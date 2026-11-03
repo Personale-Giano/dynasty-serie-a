@@ -2,9 +2,11 @@
 /* ==========================================================================
    QUIZZOTTI — Costruttore delle schede del Cruciverba
    Legge assets/db-cruciverba.js e costruisce le griglie fisse numerate
-   (N° 1, N° 2, ...) in assets/cruciverba-schede.js. Ogni scheda e' il
-   risultato di migliaia di tentativi con le regole del cruciverba a schema
-   libero: si tiene la griglia migliore per incroci, densita' e compattezza.
+   (N° 1, N° 2, ...) in assets/cruciverba-schede.js. Ogni scheda ha un tema
+   (campo `temi` delle voci): almeno MIN_THEMED parole sono del tema, le
+   altre sono generali. Ogni scheda e' il risultato di migliaia di tentativi
+   con le regole del cruciverba a schema libero: si tiene la griglia migliore
+   per parole a tema, incroci, densita' e compattezza.
    Il seme e' fisso: rilanciando lo script si ottengono le stesse griglie
    (finche' il database non cambia).
 
@@ -22,14 +24,17 @@ const ARG_ATTEMPTS = process.argv.indexOf('--attempts');
 const ATTEMPTS = ARG_ATTEMPTS > 0 ? Number(process.argv[ARG_ATTEMPTS + 1]) : 6000;
 const SEED = 20261103;
 
-/* Le schede: titolo e quanto sono cattive (sale piano dalla 1 alla 5). */
+/* Le schede: tema, titolo, sottotitolo e quanto sono cattive (sale piano). */
 const PLAN = [
-    { n: 1, title: 'Calcio d\'inizio', diff2: 0.25, diff3: [2, 2] },
-    { n: 2, title: 'Palla al centro', diff2: 0.35, diff3: [2, 3] },
-    { n: 3, title: 'Secondo tempo', diff2: 0.45, diff3: [3, 3] },
-    { n: 4, title: 'Zona Cesarini', diff2: 0.55, diff3: [3, 4] },
-    { n: 5, title: 'Si va ai rigori', diff2: 0.65, diff3: [4, 4] }
+    { n: 1, tema: 'nazionale', title: 'Notti magiche', sottotitolo: 'Gli azzurri, da Italia \'90 a Wembley', diff2: 0.30, diff3: [1, 3] },
+    { n: 2, tema: 'champions', title: 'Le notti di Champions', sottotitolo: 'Finali, rimonte e la coppa dalle grandi orecchie', diff2: 0.35, diff3: [1, 3] },
+    { n: 3, tema: 'mondiali', title: 'Il Maracanazo e dintorni', sottotitolo: 'Un secolo di Mondiali, azzurri esclusi', diff2: 0.40, diff3: [2, 3] },
+    { n: 4, tema: 'bandiere', title: 'Una vita, una maglia', sottotitolo: 'Capitani, fasce e bandiere di una sola squadra', diff2: 0.40, diff3: [2, 4] },
+    { n: 5, tema: 'mercato', title: 'Fumata bianca', sottotitolo: 'Trattative, procuratori e colpi di mercato', diff2: 0.45, diff3: [2, 4] },
+    { n: 6, tema: 'bar', title: 'Chiacchiere da bar', sottotitolo: 'Gergo, tattica e modi di dire del calcio parlato', diff2: 0.45, diff3: [2, 4] },
+    { n: 7, tema: 'stadi', title: 'Tutti in curva', sottotitolo: 'Stadi, cori, derby e tifo dagli spalti', diff2: 0.50, diff3: [2, 4] }
 ];
+const MIN_THEMED = 9;
 const WORDS = { min: 16, max: 18 };
 const MAX_SIDE = 15;
 const TARGET_SIDE = 13;
@@ -44,12 +49,17 @@ const SKIP = new Set([
     'SCAMACCA', 'RICE', 'GAVI', 'DIAS', 'PERCASSI', 'LOTITO', 'LAPORTA', 'CAIRO', 'DELAURENTIIS', 'GASP',
     'KHEPHREN', 'KVARA', 'GIGIO', 'SAKA', 'SON', 'GRIEZMANN', 'COURTOIS', 'PEDRI', 'KIMMICH', 'MUSIALA', 'VANDIJK',
     'ODEGAARD', 'FODEN', 'PALMER', 'PELLEGRINI', 'LOCATELLI', 'CALAFIORI', 'DIGREGORIO', 'CAMBIASO', 'POLITANO',
-    'MKHITARYAN', 'SOMMER', 'DUMFRIES', 'KOKE', 'SIMEONE', 'CHOLO', 'EMERY', 'BELOTTI', 'FRATTESI', 'RETEGUI', 'COMO', 'RODRI', 'ARTETA', 'MORATA'
+    'MKHITARYAN', 'SOMMER', 'DUMFRIES', 'KOKE', 'SIMEONE', 'CHOLO', 'EMERY', 'BELOTTI', 'FRATTESI', 'RETEGUI', 'COMO', 'RODRI', 'ARTETA', 'MORATA', 'INFANTINO'
 ]);
-/* Tetti per categoria in una scheda: niente griglie fatte solo di cognomi. */
+/* Tetti per categoria tra le parole generali di una scheda (quelle a tema ne sono esenti). */
 const CAT_CAP = { Calciatori: 5, Soprannomi: 3 };
 const CAT_CAP_DEFAULT = 4;
 const LEN_CAP = { 3: 2, 4: 4 };
+/* Le parole a tema hanno un tetto piu' largo per categoria (niente schede di soli stadi). */
+const CAT_CAP_THEMED = 6;
+/* Varieta' delle definizioni: la stessa parola "pesante" (Triplete, stadio, finale...) in al massimo 4 definizioni. */
+const CLUE_TOKEN_CAP = 4;
+const STOP = new Set(['della', 'delle', 'dello', 'degli', 'nella', 'nelle', 'negli', 'sulla', 'sulle', 'dalla', 'dalle', 'quello', 'quella', 'prima', 'dopo', 'tutti', 'tutto', 'sempre', 'anche', 'contro', 'come', 'nella']);
 
 /* ---------- caso riproducibile ---------- */
 function mulberry32(a) {
@@ -85,19 +95,20 @@ const OTHER = { a: 'd', d: 'a' };
 
 function attempt(pool, plan) {
     const cells = new Map(), byLetter = {}, placed = [], used = new Set();
-    const cats = {}, lens = {};
+    const cats = {}, lens = {}, toks = {};
     let d3 = 0, bb = null;
     const get = (r, c) => cells.get(key(r, c));
 
     function allowed(w) {
         if (used.has(w.answer)) return false;
-        if ((cats[w.cat] || 0) >= (CAT_CAP[w.cat] || CAT_CAP_DEFAULT)) return false;
+        if ((cats[w.cat] || 0) >= (w.themed ? CAT_CAP_THEMED : (CAT_CAP[w.cat] || CAT_CAP_DEFAULT))) return false;
+        for (const t of w.heavy) if ((toks[t] || 0) >= CLUE_TOKEN_CAP) return false;
         if (LEN_CAP[w.answer.length] != null && (lens[w.answer.length] || 0) >= LEN_CAP[w.answer.length]) return false;
         if (w.diff === 3 && d3 >= plan.diff3[1]) return false;
         for (const p of placed) {
             const o = p.w;
             if (mentions(w, o.answer) || mentions(o, w.answer)) return false;
-            if (o.answer.length >= 4 && w.answer.length >= 4 && (o.answer.includes(w.answer) || w.answer.includes(o.answer))) return false;
+            if ((o.answer.includes(w.answer) || w.answer.includes(o.answer))) return false;
         }
         return true;
     }
@@ -120,6 +131,7 @@ function attempt(pool, plan) {
         placed.push({ w, r, c, dir });
         used.add(w.answer);
         cats[w.cat] = (cats[w.cat] || 0) + 1;
+        for (const t of w.heavy) toks[t] = (toks[t] || 0) + 1;
         lens[w.answer.length] = (lens[w.answer.length] || 0) + 1;
         if (w.diff === 3) d3++;
     }
@@ -148,6 +160,7 @@ function attempt(pool, plan) {
 
     function bestFor(w) {
         let best = null;
+        const bonus = w.themed ? 16 : 0;
         const ans = w.answer;
         for (let i = 0; i < ans.length; i++) {
             const list = byLetter[ans[i]];
@@ -158,14 +171,14 @@ function attempt(pool, plan) {
                 if (!dir) continue;
                 const s = STEP[dir], r = cell.r - s[0] * i, c = cell.c - s[1] * i;
                 const sc = check(ans, r, c, dir);
-                if (sc != null && (!best || sc > best.score)) best = { w, r, c, dir, score: sc };
+                if (sc != null && (!best || sc + bonus > best.score)) best = { w, r, c, dir, score: sc + bonus };
             }
         }
         return best;
     }
 
     const rest = shuffle(pool.slice());
-    const head = rest.slice(0, 16).filter((w) => w.answer.length >= 7 && w.answer.length <= 12 && w.diff < 3);
+    const head = rest.filter((w) => w.themed && w.answer.length >= 7 && w.answer.length <= 12 && w.diff < 3).slice(0, 6);
     if (!head.length) return null;
     const first = head[Math.floor(rnd() * Math.min(4, head.length))];
     rest.splice(rest.indexOf(first), 1);
@@ -215,7 +228,7 @@ function finalize(g) {
     let n = 0;
     for (let i = 0; i < w * h; i++) if (starts.has(i)) num[i] = ++n;
     words.forEach((x) => { x.num = num[x.row * w + x.col]; });
-    return { w, h, words, cross, letters: g.letters, d3: g.d3 };
+    return { w, h, words, cross, letters: g.letters, d3: g.d3, themed: words.filter((x) => x.src.themed).length };
 }
 
 function score(f, plan) {
@@ -224,7 +237,8 @@ function score(f, plan) {
     const two = f.cross.filter((x) => x >= 2).length / n;
     const dens = f.letters / (f.w * f.h);
     const cats = new Set(f.words.map((x) => x.src.cat)).size;
-    let s = n * 40 + two * 500 + avg * 90 + dens * 350 + cats * 12;
+    let s = n * 40 + two * 500 + avg * 90 + dens * 350 + cats * 6 + f.themed * 28;
+    if (f.themed < MIN_THEMED) s -= 3000 + (MIN_THEMED - f.themed) * 300;
     s -= (Math.abs(f.w - TARGET_SIDE) + Math.abs(f.h - TARGET_SIDE)) * 9 + Math.abs(f.w - f.h) * 12;
     if (n < WORDS.min) s -= 2000;
     if (f.d3 < plan.diff3[0]) s -= 600 * (plan.diff3[0] - f.d3);
@@ -235,20 +249,26 @@ function score(f, plan) {
     return s;
 }
 
-/** Il mazzo per un tentativo: proporzioni di difficolta' secondo la scheda. */
+/** Il mazzo per un tentativo: tutte le parole del tema + parole generali secondo la scheda. */
 function samplePool(avail, plan) {
+    const themed = avail.filter((x) => x.temi.includes(plan.tema)).map((x) => Object.assign({}, x, { themed: true }));
+    // le parole di altri temi restano a disposizione delle loro schede
+    const general = avail.filter((x) => !x.temi.length);
     const by = { 1: [], 2: [], 3: [] };
-    avail.forEach((x) => by[x.diff].push(x));
+    general.forEach((x) => by[x.diff].push(x));
     Object.values(by).forEach(shuffle);
-    const size = 170;
-    const n3 = 14, n2 = Math.round((size - n3) * plan.diff2), n1 = size - n3 - n2;
-    return by[1].slice(0, n1).concat(by[2].slice(0, n2), by[3].slice(0, n3));
+    const size = 120;
+    const n3 = 10, n2 = Math.round((size - n3) * plan.diff2), n1 = size - n3 - n2;
+    return themed.concat(by[1].slice(0, n1), by[2].slice(0, n2), by[3].slice(0, n3));
 }
 
 /* ---------- costruzione ---------- */
-const clean = DB.map((x) => ({ answer: x.answer, clue: x.clue, cat: x.cat || '', diff: x.diff }))
+const clean = DB.map((x) => ({ answer: x.answer, clue: x.clue, cat: x.cat || '', diff: x.diff, temi: x.temi || [] }))
     .filter((x) => /^[A-Z]{3,13}$/.test(x.answer) && !SKIP.has(x.answer) && x.clue && !/\b(o|oppure)\b.*\bper gli amici\b/i.test(x.clue))
-    .map((x) => Object.assign(x, { tok: new Set(norm(x.clue).split(' ')), flat: norm(x.clue).replace(/ /g, '') }));
+    .map((x) => Object.assign(x, {
+        tok: new Set(norm(x.clue).split(' ')), flat: norm(x.clue).replace(/ /g, ''),
+        heavy: [...new Set(norm(x.clue).split(' ').filter((t) => t.length >= 5 && !STOP.has(t)))]
+    }));
 const taken = new Set();
 const out = [];
 const t00 = Date.now();
@@ -256,6 +276,7 @@ const t00 = Date.now();
 for (const plan of PLAN) {
     rnd = mulberry32(SEED + plan.n * 7919);
     const avail = clean.filter((x) => !taken.has(x.answer));
+    console.log(`   (tema ${plan.tema}: ${avail.filter((x) => x.temi.includes(plan.tema)).length} parole candidate)`);
     const t0 = Date.now();
     let best = null, bestScore = -Infinity;
     for (let i = 0; i < ATTEMPTS; i++) {
@@ -273,23 +294,24 @@ for (const plan of PLAN) {
     const diffs = [1, 2, 3].map((d) => best.words.filter((x) => x.src.diff === d).length);
     const cats = {};
     best.words.forEach((x) => { cats[x.src.cat] = (cats[x.src.cat] || 0) + 1; });
-    console.log(`N° ${plan.n} "${plan.title}": ${best.w}x${best.h}, ${n} parole, incroci medi ${(cr.reduce((a, b) => a + b, 0) / n).toFixed(2)}, ` +
+    console.log(`N° ${plan.n} [${plan.tema}] "${plan.title}": ${best.w}x${best.h}, ${n} parole, a tema ${best.themed}/${n}, incroci medi ${(cr.reduce((a, b) => a + b, 0) / n).toFixed(2)}, ` +
         `${cr.filter((x) => x >= 2).length}/${n} con 2+ incroci, densita' ${Math.round(best.letters / (best.w * best.h) * 100)}%, ` +
         `diff 1/2/3 = ${diffs.join('/')}, ${((Date.now() - t0) / 1000).toFixed(1)} s`);
     console.log('   categorie: ' + Object.entries(cats).map(([k, v]) => k + ' ' + v).join(', '));
     out.push({
-        n: plan.n, title: plan.title, w: best.w, h: best.h,
+        n: plan.n, tema: plan.tema, title: plan.title, sottotitolo: plan.sottotitolo, w: best.w, h: best.h,
         words: best.words.map((x) => ({ answer: x.answer, clue: x.clue, row: x.row, col: x.col, dir: x.dir === 'a' ? 'A' : 'D', num: x.num }))
     });
 }
 
-const body = out.map((p) => '  {\n    n: ' + p.n + ', title: ' + JSON.stringify(p.title) + ', w: ' + p.w + ', h: ' + p.h + ',\n    words: [\n' +
+const body = out.map((p) => '  {\n    n: ' + p.n + ', tema: ' + JSON.stringify(p.tema) + ', title: ' + JSON.stringify(p.title) + ',\n    sottotitolo: ' + JSON.stringify(p.sottotitolo) + ', w: ' + p.w + ', h: ' + p.h + ',\n    words: [\n' +
     p.words.map((x) => '      { answer: ' + JSON.stringify(x.answer) + ', clue: ' + JSON.stringify(x.clue) + ', row: ' + x.row + ', col: ' + x.col + ', dir: "' + x.dir + '", num: ' + x.num + ' }').join(',\n') +
     '\n    ]\n  }').join(',\n');
 const file = `/* ==========================================================================
    QUIZZOTTI — Cruciverba: le schede fisse (N° 1 ... N° ${out.length})
    FILE GENERATO da scripts/build-cruciverba.js a partire da
    assets/db-cruciverba.js: non modificarlo a mano, rilancia lo script.
+   tema: nazionale | champions | mondiali | bandiere | mercato | bar | stadi.
    row/col partono da 0; dir "A" = orizzontale, "D" = verticale.
    ========================================================================== */
 /* exported cruciverbaSchede */

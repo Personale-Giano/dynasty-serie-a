@@ -115,6 +115,8 @@ test('db-sfidaeredita.js: parola/definizione senza duplicati', () => {
     noDuplicates(database.map((d) => d.word), 'parole sfidaeredita');
 });
 
+const TEMI = ['nazionale', 'champions', 'mondiali', 'bandiere', 'mercato', 'bar', 'stadi'];
+
 test('db-cruciverba.js: parole A-Z 3-13, definizioni brevi senza la risposta, categorie e difficolta valide', () => {
     const { cruciverba } = load('db-cruciverba.js');
     assert.ok(cruciverba.length >= 700, `attese almeno 700 voci, trovate ${cruciverba.length}`);
@@ -128,20 +130,36 @@ test('db-cruciverba.js: parole A-Z 3-13, definizioni brevi senza la risposta, ca
         assert.ok(!norm(e.clue).includes(e.answer), `la definizione contiene la risposta: ${e.answer}`);
         assert.ok(categorie.includes(e.cat), `categoria non valida per ${e.answer}: ${e.cat}`);
         assert.ok([1, 2, 3].includes(e.diff), `diff non valida per ${e.answer}: ${e.diff}`);
+        if (e.temi !== undefined) {
+            assert.ok(Array.isArray(e.temi) && e.temi.length > 0, `temi non validi per ${e.answer}`);
+            e.temi.forEach((t) => assert.ok(TEMI.includes(t), `tema sconosciuto per ${e.answer}: ${t}`));
+            noDuplicates(e.temi, `temi di ${e.answer}`);
+        }
     });
     noDuplicates(cruciverba.map((e) => e.answer), 'risposte cruciverba');
+    // ogni tema ha abbastanza parole per costruire una scheda
+    for (const t of TEMI) {
+        const n = cruciverba.filter((e) => (e.temi || []).includes(t)).length;
+        assert.ok(n >= 45, `tema ${t}: solo ${n} parole candidate (servono almeno 45)`);
+    }
 });
 
-test('cruciverba-schede.js: 5 schede coerenti, risposte uniche e prese dal database', () => {
+test('cruciverba-schede.js: 7 schede a tema coerenti, risposte uniche e prese dal database', () => {
     const { cruciverbaSchede } = load('cruciverba-schede.js');
     const { cruciverba } = load('db-cruciverba.js');
     const clueOf = new Map(cruciverba.map((x) => [x.answer, x.clue]));
-    assert.equal(cruciverbaSchede.length, 5);
-    assert.deepEqual(cruciverbaSchede.map((p) => p.n), [1, 2, 3, 4, 5]);
+    const temiOf = new Map(cruciverba.map((x) => [x.answer, x.temi || []]));
+    assert.equal(cruciverbaSchede.length, 7);
+    assert.deepEqual(cruciverbaSchede.map((p) => p.n), [1, 2, 3, 4, 5, 6, 7]);
+    noDuplicates(cruciverbaSchede.map((p) => p.tema), 'temi delle schede');
     const allAnswers = [];
     for (const p of cruciverbaSchede) {
         const tag = `N° ${p.n}`;
         assert.ok(p.title && typeof p.title === 'string', `${tag}: titolo mancante`);
+        assert.ok(TEMI.includes(p.tema), `${tag}: tema non valido ${p.tema}`);
+        assert.ok(p.sottotitolo && typeof p.sottotitolo === 'string', `${tag}: sottotitolo mancante`);
+        const themed = p.words.filter((w) => (temiOf.get(w.answer) || []).includes(p.tema)).length;
+        assert.ok(themed >= 9, `${tag}: solo ${themed} parole a tema ${p.tema} (ne servono almeno 9)`);
         assert.ok(p.w >= 3 && p.w <= 15 && p.h >= 3 && p.h <= 15, `${tag}: misure fuori range ${p.w}x${p.h}`);
         assert.ok(p.words.length >= 12, `${tag}: troppe poche parole`);
         const cells = new Map(); // "r,c" -> { ch, A, D }

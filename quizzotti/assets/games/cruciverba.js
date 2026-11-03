@@ -2,7 +2,8 @@
    QUIZZOTTI v2 — Il cruciverba del pallone
    Dati: assets/cruciverba-schede.js (`cruciverbaSchede`), schede fisse e
    numerate costruite da scripts/build-cruciverba.js a partire da
-   assets/db-cruciverba.js. Il N° 1 e' sempre la stessa griglia: una volta
+   assets/db-cruciverba.js. Ogni scheda ha un tema (Nazionale, Champions,
+   Mondiali...). Il N° 1 e' sempre la stessa griglia: una volta
    completata resta da rivedere, non da rigiocare. Ogni scheda ha il suo
    salvataggio: si puo' lasciare a meta' e riprenderla quando si vuole.
    ========================================================================== */
@@ -12,14 +13,20 @@
 
     var STEP = { a: [0, 1], d: [1, 0] };
     var OTHER = { a: 'd', d: 'a' };
-    var STORE_KEY = 'qz.cruciverba.v2';
+    // v3: le 7 schede a tema; i progressi sulle vecchie 5 schede (v2) non valgono piu'
+    var STORE_KEY = 'qz.cruciverba.v3';
+    var TEMI = {
+        nazionale: 'Nazionale', champions: 'Champions', mondiali: 'Mondiali', bandiere: 'Bandiere',
+        mercato: 'Calciomercato', bar: 'Bar dello sport', stadi: 'Stadi e curve'
+    };
+    function temaLabel(id) { return TEMI[id] || ''; }
 
     /* =====================================================================
        LE SCHEDE
        ===================================================================== */
     var SCHEDE = (typeof cruciverbaSchede !== 'undefined' && Array.isArray(cruciverbaSchede) ? cruciverbaSchede : []).map(function (p) {
         return {
-            n: p.n, title: p.title, w: p.w, h: p.h,
+            n: p.n, tema: p.tema || '', title: p.title, sottotitolo: p.sottotitolo || '', w: p.w, h: p.h,
             words: p.words.map(function (x) { return { answer: x.answer, clue: x.clue, r: x.row, c: x.col, dir: x.dir === 'D' ? 'd' : 'a', n: x.num }; })
         };
     });
@@ -57,7 +64,7 @@
 
     $('#medal').innerHTML = QZ.icon('xword');
     $('#rules').innerHTML = [
-        ['Schede numerate:', 'il N° 1 è uguale per tutti. Una volta chiusa, la scheda resta in bacheca.'],
+        ['Sette schede, sette temi:', 'Nazionale, Champions, Mondiali, bandiere, mercato, bar dello sport, stadi. Uguali per tutti; chiusa una, resta in bacheca.'],
         ['Tocca una casella', 'e scrivi. Toccala di nuovo per passare da orizzontale a verticale.'],
         ['Niente suggerimenti in corsa:', 'scrivi tutto, correggi quanto vuoi. Nessuna parola si accende prima del tempo.'],
         ['Verifica quando vuoi:', 'le lettere giuste diventano verdi, le sbagliate rosse. Correggi e riprova: tentativi infiniti, la scheda si chiude solo quando è tutta giusta.'],
@@ -146,11 +153,13 @@
                 status = 'Nuovo';
                 action = 'Gioca';
             }
-            var label = 'Cruciverba numero ' + p.n + ', ' + p.title + ', ' + p.words.length + ' parole. ' + status +
+            var label = 'Cruciverba numero ' + p.n + ', tema ' + temaLabel(p.tema) + ': ' + p.title + '. ' + p.sottotitolo + '. ' + p.words.length + ' parole. ' + status +
                 (d ? (d.quit ? '' : ', voto ' + votoOf(d.ratio)) + ', tempo ' + timeWords(d.time) : play ? ', ' + wordsFilled(p, play.fill) + ' parole scritte su ' + p.words.length : '') + '. ' + action;
             return '<li style="--i:' + i + '"><button type="button" class="xw-card ' + cls + '" data-n="' + p.n + '" aria-label="' + QZ.esc(label) + '">' +
                 '<span class="xw-card__top"><span class="xw-card__n">N° ' + p.n + '</span><span class="xw-card__status">' + status + '</span></span>' +
+                (p.tema ? '<span class="xw-card__tema">' + QZ.esc(temaLabel(p.tema)) + '</span>' : '') +
                 '<span class="xw-card__title">' + QZ.esc(p.title) + '</span>' +
+                (p.sottotitolo ? '<span class="xw-card__sub">' + QZ.esc(p.sottotitolo) + '</span>' : '') +
                 '<span class="xw-card__meta">' + p.w + '×' + p.h + ' · ' + p.words.length + ' parole</span>' +
                 detail +
                 '<span class="xw-card__go">' + action + QZ.icon('arrow') + '</span></button></li>';
@@ -207,7 +216,7 @@
     function begin(p, play, review) {
         starting = true;
         S = {
-            n: p.n, p: { n: p.n, title: p.title, w: p.w, h: p.h, words: p.words.map(function (w) { return Object.assign({}, w); }) },
+            n: p.n, p: { n: p.n, tema: p.tema, title: p.title, w: p.w, h: p.h, words: p.words.map(function (w) { return Object.assign({}, w); }) },
             fill: play.fill.slice(), rev: play.rev.slice(), solved: play.solved.slice(),
             ok: Array.isArray(play.ok) && play.ok.length === play.fill.length ? play.ok.slice() : new Array(play.fill.length).fill(0),
             verifies: play.verifies || 0,
@@ -216,7 +225,7 @@
         };
         index();
         if (review) Object.keys(S.map).forEach(function (ci) { S.fill[ci] = S.map[ci].ch; });
-        $('#xw-title').textContent = 'N° ' + p.n + ' · ' + p.title;
+        $('#xw-title').textContent = 'N° ' + p.n + (p.tema ? ' · ' + temaLabel(p.tema) : '') + ' · ' + p.title;
         $('#s-game').classList.toggle('is-review', !!review);
         $('#xw-aids').hidden = !!review;
         $('#xw-back').hidden = !!review;
@@ -816,7 +825,7 @@
         var r = null;
         if (first) {
                 var xp = mine * 5 + (type === 'win' ? 40 : 0) + (type === 'win' && !aids ? 25 : 0);
-            r = QZ.profile.record('cruciverba', { xp: xp, label: 'N° ' + S.n + ' · ' + mine + '/' + tot + ' parole · ' + fmtTime(S.elapsed), score: Math.round(ratio * 100) });
+            r = QZ.profile.record('cruciverba', { xp: xp, label: 'N° ' + S.n + ' ' + S.p.title + ' · ' + mine + '/' + tot + ' parole · ' + fmtTime(S.elapsed), score: Math.round(ratio * 100) });
         }
         var doneN = SCHEDE.filter(function (x) { return st.done[x.n]; }).length;
         var nx = nextOpen(S.n);
@@ -847,9 +856,9 @@
                     { label: 'Completati', value: doneN + '/' + SCHEDE.length }
                 ],
                 extraHTML: solutionHTML(),
-                share: type === 'win' && !aids ? 'Griglia perfetta al Cruciverba N° ' + S.n + ' di Quizzotti, in ' + fmtTime(S.elapsed) + ' e senza aiuti. Ci provi?'
+                share: type === 'win' && !aids ? 'Griglia perfetta al Cruciverba N° ' + S.n + ' (' + S.p.title + ') di Quizzotti, in ' + fmtTime(S.elapsed) + ' e senza aiuti. Ci provi?'
                     : type === 'win'
-                    ? 'Ho chiuso il Cruciverba N° ' + S.n + ' di Quizzotti in ' + fmtTime(S.elapsed) + (aids ? ' con ' + aids + (aids === 1 ? ' aiuto' : ' aiuti') : ' senza aiuti') + '. Ci provi?'
+                    ? 'Ho chiuso il Cruciverba N° ' + S.n + ' (' + S.p.title + ') di Quizzotti in ' + fmtTime(S.elapsed) + (aids ? ' con ' + aids + (aids === 1 ? ' aiuto' : ' aiuti') : ' senza aiuti') + '. Ci provi?'
                     : 'Al Cruciverba N° ' + S.n + ' di Quizzotti ho azzeccato ' + mine + ' parole su ' + tot + '. Fai di meglio?',
                 retryLabel: 'Torna alle schede',
                 onRetry: backToList,
