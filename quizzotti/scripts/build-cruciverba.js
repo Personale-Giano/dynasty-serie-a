@@ -7,8 +7,12 @@
    altre sono generali. Ogni scheda e' il risultato di migliaia di tentativi
    con le regole del cruciverba a schema libero: si tiene la griglia migliore
    per parole a tema, incroci, densita' e compattezza.
-   Il seme e' fisso: rilanciando lo script si ottengono le stesse griglie
-   (finche' il database non cambia).
+   Le schede gia' pubblicate sono CONGELATE: lo script rilegge
+   assets/cruciverba-schede.js, ricopia tali e quali le schede che ci sono
+   gia' (i giocatori possono avere partite in corso) e genera soltanto i
+   numeri nuovi del PLAN, con risposte mai usate nelle schede precedenti.
+   Un test (tests/db-integrity.test.js) controlla l'impronta delle schede
+   pubblicate. Il seme e' fisso: le schede nuove sono riproducibili.
 
    Uso: node scripts/build-cruciverba.js [--attempts 6000]
    Poi: node scripts/cache-bust.js
@@ -32,7 +36,10 @@ const PLAN = [
     { n: 4, tema: 'bandiere', title: 'Una vita, una maglia', sottotitolo: 'Capitani, fasce e bandiere di una sola squadra', diff2: 0.40, diff3: [2, 4] },
     { n: 5, tema: 'mercato', title: 'Fumata bianca', sottotitolo: 'Trattative, procuratori e colpi di mercato', diff2: 0.45, diff3: [2, 4] },
     { n: 6, tema: 'bar', title: 'Chiacchiere da bar', sottotitolo: 'Gergo, tattica e modi di dire del calcio parlato', diff2: 0.45, diff3: [2, 4] },
-    { n: 7, tema: 'stadi', title: 'Tutti in curva', sottotitolo: 'Stadi, cori, derby e tifo dagli spalti', diff2: 0.50, diff3: [2, 4] }
+    { n: 7, tema: 'stadi', title: 'Tutti in curva', sottotitolo: 'Stadi, cori, derby e tifo dagli spalti', diff2: 0.50, diff3: [2, 4] },
+    { n: 8, tema: 'anni90', title: 'Le sette sorelle', sottotitolo: 'La Serie A degli anni Novanta, tra scudetti e 90° minuto', diff2: 0.45, diff3: [2, 4] },
+    { n: 9, tema: 'mister', title: 'Parola al mister', sottotitolo: 'Panchine, esoneri e frasi celebri degli allenatori', diff2: 0.45, diff3: [2, 4] },
+    { n: 10, tema: 'estero', title: 'Il pallone nel mondo', sottotitolo: 'Premier, Liga, Bundesliga e Sudamerica: club, stadi e rivalità', diff2: 0.45, diff3: [2, 4] }
 ];
 const MIN_THEMED = 9;
 const WORDS = { min: 16, max: 18 };
@@ -269,11 +276,22 @@ const clean = DB.map((x) => ({ answer: x.answer, clue: x.clue, cat: x.cat || '',
         tok: new Set(norm(x.clue).split(' ')), flat: norm(x.clue).replace(/ /g, ''),
         heavy: [...new Set(norm(x.clue).split(' ').filter((t) => t.length >= 5 && !STOP.has(t)))]
     }));
-const taken = new Set();
+// le schede gia' pubblicate non si toccano: si ricopiano e le loro risposte restano prese
+const SCHEDE_FILE = path.join(ROOT, 'assets', 'cruciverba-schede.js');
+const frozen = fs.existsSync(SCHEDE_FILE) ? require(SCHEDE_FILE).cruciverbaSchede : [];
+const taken = new Set(frozen.flatMap((p) => p.words.map((w) => w.answer)));
 const out = [];
 const t00 = Date.now();
+const extra = frozen.filter((p) => !PLAN.some((x) => x.n === p.n));
+if (extra.length) throw new Error('Schede pubblicate assenti dal PLAN: ' + extra.map((p) => p.n).join(', '));
 
 for (const plan of PLAN) {
+    const old = frozen.find((p) => p.n === plan.n);
+    if (old) {
+        out.push(old);
+        console.log(`N° ${plan.n} [${old.tema}] "${old.title}": congelata (${old.w}x${old.h}, ${old.words.length} parole)`);
+        continue;
+    }
     rnd = mulberry32(SEED + plan.n * 7919);
     const avail = clean.filter((x) => !taken.has(x.answer));
     console.log(`   (tema ${plan.tema}: ${avail.filter((x) => x.temi.includes(plan.tema)).length} parole candidate)`);

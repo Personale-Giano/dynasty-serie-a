@@ -17,7 +17,8 @@
     var STORE_KEY = 'qz.cruciverba.v3';
     var TEMI = {
         nazionale: 'Nazionale', champions: 'Champions', mondiali: 'Mondiali', bandiere: 'Bandiere',
-        mercato: 'Calciomercato', bar: 'Bar dello sport', stadi: 'Stadi e curve'
+        mercato: 'Calciomercato', bar: 'Bar dello sport', stadi: 'Stadi e curve',
+        anni90: 'Anni \'90', mister: 'Mister', estero: 'Calcio estero'
     };
     function temaLabel(id) { return TEMI[id] || ''; }
 
@@ -64,7 +65,7 @@
 
     $('#medal').innerHTML = QZ.icon('xword');
     $('#rules').innerHTML = [
-        ['Sette schede, sette temi:', 'Nazionale, Champions, Mondiali, bandiere, mercato, bar dello sport, stadi. Uguali per tutti; chiusa una, resta in bacheca.'],
+        ['Ogni scheda ha il suo tema:', 'dalla Nazionale al calciomercato, dagli anni \'90 ai campionati esteri. Uguali per tutti; chiusa una, resta in bacheca.'],
         ['Tocca una casella', 'e scrivi. Toccala di nuovo per passare da orizzontale a verticale.'],
         ['Niente suggerimenti in corsa:', 'scrivi tutto, correggi quanto vuoi. Nessuna parola si accende prima del tempo.'],
         ['Verifica quando vuoi:', 'le lettere giuste diventano verdi, le sbagliate rosse. Correggi e riprova: tentativi infiniti, la scheda si chiude solo quando è tutta giusta.'],

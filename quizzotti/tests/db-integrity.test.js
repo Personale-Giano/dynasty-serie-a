@@ -115,7 +115,7 @@ test('db-sfidaeredita.js: parola/definizione senza duplicati', () => {
     noDuplicates(database.map((d) => d.word), 'parole sfidaeredita');
 });
 
-const TEMI = ['nazionale', 'champions', 'mondiali', 'bandiere', 'mercato', 'bar', 'stadi'];
+const TEMI = ['nazionale', 'champions', 'mondiali', 'bandiere', 'mercato', 'bar', 'stadi', 'anni90', 'mister', 'estero'];
 
 test('db-cruciverba.js: parole A-Z 3-13, definizioni brevi senza la risposta, categorie e difficolta valide', () => {
     const { cruciverba } = load('db-cruciverba.js');
@@ -144,13 +144,13 @@ test('db-cruciverba.js: parole A-Z 3-13, definizioni brevi senza la risposta, ca
     }
 });
 
-test('cruciverba-schede.js: 7 schede a tema coerenti, risposte uniche e prese dal database', () => {
+test('cruciverba-schede.js: 10 schede a tema coerenti, risposte uniche e prese dal database', () => {
     const { cruciverbaSchede } = load('cruciverba-schede.js');
     const { cruciverba } = load('db-cruciverba.js');
     const clueOf = new Map(cruciverba.map((x) => [x.answer, x.clue]));
     const temiOf = new Map(cruciverba.map((x) => [x.answer, x.temi || []]));
-    assert.equal(cruciverbaSchede.length, 7);
-    assert.deepEqual(cruciverbaSchede.map((p) => p.n), [1, 2, 3, 4, 5, 6, 7]);
+    assert.equal(cruciverbaSchede.length, 10);
+    assert.deepEqual(cruciverbaSchede.map((p) => p.n), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     noDuplicates(cruciverbaSchede.map((p) => p.tema), 'temi delle schede');
     const allAnswers = [];
     for (const p of cruciverbaSchede) {
@@ -206,5 +206,20 @@ test('cruciverba-schede.js: 7 schede a tema coerenti, risposte uniche e prese da
     function covers(w, r, c) {
         return w.dir === 'A' ? r === w.row && c >= w.col && c < w.col + w.answer.length
             : c === w.col && r >= w.row && r < w.row + w.answer.length;
+    }
+});
+
+test('cruciverba-schede.js: le schede pubblicate (N° 1-7) non cambiano mai', () => {
+    // I giocatori hanno partite salvate su queste griglie: rigenerarle romperebbe i progressi.
+    // scripts/build-cruciverba.js le congela; se questo test fallisce, qualcuno le ha toccate.
+    // Quando si pubblicano nuove schede, si aggiunge la loro impronta qui sotto (mai cambiare quelle esistenti).
+    const crypto = require('node:crypto');
+    const { cruciverbaSchede } = load('cruciverba-schede.js');
+    const PUBBLICATE = [
+        { fino: 7, sha256: '5b494d2e1384dd9411d9dd99dd1910520b160bd15936236dc83de554971e0365' }
+    ];
+    for (const { fino, sha256 } of PUBBLICATE) {
+        const got = crypto.createHash('sha256').update(JSON.stringify(cruciverbaSchede.slice(0, fino))).digest('hex');
+        assert.equal(got, sha256, `le schede N° 1-${fino} sono cambiate rispetto a quelle pubblicate`);
     }
 });

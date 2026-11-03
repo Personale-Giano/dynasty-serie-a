@@ -1,5 +1,5 @@
 /* ==========================================================================
-   QUIZZOTTI — Cruciverba: le schede fisse (N° 1 ... N° 7)
+   QUIZZOTTI — Cruciverba: le schede fisse (N° 1 ... N° 10)
    FILE GENERATO da scripts/build-cruciverba.js a partire da
    assets/db-cruciverba.js: non modificarlo a mano, rilancia lo script.
    tema: nazionale | champions | mondiali | bandiere | mercato | bar | stadi.
@@ -173,6 +173,78 @@ const cruciverbaSchede = [
       { answer: "MAZZONE", clue: "Carletto, la corsa sotto la curva atalantina", row: 3, col: 6, dir: "D", num: 8 },
       { answer: "FISCHI", clue: "Accolgono l'ex che torna da traditore", row: 8, col: 13, dir: "D", num: 14 },
       { answer: "SPAL", clue: "Biancazzurri di Ferrara", row: 11, col: 11, dir: "D", num: 17 }
+    ]
+  },
+  {
+    n: 8, tema: "anni90", title: "Le sette sorelle",
+    sottotitolo: "La Serie A degli anni Novanta, tra scudetti e 90° minuto", w: 12, h: 15,
+    words: [
+      { answer: "TATANKA", clue: "Dario Hubner, come il bisonte", row: 1, col: 3, dir: "A", num: 2 },
+      { answer: "CEREZO", clue: "Toninho, brasiliano della Samp scudetto", row: 4, col: 0, dir: "A", num: 7 },
+      { answer: "CIRIO", clue: "Il marchio di Cragnotti sulle maglie della Lazio", row: 6, col: 7, dir: "A", num: 8 },
+      { answer: "SIGNORI", clue: "Beppe, mancino e rigori da fermo", row: 7, col: 0, dir: "A", num: 9 },
+      { answer: "SALAS", clue: "Marcelo, il Matador cileno della Lazio", row: 9, col: 0, dir: "A", num: 12 },
+      { answer: "CAPELLO", clue: "Fabio, vincente con Milan, Roma e Real Madrid", row: 10, col: 4, dir: "A", num: 15 },
+      { answer: "TELEPIU", clue: "La pay tv delle prime dirette di Serie A, anni '90", row: 12, col: 2, dir: "A", num: 16 },
+      { answer: "CIGNO", clue: "Van Basten, quello di Utrecht", row: 14, col: 6, dir: "A", num: 17 },
+      { answer: "SAMPDORIA", clue: "Blucerchiati, scudetto 1991", row: 0, col: 9, dir: "D", num: 1 },
+      { answer: "TITOLARE", clue: "Chi parte dal primo minuto", row: 1, col: 5, dir: "D", num: 3 },
+      { answer: "MOVIOLA", clue: "Il rallentatore che faceva litigare al Processo di Biscardi", row: 2, col: 11, dir: "D", num: 4 },
+      { answer: "SENSI", clue: "Franco e poi Rosella, presidenti della Roma", row: 3, col: 1, dir: "D", num: 5 },
+      { answer: "VERON", clue: "Juan Sebastian, la Brujita di Parma e Lazio", row: 3, col: 3, dir: "D", num: 6 },
+      { answer: "SOSA", clue: "Ruben, uruguaiano mancino di Lazio e Inter", row: 7, col: 0, dir: "D", num: 9 },
+      { answer: "GULLIT", clue: "Ruud, treccine e Pallone d'Oro 1987", row: 7, col: 2, dir: "D", num: 10 },
+      { answer: "TREDICI", clue: "Il colpo grosso della schedina", row: 8, col: 7, dir: "D", num: 11 },
+      { answer: "SCALA", clue: "Nevio, il Parma delle prime coppe", row: 9, col: 4, dir: "D", num: 13 },
+      { answer: "CODINO", clue: "Roberto Baggio, Divin...", row: 9, col: 10, dir: "D", num: 14 }
+    ]
+  },
+  {
+    n: 9, tema: "mister", title: "Parola al mister",
+    sottotitolo: "Panchine, esoneri e frasi celebri degli allenatori", w: 13, h: 15,
+    words: [
+      { answer: "AUSTRIA", clue: "Il Wunderteam degli anni '30", row: 1, col: 1, dir: "A", num: 4 },
+      { answer: "PARON", clue: "Nereo Rocco, in triestino", row: 3, col: 3, dir: "A", num: 6 },
+      { answer: "VICE", clue: "L'allenatore in seconda, in breve", row: 4, col: 0, dir: "A", num: 7 },
+      { answer: "HAGI", clue: "Gheorghe, il Maradona dei Carpazi", row: 4, col: 9, dir: "A", num: 8 },
+      { answer: "RANIERI", clue: "Claudio, il miracolo Leicester", row: 5, col: 3, dir: "A", num: 9 },
+      { answer: "GUARDIOLA", clue: "Pep, il filosofo del possesso", row: 7, col: 1, dir: "A", num: 11 },
+      { answer: "SPALLETTI", clue: "Luciano, scudetto col Napoli nel 2023", row: 9, col: 2, dir: "A", num: 14 },
+      { answer: "ANCELOTTI", clue: "Carletto, re delle Champions", row: 11, col: 2, dir: "A", num: 15 },
+      { answer: "FUSIGNANO", clue: "Il paese romagnolo del profeta del calcio a zona", row: 13, col: 2, dir: "A", num: 17 },
+      { answer: "HAMRIN", clue: "Kurt, l'Uccellino svedese della Fiorentina", row: 0, col: 1, dir: "D", num: 1 },
+      { answer: "SIMONI", clue: "Gigi, la Coppa UEFA dell'Inter nel 1998", row: 0, col: 6, dir: "D", num: 2 },
+      { answer: "PANCHINA", clue: "Dove siedono riserve e allenatore", row: 0, col: 9, dir: "D", num: 3 },
+      { answer: "SUPERGA", clue: "La tragedia del Grande Torino nel 1949", row: 1, col: 3, dir: "D", num: 5 },
+      { answer: "ESONERO", clue: "Il benservito al tecnico dopo una serie nera", row: 5, col: 7, dir: "D", num: 10 },
+      { answer: "DELNERI", clue: "Luigi, il Chievo dei miracoli del 2001", row: 7, col: 5, dir: "D", num: 12 },
+      { answer: "RITIRO", clue: "Lo fa la squadra in estate, o per punizione", row: 8, col: 10, dir: "D", num: 13 },
+      { answer: "STAFF", clue: "Lo ... tecnico: i collaboratori del mister", row: 9, col: 2, dir: "D", num: 14 },
+      { answer: "TRAP", clue: "Giovanni del fischio con le dita, in breve", row: 11, col: 8, dir: "D", num: 16 }
+    ]
+  },
+  {
+    n: 10, tema: "estero", title: "Il pallone nel mondo",
+    sottotitolo: "Premier, Liga, Bundesliga e Sudamerica: club, stadi e rivalità", w: 13, h: 14,
+    words: [
+      { answer: "DORTMUND", clue: "Il Borussia del Muro Giallo", row: 1, col: 2, dir: "A", num: 2 },
+      { answer: "GALATASARAY", clue: "Giallorossi di Istanbul, Coppa UEFA 2000", row: 3, col: 2, dir: "A", num: 6 },
+      { answer: "LIGA", clue: "Il campionato spagnolo", row: 5, col: 0, dir: "A", num: 7 },
+      { answer: "PORTO", clue: "I Dragoni, Champions con Mourinho nel 2004", row: 5, col: 8, dir: "A", num: 9 },
+      { answer: "MLS", clue: "Il campionato statunitense, in sigla", row: 7, col: 0, dir: "A", num: 11 },
+      { answer: "AGUERO", clue: "Sergio, il gol al 94' che diede la Premier al City", row: 7, col: 4, dir: "A", num: 12 },
+      { answer: "EREDIVISIE", clue: "Il massimo campionato olandese", row: 9, col: 3, dir: "A", num: 15 },
+      { answer: "VELODROME", clue: "Lo stadio caldissimo di Marsiglia", row: 12, col: 4, dir: "A", num: 16 },
+      { answer: "BOCA", clue: "Xeneizes della Bombonera", row: 0, col: 3, dir: "D", num: 1 },
+      { answer: "METZ", clue: "Club granata della Lorena", row: 1, col: 6, dir: "D", num: 3 },
+      { answer: "DIAVOLO", clue: "Il Milan, per antonomasia", row: 1, col: 9, dir: "D", num: 4 },
+      { answer: "SANTOS", clue: "Club brasiliano di Pelé", row: 2, col: 11, dir: "D", num: 5 },
+      { answer: "GIGGS", clue: "Ryan, ala gallese dello United", row: 3, col: 2, dir: "D", num: 6 },
+      { answer: "LAMPARD", clue: "Frank, centrocampista goleador del Chelsea", row: 5, col: 0, dir: "D", num: 7 },
+      { answer: "LIGUE", clue: "... 1, il campionato francese", row: 5, col: 5, dir: "D", num: 8 },
+      { answer: "MEDIANO", clue: "Ligabue gli ha dedicato una canzone", row: 6, col: 7, dir: "D", num: 10 },
+      { answer: "REDS", clue: "Il Liverpool, per i suoi tifosi", row: 8, col: 3, dir: "D", num: 13 },
+      { answer: "HEYSEL", clue: "La tragedia di Bruxelles del 1985", row: 8, col: 12, dir: "D", num: 14 }
     ]
   }
 ];
