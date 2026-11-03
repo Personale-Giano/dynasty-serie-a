@@ -4,7 +4,7 @@ La direzione visiva di Quizzotti. Da leggere prima di toccare una pagina.
 
 ## L'idea
 
-**Lo stadio di sera, con i fari accesi.** Quizzotti si gioca sotto i riflettori: nero pieno, le torri dei fari agli angoli, il prato in fondo, e tutti i numeri che contano (tempo, punti, premi, classifiche) sul **tabellone luminoso a LED** come negli stadi italiani. È sportivo, fisico, riconoscibile.
+**Lo stadio di sera, con i fari accesi.** Quizzotti si gioca sotto i riflettori: nero pieno, le torri dei fari agli angoli, il prato in fondo, e tutti i numeri che contano (tempo, punti, premi, classifiche) sul **tabellone luminoso**, come nelle grafiche TV del calcio di oggi. Sportivo e moderno, **non arcade**: niente caratteri pixelati, niente spigoli vivi, niente cornici spesse.
 
 Quello che **non** siamo: vetro smerigliato, sfumature viola, bagliori ovunque, card morbide e arrotondate da template SaaS. Le uniche cose che "brillano" sono quelle che brillano davvero in uno stadio: i fari e i LED del tabellone.
 
@@ -13,8 +13,8 @@ Quello che **non** siamo: vetro smerigliato, sfumature viola, bagliori ovunque, 
 | Cosa | Come |
 |---|---|
 | Fondo | nero quasi pieno (`--bg`) con i coni di luce dei fari dall'alto e il prato a strisce in basso |
-| Superfici | pannelli scuri (`--panel`, `--panel-2`) con bordo sottile 1px (`--line`), angoli piccoli (3–6px), **niente ombre sfocate** |
-| Tabellone | sfondo nero puro, cornice grigio scuro spessa (`.board`), numeri e scritte in **DotGothic16** color LED (`--led` ambra, `--led-red`, `--led-green`) con un filo di alone: è l'unico posto dove l'alone è permesso |
+| Superfici | pannelli scuri (`--panel`, `--panel-2`) con bordo sottile 1px (`--line`), angoli morbidi (`--r` 12px, `--r-lg` 16px, pillole per i messaggi), niente ombre pesanti |
+| Tabellone | fondo nero leggermente sfumato, filo sottile (`.board`), numeri in **Saira Semi Condensed** (700) color tabellone (`--led` ambra, `--led-red`, `--led-green`) con un alone leggero: è l'unico posto dove l'alone è permesso |
 | Colore del gioco | `--accent`, una tinta viva per gioco, usata per il filo a sinistra della domanda, la scelta attiva, il bottone principale (con sopra `--on-accent`, scuro) |
 | Testo | `--text` (quasi bianco), `--text-2` secondario, `--muted` solo per etichette piccole |
 
@@ -22,7 +22,8 @@ Quello che **non** siamo: vetro smerigliato, sfumature viola, bagliori ovunque, 
 
 - **Archivo** (700–900) per titoli, domande, bottoni. Maiuscolo solo per etichette piccole con spaziatura larga.
 - **Archivo** (400–600) per il testo.
-- **DotGothic16** solo per ciò che sta su un tabellone: tempo, punteggi, premi, posizioni, lettere delle risposte, livello, esiti ("GOL!", "FUORI").
+- **Saira Semi Condensed** (`--font-led`) solo per ciò che sta su un tabellone: tempo, punteggi, premi, posizioni, lettere delle risposte, livello, esiti ("GOL!", "FUORI").
+- Bottoni in minuscolo normale, non in maiuscolo: il maiuscolo spaziato resta solo per le etichette piccole.
 
 ## Firme visive
 

@@ -17,8 +17,8 @@
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=DotGothic16&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=a68d8e3c">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=c288be07">
 <style>
   /* ---------- Impostazioni ---------- */
   .tb-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 34px; }
@@ -36,7 +36,7 @@
   .tb-group:hover { background: var(--panel-2); color: var(--text); }
   .tb-group:focus-visible { position: relative; z-index: 1; outline-offset: -5px; }
   .tb-group small { margin-left: auto; font-family: var(--font-led); font-size: 17px; color: #a07a2e; }
-  .tb-group__lamp { flex: none; width: 16px; height: 16px; border-radius: 2px; background: #000; border: 1px solid var(--line-2); transition: background .15s, border-color .15s; }
+  .tb-group__lamp { flex: none; width: 16px; height: 16px; border-radius: var(--r-sm); background: #000; border: 1px solid var(--line-2); transition: background .15s, border-color .15s; }
   .tb-group[aria-pressed="true"] { color: var(--text); font-weight: 700; background: rgba(var(--accent-rgb), .06); }
   .tb-group[aria-pressed="true"] small { color: var(--led); text-shadow: var(--led-glow); }
   .tb-group[aria-pressed="true"] .tb-group__lamp { background: var(--led); border-color: var(--led); box-shadow: 0 0 8px rgba(255, 182, 39, .55); }
@@ -53,8 +53,8 @@
   }
   .tb-card__cat { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tb-card .bigword { flex: 1; display: grid; place-items: center; min-height: 120px; padding: 4px; font-size: clamp(38px, 11vw, 66px); }
-  .tb-forbid { background: #000; border: 4px solid #1c2226; border-radius: var(--r); box-shadow: inset 0 0 0 1px #2d353b; }
-  .tb-forbid__head { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 10px 6px; border-bottom: 2px solid #1c2226; font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #8d969c; }
+  .tb-forbid { background: #000; border: 1px solid var(--line-2); border-radius: var(--r); box-shadow: none; }
+  .tb-forbid__head { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 10px 6px; border-bottom: 1px solid var(--line); font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #8d969c; }
   .tb-forbid__head .ico { width: 15px; height: 15px; color: var(--led-red); }
   .tb-taboo { list-style: none; margin: 0; padding: 4px 12px 6px; }
   .tb-taboo li { padding: 6px 2px 5px; border-top: 1px solid #1a1110; font-family: var(--font-led); font-size: 24px; line-height: 1.1; text-transform: uppercase; color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .55); overflow-wrap: anywhere; }
@@ -78,14 +78,14 @@
 
   /* ---------- Il cambio: il maxischermo annuncia la squadra ---------- */
   .handoff { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; text-align: center; padding-top: 6px; }
-  .handoff__screen { overflow: hidden; background: #000; border: 6px solid #1c2226; border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px #2d353b; animation: qz-rise .35s var(--ease-out) both; }
-  .handoff__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 2px solid #1c2226; }
+  .handoff__screen { overflow: hidden; background: #000; border: 1px solid var(--line-2); border-radius: var(--r-lg); box-shadow: none; animation: qz-rise .35s var(--ease-out) both; }
+  .handoff__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
   .handoff__call { font-size: clamp(26px, 7vw, 34px); text-transform: uppercase; animation: qz-led-on .5s linear .15s both; }
   .handoff__round { font-family: var(--font-led); font-size: 17px; color: #a07a2e; text-transform: uppercase; }
   .handoff__band { height: 10px; background: var(--c); }
   .handoff__name { padding: 22px 16px 6px; font-size: clamp(46px, 13vw, 84px); font-weight: 900; text-transform: uppercase; line-height: .9; letter-spacing: -.03em; color: var(--text); overflow-wrap: anywhere; }
   .handoff__sub { padding: 0 16px; font-size: 17px; color: var(--text-2); }
-  .handoff .rules { margin: 18px 0 0; padding: 16px 18px 18px; border-top: 2px solid #1c2226; text-align: left; background: var(--panel); }
+  .handoff .rules { margin: 18px 0 0; padding: 16px 18px 18px; border-top: 1px solid var(--line); text-align: left; background: var(--panel); }
   .handoff .teams { text-align: left; }
 
   /* ---------- Il tabellone in campo: tempo, squadra, punti del turno ---------- */

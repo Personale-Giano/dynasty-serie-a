@@ -285,7 +285,6 @@
 
     function pickOption(i) {
         if (S.phase !== 'options') return;
-        QZ.fx.mark(answerEls[i].querySelector('.answer__key'), 'cross', 'var(--ink)');
         if (S.q.options[i] === S.q.correct) win('options', answerEls[i]);
         else lose('wrong', answerEls[i]);
     }

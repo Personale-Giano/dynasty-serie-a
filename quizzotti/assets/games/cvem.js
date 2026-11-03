@@ -164,7 +164,6 @@
         S.times.push((performance.now() - S.t0) / 1000);
         answerEls.forEach(function (el) { el.disabled = true; });
         answerEls[i].classList.add('is-picked');
-        QZ.fx.mark(answerEls[i].querySelector('.answer__key'), 'cross', 'var(--ink)');
         QZ.sound.pop();
         // suspense: piu' alta la posta, piu' lunga l'attesa
         var wait = S.level <= 5 ? 700 : S.level <= 10 ? 1300 : 2000;
@@ -242,7 +241,6 @@
             if (alive) alive.focus({ preventScroll: true });
         }
         btn.disabled = true;
-        QZ.fx.mark(btn, 'cross');
         QZ.sound.lifeline();
         return true;
     }

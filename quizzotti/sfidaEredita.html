@@ -17,8 +17,8 @@
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=DotGothic16&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=a68d8e3c">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=c288be07">
 <style>
   .db-wrap { max-width: 680px; margin: 0 auto; }
   .db-setup, .db-opt { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
@@ -28,8 +28,8 @@
   .db-micnote .ico { flex: none; margin-top: 2px; color: var(--accent-ink); }
 
   /* ---------- Il tabellone dello stadio: CASA, risultato, OSPITI ---------- */
-  .db-sb { display: grid; background: #000; border: 6px solid #1c2226; border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px #2d353b; overflow: hidden; }
-  .db-sb__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 12px 6px; border-bottom: 2px solid #1c2226; font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #7d878f; }
+  .db-sb { display: grid; background: #000; border: 1px solid var(--line-2); border-radius: var(--r-lg); box-shadow: none; overflow: hidden; }
+  .db-sb__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 12px 6px; border-bottom: 1px solid var(--line); font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #7d878f; }
   .db-sb__head b { font-family: var(--font-led); font-weight: 400; font-size: 16px; letter-spacing: 0; color: var(--led); text-shadow: var(--led-glow); }
   .db-sb__row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; }
   .db-team { --c: var(--accent); position: relative; display: grid; gap: 6px; align-content: start; min-width: 0; padding: 9px 12px 12px; transition: background .2s; }
@@ -56,7 +56,7 @@
   .db-team.is-danger .db-team__clock { color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .6); }
   .db-team.is-active.is-danger .db-team__clock { animation: qz-heartbeat .8s ease-in-out infinite; }
   .db-team.is-danger .timer-bar__fill { background: var(--led-red); }
-  .db-goals { display: flex; align-items: center; gap: 6px; padding: 0 10px; border-inline: 2px solid #1c2226; }
+  .db-goals { display: flex; align-items: center; gap: 6px; padding: 0 10px; border-inline: 1px solid var(--line); }
   .db-goals span { display: grid; place-items: center; min-width: 40px; font-family: var(--font-led); font-size: clamp(44px, 12vw, 64px); line-height: 1; color: var(--led); text-shadow: 0 0 10px rgba(255, 182, 39, .5); font-variant-numeric: tabular-nums; }
   .db-goals i { font-style: normal; font-family: var(--font-led); font-size: 28px; color: #8a6a2a; }
 
@@ -65,10 +65,10 @@
   .db-def .eyebrow { margin-bottom: 10px; }
   .db-def h2 { font-size: clamp(25px, 6.4vw, 32px); font-weight: 800; line-height: 1.08; text-wrap: balance; }
   .db-def h2.is-in { animation: qz-rise .35s var(--ease-out) both; }
-  .db-word { --tw: 40px; position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 16px; min-height: calc(var(--tw) + 28px); padding: 12px 10px; background: #000; border: 6px solid #1c2226; border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px #2d353b; }
+  .db-word { --tw: 40px; position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 16px; min-height: calc(var(--tw) + 28px); padding: 12px 10px; background: #000; border: 1px solid var(--line-2); border-radius: var(--r-lg); box-shadow: none; }
   .db-w { display: flex; gap: 3px; }
   /* la cella spenta: la griglia di puntini del pannello, da accendere */
-  .db-t { position: relative; width: var(--tw); height: calc(var(--tw) * 1.12); display: grid; place-items: center; border-radius: 2px; background: radial-gradient(circle, #2a2216 1.1px, transparent 1.5px) 50% 50% / 5px 5px, #0b0906; font-family: var(--font-led); font-size: calc(var(--tw) * .78); line-height: 1; text-transform: uppercase; color: var(--led); text-shadow: var(--led-glow); }
+  .db-t { position: relative; width: var(--tw); height: calc(var(--tw) * 1.12); display: grid; place-items: center; border-radius: var(--r-sm); background: radial-gradient(circle, #2a2216 1.1px, transparent 1.5px) 50% 50% / 5px 5px, #0b0906; font-family: var(--font-led); font-size: calc(var(--tw) * .78); line-height: 1; text-transform: uppercase; color: var(--led); text-shadow: var(--led-glow); }
   .db-t[data-n]::before { content: attr(data-n); position: absolute; top: 2px; left: 3px; font-family: var(--font-body); font-weight: 700; font-size: max(9px, calc(var(--tw) * .22)); line-height: 1; color: #6c767d; text-shadow: none; }
   .db-t.is-on { animation: qz-led-on .3s linear both; }
   .db-t.is-solved { color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .55); }
@@ -82,7 +82,7 @@
   .db-board { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 
   /* la radiocronaca, sulla striscia del tabellone */
-  .db-feed { display: flex; align-items: stretch; min-height: 50px; background: #000; border: 4px solid #1c2226; border-radius: var(--r); }
+  .db-feed { display: flex; align-items: stretch; min-height: 50px; background: #000; border: 1px solid var(--line-2); border-radius: var(--r); }
   .db-feed__label { flex: none; display: flex; align-items: center; gap: 6px; padding: 0 10px; background: var(--led); color: #000; font-family: var(--font-display); font-weight: 900; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
   .db-feed__label .ico { width: 16px; height: 16px; }
   .db-feed__txt { flex: 1; min-width: 0; align-self: center; padding: 8px 12px; overflow-wrap: anywhere; font-family: var(--font-led); font-size: 17px; line-height: 1.3; color: var(--led); text-shadow: var(--led-glow); }
