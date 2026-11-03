@@ -2,8 +2,9 @@
    QUIZZOTTI v2 — Mr. White
    Dati: assets/db-mrwhite.js (`wordsList`: calciatori segreti). Le immagini di
    `playerImages` sono segnaposto finti: al loro posto una maglia disegnata.
-   Il ruolo arriva in una bustina di figurine: i civili trovano il calciatore,
-   Mr. White la casella vuota. Si vota su una scheda, a penna.
+   Il ruolo si accende sul maxischermo dello stadio: i civili vedono il
+   calciatore con la sua maglia, Mr. White uno schermo senza segnale.
+   Si vota su un tabellone a LED: chi e' fuori si spegne.
    Ordine di parola (Mr. White non parla mai per primo), eliminazione, ultimo
    tiro per Mr. White con risposta tollerante, piu' round con classifica,
    calciatori che non si ripetono tra le partite.
@@ -23,11 +24,11 @@
     var busy = false;
 
     /* ---------- Markup statico ---------- */
-    $('#start-btn').innerHTML = 'Apri le bustine' + QZ.icon('arrow');
+    $('#start-btn').innerHTML = 'Accendi lo schermo' + QZ.icon('arrow');
     $('#medal').innerHTML = '<span class="mw-q" aria-hidden="true">?</span>';
     $('#rules').innerHTML = [
-        ['Passatevi il telefono:', 'ognuno apre la sua bustina di nascosto e trova la figurina del calciatore segreto.'],
-        ['Mr. White', 'trova la casella vuota: non sa chi è il calciatore e deve fare finta di saperlo.'],
+        ['Passatevi il telefono:', 'ognuno accende il maxischermo di nascosto e vede il calciatore segreto.'],
+        ['Mr. White', 'trova lo schermo senza segnale: non sa chi è il calciatore e deve fare finta di saperlo.'],
         ['Una parola a testa', 'sul calciatore, poi si vota chi buttare fuori.'],
         ['Beccato?', 'Mr. White ha un ultimo tiro: se indovina il calciatore, la vince lui.']
     ].map(function (r, i) {
@@ -79,16 +80,17 @@
         return h;
     }
 
-    /* La maglia del calciatore, disegnata a china: colori e motivo (tinta unita,
-       strisce, cerchi, due meta') dipendono dal nome, cosi' restano sempre gli stessi. */
+    /* La maglia del calciatore, un'icona piatta come sul maxischermo: colori e motivo
+       (tinta unita, strisce, cerchi, due meta') dipendono dal nome, cosi' restano sempre
+       gli stessi. Sul nero dello schermo la sagoma ha un filo di luce che la stacca. */
     var SHIRT = 'M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z';
-    var KIT = ['#cf2a1e', '#1f3c88', '#0e7a43', '#1d1913', '#6b3fa0', '#e3a21a', '#1672ad', '#8e1b3f', '#fbf6ec'];
+    var KIT = ['#d9342b', '#2f5fc4', '#1f9d55', '#14181c', '#7d4fd0', '#f0b323', '#1d8fd1', '#9e2049', '#f2f4f5'];
     var shirtSeq = 0;
     function shirt(word) {
         var h = hash(word);
         var c1 = KIT[h % KIT.length];
         var c2 = KIT[(h >>> 4) % KIT.length];
-        if (c2 === c1) c2 = c1 === '#fbf6ec' ? '#1d1913' : '#fbf6ec';
+        if (c2 === c1) c2 = c1 === '#f2f4f5' ? '#14181c' : '#f2f4f5';
         var kind = ['plain', 'stripes', 'hoops', 'half', 'stripes'][(h >>> 8) % 5];
         var id = 'mw-kit-' + (++shirtSeq);
         var deco = '';
@@ -96,13 +98,19 @@
         if (kind === 'stripes') for (k = 3.2; k < 22; k += 4) deco += '<rect x="' + k + '" y="0" width="2" height="24"/>';
         if (kind === 'hoops') for (k = 6; k < 22; k += 4.4) deco += '<rect x="0" y="' + k + '" width="24" height="2.2"/>';
         if (kind === 'half') deco = '<rect x="12" y="0" width="12" height="24"/>';
+        // il numero sulla schiena: le iniziali, nel colore che si legge meglio sulla tinta di fondo
+        var ink = QZ.onColor(c1) === '#fbf6ec' ? '#fff' : '#0b0e11';
         return '<svg class="mw-shirt" viewBox="1 0.5 22 22.5" aria-hidden="true">' +
             '<defs><clipPath id="' + id + '"><path d="' + SHIRT + '"/></clipPath></defs>' +
             '<path d="' + SHIRT + '" fill="' + c1 + '"/>' +
             (deco ? '<g clip-path="url(#' + id + ')" fill="' + c2 + '">' + deco + '</g>' : '') +
-            '<path d="M8 2a4 4 0 0 0 8 0" fill="none" stroke="#1d1913" stroke-width=".55"/>' +
-            '<path d="' + SHIRT + '" fill="none" stroke="#1d1913" stroke-width=".7" stroke-linejoin="round"/>' +
-            '<text x="12" y="15.6" text-anchor="middle" fill="#fbf6ec" stroke="#1d1913" stroke-width=".9" paint-order="stroke" stroke-linejoin="round">' + QZ.esc(initials(word)) + '</text>' +
+            // ombra piatta sul fianco destro e colletto: volume senza contorni
+            '<g clip-path="url(#' + id + ')"><rect x="15.5" y="0" width="9" height="24" fill="#000" opacity=".16"/></g>' +
+            '<path d="M8 2a4 4 0 0 0 8 0" fill="none" stroke="#000" stroke-opacity=".35" stroke-width=".9"/>' +
+            '<path d="' + SHIRT + '" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width=".35" stroke-linejoin="round"/>' +
+            (kind === 'plain' || kind === 'hoops'
+                ? '<text x="12" y="15.4" text-anchor="middle" fill="' + ink + '">' + QZ.esc(initials(word)) + '</text>'
+                : '<rect x="6.9" y="10.3" width="10.2" height="6.4" rx=".7" fill="#0b0e11" opacity=".88"/><text x="12" y="15.4" text-anchor="middle" fill="#fff">' + QZ.esc(initials(word)) + '</text>') +
             '</svg>';
     }
     function surnameInitial(word) {
@@ -178,51 +186,56 @@
             pos: 0, flipped: false, turn: 0,
             delta: G.players.map(function () { return 0; })
         };
-        $('#rv-round').innerHTML = QZ.icon('flag') + roundLabel();
+        $('#rv-round').textContent = CFG.rounds ? pad(G.round) + '/' + pad(CFG.rounds) : pad(G.round);
         $('#rv-dots').innerHTML = R.order.map(function () { return '<i></i>'; }).join('');
         renderFront();
         QZ.show('s-reveal');
     }
+    function pad(n) { return String(n).padStart(2, '0'); }
 
-    /* ---------- Le bustine: carta 3D ---------- */
-    function packHTML(kicker, p, foot, cls) {
-        return '<div class="mw-pack ' + (cls || '') + '">' +
-            '<div class="mw-pack__brand"><span>Figurine Quizzotti</span><span>' + NUM + '</span></div>' +
-            '<div class="mw-pack__tear">strappa qui</div>' +
-            '<div class="mw-pack__label"><span class="mw-pack__kicker">' + kicker + '</span>' + av(p, 'mw-av--xl') +
+    /* ---------- Il maxischermo: carta 3D ---------- */
+    // schermo spento: chi deve guardare, e la scritta per accenderlo
+    function offHTML(kicker, p, foot, cls) {
+        return '<div class="mw-screen mw-screen--off ' + (cls || '') + '">' +
+            '<div class="mw-screen__bar"><span>MAXISCHERMO</span><b>' + NUM + '</b></div>' +
+            '<div class="mw-screen__body"><span class="mw-screen__k">' + kicker + '</span>' + av(p, 'mw-av--xl') +
             '<div class="mw-name">' + QZ.esc(p.name) + '</div></div>' +
-            '<div class="mw-pack__tap">' + foot + '</div></div>';
+            '<div class="mw-screen__foot">' + foot + '</div></div>';
+    }
+    // nessun segnale: il retro di Mr. White (nel gioco e nel verdetto)
+    function noSignalHTML(role, txt, foot) {
+        return '<div class="mw-screen mw-screen--nosignal">' +
+            '<div class="mw-screen__bar"><span>MAXISCHERMO</span><b style="color:var(--led-red)">NO SIGNAL</b></div>' +
+            '<div class="mw-screen__body"><span class="mw-screen__nosig">NESSUN SEGNALE</span><span class="mw-screen__q">???</span>' +
+            '<span class="mw-screen__role">' + role + '</span>' + txt + '</div>' +
+            '<div class="mw-screen__foot">' + (foot || QZ.icon('eyeoff') + 'Il calciatore non lo vedi') + '</div></div>';
     }
 
     function renderFront() {
         var p = G.players[R.order[R.pos]];
-        $('#rv-front').innerHTML = packHTML('Passa il telefono a', p, QZ.icon('eye') + 'Tocca per aprire la bustina');
-        $('#rv-front').setAttribute('aria-label', 'Bustina di ' + p.name + ': tocca per aprirla');
-        $('#rv-step').textContent = 'Bustina ' + (R.pos + 1) + ' di ' + R.order.length;
+        $('#rv-front').innerHTML = offHTML('Passa il telefono a', p, QZ.icon('eye') + 'Tocca per accendere lo schermo');
+        $('#rv-front').setAttribute('aria-label', 'Schermo di ' + p.name + ': tocca per accenderlo');
+        $('#rv-step').textContent = pad(R.pos + 1) + '/' + pad(R.order.length);
         $('#rv-hint').textContent = 'Guarda solo tu, ' + p.name + '.';
-        $('#rv-btn').innerHTML = QZ.icon('eye') + 'Sono io: apri';
-        $('#rv-btn').setAttribute('aria-label', 'Sono ' + p.name + ': apri la bustina');
+        $('#rv-btn').innerHTML = QZ.icon('eye') + 'Sono io: accendi';
+        $('#rv-btn').setAttribute('aria-label', 'Sono ' + p.name + ': accendi lo schermo');
         QZ.$$('#rv-dots i').forEach(function (d, i) {
             d.className = i < R.pos ? 'is-done' : i === R.pos ? 'is-now' : '';
         });
-        QZ.fx.replay($('#rv-front .mw-pack__label'), 'is-pop');
+        QZ.fx.replay($('#rv-front .mw-screen__body'), 'is-pop');
     }
 
-    function stickerHTML(p) {
+    function secretHTML(p) {
         if (R.mw[p]) {
-            return '<div class="mw-sticker mw-sticker--blank">' +
-                '<div class="mw-sticker__top"><b>N° ??</b><span>Figurina mancante</span></div>' +
-                '<div class="mw-sticker__pic"><span class="mw-sticker__q">?</span></div>' +
-                '<div class="mw-sticker__plate">Sei Mr. White</div>' +
-                (CFG.hint ? '<span class="note">il cognome inizia per ' + QZ.esc(surnameInitial(R.word)) + '</span>'
-                    : '<p class="mw-sticker__txt">Non sai chi è. Ascolta, bluffa, non farti beccare.' + (CFG.mw > 1 ? ' In campo siete in ' + CFG.mw + '.' : '') + '</p>') +
-                '</div>';
+            return noSignalHTML('Sei Mr. White', CFG.hint
+                ? '<span class="note">il cognome inizia per ' + QZ.esc(surnameInitial(R.word)) + '</span>'
+                : '<p class="mw-screen__txt">Non sai chi è. Ascolta, bluffa, non farti beccare.' + (CFG.mw > 1 ? ' In campo siete in ' + CFG.mw + '.' : '') + '</p>');
         }
-        return '<div class="mw-sticker">' +
-            '<div class="mw-sticker__top"><b>' + NUM + '</b><span>Il calciatore segreto</span></div>' +
-            '<div class="mw-sticker__pic">' + shirt(R.word) + '</div>' +
-            '<div class="mw-sticker__plate">' + QZ.esc(R.word) + '</div>' +
-            '<p class="mw-sticker__txt">Descrivilo con una parola, senza regalarlo a Mr. White.</p>' +
+        return '<div class="mw-screen">' +
+            '<div class="mw-screen__bar"><span>MAXISCHERMO</span><b>IN ONDA</b></div>' +
+            '<div class="mw-screen__body"><span class="mw-screen__k">Il calciatore segreto</span>' + shirt(R.word) +
+            '<div class="mw-screen__name">' + QZ.esc(R.word) + '</div></div>' +
+            '<div class="mw-screen__foot" style="font-weight:600;font-size:15px">Descrivilo con una parola, senza regalarlo a Mr. White.</div>' +
             '</div>';
     }
 
@@ -231,9 +244,9 @@
         var i = R.order[R.pos];
         var back = $('#rv-back');
         back.className = 'flip__face flip__face--back mw-face ' + (R.mw[i] ? 'mw-face--spy' : 'mw-face--civ');
-        back.innerHTML = stickerHTML(i);
+        back.innerHTML = secretHTML(i);
         back.setAttribute('aria-hidden', 'false');
-        // la bustina aperta esce dall'ordine del Tab: si richiude dal bottone sotto
+        // lo schermo acceso esce dall'ordine del Tab: si spegne dal bottone sotto
         $('#rv-front').setAttribute('aria-hidden', 'true');
         $('#rv-front').setAttribute('tabindex', '-1');
         $('#rv-card').classList.add('is-flipped');
@@ -242,10 +255,10 @@
         QZ.sound.whoosh();
         QZ.vibrate(30);
         var last = R.pos >= R.order.length - 1;
-        $('#rv-btn').innerHTML = QZ.icon('eyeoff') + (last ? 'Richiudi e si parte' : 'Richiudi e passa');
+        $('#rv-btn').innerHTML = QZ.icon('eyeoff') + (last ? 'Spegni e si parte' : 'Spegni e passa');
         $('#rv-btn').removeAttribute('aria-label');
-        // solo che la bustina e' aperta: il contenuto non si legge ad alta voce a tutto il tavolo
-        $('#rv-hint').textContent = 'Bustina aperta. Memorizza, poi richiudi la bustina.';
+        // solo che lo schermo e' acceso: il contenuto non si legge ad alta voce a tutto il tavolo
+        $('#rv-hint').textContent = 'Schermo acceso. Memorizza, poi spegnilo.';
         $('#rv-btn').focus({ preventScroll: true });
     }
 
@@ -264,12 +277,12 @@
             R.flipped = false;
             R.pos++;
             busy = false;
-            if (R.pos < R.order.length) { renderFront(); QZ.say('Bustina richiusa. Passa il telefono a ' + G.players[R.order[R.pos]].name + '.'); }
+            if (R.pos < R.order.length) { renderFront(); QZ.say('Schermo spento. Passa il telefono a ' + G.players[R.order[R.pos]].name + '.'); }
             else startTalk();
         }, QZ.reducedMotion() ? 30 : 650);
     }
 
-    // un doppio tocco aprirebbe e richiuderebbe la bustina in un colpo (e passerebbe al prossimo
+    // un doppio tocco accenderebbe e spegnerebbe lo schermo in un colpo (e passerebbe al prossimo
     // senza che nessuno l'abbia vista): tra un'azione e l'altra serve un attimo
     var lastTap = 0;
     function tapOk() {
@@ -296,9 +309,10 @@
 
     function startTalk() {
         R.turn++;
-        $('#tk-round').innerHTML = QZ.icon('flag') + '<b>' + roundLabel() + '</b>';
-        $('#tk-alive').innerHTML = QZ.icon('users') + 'In campo <b>' + alive().length + '</b>';
-        $('#tk-eyebrow').innerHTML = QZ.icon('message') + 'Giro ' + R.turn;
+        $('#tk-round').textContent = $('#rv-round').textContent;
+        $('#tk-turn').textContent = pad(R.turn);
+        $('#tk-alive').textContent = pad(alive().length) + '/' + pad(G.players.length);
+        $('#tk-eyebrow').innerHTML = QZ.icon('message') + 'Si parla';
         // il primo a parlare e' sempre un civile scelto a caso, poi si segue il giro
         var seat = alive();
         var first = seat.indexOf(QZ.pick(alive(false)));
@@ -385,20 +399,20 @@
         });
     });
 
-    /* ---------- Votazione: la scheda ---------- */
+    /* ---------- Votazione: il tabellone dei nomi ---------- */
     function openVote() {
         if (talk) { talk.pause(); paintToggle(); }
         $('#vt-eyebrow').innerHTML = QZ.icon('target') + roundLabel();
         var n = 0;
         $('#vt-list').innerHTML =
-            '<div class="mw-ballot__head"><span>Scheda di voto</span><span>Giro ' + R.turn + '</span></div>' +
+            '<div class="mw-ballot__head"><span>Chi va fuori</span><span>Giro <b>' + pad(R.turn) + '</b></span></div>' +
             G.players.map(function (p, i) {
                 var out = !R.alive[i];
                 if (!out) n++;
                 return '<button type="button" class="mw-ballot__row" data-i="' + i + '"' + (out ? ' disabled' : ' data-n="' + n + '"') + '>' +
                     '<span class="mw-ballot__n">' + (out ? '' : n) + '</span>' + av(p) +
                     '<span class="mw-ballot__name">' + QZ.esc(p.name) + '</span>' +
-                    (out ? '<span class="mw-ballot__out">già fuori</span>' : '') +
+                    (out ? '<span class="mw-ballot__out">FUORI</span>' : '') +
                     '<span class="mw-ballot__box" aria-hidden="true"></span></button>';
             }).join('');
         QZ.$$('#vt-list .mw-ballot__row:not(:disabled)').forEach(function (b) {
@@ -416,10 +430,10 @@
         var p = G.players[i];
         var box = row.querySelector('.mw-ballot__box');
         row.classList.add('is-picked');
-        QZ.fx.mark(box, 'cross', 'var(--red)');
+        QZ.fx.mark(box, 'cross', 'var(--led-red)');
         QZ.sound.pop();
         setTimeout(function () {
-            QZ.confirm('Si gira la sua figurina. Niente ripensamenti.', { title: 'Fuori ' + p.name + '?', okLabel: 'Fuori', cancelLabel: 'Aspetta' }).then(function (ok) {
+            QZ.confirm('Il suo schermo si accende davanti a tutti. Niente ripensamenti.', { title: 'Fuori ' + p.name + '?', okLabel: 'Fuori', cancelLabel: 'Aspetta' }).then(function (ok) {
                 busy = false;
                 if (ok) eliminate(i);
                 else { row.classList.remove('is-picked'); QZ.$$('.qz-mark', box).forEach(function (m) { m.remove(); }); }
@@ -433,23 +447,22 @@
         var isMW = R.mw[i];
         R.alive[i] = false;
         $('#vd-card').classList.remove('is-flipped');
-        $('#vd-front').innerHTML = packHTML('Si gira la figurina di', p, 'era…', 'mw-pack--verdict');
+        $('#vd-front').innerHTML = offHTML('Sul maxischermo', p, '<span>era…</span>', 'mw-screen--verdict');
         var back = $('#vd-back');
         back.className = 'flip__face flip__face--back mw-face ' + (isMW ? 'mw-face--spy' : 'mw-face--out');
         // il retro (l'esito) resta muto finche' la carta non si gira
         back.setAttribute('aria-hidden', 'true');
         $('#vd-front').removeAttribute('aria-hidden');
         back.innerHTML = isMW
-            ? '<div class="mw-sticker mw-sticker--blank"><div class="mw-sticker__top"><b>N° ??</b><span>Figurina mancante</span></div>' +
-                '<div class="mw-sticker__pic"><span class="mw-sticker__q">?</span></div><div class="mw-sticker__plate">Mr. White</div>' +
-                '<p class="mw-sticker__txt">Beccato. Ma ha ancora un tiro.</p></div>'
-            : '<div class="mw-sticker"><div class="mw-sticker__top"><b>' + NUM + '</b><span>Uno dei vostri</span></div>' +
-                '<div class="mw-sticker__pic">' + av(p, 'mw-av--xl') + '</div><div class="mw-sticker__plate">' + QZ.esc(p.name) + '</div>' +
-                '<p class="mw-sticker__txt">Avete buttato fuori un innocente.</p></div>';
+            ? noSignalHTML('Mr. White', '<p class="mw-screen__txt">' + QZ.esc(p.name) + ' non sapeva niente. Ma ha ancora un tiro.</p>', QZ.icon('target') + 'Ultimo tiro in arrivo')
+            : '<div class="mw-screen"><div class="mw-screen__bar"><span>MAXISCHERMO</span><b>IN ONDA</b></div>' +
+                '<div class="mw-screen__body"><span class="mw-screen__k">Uno dei vostri</span>' + av(p, 'mw-av--xl') +
+                '<div class="mw-screen__name">' + QZ.esc(p.name) + '</div><p class="mw-screen__txt">Avete buttato fuori un innocente.</p></div>' +
+                '<div class="mw-screen__foot">' + QZ.icon('users') + 'Sapeva chi era il calciatore</div></div>';
         $('#vd-panel').innerHTML = '';
-        QZ.say('Fuori ' + p.name + '. Si gira la sua figurina…');
+        QZ.say('Fuori ' + p.name + '. Si accende il suo schermo…');
         QZ.show('s-verdict');
-        // rullo di tamburi che accelera, poi la carta si gira e cade il timbro
+        // rullo di tamburi che accelera, poi lo schermo si accende e si illumina la scritta
         var beats = QZ.reducedMotion() ? 0 : 7;
         for (var b = 0; b < beats; b++) setTimeout(QZ.sound.tock, 300 + 900 * (1 - Math.pow(1 - b / beats, 1.6)));
         setTimeout(function () {
@@ -460,13 +473,13 @@
                 G.stats.caught++;
                 QZ.sound.reveal();
                 QZ.vibrate([60, 40, 160]);
-                setTimeout(function () { QZ.fx.stamp(back.querySelector('.mw-sticker__pic'), 'Smascherato', 'ok', { size: 34, rot: -12, say: false }); }, 550);
+                setTimeout(function () { QZ.fx.stamp(back.querySelector('.mw-screen__body'), 'Smascherato', 'ok', { size: 34, y: 46, say: false }); }, 550);
                 setTimeout(function () { guessPanel(i); }, 900);
             } else {
                 G.stats.civOut++;
                 QZ.sound.wrong();
                 QZ.vibrate([60, 40, 60]);
-                setTimeout(function () { QZ.fx.stamp(back.querySelector('.mw-sticker__pic'), 'Innocente', 'bad', { size: 34, rot: 9, say: false }); }, 550);
+                setTimeout(function () { QZ.fx.stamp(back.querySelector('.mw-screen__body'), 'Innocente', 'bad', { size: 34, y: 46, say: false }); }, 550);
                 setTimeout(function () { afterCivilian(p.name); }, 900);
             }
         }, beats ? 1350 : 200);
@@ -482,7 +495,7 @@
         }
     }
 
-    // lead: l'esito da annunciare prima del messaggio (il timbro e' solo per gli occhi)
+    // lead: l'esito da annunciare prima del messaggio (la scritta LED e' solo per gli occhi)
     function panel(html, label, fn, lead) {
         var host = $('#vd-panel');
         host.innerHTML = html + '<button type="button" class="btn btn--primary btn--lg btn--block" data-next>' + QZ.icon('arrow') + '<span></span></button>';
@@ -526,7 +539,7 @@
             panel('<div class="card mw-solution">' + shirt(R.word) +
                 '<p class="mw-msg grow"><b>' + QZ.esc(p.name) + '</b> ci ha preso: era <b>' + QZ.esc(R.word) + '</b>. Che faccia tosta.</p></div>',
                 'Vedi il round', function () { endRound('mw', 'guess', i); }, 'Gol! ');
-            QZ.fx.stamp($('#vd-panel .mw-solution'), 'Gol', 'bad', { size: 30, rot: -8, say: false });
+            QZ.fx.stamp($('#vd-panel .mw-solution'), 'Gol!', 'bad', { size: 26, x: 80, y: 0, say: false });
             return;
         }
         R.delta[i] += PTS.wrongGuess;
@@ -539,7 +552,7 @@
         var next = mwLeft === 0
             ? function () { endRound('civ', 'caught'); }
             : function () { afterWrongWithMates(); };
-        panel('<div class="card center stack" style="--gap:10px;align-items:center"><span class="note">' + QZ.fmt(PTS.wrongGuess) + ' punti</span><p class="mw-msg">' + msg + '</p>' + override + '</div>',
+        panel('<div class="card center stack" style="--gap:10px;align-items:center"><span class="note" style="color:var(--led-red)">' + QZ.fmt(PTS.wrongGuess) + ' punti</span><p class="mw-msg">' + msg + '</p>' + override + '</div>',
             mwLeft === 0 ? 'Vedi il round' : 'Avanti', next);
         var ov = $('#vd-override');
         if (ov) ov.addEventListener('click', function () {
@@ -583,23 +596,22 @@
             '<div class="card card--tight mw-solution" id="rd-sol">' + shirt(R.word) +
             '<div class="grow"><div class="mw-solution__k">Il calciatore era</div><div class="mw-name">' + QZ.esc(R.word) + '</div>' +
             '<div class="mt-1">' + (mwNames.length > 1 ? 'I Mr. White: ' : 'Mr. White: ') + '<b>' + QZ.esc(mwNames.join(', ')) + '</b></div></div></div>' +
-            '<div class="mw-standings">' + sorted.map(function (x, k) {
+            '<div class="mw-standings" style="margin-top:6px">' + sorted.map(function (x, k) {
                 var d = R.delta[x.i];
                 return '<div class="team" style="--c:' + x.p.color + ';animation:qz-rise .35s var(--ease-out) both;animation-delay:' + (k * 60 + 200) + 'ms">' +
                     '<span class="team__dot"></span><span class="team__name">' + QZ.esc(x.p.name) + (R.mw[x.i] ? '<small>era Mr. White</small>' : '') + '</span>' +
                     (d ? '<span class="mw-delta ' + (d > 0 ? 'mw-delta--up' : 'mw-delta--down') + '">' + (d > 0 ? '+' : '') + d + '</span>' : '') +
                     '<span class="team__score">' + QZ.fmt(x.p.score) + '</span></div>';
             }).join('') + '</div>' +
-            '<div class="row row--center">' +
+            '<div class="result__actions" style="margin-top:4px">' +
             (more ? '<button type="button" class="btn btn--primary btn--lg" id="rd-next">' + QZ.icon('play', 'ico-fill') + 'Prossimo round</button>' +
                 '<button type="button" class="btn btn--ghost btn--lg" id="rd-end">' + QZ.icon('flag') + 'Chiudi qui</button>'
                 : '<button type="button" class="btn btn--primary btn--lg" id="rd-end">' + QZ.icon('trophy') + 'Classifica finale</button>') +
             '</div>';
         QZ.show('s-round');
         setTimeout(function () {
-            // il timbro sull'angolo della figurina, senza coprire il nome
-            var st = QZ.fx.stamp($('#rd-sol'), hows[how][0], winner === 'civ' ? 'ok' : 'bad', { size: 22, rot: -7, say: false });
-            if (st) { st.style.left = '55%'; st.style.top = '106%'; }
+            // la scritta LED sul bordo basso del riquadro, senza coprire il nome
+            QZ.fx.stamp($('#rd-sol'), hows[how][0], winner === 'civ' ? 'ok' : 'bad', { size: 22, x: 58, y: 100, say: false });
         }, QZ.reducedMotion() ? 0 : 650);
         if (winner === 'civ') { QZ.sound.win(); setTimeout(function () { QZ.fx.confetti({ count: 100 }); }, 300); }
         else QZ.sound.reveal();

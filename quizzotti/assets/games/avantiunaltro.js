@@ -6,8 +6,10 @@
    giusta era la A 3 volte su 4), tempo per risposta, scala da 10/15/20,
    domande nuove o stesse dopo l'errore, blocco dei doppi clic, cronometro
    al decimo, resa e record di tempo.
-   Almanacco: la scala e' una fila di caselle da schedina che si riempiono
-   a penna, l'errore e' un timbro rosso su tutta la pagina.
+   Riflettori: tempo, gradino e serie migliore sul tabellone a LED; la scala
+   e' una fila di lampadine che si accendono salendo (la serie migliore resta
+   accesa a meta'); l'errore e' la scritta rossa "Si riparte da zero" su
+   tutto lo schermo, la sirena e le lampadine che si spengono una a una.
    ========================================================================== */
 (function () {
     'use strict';
@@ -121,9 +123,23 @@
             b.classList.toggle('is-bad', bad);
             b.classList.toggle('is-now', i === S.chain && S.failAt < 0 && S.running);
             b.classList.toggle('is-old', !ok && !bad && i < S.best);
-            // la gomma: chi non e' piu' nella serie perde il segno di penna
-            if (!ok && !bad) QZ.$$('.qz-mark', b).forEach(function (m) { m.remove(); });
+            b.classList.remove('is-off');
         });
+    }
+
+    /** Dopo l'errore le lampadine accese si spengono una a una, dall'ultima alla prima. */
+    function switchOff(from, within) {
+        var cells = QZ.$$('#g-steps .au-step');
+        var off = function (i) {
+            var b = cells[i];
+            if (!b || S.done) return;
+            b.classList.remove('is-ok');
+            b.classList.add('is-old');
+            QZ.fx.replay(b, 'is-off');
+        };
+        if (QZ.reducedMotion()) { for (var j = 0; j < from; j++) off(j); return; }
+        var gap = from ? Math.min(70, within / from) : 0;
+        for (var i = from - 1, k = 0; i >= 0; i--, k++) setTimeout(off.bind(null, i), k * gap);
     }
 
     function stepEl(i) { return QZ.$$('#g-steps .au-step')[i]; }
@@ -152,7 +168,9 @@
         $('#g-question').textContent = 'Due risposte. Prendi quella sbagliata.';
         $('#g-qcard').classList.remove('is-bad');
         answerEls.forEach(function (el) { el.className = 'answer'; el.disabled = true; el.querySelector('.answer__text').textContent = '…'; });
-        $('#g-chrono').classList.remove('is-stopped');
+        $('#g-board').classList.remove('is-stopped');
+        var recT = bestTimes()[timeKey()];
+        $('#g-rec').textContent = recT ? fmtTime(recT) : '-:--,-';
         $('#g-clock').textContent = fmtTime(0);
         QZ.show('s-game');
         QZ.sound.start();
@@ -219,14 +237,13 @@
         if (S.chain > S.best) S.best = S.chain;
         var el = answerEls[i];
         el.classList.add('is-correct');
-        QZ.fx.mark(el.querySelector('.answer__key'), 'cross', 'var(--ink)');
         answerEls[1 - i].classList.add('is-dim');
         QZ.sound.correct();
         QZ.vibrate(25);
         if (rt < 1.6) QZ.fx.floatText(el, 'Lampo!');
         paintTop(true);
         paintSteps();
-        QZ.fx.mark(stepEl(S.chain - 1), 'cross', 'var(--ink)');
+        QZ.fx.pop(stepEl(S.chain - 1));
         if (S.chain >= S.target) { setTimeout(function () { finish(true); }, 650); return; }
         if (MILESTONES[S.chain]) {
             QZ.sound.levelUp();
@@ -243,46 +260,48 @@
             S.answered++;
             S.rts.push((performance.now() - S.t0) / 1000);
             answerEls[i].classList.add('is-wrong');
-            QZ.fx.mark(answerEls[i].querySelector('.answer__key'), 'cross', 'var(--ink)');
         } else {
             answerEls[S.q.correct].classList.add('is-dim');
         }
-        // cerchiata a penna quella da prendere
-        QZ.fx.mark(answerEls[right], 'circle', 'var(--green)');
+        // quella da prendere si accende di verde
+        QZ.fx.mark(answerEls[right], 'circle', 'var(--led-green)');
         S.failAt = S.chain;
         QZ.sound.buzzer();
         QZ.vibrate([80, 40, 80]);
         QZ.fx.shake($('#g-qcard'));
         $('#g-qcard').classList.add('is-bad');
         paintSteps();
-        QZ.fx.mark(stepEl(S.failAt), 'circle', 'var(--red)');
 
         var ov = QZ.el('<div class="au-reset" aria-hidden="true"></div>');
         document.body.appendChild(ov);
         var text = i < 0 ? 'Tempo scaduto' : S.chain === 0 ? 'Subito fuori' : 'Si riparte da zero';
         QZ.fx.stamp(ov, text, 'bad', {
-            size: Math.round(Math.min(78, window.innerWidth * 0.12)), rot: -8,
+            size: Math.round(QZ.clamp(window.innerWidth * 0.1, 30, 72)), quiet: true,
             say: text + (i < 0 ? '' : ': hai preso la giusta') + '. Andava presa la ' + LETTERS[right] + ', ' + S.q.options[right] + '.'
         });
-        setTimeout(function () { ov.remove(); }, QZ.reducedMotion() ? 600 : 1050);
+        setTimeout(function () { ov.remove(); }, QZ.reducedMotion() ? 600 : 800);
+        // la scritta si toglie e si vede la scala che si spegne
+        var lit = S.chain;
+        setTimeout(function () { switchOff(lit, 380); }, QZ.reducedMotion() ? 0 : 820);
         setTimeout(function () {
             if (S.done) return;
             S.chain = 0;
             S.tries++;
             paintTop(true);
             load();
-        }, QZ.reducedMotion() ? 650 : 1250);
+        }, QZ.reducedMotion() ? 650 : 1400);
     }
+
+    function two(n) { return String(n).padStart(2, '0'); }
 
     function paintTop(bump) {
         var c = $('#g-chain');
-        c.innerHTML = S.chain + '<small>/' + S.target + '</small>';
+        c.innerHTML = two(S.chain) + '<small>/' + S.target + '</small>';
         if (bump) QZ.fx.pop(c);
         $('#g-try').textContent = 'Tentativo ' + S.tries;
-        var s = $('#g-streak');
-        s.innerHTML = QZ.icon('flame') + '<span>' + S.best + '</span>';
-        s.title = 'Miglior serie di questa partita';
-        s.classList.toggle('is-hot', S.chain >= 5);
+        var b = $('#g-best');
+        if (b.textContent !== two(S.best)) { b.textContent = two(S.best); if (bump) QZ.fx.pop(b); }
+        b.title = 'Miglior serie di questa partita';
     }
 
     function giveUp() {
@@ -310,7 +329,7 @@
         clockPause();
         clearInterval(clockIv);
         paintClock();
-        $('#g-chrono').classList.add('is-stopped');
+        $('#g-board').classList.add('is-stopped');
         if (timer) timer.pause();
         var total = Math.floor(clockNow() / 100) / 10;
         var avg = S.rts.length ? S.rts.reduce(function (a, b) { return a + b; }, 0) / S.rts.length : 0;

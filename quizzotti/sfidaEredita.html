@@ -24,97 +24,107 @@
   .db-setup, .db-opt { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
   .db-opt { gap: 8px; }
   #teams-host .stepper { display: none; }
-  .db-micnote { display: flex; gap: 10px; align-items: flex-start; padding-top: 14px; border-top: 1.5px dashed var(--rule); color: var(--ink-2); font-size: 15px; }
-  .db-micnote .ico { flex: none; margin-top: 2px; color: var(--ink); }
+  .db-micnote { display: flex; gap: 10px; align-items: flex-start; padding-top: 14px; border-top: 1px solid var(--line); color: var(--text-2); font-size: 15px; }
+  .db-micnote .ico { flex: none; margin-top: 2px; color: var(--accent-ink); }
 
-  /* ---------- Il tabellone dello stadio, stampato ---------- */
-  .db-sb { border: var(--bw) solid var(--ink); background: var(--card); box-shadow: var(--shadow-print); }
-  .db-sb__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 5px 12px 4px; background: var(--ink); color: var(--card); font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 16px; text-transform: uppercase; letter-spacing: .04em; }
-  .db-sb__head span:last-child { color: var(--yellow); }
+  /* ---------- Il tabellone dello stadio: CASA, risultato, OSPITI ---------- */
+  .db-sb { display: grid; background: #000; border: 6px solid #1c2226; border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px #2d353b; overflow: hidden; }
+  .db-sb__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 12px 6px; border-bottom: 2px solid #1c2226; font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #7d878f; }
+  .db-sb__head b { font-family: var(--font-led); font-weight: 400; font-size: 16px; letter-spacing: 0; color: var(--led); text-shadow: var(--led-glow); }
   .db-sb__row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; }
-  .db-team { --c: var(--accent); position: relative; display: grid; gap: 6px; align-content: center; min-width: 0; padding: 10px 12px 12px; transition: background .2s; }
+  .db-team { --c: var(--accent); position: relative; display: grid; gap: 6px; align-content: start; min-width: 0; padding: 9px 12px 12px; transition: background .2s; }
   .db-team:last-child { text-align: right; }
-  .db-team__name { display: flex; align-items: center; gap: 7px; min-width: 0; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 18px; line-height: 1; text-transform: uppercase; }
+  .db-team__side { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #6c767d; }
+  .db-team:last-child .db-team__side { justify-content: flex-end; }
+  /* il pallino del possesso: verde acceso quando tocca a quella squadra */
+  .db-team__side em { width: 8px; height: 8px; border-radius: 50%; background: #1a2a20; }
+  .db-team.is-active .db-team__side em { background: var(--led-green); box-shadow: 0 0 6px rgba(61, 220, 132, .7); }
+  .db-team.is-active .db-team__side { color: var(--led-green); }
+  .db-team__name { display: flex; align-items: center; gap: 7px; min-width: 0; font-family: var(--font-display); font-weight: 900; font-size: 18px; line-height: 1.05; text-transform: uppercase; color: var(--text); }
   .db-team:last-child .db-team__name { flex-direction: row-reverse; }
-  .db-team__name i { flex: none; width: 13px; height: 13px; border-radius: 50%; background: var(--c); border: var(--bw) solid var(--ink); }
+  .db-team__name i { flex: none; width: 4px; height: 18px; border-radius: 1px; background: var(--c); }
   .db-team__name span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .db-team__clock { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: clamp(34px, 10vw, 46px); line-height: .9; font-variant-numeric: tabular-nums; color: var(--ink-2); }
-  .db-team__clock small { font-size: .5em; margin-left: 2px; }
-  /* il cronometro come una barra stampata, con le tacche ogni 10 secondi */
-  .db-team .timer-bar { position: relative; height: 14px; }
-  .db-team .timer-bar::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(var(--tick) - 1.5px), var(--ink) calc(var(--tick) - 1.5px) var(--tick)); opacity: .45; }
-  .db-team .timer-bar__fill { background: var(--c); }
+  .db-team__clock { font-family: var(--font-led); font-size: clamp(32px, 9.5vw, 46px); line-height: 1; color: #8a6a2a; font-variant-numeric: tabular-nums; }
+  .db-team.is-active .db-team__clock { color: var(--led); text-shadow: var(--led-glow); }
+  /* il cronometro come una fila di LED, una tacca ogni 10 secondi */
+  .db-team .timer-bar { position: relative; height: 8px; border: 0; border-radius: 1px; background: #1a1610; }
+  .db-team .timer-bar::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(var(--tick) - 2px), #000 calc(var(--tick) - 2px) var(--tick)); }
+  .db-team .timer-bar__fill { background: #8a6a2a; }
+  .db-team.is-active .timer-bar__fill { background: var(--led); }
   .db-team:last-child .timer-bar__fill { transform-origin: right; }
-  .db-team.is-active { background: #fff3c4; }
-  .db-team.is-active .db-team__clock { color: var(--ink); }
-  .db-team.is-active::after { content: "tocca a voi"; position: absolute; bottom: -13px; left: 10px; z-index: 1; padding: 0 6px; font-family: var(--font-hand); font-size: 14px; line-height: 1.4; color: var(--card); background: var(--red); transform: rotate(-3deg); }
-  .db-team:last-child.is-active::after { left: auto; right: 10px; transform: rotate(3deg); }
-  .db-team.is-danger .db-team__clock { color: var(--red); animation: qz-heartbeat .8s ease-in-out infinite; }
-  .db-goals { display: flex; align-items: center; gap: 5px; padding: 0 8px; border-inline: var(--bw) solid var(--ink); background: var(--paper-2); }
-  .db-goals span { display: grid; place-items: center; min-width: 42px; height: 54px; padding: 0 4px; background: var(--ink); color: var(--card); font-family: var(--font-display); font-weight: 900; font-size: 42px; line-height: 1; font-variant-numeric: tabular-nums; }
-  .db-goals i { font-style: normal; font-family: var(--font-display); font-weight: 900; font-size: 24px; }
+  .db-team.is-active { background: #0c0f12; box-shadow: inset 0 -3px 0 var(--c); }
+  .db-team.is-danger .db-team__clock { color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .6); }
+  .db-team.is-active.is-danger .db-team__clock { animation: qz-heartbeat .8s ease-in-out infinite; }
+  .db-team.is-danger .timer-bar__fill { background: var(--led-red); }
+  .db-goals { display: flex; align-items: center; gap: 6px; padding: 0 10px; border-inline: 2px solid #1c2226; }
+  .db-goals span { display: grid; place-items: center; min-width: 40px; font-family: var(--font-led); font-size: clamp(44px, 12vw, 64px); line-height: 1; color: var(--led); text-shadow: 0 0 10px rgba(255, 182, 39, .5); font-variant-numeric: tabular-nums; }
+  .db-goals i { font-style: normal; font-family: var(--font-led); font-size: 28px; color: #8a6a2a; }
 
-  /* ---------- La definizione e la parola: il cruciverba ---------- */
+  /* ---------- La definizione e la parola: celle a LED ---------- */
   .db-def { text-align: center; padding: 16px 16px 18px; }
   .db-def .eyebrow { margin-bottom: 10px; }
-  .db-def h2 { font-size: clamp(26px, 6.6vw, 38px); font-weight: 800; line-height: 1.05; text-wrap: balance; }
+  .db-def h2 { font-size: clamp(25px, 6.4vw, 32px); font-weight: 800; line-height: 1.08; text-wrap: balance; }
   .db-def h2.is-in { animation: qz-rise .35s var(--ease-out) both; }
-  .db-word { --tw: 40px; position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 16px; min-height: var(--tw); padding: 6px 0; }
-  .db-w { display: flex; box-shadow: var(--shadow-print-sm); }
-  .db-t { position: relative; width: var(--tw); height: var(--tw); display: grid; place-items: center; margin-left: calc(var(--bw) * -1); background: var(--card); border: var(--bw) solid var(--ink); font-family: var(--font-display); font-weight: 900; font-size: calc(var(--tw) * .62); line-height: 1; text-transform: uppercase; color: var(--ink); }
-  .db-t:first-child { margin-left: 0; }
-  .db-t[data-n]::before { content: attr(data-n); position: absolute; top: 1px; left: 3px; font-family: var(--font-body); font-weight: 700; font-size: max(9px, calc(var(--tw) * .24)); line-height: 1; color: var(--ink-2); }
-  .db-t.is-on { animation: db-write .3s var(--ease-spring) both; }
-  .db-t.is-solved { color: var(--green); background: #e3f3e6; }
-  .db-t.is-fail { color: var(--red); background: #fbe5e0; }
-  .db-t.is-solved, .db-t.is-fail { animation: db-write .3s var(--ease-spring) both; animation-delay: calc(var(--i, 0) * 30ms); }
-  .db-t.db-p { width: auto; min-width: calc(var(--tw) * .4); margin-left: 0; background: none; border: 0; color: var(--ink); }
-  .db-w .db-p + .db-t { margin-left: 0; }
+  .db-word { --tw: 40px; position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 16px; min-height: calc(var(--tw) + 28px); padding: 12px 10px; background: #000; border: 6px solid #1c2226; border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px #2d353b; }
+  .db-w { display: flex; gap: 3px; }
+  /* la cella spenta: la griglia di puntini del pannello, da accendere */
+  .db-t { position: relative; width: var(--tw); height: calc(var(--tw) * 1.12); display: grid; place-items: center; border-radius: 2px; background: radial-gradient(circle, #2a2216 1.1px, transparent 1.5px) 50% 50% / 5px 5px, #0b0906; font-family: var(--font-led); font-size: calc(var(--tw) * .78); line-height: 1; text-transform: uppercase; color: var(--led); text-shadow: var(--led-glow); }
+  .db-t[data-n]::before { content: attr(data-n); position: absolute; top: 2px; left: 3px; font-family: var(--font-body); font-weight: 700; font-size: max(9px, calc(var(--tw) * .22)); line-height: 1; color: #6c767d; text-shadow: none; }
+  .db-t.is-on { animation: qz-led-on .3s linear both; }
+  .db-t.is-solved { color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .55); }
+  .db-t.is-fail { color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .6); }
+  .db-t.is-solved, .db-t.is-fail { animation: qz-led-on .3s linear both; animation-delay: calc(var(--i, 0) * 30ms); }
+  .db-t.db-p { width: auto; min-width: calc(var(--tw) * .4); background: none; }
 
-  @keyframes db-write { from { opacity: 0; transform: scale(1.5) rotate(-8deg); } }
-
-  .db-cover { position: absolute; inset: 0; display: none; place-items: center; z-index: 3; background: repeating-linear-gradient(-45deg, var(--ink) 0 3px, var(--card) 3px 11px); border: var(--bw) solid var(--ink); }
-  .db-cover span { padding: 4px 12px 2px; background: var(--card); border: var(--bw) solid var(--ink); font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 20px; text-transform: uppercase; transform: rotate(-3deg); }
+  .db-cover { position: absolute; inset: 0; display: none; place-items: center; z-index: 3; background: #000; border-radius: var(--r-lg); }
+  .db-cover span { font-family: var(--font-led); font-size: 26px; color: var(--led); text-shadow: var(--led-glow); animation: qz-led-on .35s linear both; }
   .db-paused .db-cover { display: grid; }
-  .db-board { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .db-board { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 
-  /* la radiocronaca */
-  .db-feed { display: flex; align-items: stretch; min-height: 48px; border: var(--bw) solid var(--ink); background: var(--card); }
-  .db-feed__label { flex: none; display: flex; align-items: center; gap: 6px; padding: 0 10px; background: var(--ink); color: var(--yellow); font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 16px; text-transform: uppercase; }
-  .db-feed__label .ico { width: 17px; height: 17px; }
-  .db-feed__txt { flex: 1; min-width: 0; align-self: center; padding: 8px 12px; overflow-wrap: anywhere; font-weight: 700; font-size: 16px; line-height: 1.3; color: var(--ink-2); }
-  .db-feed.is-bad .db-feed__txt { color: var(--red); }
-  .db-feed.is-ok .db-feed__txt { color: var(--green); }
-  .db-live { display: none; align-items: center; gap: 6px; padding: 0 10px; font-family: var(--font-hand); font-size: 15px; color: var(--red); }
-  .db-live::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--red); border: 1.5px solid var(--ink); }
+  /* la radiocronaca, sulla striscia del tabellone */
+  .db-feed { display: flex; align-items: stretch; min-height: 50px; background: #000; border: 4px solid #1c2226; border-radius: var(--r); }
+  .db-feed__label { flex: none; display: flex; align-items: center; gap: 6px; padding: 0 10px; background: var(--led); color: #000; font-family: var(--font-display); font-weight: 900; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; }
+  .db-feed__label .ico { width: 16px; height: 16px; }
+  .db-feed__txt { flex: 1; min-width: 0; align-self: center; padding: 8px 12px; overflow-wrap: anywhere; font-family: var(--font-led); font-size: 17px; line-height: 1.3; color: var(--led); text-shadow: var(--led-glow); }
+  .db-feed.is-bad .db-feed__txt { color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .55); }
+  .db-feed.is-ok .db-feed__txt { color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .5); }
+  .db-live { display: none; align-items: center; gap: 6px; padding: 0 10px; font-family: var(--font-led); font-size: 14px; color: var(--led-red); }
+  .db-live::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--led-red); box-shadow: 0 0 6px rgba(255, 75, 58, .7); animation: db-rec 1.2s steps(2, jump-none) infinite; }
   .db-feed.is-listening .db-live { display: inline-flex; }
+
+  @keyframes db-rec { 50% { opacity: .3; } }
 
   .db-form { display: flex; gap: 8px; }
   .db-form .input { flex: 1; min-width: 0; text-transform: uppercase; font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: .03em; }
   .db-form .input::placeholder { text-transform: none; font-family: var(--font-body); font-weight: 400; font-size: 17px; letter-spacing: 0; }
   .db-ref { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-  .db-ref .btn { min-height: 58px; padding: 0 6px; font-size: 21px; }
-  .db-ref small { font-size: .72em; text-transform: none; white-space: nowrap; }
+  .db-ref .btn { min-height: 58px; padding: 0 6px; font-size: 19px; }
+  .db-ref .btn { flex-wrap: wrap; align-content: center; column-gap: 6px; row-gap: 3px; }
+  .db-ref small { flex-basis: 100%; font-family: var(--font-led); font-weight: 400; font-size: .8em; text-transform: none; white-space: nowrap; }
+  .db-ref .db-post { --b-bg: #2a1d08; --b-fg: var(--led); --b-bd: #8a6a2a; }
   .db-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 10px; }
-  .db-mic[aria-pressed="true"] { --b-bg: var(--red); --b-fg: var(--card); }
+  .db-mic[aria-pressed="true"] { --b-bg: #3a0f0b; --b-fg: var(--led-red); --b-bd: var(--led-red); }
 
   /* calcio d'inizio */
   .db-kick { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 6px 0; }
-  .db-kick__k { font-family: var(--font-hand); font-size: 21px; color: var(--red); transform: rotate(-2deg); }
-  .db-kick__team { --c: var(--accent); max-width: 100%; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: clamp(48px, 14vw, 84px); line-height: .9; text-transform: uppercase; overflow-wrap: anywhere; }
-  .db-kick__team span { padding: 0 .08em; background: linear-gradient(transparent 58%, color-mix(in srgb, var(--c) 40%, var(--card)) 58% 92%, transparent 92%); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
-  .db-kick.is-pop { animation: qz-slap .35s var(--ease-spring) both; }
+  .db-kick__k { font-family: var(--font-led); font-size: 20px; color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .5); text-transform: uppercase; }
+  .db-kick__team { --c: var(--accent); max-width: 100%; font-family: var(--font-display); font-weight: 900; font-size: clamp(46px, 13vw, 84px); line-height: .92; letter-spacing: -.03em; text-transform: uppercase; overflow-wrap: break-word; }
+  .db-kick__team span { padding: 0 .04em; box-shadow: inset 0 -.1em 0 var(--c); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .db-kick.is-pop { animation: qz-rise .35s var(--ease-out) both; }
 
   @media (max-width: 479px) {
-    .db-team { padding: 9px 8px 10px; gap: 5px; }
-    .db-team__name { font-size: 16px; }
-    .db-team__name i { width: 11px; height: 11px; }
-    .db-goals { padding: 0 5px; gap: 3px; }
-    .db-goals span { min-width: 34px; height: 46px; font-size: 34px; }
-    .db-goals i { font-size: 18px; }
-    .db-ref .btn { font-size: 19px; }
+    .db-sb__row { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+    .db-team { padding: 8px 8px 10px; gap: 5px; }
+    .db-team__name { font-size: 15px; }
+    .db-team__side { letter-spacing: .12em; }
+    .db-goals { padding: 0 6px; gap: 3px; }
+    .db-goals span { min-width: 28px; }
+    .db-goals i { font-size: 22px; }
+    .db-ref .btn { font-size: 17px; }
+    .db-feed__lbl { display: none; }
   }
   @media (min-width: 900px) { #s-start .intro { align-items: start; } #s-start .intro > .stack { position: sticky; top: calc(var(--header-h) + 32px); } }
+  @media (prefers-reduced-motion: reduce) { .db-live::before { animation: none; } }
 </style>
 </head>
 <body data-game="sfidaeredita">
@@ -126,7 +136,7 @@
       <div data-stagger>
         <span class="eyebrow">N° 09 · Due squadre</span>
         <h1 class="intro__title">Il derby delle <em>parole</em></h1>
-        <p class="intro__lead">Una definizione, una parola che si scrive da sola lettera dopo lettera, due squadre col cronometro a scacchi. Chi la sa tira in porta. Chi resta senza tempo perde il derby.</p>
+        <p class="intro__lead">Una definizione, una parola che si accende sul tabellone lettera dopo lettera, due squadre col cronometro a scacchi. Chi la sa tira in porta. Chi resta senza tempo perde il derby.</p>
         <div class="card mt-3">
           <div class="db-setup">
             <div id="teams-host"></div>
@@ -159,17 +169,19 @@
   <section class="screen" id="s-game">
     <div class="db-wrap stack" style="--gap:16px" id="game">
       <div class="db-sb" id="sb" role="group" aria-label="Tabellone">
-        <div class="db-sb__head"><span>Derby delle Parole</span><span id="sb-word"></span></div>
+        <div class="db-sb__head"><span>Derby delle Parole</span><span>Parola <b id="sb-word">01</b></span></div>
         <div class="db-sb__row">
           <div class="db-team" id="t0">
+            <div class="db-team__side"><em></em>Casa</div>
             <div class="db-team__name"><i></i><span data-name></span></div>
-            <div class="db-team__clock"><span data-clock>60</span><small>s</small></div>
+            <div class="db-team__clock" data-clock>1:00</div>
             <div class="timer-bar" data-bar><div class="timer-bar__fill"></div></div>
           </div>
-          <div class="db-goals"><span id="g0">0</span><i aria-hidden="true">–</i><span id="g1">0</span></div>
+          <div class="db-goals" aria-label="Risultato"><span id="g0">0</span><i aria-hidden="true">-</i><span id="g1">0</span></div>
           <div class="db-team" id="t1">
+            <div class="db-team__side">Ospiti<em></em></div>
             <div class="db-team__name"><i></i><span data-name></span></div>
-            <div class="db-team__clock"><span data-clock>60</span><small>s</small></div>
+            <div class="db-team__clock" data-clock>1:00</div>
             <div class="timer-bar" data-bar><div class="timer-bar__fill"></div></div>
           </div>
         </div>
@@ -195,12 +207,12 @@
             <h2 id="p-def" tabindex="-1"></h2>
           </div>
           <div class="db-word" id="word" role="img" aria-label="Parola misteriosa"></div>
-          <div class="db-cover" aria-hidden="true"><span>Partita ferma</span></div>
+          <div class="db-cover" aria-hidden="true"><span>PARTITA FERMA</span></div>
         </div>
         <div class="db-feed" id="feed">
           <span class="db-feed__label" id="feed-ico"></span>
           <span class="db-feed__txt" id="feed-txt" aria-live="polite"></span>
-          <span class="db-live">ascolto</span>
+          <span class="db-live">IN ASCOLTO</span>
         </div>
         <form class="db-form" id="form" autocomplete="off">
           <label class="sr-only" for="guess">La vostra risposta</label>
@@ -209,7 +221,7 @@
         </form>
         <div class="db-ref" role="group" aria-label="Arbitro">
           <button class="btn btn--ok" type="button" id="ref-goal"></button>
-          <button class="btn btn--bad" type="button" id="ref-post"></button>
+          <button class="btn db-post" type="button" id="ref-post"></button>
           <button class="btn" type="button" id="ref-pass"></button>
         </div>
         <div class="db-tools">
@@ -227,8 +239,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=40f5afd6" defer></script>
+<script src="assets/qz.js?v=e3a7f46c" defer></script>
 <script src="assets/db-sfidaeredita.js?v=27078a03" defer></script>
-<script src="assets/games/sfidaeredita.js?v=6b6aeaf7" defer></script>
+<script src="assets/games/sfidaeredita.js?v=57d5714a" defer></script>
 </body>
 </html>

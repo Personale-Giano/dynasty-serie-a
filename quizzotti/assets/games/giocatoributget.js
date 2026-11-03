@@ -7,9 +7,12 @@
    squadra, ruolo, senza accenti) con lista paginata, filtro per ruolo,
    passaggio del telefono tra i turni, regola "chi sfora perde", partita in
    solitaria e rivelazione dei valori uno alla volta.
-   Almanacco: i calciatori sono figurine coi colori di ruolo dell'album, la
-   rosa si scrive sul taccuino del ds, i prezzi arrivano col timbro e il
-   totale si tira a penna con la doppia riga del ragioniere.
+   Riflettori: il calciomercato come un tabellone dello stadio. I calciatori
+   sono righe scure col ruolo a colori (POR, DIF, CEN, ATT), budget e posti
+   da riempire stanno a LED, la rosa e' una distinta; alla resa dei conti i
+   prezzi si accendono uno a uno, il totale corre e la barra della spesa
+   sfida la linea del budget ("Centrato" / "Sforato"); il vincitore si
+   illumina.
    ========================================================================== */
 (function () {
     'use strict';
@@ -18,14 +21,14 @@
     var GAME = 'giocatoributget';
     var PAGE = 40;
     var BUDGET_MIN = 50, BUDGET_MAX = 1000, PICKS_MAX = 11;
-    // i colori di ruolo dell'album: fondo e inchiostro leggibile sopra
+    // un colore per ruolo, acceso come sul tabellone, con la scritta scura sopra
     var ROLES = {
-        POR: { label: 'Portiere', c: '#f3c21b', t: '#1d1913' },
-        DIF: { label: 'Difensore', c: '#1f3c88', t: '#fbf6ec' },
-        CEN: { label: 'Centrocampista', c: '#0e7a43', t: '#fbf6ec' },
-        ATT: { label: 'Attaccante', c: '#cf2a1e', t: '#fbf6ec' }
+        POR: { label: 'Portiere', c: '#ffb627', t: '#07090b' },
+        DIF: { label: 'Difensore', c: '#4d8dff', t: '#07090b' },
+        CEN: { label: 'Centrocampista', c: '#3ddc84', t: '#07090b' },
+        ATT: { label: 'Attaccante', c: '#ff5a4a', t: '#07090b' }
     };
-    var NO_ROLE = { label: '', c: '#6f6555', t: '#fbf6ec' };
+    var NO_ROLE = { label: '', c: '#84909a', t: '#07090b' };
 
     // indice di ricerca calcolato una volta sola
     var DB = playersDatabase.map(function (p, i) {
@@ -54,7 +57,7 @@
         ['Cartellini coperti.', 'Scegli i calciatori senza vedere quanto costano. Vale l\'occhio, non il listino.'],
         ['Un turno a testa.', 'Fai la tua lista e passa il telefono. Chi è già preso resta all\'altro.'],
         ['Vince chi ci va più vicino', 'al budget, sopra o sotto. Con la regola dura chi sfora finisce in fondo.'],
-        ['La resa dei conti:', 'si timbrano i prezzi uno a uno, poi si tirano le somme.']
+        ['La resa dei conti:', 'i prezzi si accendono uno a uno sul tabellone, poi si tirano le somme.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
@@ -153,8 +156,8 @@
         hand.style.setProperty('--c', p.color);
         hand.innerHTML =
             '<span class="eyebrow">Turno ' + (G.turn + 1) + ' di ' + G.players.length + '</span>' +
-            '<div class="bg-card" aria-hidden="true"><span class="bg-card__n">N° ' + String(G.turn + 1).padStart(2, '0') + '</span>' +
-            '<span class="bg-card__face" style="color:' + QZ.onColor(p.color) + '">' + QZ.esc(initial) + '</span><span class="bg-card__name">' + QZ.esc(p.name) + '</span></div>' +
+            '<div class="bg-shirt" aria-hidden="true"><span class="bg-shirt__n">In panchina</span>' +
+            '<span class="bg-shirt__dot" style="color:' + QZ.onColor(p.color) + '">' + QZ.esc(initial) + '</span><span class="bg-shirt__name">' + QZ.esc(p.name) + '</span></div>' +
             '<h2>Passa il telefono a <em>' + QZ.esc(p.name) + '</em></h2>' +
             '<p>Gli altri guardano altrove. Scegli ' + G.perUser + (G.perUser === 1 ? ' calciatore' : ' calciatori') + ' con <b>' + money(G.budget) + '</b> in cassa.' +
             (G.turn > 0 ? ' Chi è già stato preso è fuori mercato.' : '') + '</p>' +
@@ -180,7 +183,7 @@
             G.shown = PAGE;
             renderList();
         });
-        // il filtro acceso prende il colore del ruolo, come le pagine dell'album
+        // il filtro acceso prende il colore del ruolo
         QZ.$$('#p-roles button').forEach(function (b, i) { if (i) b.setAttribute('style', roleVars(ROLE_OPTS[i].value)); });
         var p = cur();
         var dot = $('#p-dot');
@@ -253,13 +256,16 @@
         for (var i = 0; i < G.perUser; i++) {
             var p = me.picks[i];
             slots += p
-                ? '<li class="bg-slot is-full' + (p === added ? ' is-new' : '') + '"><span class="bg-slot__n">' + (i + 1) + '.</span>' + roleBadge(p) +
+                ? '<li class="bg-slot is-full' + (p === added ? ' is-new' : '') + '"><span class="bg-slot__n">' + (i + 1) + '</span>' + roleBadge(p) +
                   '<span class="bg-slot__name">' + QZ.esc(p.name) + '<small>' + QZ.esc(p.team) + '</small></span><span class="bg-slot__price">? M€</span>' +
                   '<button class="qz-iconbtn" type="button" data-remove="' + p.id + '" aria-label="Togli ' + QZ.esc(p.name) + '">' + QZ.icon('x') + '</button></li>'
-                : '<li class="bg-slot is-empty"><span class="bg-slot__n">' + (i + 1) + '.</span><span class="bg-slot__name">da scegliere</span></li>';
+                : '<li class="bg-slot is-empty"><span class="bg-slot__n">' + (i + 1) + '</span><span class="bg-slot__name">da scegliere</span></li>';
         }
         $('#p-slots').innerHTML = slots;
         var left = G.perUser - me.picks.length;
+        var lf = $('#p-left');
+        lf.innerHTML = left + '<small>/' + G.perUser + '</small>';
+        lf.classList.toggle('is-full', left === 0);
         var btn = $('#p-confirm');
         btn.disabled = left > 0;
         btn.innerHTML = left > 0
@@ -392,7 +398,7 @@
         return 'Sforato di ' + money(d) + (G.rule === 'bust' ? ' · fuori dai giochi' : '');
     }
 
-    /* ---------- La resa dei conti: prezzi timbrati uno alla volta ---------- */
+    /* ---------- La resa dei conti: i prezzi si accendono uno alla volta ---------- */
     function reveal() {
         var maxSpent = Math.max.apply(null, G.players.map(spent));
         G.scale = Math.max(G.budget * 1.3, maxSpent * 1.05);
@@ -400,15 +406,16 @@
         $('#r-sub').textContent = 'Budget ' + money(G.budget) + ' · ' + (G.rule === 'bust' ? 'chi sfora perde' : 'conta la distanza');
         $('#r-cards').innerHTML = G.players.map(function (p, pi) {
             return '<div class="card bg-rcard" data-p="' + pi + '" style="--c:' + p.color + '">' +
-                '<div class="bg-rhead"><span class="team__dot" style="--c:' + p.color + '"></span><span class="bg-rhead__name">' + QZ.esc(G.players.length > 1 ? p.name : 'La tua squadra') + '</span></div>' +
+                '<div class="bg-rhead"><span class="team__dot" style="--c:' + p.color + '"></span><span class="bg-rhead__name">' + QZ.esc(G.players.length > 1 ? p.name : 'La tua squadra') + '</span>' +
+                '<span class="bg-rhead__win led led--green" hidden>VINCE</span></div>' +
                 '<ul class="bg-rlist">' + p.picks.map(function (x, xi) {
                     return '<li>' + roleBadge(x) + '<span class="grow"><b>' + QZ.esc(x.name) + '</b> <span class="small muted">· ' + QZ.esc(x.team) + '</span></span>' +
-                        '<span class="bg-rval" data-v="' + xi + '" style="--rot:' + (Math.round(Math.random() * 10) - 9) + 'deg">? M€</span></li>';
+                        '<span class="bg-rval" data-v="' + xi + '">? M€</span></li>';
                 }).join('') + '</ul>' +
                 '<div class="bg-rtot"><span>Totale</span><b data-total>0 M€</b></div>' +
                 '<div class="bg-meter" aria-hidden="true"><div class="bg-meter__fill"></div><div class="bg-meter__mark" style="left:' + mark + '%"></div></div>' +
-                '<div class="bg-verdict"></div>' +
-                '<span class="bg-rcard__stamp" aria-hidden="true"></span></div>';
+                '<div class="bg-rfoot"><div class="bg-verdict"></div>' +
+                '<span class="bg-rcard__stamp" aria-hidden="true"></span></div></div>';
         }).join('');
         $('#r-skip').hidden = false;
         $('#r-next').hidden = true;
@@ -444,6 +451,8 @@
         });
         c.querySelector('[data-total]').textContent = money(s);
         paintMeter(c, s);
+        c.classList.toggle('is-over', d > 0);
+        c.classList.toggle('is-ok', Math.abs(d) <= G.budget * 0.03 && d <= 0);
         var vd = c.querySelector('.bg-verdict');
         vd.textContent = verdict(d);
         vd.className = 'bg-verdict ' + (d > 0 ? 'bad' : 'ok');
@@ -452,9 +461,9 @@
             var near = Math.abs(d) <= G.budget * 0.03;
             if (near || d > 0) {
                 if (quiet) {
-                    holder.innerHTML = '<span class="qz-stamp qz-stamp--' + (near ? 'ok' : 'bad') + '" style="--rot:-10deg;animation:none;opacity:.92">' + (near ? 'Centrato' : 'Sforato') + '</span>';
+                    holder.innerHTML = '<span class="qz-stamp qz-stamp--' + (near ? 'ok' : 'bad') + '" style="--stamp-size:18px;animation:none">' + (near ? 'Centrato' : 'Sforato') + '</span>';
                 } else {
-                    QZ.fx.stamp(holder, near ? 'Centrato' : 'Sforato', near ? 'ok' : 'bad', { size: 26, rot: -10, say: false });
+                    QZ.fx.stamp(holder, near ? 'Centrato' : 'Sforato', near ? 'ok' : 'bad', { size: 18, say: false });
                 }
             }
         }
@@ -504,10 +513,14 @@
     function revealDone(full) {
         $('#r-skip').hidden = true;
         $('#r-next').hidden = false;
-        // il vincitore cerchiato a penna
+        // il vincitore si illumina
         if (G.players.length > 1) {
-            var w = ranking()[0];
-            QZ.fx.mark(card(w.i).querySelector('[data-total]'), 'circle', 'var(--red)');
+            var wc = card(ranking()[0].i);
+            if (!wc.classList.contains('is-winner')) {
+                wc.classList.add('is-winner');
+                wc.querySelector('.bg-rhead__win').hidden = false;
+                if (!full) QZ.sound.levelUp();
+            }
         }
         // full: i conti non sono stati annunciati uno a uno (salto o movimento ridotto)
         var all = full ? G.players.map(function (p, pi) { return account(pi); }).join(' ') + ' ' : '';

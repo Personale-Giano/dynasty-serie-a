@@ -21,112 +21,104 @@
 <link rel="stylesheet" href="assets/qz.css?v=a68d8e3c">
 <style>
   /* ---------- Impostazioni ---------- */
-  .jp-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; margin-top: 34px; }
+  .jp-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 34px; }
   @media (min-width: 900px) { .jp-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
-  .jp-setup > .card:nth-child(2) { --tilt: .4deg; }
   .jp-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  .switch { align-items: flex-start; font-weight: 600; color: var(--ink-2); }
-  .switch b { color: var(--ink); }
+  .switch { align-items: flex-start; font-weight: 500; color: var(--text-2); }
+  .switch b { color: var(--text); }
   .switch input { flex: none; margin-top: 1px; }
 
-  /* le categorie come le caselle della schedina */
-  .jp-cats { display: grid; grid-template-columns: minmax(0, 1fr); border: var(--bw) solid var(--ink); background: var(--card); }
-  @media (min-width: 480px) { .jp-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .jp-cat:nth-child(odd) { border-right: 1.5px solid var(--rule); } }
+  /* le categorie: interruttori con la spia che si accende */
+  .jp-cats { display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); overflow: hidden; }
+  @media (min-width: 480px) { .jp-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .jp-cat:nth-child(odd) { border-right: 1px solid var(--line); } }
   .jp-cat {
-    display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 12px; border: 0; border-bottom: 1.5px solid var(--rule);
-    background: transparent; text-align: left; font-weight: 600; font-size: 16px; color: var(--ink-2); transition: background .12s;
+    display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 12px; border: 0; border-bottom: 1px solid var(--line);
+    background: transparent; text-align: left; font-weight: 600; font-size: 16px; color: var(--text-2); transition: background .12s, color .12s;
   }
-  .jp-cat:hover { background: var(--paper-2); }
-  /* nelle griglie stampate il contorno del fuoco sta dentro la casella, sennò la vicina lo copre */
+  .jp-cat:hover { background: var(--panel-2); color: var(--text); }
+  /* nelle griglie il contorno del fuoco sta dentro la casella, sennò la vicina lo copre */
   .jp-cat:focus-visible, .jp-cell:focus-visible { position: relative; z-index: 6; outline-offset: -5px; }
-  .jp-cat__box { position: relative; flex: none; width: 26px; height: 26px; border: var(--bw) solid var(--ink); background: var(--card); }
-  .jp-cat__box svg { position: absolute; inset: -5px; width: 32px; height: 32px; max-width: none; display: none; }
-  .jp-cat__box path { fill: none; stroke: var(--red); stroke-width: 3.4; stroke-linecap: round; stroke-dasharray: 40; stroke-dashoffset: 0; }
-  .jp-cat[aria-pressed="true"] { color: var(--ink); font-weight: 800; }
-  .jp-cat[aria-pressed="true"] .jp-cat__box svg { display: block; }
-  .jp-cat.is-drawn .jp-cat__box path { animation: jp-draw .28s ease-out both; }
-  @keyframes jp-draw { from { stroke-dashoffset: 40; } }
+  .jp-cat__lamp { flex: none; width: 16px; height: 16px; border-radius: 2px; background: #000; border: 1px solid var(--line-2); transition: background .15s, border-color .15s; }
+  .jp-cat[aria-pressed="true"] { color: var(--text); font-weight: 700; background: rgba(var(--accent-rgb), .06); }
+  .jp-cat[aria-pressed="true"] .jp-cat__lamp { background: var(--led); border-color: var(--led); box-shadow: 0 0 8px rgba(255, 182, 39, .55); }
+  .jp-cat.is-drawn .jp-cat__lamp { animation: qz-led-on .3s linear both; }
   .jp-cats__foot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 
-  /* ---------- Testata del turno ---------- */
-  .jp-scores { margin-bottom: 20px; padding-top: 10px; }
-  .jp-scores .team { cursor: default; }
-  .jp-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 3px double var(--ink); }
-  .jp-who { min-width: 0; }
-  .jp-who small { display: block; font-family: var(--font-hand); font-size: 19px; line-height: 1.1; color: var(--red); transform: rotate(-2deg); transform-origin: left; }
-  .jp-who b { display: block; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: clamp(32px, 8vw, 50px); line-height: .9; text-transform: uppercase; color: var(--c, var(--ink)); overflow-wrap: anywhere; }
-  .jp-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-  .jp-round { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 17px; text-transform: uppercase; padding: 3px 10px 2px; border: var(--bw) solid var(--ink); background: var(--yellow); transform: rotate(-1.5deg); }
-  /* sotto i 480px resta l'icona, ma la scritta continua a dare il nome al bottone */
-  @media (max-width: 479px) { .jp-tools .btn { width: 44px; padding: 0; } .jp-tools .btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } }
-
-  /* ---------- Il tabellone: una griglia stampata ---------- */
-  .jp-board { display: grid; grid-template-columns: minmax(0, 1fr); border: var(--bw) solid var(--ink); background: var(--card); box-shadow: var(--shadow-print); }
-  .jp-col { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: var(--bw) solid var(--ink); animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 45ms); }
-  .jp-col:last-child { border-bottom: 0; }
-  .jp-col__head {
-    grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 5px 10px 4px;
-    background: var(--ink); color: var(--card); font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 17px; line-height: 1.1; text-transform: uppercase; letter-spacing: .03em;
+  /* ---------- I punteggi: una casella del tabellone per squadra ---------- */
+  .jp-scores { grid-template-columns: repeat(auto-fit, minmax(min(100%, 104px), 1fr)); gap: 8px; margin-bottom: 14px; }
+  .jp-scores .team { cursor: default; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 7px; padding: 8px 10px; }
+  .jp-scores .team__name { font-size: 14px; }
+  .jp-scores .team__score { grid-column: 1 / -1; font-size: 26px; text-align: right; }
+  @media (min-width: 760px) {
+    .jp-scores { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .jp-scores .team { display: flex; padding: 10px 14px; }
+    .jp-scores .team__name { font-size: 16px; }
+    .jp-scores .team__score { font-size: 30px; }
   }
-  .jp-col__head::before { content: ""; flex: none; width: 9px; height: 9px; background: var(--yellow); transform: rotate(45deg); }
+
+  /* ---------- Il tabellone del turno: chi sceglie, tempo, caselle ---------- */
+  .jp-hud { margin-bottom: 14px; }
+  .jp-hud__who { flex: 1; min-width: 0; box-shadow: inset 0 3px 0 var(--c, var(--accent)); }
+  .jp-who { display: block; font-family: var(--font-display); font-weight: 900; font-size: clamp(22px, 5.4vw, 34px); line-height: 1; letter-spacing: -.01em; text-transform: uppercase; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jp-hud .led { font-size: clamp(24px, 5vw, 32px); }
+  @media (max-width: 479px) { .jp-hud .board__cell { padding: 8px 10px; } }
+  /* i comandi di servizio stanno sotto il tabellone, fuori dai piedi */
+  .jp-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 16px; }
+
+  /* ---------- Il tabellone: una griglia di LED ---------- */
+  .jp-board { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; background: #1c2226; border: 6px solid #1c2226; border-radius: var(--r-lg); overflow: hidden; }
+  .jp-col { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 45ms); }
+  .jp-col__head {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 7px 12px;
+    background: var(--panel-2); border-left: 3px solid var(--accent); color: var(--text);
+    font-family: var(--font-display); font-weight: 800; font-size: 13px; line-height: 1.15; letter-spacing: .1em; text-transform: uppercase;
+  }
   .jp-cell {
-    position: relative; min-height: 60px; padding: 0 2px; border: 0; border-right: 1.5px solid var(--ink); background: transparent;
-    font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 25px; line-height: 1; color: var(--accent-ink); font-variant-numeric: tabular-nums;
+    position: relative; min-height: 58px; padding: 0 2px; border: 0; background: #000;
+    font-family: var(--font-led); font-size: 24px; line-height: 1; color: var(--led); text-shadow: var(--led-glow); font-variant-numeric: tabular-nums;
     transition: background .1s, color .1s;
   }
-  .jp-cell:last-child { border-right: 0; }
-  .jp-cell:hover:not(:disabled) { background: var(--yellow); color: var(--ink); }
-  .jp-cell:active:not(:disabled) { background: var(--accent); color: var(--on-accent); }
-  .jp-cell:disabled { cursor: default; color: var(--ink-3); background: repeating-linear-gradient(-45deg, transparent 0 7px, rgba(var(--ink-rgb), .08) 7px 8px); }
-  .jp-cell .qz-mark { inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); }
-  .jp-cell .qz-mark path { stroke-width: 3.5; }
-  .jp-cell.is-static .qz-mark path { animation: none; stroke-dasharray: none; stroke-dashoffset: 0; }
-  .jp-cell__by { position: absolute; z-index: 5; right: 3px; bottom: 1px; font-family: var(--font-hand); font-style: normal; font-weight: 400; font-size: 14px; line-height: 1; color: var(--c); transform: rotate(-8deg); animation: qz-pop-in .3s var(--ease-spring) .3s both; }
-  .jp-cell.is-static .jp-cell__by { animation: none; }
+  .jp-cell:hover:not(:disabled) { background: #1c1608; }
+  .jp-cell:active:not(:disabled) { background: var(--led); color: #000; text-shadow: none; }
+  /* giocata: la casella si spegne e restano accese solo le iniziali di chi l'ha presa */
+  .jp-cell:disabled { cursor: default; background: #050607; }
+  .jp-cell.is-played { color: var(--c); font-size: 19px; letter-spacing: .04em; text-shadow: 0 0 6px currentcolor; }
+  .jp-cell.is-nobody { color: #4a3d22; text-shadow: none; }
+  .jp-cell.is-switch { animation: qz-led-on .45s linear both; }
   @media (min-width: 760px) {
-    .jp-board { grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr)); }
-    .jp-col { grid-template-columns: minmax(0, 1fr); border-bottom: 0; border-right: var(--bw) solid var(--ink); }
-    .jp-col:last-child { border-right: 0; }
-    .jp-col__head { min-height: 66px; justify-content: center; text-align: center; padding: 8px 10px; font-size: 18px; }
-    .jp-col__head::before { display: none; }
-    .jp-cell { min-height: 84px; font-size: 40px; border-right: 0; border-top: 1.5px solid var(--ink); }
-    .jp-col__head + .jp-cell { border-top: 0; }
-    .jp-cell .qz-mark { left: 50%; width: min(calc(100% - 12px), 130px); transform: translateX(-50%); }
-    .jp-cell__by { font-size: 19px; right: auto; left: calc(50% + 46px); bottom: 6px; }
+    .jp-board { grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr)); max-width: calc(var(--cols, 5) * 240px); margin: 0 auto; }
+    .jp-col { grid-template-columns: minmax(0, 1fr); align-content: start; }
+    .jp-col__head { min-height: 64px; justify-content: center; text-align: center; padding: 8px 10px; font-size: 14px; border-left: 0; box-shadow: inset 0 -3px 0 var(--accent); }
+    .jp-cell { min-height: 78px; font-size: 38px; }
+    .jp-cell.is-played { font-size: 28px; }
   }
-  @media (min-width: 760px) { .jp-board { max-width: calc(var(--cols, 5) * 250px); margin: 0 auto; } }
 
-  /* ---------- La domanda: un cartoncino ---------- */
-  .jp-q { --tilt: -.5deg; padding: 0; overflow: hidden; text-align: center; }
-  .jp-q__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; background: var(--accent); color: var(--on-accent); border-bottom: var(--bw) solid var(--ink); }
-  .jp-q__cat { display: flex; align-items: center; gap: 8px; min-width: 0; text-align: left; font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 18px; line-height: 1.05; text-transform: uppercase; }
-  .jp-q__value { flex: none; padding: 2px 10px 1px; background: var(--yellow); color: var(--ink); border: var(--bw) solid var(--ink); font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 26px; line-height: 1.05; font-variant-numeric: tabular-nums; transform: rotate(2deg); }
-  .jp-q__value { position: relative; }
-  .jp-q__value.is-double { background: var(--red); color: var(--card); }
-  .jp-q__value.is-double::after { content: "vale doppio"; position: absolute; top: calc(100% + 8px); right: -4px; font-family: var(--font-hand); font-style: normal; font-weight: 400; font-size: 17px; color: var(--red); white-space: nowrap; transform: rotate(-5deg); }
-  .jp-q__body {
-    position: relative; padding: 30px 22px 30px 30px;
-    background:
-      linear-gradient(to right, transparent 16px, rgba(var(--bad-rgb), .4) 16px 18px, transparent 18px),
-      repeating-linear-gradient(to bottom, transparent 0 35px, rgba(31, 60, 136, .14) 35px 36px);
-  }
-  .jp-q .question { margin: 0 auto; max-width: 28ch; }
-  .jp-q .timer-ring { margin: 22px auto 0; }
-  .jp-ans { padding: 14px 18px 20px; border-top: 2px dashed var(--ink); background: var(--paper); animation: jp-unfold .3s var(--ease-out) both; }
-  .jp-ans__label { display: inline-block; font-family: var(--font-hand); font-size: 19px; color: var(--red); transform: rotate(-2deg); }
-  .jp-ans__text { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 6vw, 38px); line-height: 1.02; margin-top: 2px; overflow-wrap: anywhere; text-wrap: balance; }
+  /* ---------- La domanda sul maxischermo ---------- */
+  .jp-screen { position: relative; overflow: hidden; text-align: center; background: #000; border: 6px solid #1c2226; border-left-color: var(--accent); border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px #2d353b; }
+  .jp-screen__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 2px solid #1c2226; text-align: left; }
+  .jp-screen__cat { display: flex; align-items: center; gap: 8px; min-width: 0; font-family: var(--font-display); font-weight: 700; font-size: 13px; line-height: 1.2; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-ink); }
+  .jp-screen__cat .ico { width: 15px; height: 15px; }
+  .jp-screen__value { flex: none; display: grid; justify-items: end; gap: 3px; }
+  .jp-screen__value .led { font-size: clamp(30px, 7vw, 44px); }
+  .jp-screen__value.is-double .board__label { color: var(--led-red); }
+  .jp-screen__body { position: relative; padding: 32px 20px 30px; }
+  .jp-screen .question { margin: 0 auto; max-width: 28ch; }
+  .jp-screen .timer-ring { margin: 22px auto 0; }
+  .jp-ans { padding: 14px 18px 22px; border-top: 2px solid #1c2226; background: #06090a; animation: jp-unfold .3s var(--ease-out) both; }
+  .jp-ans__label { display: block; font-family: var(--font-led); font-size: 16px; color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .5); text-transform: uppercase; }
+  .jp-ans__text { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 6vw, 38px); line-height: 1.05; margin-top: 6px; overflow-wrap: anywhere; text-wrap: balance; }
   @keyframes jp-unfold { from { opacity: 0; transform: translateY(-8px); } }
   .jp-steal { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; }
-  .jp-steal .btn { justify-content: flex-start; min-width: 0; text-align: left; line-height: 1.05; overflow-wrap: anywhere; }
-  .jp-steal .btn--ghost { justify-content: center; }
-  .jp-steal__title { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 30px; text-transform: uppercase; text-align: center; }
-  .jp-steal__title small { display: block; font-family: var(--font-body); font-style: normal; font-weight: 600; font-size: 15px; text-transform: none; color: var(--ink-2); }
+  .jp-steal .btn { justify-content: flex-start; min-width: 0; text-align: left; line-height: 1.05; overflow-wrap: anywhere; text-transform: none; letter-spacing: 0; }
+  .jp-steal .btn--ghost { justify-content: center; text-transform: uppercase; letter-spacing: .04em; }
+  .jp-steal__title { font-family: var(--font-display); font-weight: 900; font-size: 30px; text-transform: uppercase; text-align: center; }
+  .jp-steal__title small { display: block; margin-top: 4px; font-family: var(--font-body); font-weight: 500; font-size: 15px; text-transform: none; color: var(--text-2); }
 
   /* ---------- Correzione punteggi ---------- */
-  .jp-adjust { display: grid; border: var(--bw) solid var(--ink); }
-  .jp-adjust__row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1.5px solid var(--rule); }
+  .jp-adjust { display: grid; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); }
+  .jp-adjust__row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
   .jp-adjust__row:last-child { border-bottom: 0; }
-  .jp-adjust__row output { min-width: 64px; text-align: center; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 24px; font-variant-numeric: tabular-nums; }
+  .jp-adjust__row output { min-width: 72px; padding: 6px 4px; text-align: center; font-family: var(--font-led); font-size: 24px; line-height: 1; color: var(--led); text-shadow: var(--led-glow); background: #000; border: 1px solid var(--line); border-radius: var(--r-sm); }
 </style>
 </head>
 <body data-game="jeopardy">
@@ -136,7 +128,7 @@
   <section class="screen is-active" id="s-start">
     <div class="intro">
       <div data-stagger>
-        <span class="eyebrow">N° 02 · Da 1 a 6 squadre</span>
+        <span class="eyebrow">Gioco 02 · Da 1 a 6 squadre</span>
         <h1 class="intro__title">Il tabellone del <em>calcio</em></h1>
         <p class="intro__lead">Cinque caselle per categoria, da 100 a 500 punti. Più alta la posta, più cattiva la domanda. Chi sbaglia paga, e gli altri ringraziano.</p>
         <div class="row mt-3">
@@ -175,30 +167,31 @@
   </div>
 
   <section class="screen" id="s-board">
-    <div class="jp-head">
-      <div class="jp-who" id="turn-who" aria-live="polite"></div>
-      <div class="jp-tools">
-        <span class="jp-round" id="round-chip"></span>
-        <button class="btn btn--sm" type="button" id="adjust-btn"></button>
-        <button class="btn btn--sm" type="button" id="end-btn"></button>
-      </div>
+    <div class="board jp-hud">
+      <div class="board__cell jp-hud__who" id="turn-cell"><span class="board__label" id="turn-label"></span><span class="jp-who" id="turn-who" aria-live="polite"></span></div>
+      <div class="board__cell" id="round-cell"><span class="board__label">Tempo</span><span class="led" id="round-led"></span></div>
+      <div class="board__cell"><span class="board__label">Caselle</span><span class="led" id="left-led"></span></div>
     </div>
     <div class="jp-board" id="board"></div>
+    <div class="jp-tools">
+      <button class="btn btn--sm" type="button" id="adjust-btn"></button>
+      <button class="btn btn--sm" type="button" id="end-btn"></button>
+    </div>
   </section>
 
   <section class="screen" id="s-q">
     <div class="qz-main--narrow stack" style="--gap:18px;margin:0 auto">
-      <div class="card jp-q" id="q-card">
-        <div class="jp-q__top">
-          <span class="jp-q__cat" id="q-cat"></span>
-          <span class="jp-q__value" id="q-value"></span>
+      <div class="jp-screen" id="q-card">
+        <div class="jp-screen__top">
+          <span class="jp-screen__cat" id="q-cat"></span>
+          <span class="jp-screen__value" id="q-value-box"><span class="board__label" id="q-value-label">In palio</span><span class="led" id="q-value"></span></span>
         </div>
-        <div class="jp-q__body" id="q-body">
+        <div class="jp-screen__body" id="q-body">
           <h2 class="question" id="q-text" aria-live="polite"></h2>
           <div id="q-timer"></div>
         </div>
         <div class="jp-ans" id="q-ans" hidden>
-          <span class="jp-ans__label">la risposta</span>
+          <span class="jp-ans__label">La risposta</span>
           <div class="jp-ans__text" id="q-ans-text"></div>
         </div>
       </div>
@@ -222,8 +215,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=40f5afd6" defer></script>
+<script src="assets/qz.js?v=e3a7f46c" defer></script>
 <script src="assets/db-jeopardy.js?v=eaec42e1" defer></script>
-<script src="assets/games/jeopardy.js?v=a2d6f78c" defer></script>
+<script src="assets/games/jeopardy.js?v=283ae111" defer></script>
 </body>
 </html>

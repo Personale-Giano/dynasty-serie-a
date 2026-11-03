@@ -3,10 +3,11 @@
    Dati: assets/db-intesavincente.js (`words`: elenco di parole).
    Da 2 a 6 squadre, tempo, giri e passi a scelta, parole che non si
    ripetono (anche tra le partite), passi che si azzerano a ogni turno,
-   tempo per rispondere dopo la prenotazione opzionale, time-out, taccuino
+   tempo per rispondere dopo la prenotazione opzionale, time-out, resoconto
    del turno correggibile, classifica.
-   Stile "Almanacco": il cartellone dello studio stampato su carta, la
-   prenotazione e' un timbro, i passi sono tacche a pennarello.
+   Stile "Riflettori": la parola va sul maxischermo con lo stato a LED in alto,
+   la prenotazione e' una scritta che si accende ("PRENOTATO"), i passi sono
+   spie a LED e il tempo per rispondere una barra di LED che si spegne.
    ========================================================================== */
 (function () {
     'use strict';
@@ -67,7 +68,7 @@
         onExpire: function () { if (S.phase === 'play' || S.phase === 'anim') timeUp(); }
     });
     var answerTimer = new QZ.Timer({
-        seconds: 5, bar: $('#answer-bar'),
+        seconds: 5, bar: $('#answer-bar'), label: $('#answer-sec'),
         onSecond: function (s) { if (s > 0 && S.phase === 'buzz') QZ.sound.tock(); },
         onExpire: function () { if (S.phase === 'buzz') judge(false, 'Tempo!'); }
     });
@@ -132,13 +133,14 @@
         S.phase = 'hand';
         var t = team();
         $('#s-turn').style.setProperty('--c', t.color);
-        $('#hand-round').textContent = S.rounds > 1 ? 'Giro ' + S.round + ' di ' + S.rounds : 'Giro unico';
+        $('#hand-round').textContent = S.rounds > 1 ? 'Giro ' + S.round + '/' + S.rounds : 'Giro unico';
         $('#hand-name').textContent = t.name;
         $('#hand-scores').innerHTML = S.teams.map(function (x, i) {
             return '<div class="team' + (i === S.turn ? ' is-active' : '') + '" style="--c:' + x.color + '"><span class="team__dot"></span>' +
                 '<span class="team__name">' + QZ.esc(x.name) + '</span><span class="team__score">' + x.score + '</span></div>';
         }).join('');
         QZ.show('s-turn');
+        QZ.say((S.rounds > 1 ? 'Giro ' + S.round + ' di ' + S.rounds + '. ' : '') + 'Tocca a ' + t.name + ': il telefono ai due suggeritori.');
         QZ.sound.whoosh();
     }
 
@@ -181,29 +183,17 @@
         $('#act-judge').hidden = mode !== 'buzz';
         $('#ok-btn').disabled = $('#ko-btn').disabled = false;
         $('#card').classList.toggle('is-buzz', mode === 'buzz');
-        $('#answer-bar').hidden = !(mode === 'buzz' && S.answer);
+        $('#answer-bar').hidden = $('#answer-sec').hidden = !(mode === 'buzz' && S.answer);
     }
 
     /**
-     * I passi come tacche a pennarello: quelle gia' usate sono piene, quelle
-     * che restano sono a matita. La quinta va di traverso, come al bar.
-     * fresh: indice della tacca appena tracciata (si disegna con il pennarello).
+     * I passi come spie a LED: accese quelle che restano, spente quelle usate.
+     * fresh: indice della spia che si e' appena spenta (sfarfalla prima di spegnersi).
      */
-    function tallySVG(total, used, fresh) {
-        var d = [];
-        for (var i = 0; i < total; i++) {
-            if (i % 5 === 4) {
-                var x0 = Math.floor(i / 5) * 46;
-                d.push('M' + (x0 - 1) + ' 17 L' + (x0 + 31) + ' 6');
-            } else {
-                var x = Math.floor(i / 5) * 46 + (i % 5) * 8 + 2;
-                d.push('M' + x + ' 3 L' + (x + 1.5) + ' 21');
-            }
-        }
-        var w = Math.max(24, Math.ceil(total / 5) * 46 - 12);
-        return '<svg class="tally" viewBox="-2 0 ' + w + ' 24" style="width:' + Math.round((w + 2) * 1.25) + 'px" aria-hidden="true">' + d.map(function (p, i) {
-            return '<path d="' + p + '" class="' + (i < used ? 'is-used' : '') + (i === fresh ? ' is-new' : '') + '"/>';
-        }).join('') + '</svg>';
+    function pipsHTML(total, left, fresh) {
+        var h = '';
+        for (var i = 0; i < total; i++) h += '<i class="' + (i < left ? 'is-on' : '') + (i === fresh ? ' is-off-now' : '') + '"></i>';
+        return '<span class="iv-pips" aria-hidden="true">' + h + '</span>';
     }
 
     function paintSkip(fresh) {
@@ -211,7 +201,7 @@
         if (!total) {
             b.innerHTML = QZ.icon('skip') + 'Passo<small>niente passi</small>';
         } else {
-            b.innerHTML = 'Passo' + tallySVG(total, total - n, fresh) + '<small>' + (n ? n + (n === 1 ? ' rimasto' : ' rimasti') : 'finiti') + '</small>';
+            b.innerHTML = 'Passo' + pipsHTML(total, n, fresh) + '<small>' + (n ? n + (n === 1 ? ' rimasto' : ' rimasti') : 'finiti') + '</small>';
         }
         b.setAttribute('aria-label', 'Passo, ' + (n > 0 ? plural(n, 'rimasto', 'rimasti') : 'finiti'));
         b.disabled = n <= 0;
@@ -249,8 +239,8 @@
         QZ.vibrate(80);
         setButtons('buzz');
         setState('La risposta?', 'zap');
-        // il timbro cade sotto la parola: i suggeritori la devono ancora leggere per giudicare
-        var st = QZ.fx.stamp($('#card'), 'Prenotato', 'bad', { size: 40, rot: -6, say: 'Prenotato: la risposta?' + (S.answer ? ' ' + S.answer + ' secondi.' : '') });
+        // la scritta si accende sotto la parola: i suggeritori la devono ancora leggere per giudicare
+        var st = QZ.fx.stamp($('#card'), 'Prenotato', 'ink', { size: 40, say: 'Prenotato: la risposta?' + (S.answer ? ' ' + S.answer + ' secondi.' : '') });
         if (st) st.classList.add('is-low');
         if (S.answer) { answerTimer.reset(S.answer); answerTimer.start(); }
         $('#ok-btn').focus({ preventScroll: true });
@@ -262,14 +252,14 @@
         S.skipsLeft--;
         S.log.push({ word: S.cur, res: 'skip' });
         S.cur = null;
-        paintSkip(S.skips - S.skipsLeft - 1);
+        paintSkip(S.skipsLeft);
         QZ.sound.whoosh();
         QZ.say('Passo. ' + (S.skipsLeft ? plural(S.skipsLeft, 'passo rimasto', 'passi rimasti') : 'Passi finiti') + '.');
         deal(true);
         refocus($('#buzz-btn'));
     }
 
-    // reason: testo del timbro quando la risposta non arriva in tempo
+    // reason: la scritta quando la risposta non arriva in tempo
     function judge(ok, reason) {
         if (S.phase !== 'buzz') return;
         answerTimer.pause();
@@ -283,18 +273,18 @@
             S.turnPts++;
             t.score++;
             pts.textContent = S.turnPts;
-            QZ.fx.stamp(card, QZ.pick(['Gol!', 'Esatto', 'Che intesa']), 'ok', { size: 46, rot: -6, say: 'Giusta! ' + plural(S.turnPts, 'parola presa', 'parole prese') + ' in questo turno.' });
+            QZ.fx.stamp(card, QZ.pick(['Gol!', 'Esatto', 'Che intesa']), 'ok', { size: 46, say: 'Giusta! ' + plural(S.turnPts, 'parola presa', 'parole prese') + ' in questo turno.' });
             QZ.sound.correct();
             QZ.vibrate(40);
             QZ.fx.floatText(pts, '+1');
             QZ.fx.pop(pts);
         } else {
-            QZ.fx.stamp(card, reason || QZ.pick(['Palo', 'Fuori', 'Niente']), 'ink', { size: 46, rot: 7, say: reason ? 'Tempo scaduto per rispondere.' : 'Sbagliata.' });
+            QZ.fx.stamp(card, reason || QZ.pick(['Palo', 'Fuori', 'Niente']), 'bad', { size: 46, say: reason ? 'Tempo scaduto per rispondere.' : 'Sbagliata.' });
             QZ.sound.wrong();
             QZ.vibrate([60, 40, 60]);
             QZ.fx.shake(card);
         }
-        // il timbro resta un attimo sulla carta, poi parola nuova e cronometro che riparte
+        // la scritta resta accesa un attimo, poi parola nuova e cronometro che riparte
         setTimeout(function () {
             if (S.phase !== 'verdict') return;
             S.phase = 'play';
@@ -311,7 +301,7 @@
         $('#card').classList.add('is-covered');
         QZ.modal({
             title: 'Time-out',
-            text: 'Cronometro fermo e carta girata. Si riparte quando siete pronti.',
+            text: 'Cronometro fermo e maxischermo spento. Si riparte quando siete pronti.',
             actions: [{ label: 'Riprendi', primary: true, icon: 'play', value: 'go' }, { label: 'Chiudi qui', ghost: true, icon: 'whistle', value: 'end' }]
         }).then(function (v) {
             $('#card').classList.remove('is-covered');
@@ -330,38 +320,38 @@
         QZ.vibrate([120, 60, 120]);
         if (S.cur) S.log.push({ word: S.cur, res: 'skip', last: true });
         S.cur = null;
-        QZ.fx.stamp($('#card'), 'Tempo!', 'ink', { size: 48, rot: -6, say: 'Tempo! Fine del turno di ' + team().name + '.' });
+        QZ.fx.stamp($('#card'), 'Tempo!', 'ink', { size: 48, say: 'Tempo! Fine del turno di ' + team().name + '.' });
         setTimeout(showSummary, 900);
     }
 
-    /* ---------- Il taccuino del turno ---------- */
+    /* ---------- Il resoconto del turno ---------- */
     var RES = {
-        ok: { label: 'giusta', mark: 'tick', color: 'var(--green)' },
-        bad: { label: 'sbagliata', mark: 'cross', color: 'var(--red)' },
-        skip: { label: 'passata', mark: null }
+        ok: { label: 'giusta', glyph: QZ.icon('check'), tone: 520 },
+        bad: { label: 'sbagliata', glyph: QZ.icon('x'), tone: 260 },
+        skip: { label: 'passata', glyph: 'PASSO', tone: 400 }
     };
 
     function showSummary() {
         var t = team();
         $('#s-sum').style.setProperty('--c', t.color);
-        $('#sum-eyebrow').textContent = 'fischio finale del turno';
+        $('#sum-eyebrow').textContent = 'Fine del turno';
         $('#sum-title').textContent = t.name;
         paintSumHead();
         $('#sum-list').innerHTML = S.log.length ? S.log.map(function (l, i) {
-            return '<button type="button" class="taccuino__row" data-idx="' + i + '" data-res="' + l.res + '">' +
-                '<span class="taccuino__n">' + (i + 1) + '</span>' +
-                '<span class="taccuino__word"><span>' + QZ.esc(l.word) + '</span>' + (l.last ? '<small>sul fischio finale</small>' : '') + '</span>' +
-                '<span class="taccuino__mark"></span></button>';
-        }).join('') : '<p class="taccuino__empty">Pagina bianca: nessuna parola in questo turno.</p>';
+            return '<button type="button" class="report__row" data-idx="' + i + '" data-res="' + l.res + '">' +
+                '<span class="report__n" aria-hidden="true">' + (i + 1) + '</span>' +
+                '<span class="report__word"><span>' + QZ.esc(l.word) + '</span>' + (l.last ? '<small>sul fischio finale</small>' : '') + '</span>' +
+                '<span class="report__res" aria-hidden="true"></span></button>';
+        }).join('') : '<p class="report__empty">Tabellone vuoto: nessuna parola in questo turno.</p>';
         S.log.forEach(function (l, i) { labelRow(i); });
         var last = S.turn === S.teams.length - 1 && S.round === S.rounds;
         $('#sum-next').innerHTML = last ? QZ.icon('trophy') + 'Classifica finale' : 'Tocca a ' + QZ.esc(S.teams[(S.turn + 1) % S.teams.length].name) + QZ.icon('arrow');
         QZ.show('s-sum');
         QZ.say(t.name + ': ' + plural(S.turnPts, 'parola presa', 'parole prese') + ' in questo turno, ' + plural(t.score, 'punto', 'punti') + ' in classifica.');
-        // il cronista compila il taccuino riga per riga
+        // il resoconto si accende riga per riga
         var step = QZ.reducedMotion() ? 0 : 110;
         S.log.forEach(function (l, i) {
-            setTimeout(function () { penRow(i, step > 0); }, 300 + i * step);
+            setTimeout(function () { lightRow(i, step > 0); }, 300 + i * step);
         });
     }
 
@@ -378,15 +368,16 @@
         row.setAttribute('aria-label', l.word + ': ' + RES[l.res].label + '. Tocca per cambiare');
     }
 
-    function penRow(i, sound) {
+    /** Accende l'esito della riga sul suo pezzetto di tabellone: spunta verde, croce rossa, PASSO ambra. */
+    function lightRow(i, sound) {
         var row = $('#sum-list [data-idx="' + i + '"]');
         if (!row) return;
-        var r = RES[S.log[i].res];
-        var box = row.querySelector('.taccuino__mark');
-        box.innerHTML = '';
-        if (r.mark) QZ.fx.mark(box, r.mark, r.color);
-        else box.textContent = 'passo';
-        if (sound) QZ.sound.tone(r.mark === 'tick' ? 520 : r.mark ? 260 : 400, 0.06, 'triangle', 0.05);
+        var res = S.log[i].res, r = RES[res];
+        var box = row.querySelector('.report__res');
+        box.dataset.res = res;
+        box.innerHTML = r.glyph;
+        QZ.fx.replay(box, 'is-on');
+        if (sound) QZ.sound.tone(r.tone, 0.06, 'square', 0.04);
     }
 
     function cycle(i) {
@@ -400,7 +391,7 @@
         team().score += d;
         QZ.sound.click();
         labelRow(i);
-        penRow(i, false);
+        lightRow(i, false);
         paintSumHead();
         QZ.say(l.word + ': ' + RES[l.res].label + '. ' + plural(S.turnPts, 'parola presa', 'parole prese') + ' nel turno.');
         QZ.fx.pop($('#sum-pts'));

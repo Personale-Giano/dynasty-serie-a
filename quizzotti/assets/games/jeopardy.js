@@ -6,8 +6,9 @@
    che non si ripetono tra le partite, secondo tempo a punti doppi, casella
    "doppia posta", rubata, tempo per rispondere opzionale, correzione
    punteggi e classifica finale.
-   Stile "Almanacco": il tabellone e' una griglia stampata, le caselle
-   giocate si cancellano a penna con le iniziali di chi le ha prese.
+   Stile "Riflettori": il tabellone e' una griglia di LED dello stadio, le
+   caselle giocate si spengono e restano accese le iniziali di chi le ha
+   prese; la domanda va sul maxischermo.
    ========================================================================== */
 (function () {
     'use strict';
@@ -32,7 +33,7 @@
         }).join(' ');
     }
 
-    /** Sigla da scarabocchiare sulla casella: "Squadra 1" -> "S1", "Rossi" -> "ROS". */
+    /** Sigla che resta accesa sulla casella: "Squadra 1" -> "S1", "Rossi" -> "ROS". */
     function initials(name) {
         var words = String(name).trim().split(/\s+/).filter(Boolean);
         if (words.length > 1) return words.slice(0, 3).map(function (w) { return w.charAt(0); }).join('').toUpperCase();
@@ -63,12 +64,11 @@
 
     var teamsList = QZ.playerList($('#teams-host'), { key: 'jeopardy', min: 1, max: 6, initial: 2, label: 'Squadra', title: 'Squadre (1-6)' });
 
-    var XPATH = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 8 L25 25 M24 7 L8 25"/></svg>';
     $('#cats-random').innerHTML = QZ.icon('shuffle') + 'Pesca a caso';
     $('#cats').innerHTML = CATS.map(function (c, i) {
-        return '<button type="button" class="jp-cat" data-i="' + i + '" aria-pressed="false"><span class="jp-cat__box">' + XPATH + '</span>' + QZ.esc(pretty(c)) + '</button>';
+        return '<button type="button" class="jp-cat" data-i="' + i + '" aria-pressed="false"><span class="jp-cat__lamp" aria-hidden="true"></span>' + QZ.esc(pretty(c)) + '</button>';
     }).join('');
-    // aggiorna le caselle senza ridisegnarle: la X a penna si traccia solo su quella toccata
+    // aggiorna le caselle senza ridisegnarle: la spia si accende solo su quella toccata
     function paintCats(drawn) {
         QZ.$$('#cats .jp-cat').forEach(function (b) {
             var on = selected.indexOf(CATS[Number(b.dataset.i)]) >= 0;
@@ -127,7 +127,7 @@
             if (S.phase !== 'question') return;
             QZ.sound.buzzer();
             QZ.vibrate([80, 40, 80]);
-            QZ.fx.stamp($('#q-body'), 'Tempo!', 'ink', { size: 34, ms: 1400, say: false });
+            QZ.fx.stamp($('#q-body'), 'Tempo!', 'bad', { size: 34, ms: 1400, say: false });
             S.timeUp = true;
             reveal();
         }
@@ -217,9 +217,13 @@
     function paintActive() {
         if (S.teams.length > 1) QZ.$$('#scores .team').forEach(function (el, i) { el.classList.toggle('is-active', i === S.active); });
         var t = S.teams[S.active];
+        var solo = S.teams.length === 1;
         var who = $('#turn-who');
-        who.style.setProperty('--c', t.color);
-        who.innerHTML = S.teams.length > 1 ? '<small>sceglie la casella</small><b>' + QZ.esc(t.name) + '</b>' : '<small>tocca a te</small><b>Scegli una casella</b>';
+        $('#turn-cell').style.setProperty('--c', solo ? 'var(--accent)' : t.color);
+        $('#turn-label').textContent = solo ? 'Da solo' : 'Tocca a';
+        // la parte nascosta completa la frase per chi ascolta: "Sceglie la casella: Squadra 1"
+        who.innerHTML = solo ? 'Scegli' : '<span class="sr-only">Sceglie la casella: </span>' + QZ.esc(t.name);
+        who.title = solo ? '' : t.name;
         QZ.fx.replay(who, 'is-pop');
     }
 
@@ -250,27 +254,34 @@
                         ' aria-label="' + QZ.esc(cellLabel(cell, pts)) + '">' + QZ.fmt(pts) + '</button>';
                 }).join('') + '</div>';
         }).join('');
-        // caselle gia' giocate (ritorno dopo un cambio di schermata): segno fermo, senza animazione
-        Object.keys(S.cells).forEach(function (k) { if (S.cells[k].used) inkCell(k, false); });
+        // caselle gia' giocate (ritorno dopo un cambio di schermata): spente subito, senza sfarfallio
+        Object.keys(S.cells).forEach(function (k) { if (S.cells[k].used) darkCell(k, false); });
         paintRound();
         paintActive();
     }
 
     function paintRound() {
-        $('#round-chip').textContent = (S.rounds > 1 ? (S.round === 1 ? '1° tempo' : '2° tempo') + ' · ' : '') + plural(remaining(), 'casella', 'caselle');
+        $('#round-cell').hidden = S.rounds < 2;
+        // niente aria-label sugli span: la cifra a LED e' per gli occhi, la frase nascosta per chi ascolta
+        $('#round-led').innerHTML = '<span aria-hidden="true">' + S.round + 'T</span><span class="sr-only">' + (S.round === 1 ? 'primo' : 'secondo') + '</span>';
+        $('#left-led').textContent = String(remaining()).padStart(2, '0');
     }
 
-    /** Cancella la casella a penna: X nel colore di chi l'ha presa (inchiostro se nessuno) e sigla. */
-    function inkCell(k, animate) {
+    /**
+     * La casella giocata si spegne: restano accese le iniziali di chi l'ha presa,
+     * nel suo colore, oppure un trattino fioco se non l'ha presa nessuno.
+     */
+    function darkCell(k, animate) {
         var b = $('#board [data-k="' + k + '"]');
         if (!b) return;
         var cell = S.cells[k], by = cell.by >= 0 ? S.teams[cell.by] : null;
         b.disabled = true;
-        b.classList.toggle('is-static', !animate);
+        b.classList.add('is-played');
+        b.classList.toggle('is-nobody', !by);
+        if (by) b.style.setProperty('--c', by.color);
         b.setAttribute('aria-label', cellLabel(cell, cell.tier * mult()));
-        QZ.fx.mark(b, 'cross', by ? by.color : 'var(--ink-2)');
-        QZ.$$('.jp-cell__by', b).forEach(function (x) { x.remove(); });
-        if (by) b.insertAdjacentHTML('beforeend', '<span class="jp-cell__by" style="--c:' + by.color + '" aria-hidden="true">' + QZ.esc(by.short) + '</span>');
+        b.innerHTML = '<span aria-hidden="true">' + (by ? QZ.esc(by.short) : '—') + '</span>';
+        if (animate) QZ.fx.replay(b, 'is-switch');
     }
 
     function remaining() {
@@ -294,8 +305,10 @@
         $('#q-cat').innerHTML = QZ.icon('ball') + QZ.esc(pretty(cell.cat));
         var v = $('#q-value');
         // niente aria-label su uno span: il resto della frase e' testo nascosto
-        v.innerHTML = QZ.fmt(S.q.points) + '<span class="sr-only"> punti' + (isDouble ? ', doppia posta' : '') + '</span>';
-        v.classList.toggle('is-double', isDouble);
+        v.innerHTML = QZ.fmt(S.q.points) + '<span class="sr-only"> punti</span>';
+        v.classList.toggle('led--red', isDouble);
+        $('#q-value-box').classList.toggle('is-double', isDouble);
+        $('#q-value-label').textContent = isDouble ? 'Doppia posta' : 'In palio';
         var qt = $('#q-text');
         qt.textContent = item.q;
         $('#q-ans').hidden = true;
@@ -311,11 +324,13 @@
         QZ.fx.pop(v);
         var startDelay = 500;
         if (isDouble) {
-            // il timbro picchia sul cartoncino appena e' in pagina, poi si toglie per leggere la domanda
+            // la scritta si accende sul maxischermo appena e' in pagina, poi si spegne per leggere la domanda
             startDelay = 1900;
             setTimeout(function () {
                 if (S.phase !== 'question') return;
-                QZ.fx.stamp($('#q-body'), 'Doppia posta', 'bad', { size: window.innerWidth < 600 ? 40 : 58, rot: -9, ms: 1500, say: 'Doppia posta: questa casella vale doppio' });
+                QZ.fx.stamp($('#q-body'), 'Doppia posta', 'bad', { size: window.innerWidth < 600 ? 34 : 54, ms: 1500, say: 'Doppia posta: questa casella vale doppio' });
+                QZ.fx.flash('rgba(255, 75, 58, .22)');
+                QZ.sound.levelUp();
                 QZ.vibrate([40, 30, 40]);
             }, QZ.reducedMotion() ? 0 : 320);
         } else {
@@ -400,7 +415,7 @@
             S.q.cell.by = j;
             addScore(j, S.q.points);
             QZ.sound.coin();
-            QZ.fx.stamp($('#q-body'), 'Rubata da ' + t.short, 'ink', { size: 34, rot: 6, say: 'Rubata da ' + t.name + ': più ' + QZ.fmt(S.q.points) + ', ora ' + plural(t.score, 'punto', 'punti') + '.' });
+            QZ.fx.stamp($('#q-body'), 'Rubata da ' + t.short, 'ink', { size: 34, say: 'Rubata da ' + t.name + ': più ' + QZ.fmt(S.q.points) + ', ora ' + plural(t.score, 'punto', 'punti') + '.' });
         } else {
             QZ.say('Nessuno la ruba.');
         }
@@ -412,19 +427,17 @@
             if (S.phase !== 'resolved') return;
             var k = S.q.key;
             S.active = (S.active + 1) % S.teams.length;
-            S.phase = 'inking';
+            S.phase = 'switching';
             QZ.show('s-board');
             paintRound();
             paintActive();
-            // si torna al tabellone e la penna cancella la casella appena giocata
+            // si torna al tabellone e la casella appena giocata si spegne
             setTimeout(function () {
                 var b = $('#board [data-k="' + k + '"]');
                 if (b) b.scrollIntoView({ block: 'nearest', behavior: QZ.reducedMotion() ? 'auto' : 'smooth' });
-                inkCell(k, true);
+                darkCell(k, true);
                 focusFreeCell(k);
-                QZ.sound.tone(300 + Math.random() * 80, 0.12, 'triangle', 0.05);
-                // a tratto finito il segno diventa fisso (regge anche se lo schermo cambia misura)
-                setTimeout(function () { if (b) b.classList.add('is-static'); }, 700);
+                QZ.sound.tock();
                 if (!remaining()) { S.phase = 'between'; setTimeout(endRound, 900); return; }
                 S.phase = 'board';
             }, QZ.reducedMotion() ? 30 : 320);

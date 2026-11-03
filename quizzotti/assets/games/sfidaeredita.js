@@ -7,7 +7,8 @@
    dell'arbitro; la voce e' una scelta esplicita (tasto del microfono in
    partita), mai chiesta da sola al calcio d'inizio. Risposte tolleranti,
    parole con spazi e accenti gestite, passo con penalita', pausa.
-   Grafica: tabellone dello stadio stampato e parola come un cruciverba.
+   Grafica: il tabellone dello stadio vero (CASA - OSPITI, risultato e
+   cronometri a LED) e la parola su celle a LED che si accendono una a una.
    ========================================================================== */
 (function () {
     'use strict';
@@ -28,7 +29,7 @@
     $('#start-btn').innerHTML = 'Fischio d\'inizio' + QZ.icon('arrow');
     $('#medal').innerHTML = QZ.icon('ball');
     $('#rules').innerHTML = [
-        ['Esce una definizione', 'e la parola si scrive da sola, una lettera alla volta. L\'ultima non la regala mai.'],
+        ['Esce una definizione', 'e la parola si accende sul tabellone, una lettera alla volta. L\'ultima non la regala mai.'],
         ['Rispondete', 'scrivendo o lasciando decidere all\'arbitro. Sbagliato? Palo, si riprova.'],
         ['Gol:', 'parola indovinata, palla agli avversari con una parola nuova.'],
         ['Ogni squadra ha il suo cronometro,', 'che corre solo nel suo turno. Chi lo finisce perde il derby.']
@@ -77,11 +78,17 @@
     function playing() { return G && G.state === 'play' && !G.paused; }
     function isLetter(ch) { return QZ.norm(ch) !== ''; }
     function team() { return G.teams[G.turn]; }
+    function pad(n) { return String(n).padStart(2, '0'); }
+    /** Il cronometro della squadra come sul tabellone: 1:00, 0:45, 0:09 */
+    function paintClock(i) {
+        var s = Math.max(0, Math.ceil(timers[i].remaining));
+        $('#t' + i + ' [data-clock]').textContent = Math.floor(s / 60) + ':' + pad(s % 60);
+    }
     /** quiet: si scrive ma non si annuncia (la voce trascritta mentre si parla) */
     function feed(text, kind, ico, quiet) {
         $('#feed').classList.remove('is-ok', 'is-bad');
         if (kind) $('#feed').classList.add('is-' + kind);
-        $('#feed-ico').innerHTML = QZ.icon(ico || 'message') + 'Cronaca';
+        $('#feed-ico').innerHTML = QZ.icon(ico || 'message') + '<span class="db-feed__lbl">Cronaca</span>';
         $('#feed-txt').setAttribute('aria-live', quiet ? 'off' : 'polite');
         $('#feed-txt').textContent = text;
     }
@@ -120,15 +127,18 @@
             el.querySelector('[data-bar]').style.setProperty('--tick', (1000 / CFG.clock).toFixed(3) + '%');
             $('#g' + i).textContent = '0';
             return new QZ.Timer({
-                seconds: CFG.clock, label: el.querySelector('[data-clock]'), bar: el.querySelector('[data-bar]'),
+                seconds: CFG.clock, bar: el.querySelector('[data-bar]'),
                 warnAt: 20 / CFG.clock, dangerAt: 10 / CFG.clock,
                 onSecond: function (s) {
+                    paintClock(i);
                     el.classList.toggle('is-danger', s <= 10 && s > 0);
                     if (s <= 10 && s > 0 && G.turn === i) QZ.sound.tick();
                 },
                 onExpire: function () { timeOut(i); }
             });
         });
+        paintClock(0);
+        paintClock(1);
         // la voce riparte spenta a ogni derby: si accende solo toccando il tasto
         micWanted = false;
         paintMic();
@@ -139,7 +149,7 @@
 
     function paintTurn() {
         [0, 1].forEach(function (i) { $('#t' + i).classList.toggle('is-active', i === G.turn && G.state !== 'over'); });
-        $('#sb-word').textContent = 'Parola ' + (G.words + 1);
+        $('#sb-word').textContent = pad(G.words + 1);
     }
 
     function kickoff(first) {
@@ -199,7 +209,7 @@
             var ch = w[i];
             if (ch === ' ') { html += '</div><div class="db-w">'; fresh = true; continue; }
             var letter = isLetter(ch);
-            // come nel cruciverba: il numerino sulla prima casella di ogni parola
+            // con piu' parole, il numerino sulla prima cella di ognuna
             var num = letter && fresh && w.indexOf(' ') >= 0 ? ' data-n="' + (n++) + '"' : '';
             if (letter) fresh = false;
             html += '<span class="db-t' + (letter ? '' : ' db-p') + '" data-i="' + i + '"' + num + ' style="--i:' + (k++) + '">' + (G.shown[i] ? QZ.esc(ch) : '') + '</span>';
@@ -209,14 +219,14 @@
         paintWordLabel();
     }
 
-    // dimensione delle caselle: la parola piu' lunga deve stare su una riga
+    // dimensione delle celle: la parola piu' lunga deve stare su una riga
     function fitWord() {
         if (!G || !G.word) return;
         var longest = Math.max.apply(null, G.word.word.split(' ').map(function (x) { return x.length; }));
-        var W = ($('#word').clientWidth || 340) - 4;
-        // le caselle si sovrappongono di un bordo (2px), come in un cruciverba vero
-        var tw = Math.floor((W + (longest - 1) * 2) / longest);
-        $('#word').style.setProperty('--tw', QZ.clamp(tw, 18, 54) + 'px');
+        // larghezza utile del pannello (meno il margine interno), 3px tra una cella e l'altra
+        var W = ($('#word').clientWidth || 340) - 24;
+        var tw = Math.floor((W - (longest - 1) * 3) / longest);
+        $('#word').style.setProperty('--tw', QZ.clamp(tw, 18, 48) + 'px');
     }
 
     function paintWordLabel() {
@@ -256,7 +266,7 @@
         feed(said ? 'Palo. «' + said.toUpperCase() + '» non è la parola giusta.' : 'Palo. Si riprova.', 'bad', 'x');
         QZ.sound.wrong();
         QZ.vibrate([50, 30, 50]);
-        QZ.fx.stamp($('#word'), 'Palo', 'bad', { size: 34, ms: 1400, say: false });   // lo annuncia la cronaca
+        QZ.fx.stamp($('#word'), 'Palo', 'ink', { size: 40, ms: 1400, say: false });   // lo annuncia la cronaca
         QZ.fx.shake($('#word'));
     }
 
@@ -270,7 +280,7 @@
         t.goals++;
         G.words++;
         revealAll('is-solved');
-        QZ.fx.stamp($('#word'), 'Gol!', 'ok', { size: 46, rot: -8, say: false });
+        QZ.fx.stamp($('#word'), 'Gol!', 'ok', { size: 54, say: false });
         var g = $('#g' + G.turn);
         g.textContent = t.goals;
         QZ.fx.pop(g);
@@ -279,7 +289,7 @@
         QZ.sound.correct();
         setTimeout(QZ.sound.whistle, 350);
         QZ.vibrate([30, 40, 120]);
-        QZ.fx.confetti({ count: 70, colors: [t.color, '#fbf6ec', '#0e7a43', '#f3c21b'], origin: { x: 0.5, y: 0.45 } });
+        QZ.fx.confetti({ count: 70, colors: [t.color, '#eef1f2', '#3ddc84', '#ffb627'], origin: { x: 0.5, y: 0.45 } });
         clearTimeout(goalTo);
         goalTo = setTimeout(function () {
             if (G.state !== 'goal') return;
@@ -309,6 +319,7 @@
         team().passes++;
         tm.remaining = Math.max(0, tm.remaining - PASS_COST);
         tm.render();
+        paintClock(G.turn);
         QZ.fx.floatText($('#t' + G.turn), '−' + PASS_COST + ' s', true);
         QZ.sound.whoosh();
         if (tm.remaining <= 0) { tm.pause(); timeOut(G.turn); return; }
@@ -326,7 +337,7 @@
         paintTurn();
         if (G.word && !$('#play').hidden) {
             revealAll('is-fail');
-            QZ.fx.stamp($('#word'), 'Fischio finale', 'ink', { size: 22, rot: -6, say: false });
+            QZ.fx.stamp($('#word'), 'Fischio finale', 'bad', { size: 28, y: 0, say: false });
         }
         feed('Tempo finito per ' + G.teams[i].name + '. La parola era «' + (G.word ? G.word.word.toUpperCase() : '') + '».', 'bad', 'clock');
         QZ.sound.buzzer();

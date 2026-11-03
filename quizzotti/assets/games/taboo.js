@@ -3,10 +3,11 @@
    Dati: assets/db-taboo.js (`tabooWords`: {word, categoria, taboo[]}).
    Da 2 a 6 squadre, tempo e numero di giri a scelta, penalita' per la parola
    vietata e passi configurabili, argomenti selezionabili, carte che non si
-   ripetono tra le partite, schermata "passa il telefono", taccuino del turno
+   ripetono tra le partite, schermata "passa il telefono", resoconto del turno
    correggibile, classifica finale.
-   Stile "Almanacco": la carta e' un cartoncino con il riquadro rosso delle
-   vietate; ogni verdetto e' un timbro, il taccuino si compila a penna.
+   Stile "Riflettori": la carta va sul maxischermo con le vietate a LED rossi;
+   ogni verdetto e' una scritta che si accende ("GOL!", "VIETATA"), il
+   resoconto del turno si accende riga per riga.
    ========================================================================== */
 (function () {
     'use strict';
@@ -65,7 +66,7 @@
     $('#medal').innerHTML = QZ.icon('ban');
     $('#rules').innerHTML = rulesHTML([
         ['Uno spiega,', 'i compagni indovinano prima che scada il tempo.'],
-        ['Vietato dire', 'la parola, quelle nel riquadro rosso e i loro parenti stretti.'],
+        ['Vietato dire', 'la parola, quelle accese in rosso e i loro parenti stretti.'],
         ['Un avversario fa l\'arbitro:', 'sente una vietata e fischia.'],
         ['Carta indovinata, un punto.', 'Alla fine dei giri vince chi ne ha di più.']
     ]);
@@ -79,12 +80,11 @@
     QZ.segmented($('#opt-pen'), [{ label: 'Costa un punto', value: 1 }, { label: 'Solo carta buttata', value: 0 }], opts.pen, function (v) { opts.pen = v; saveOpts(); });
     QZ.segmented($('#opt-skip'), [{ label: 'Quanti vuoi', value: -1 }, { label: '3', value: 3 }, { label: '1', value: 1 }, { label: 'Zero', value: 0 }], opts.skips, function (v) { opts.skips = v; saveOpts(); });
 
-    var XPATH = '<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 8 L25 25 M24 7 L8 25"/></svg>';
     $('#groups-all').innerHTML = QZ.icon('check') + 'Tutti';
     $('#groups').innerHTML = GROUPS.map(function (g) {
-        return '<button type="button" class="tb-group" data-g="' + g.id + '" aria-pressed="false"><span class="tb-group__box">' + XPATH + '</span>' + QZ.esc(g.label) + ' <small>' + QZ.fmt(COUNT[g.id] || 0) + '</small></button>';
+        return '<button type="button" class="tb-group" data-g="' + g.id + '" aria-pressed="false"><span class="tb-group__lamp" aria-hidden="true"></span>' + QZ.esc(g.label) + ' <small>' + QZ.fmt(COUNT[g.id] || 0) + '</small></button>';
     }).join('');
-    // aggiorna le caselle senza ridisegnarle: la X a penna si traccia solo dove si tocca
+    // aggiorna le caselle senza ridisegnarle: la spia si accende solo dove si tocca
     function paintGroups(drawn) {
         QZ.$$('#groups .tb-group').forEach(function (b) {
             var on = groups.indexOf(b.dataset.g) >= 0;
@@ -193,11 +193,11 @@
         S.phase = 'hand';
         var t = team();
         $('#s-turn').style.setProperty('--c', t.color);
-        $('#hand-round').textContent = S.rounds > 1 ? 'Giro ' + S.round + ' di ' + S.rounds : 'Giro unico';
+        $('#hand-round').textContent = S.rounds > 1 ? 'Giro ' + S.round + '/' + S.rounds : 'Giro unico';
         $('#hand-name').textContent = t.name;
         $('#hand-scores').innerHTML = scoresHTML(S.turn);
         QZ.show('s-turn');
-        QZ.say((S.rounds > 1 ? 'Giro ' + S.round + ' di ' + S.rounds + '. ' : '') + 'Passa il telefono a ' + t.name + '.');
+        QZ.say((S.rounds > 1 ? 'Giro ' + S.round + ' di ' + S.rounds + '. ' : '') + 'Tocca a ' + t.name + ': passa il telefono a chi spiega.');
         QZ.sound.whoosh();
     }
 
@@ -246,8 +246,8 @@
     }
 
     var VERDICT = {
-        ok: { cls: 'is-go-ok', kind: 'ok', words: ['Indovinata', 'Gol!', 'Esatto'] },
-        bad: { cls: 'is-go-bad', kind: 'bad', words: ['Vietata!'] },
+        ok: { cls: 'is-go-ok', kind: 'ok', words: ['Gol!', 'Gol!', 'Esatto'] },
+        bad: { cls: 'is-go-bad', kind: 'bad', words: ['Vietata'] },
         skip: { cls: 'is-go-skip', kind: 'ink', words: ['Passo'] }
     };
 
@@ -261,7 +261,7 @@
         var show = function () {
             var w = draw();
             S.cur = w;
-            card.classList.remove('is-go-ok', 'is-go-bad', 'is-go-skip');
+            card.classList.remove('is-go-ok', 'is-go-bad', 'is-go-skip', 'is-foul');
             QZ.$$('.qz-stamp', card).forEach(function (x) { x.remove(); });
             $('#word').textContent = w.word;
             $('#taboo').innerHTML = w.taboo.map(function (x) { return '<li>' + QZ.esc(x) + '</li>'; }).join('');
@@ -273,8 +273,9 @@
         if (!res) { show(); return; }
         var v = VERDICT[res];
         S.phase = 'anim';
-        // il timbro picchia sulla carta, poi la carta vola via e arriva la prossima
-        QZ.fx.stamp(card, QZ.pick(v.words), v.kind, { size: 44, rot: res === 'skip' ? 8 : -10, say: false });
+        // la scritta si accende sul maxischermo, poi la carta esce e arriva la prossima
+        QZ.fx.stamp(card, QZ.pick(v.words), v.kind, { size: 44, say: false });
+        if (res === 'bad') { card.classList.add('is-foul'); QZ.fx.flash('rgba(255, 75, 58, .22)'); }
         if (QZ.reducedMotion()) { setTimeout(function () { if (S.phase === 'anim') show(); }, 260); return; }
         setTimeout(function () {
             if (S.phase !== 'anim') return;
@@ -321,7 +322,7 @@
         $('#card').classList.add('is-covered');
         QZ.modal({
             title: 'Time-out',
-            text: 'Cronometro fermo e carta girata. Si riparte quando siete pronti.',
+            text: 'Cronometro fermo e maxischermo spento. Si riparte quando siete pronti.',
             actions: [{ label: 'Riprendi', primary: true, icon: 'play', value: 'go' }, { label: 'Chiudi qui', ghost: true, icon: 'whistle', value: 'end' }]
         }).then(function (v) {
             $('#card').classList.remove('is-covered');
@@ -338,42 +339,42 @@
         S.phase = 'sum';
         QZ.sound.whistle();
         QZ.vibrate([120, 60, 120]);
-        // la carta rimasta in mano finisce nel taccuino: se l'hanno detta sul fischio si convalida
+        // la carta rimasta in mano finisce nel resoconto: se l'hanno detta sul fischio si convalida
         if (S.cur) S.log.push({ word: S.cur.word, res: 'skip', last: true });
         S.cur = null;
-        QZ.fx.stamp($('#card'), 'Tempo!', 'ink', { size: 48, rot: -6, say: 'Tempo! Fine del turno.' });
+        QZ.fx.stamp($('#card'), 'Tempo!', 'ink', { size: 48, say: 'Tempo! Fine del turno.' });
         setTimeout(showSummary, 900);
     }
 
-    /* ---------- Il taccuino del turno ---------- */
+    /* ---------- Il resoconto del turno ---------- */
     var RES = {
-        ok: { label: 'indovinata', mark: 'tick', color: 'var(--green)' },
-        bad: { label: 'vietata', mark: 'cross', color: 'var(--red)' },
-        skip: { label: 'passata', mark: null }
+        ok: { label: 'indovinata', glyph: QZ.icon('check'), tone: 520 },
+        bad: { label: 'vietata', glyph: QZ.icon('x'), tone: 260 },
+        skip: { label: 'passata', glyph: 'PASSO', tone: 400 }
     };
 
     function showSummary() {
         var t = team();
         $('#s-sum').style.setProperty('--c', t.color);
-        $('#sum-eyebrow').textContent = 'fischio finale del turno';
+        $('#sum-eyebrow').textContent = 'Fine del turno';
         $('#sum-title').textContent = t.name;
         paintSumHead();
         var list = $('#sum-list');
         list.innerHTML = S.log.length ? S.log.map(function (l, i) {
-            return '<button type="button" class="taccuino__row" data-idx="' + i + '" data-res="' + l.res + '">' +
-                '<span class="taccuino__n">' + (i + 1) + '</span>' +
-                '<span class="taccuino__word"><span>' + QZ.esc(l.word) + '</span>' + (l.last ? '<small>sul fischio finale</small>' : '') + '</span>' +
-                '<span class="taccuino__mark"></span></button>';
-        }).join('') : '<p class="taccuino__empty">Pagina bianca: nessuna carta in questo turno.</p>';
+            return '<button type="button" class="report__row" data-idx="' + i + '" data-res="' + l.res + '">' +
+                '<span class="report__n" aria-hidden="true">' + (i + 1) + '</span>' +
+                '<span class="report__word"><span>' + QZ.esc(l.word) + '</span>' + (l.last ? '<small>sul fischio finale</small>' : '') + '</span>' +
+                '<span class="report__res" aria-hidden="true"></span></button>';
+        }).join('') : '<p class="report__empty">Tabellone vuoto: nessuna carta in questo turno.</p>';
         S.log.forEach(function (l, i) { labelRow(i); });
         var last = S.turn === S.teams.length - 1 && S.round === S.rounds;
         $('#sum-next').innerHTML = last ? QZ.icon('trophy') + 'Classifica finale' : 'Tocca a ' + QZ.esc(S.teams[(S.turn + 1) % S.teams.length].name) + QZ.icon('arrow');
         QZ.show('s-sum');
-        // il cronista compila il taccuino riga per riga
-        var rows = QZ.$$('#sum-list .taccuino__row');
+        // il resoconto si accende riga per riga
+        var rows = QZ.$$('#sum-list .report__row');
         var step = QZ.reducedMotion() ? 0 : 110;
         rows.forEach(function (row, i) {
-            setTimeout(function () { penRow(i, step > 0); }, 300 + i * step);
+            setTimeout(function () { lightRow(i, step > 0); }, 300 + i * step);
         });
     }
 
@@ -392,15 +393,16 @@
         row.setAttribute('aria-label', l.word + ': ' + RES[l.res].label + '. Tocca per cambiare');
     }
 
-    function penRow(i, sound) {
+    /** Accende l'esito della riga sul suo pezzetto di tabellone: spunta verde, croce rossa, PASSO ambra. */
+    function lightRow(i, sound) {
         var row = $('#sum-list [data-idx="' + i + '"]');
         if (!row) return;
-        var r = RES[S.log[i].res];
-        var box = row.querySelector('.taccuino__mark');
-        box.innerHTML = '';
-        if (r.mark) QZ.fx.mark(box, r.mark, r.color);
-        else box.textContent = 'passo';
-        if (sound) QZ.sound.tone(r.mark === 'tick' ? 520 : r.mark ? 260 : 400, 0.06, 'triangle', 0.05);
+        var res = S.log[i].res, r = RES[res];
+        var box = row.querySelector('.report__res');
+        box.dataset.res = res;
+        box.innerHTML = r.glyph;
+        QZ.fx.replay(box, 'is-on');
+        if (sound) QZ.sound.tone(r.tone, 0.06, 'square', 0.04);
     }
 
     function cycle(i) {
@@ -414,7 +416,7 @@
         team().score += d;
         QZ.sound.click();
         labelRow(i);
-        penRow(i, false);
+        lightRow(i, false);
         paintSumHead();
         QZ.say(l.word + ': ' + RES[next].label + '. Turno a ' + S.turnPts + '.');
         QZ.fx.pop($('#sum-pts'));

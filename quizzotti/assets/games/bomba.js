@@ -3,8 +3,11 @@
    Dati: assets/db-bomba.js (`topics`: { categoria, topic }).
    Si vede chi ha la bomba e si passa con un tasto, miccia nascosta con
    ticchettio che accelera, pausa, scelta delle categorie, modalita' a punti
-   o a eliminazione, temi senza ripetizioni. La bomba e' disegnata a china
-   come nei fumetti: trema quando scotta e fa BOOM in una nuvola a punte.
+   o a eliminazione, temi senza ripetizioni. La bomba sta sotto i riflettori:
+   sfera scura con il filo di luce del faro, miccia con la scintilla vera,
+   battito a LED rossi che accelera. Lo scoppio e' un BOOM a LED a tutto schermo.
+   La durata vera della miccia non si vede mai: quella disegnata brucia al
+   ritmo della durata massima.
    ========================================================================== */
 (function () {
     'use strict';
@@ -19,7 +22,7 @@
     var G = null;   // partita
     var S = {};     // round in corso
     var lastStart = 0;
-    var fuseEl = $('#fuse'), fuseInk = $('#fuse-ink'), sparkEl = $('#spark'), stage = $('#stage');
+    var fuseEl = $('#fuse'), fuseInk = $('#fuse-ink'), sparkEl = $('#spark'), stage = $('#stage'), game = $('#game'), sb = $('#sb');
     var fuseLen = fuseEl.getTotalLength();
 
     /* ---------- Markup statico ---------- */
@@ -91,17 +94,18 @@
     $('#rd-go').addEventListener('click', go);
     $('#g-pass').innerHTML = 'Passa la bomba' + QZ.icon('arrow');
     $('#g-pass').addEventListener('click', pass);
-    $('#g-skip').innerHTML = QZ.icon('shuffle');
+    $('#g-skip').innerHTML = QZ.icon('shuffle') + 'Tema';
+    $('#g-skip').setAttribute('aria-label', 'Cambia tema');
     $('#g-skip').addEventListener('click', skip);
     $('#g-pause').addEventListener('click', togglePause);
-    $('#g-quit').innerHTML = QZ.icon('x');
+    $('#g-quit').innerHTML = QZ.icon('flag') + 'Chiudi';
     $('#g-quit').addEventListener('click', function () {
         if (S.running) pause();
         QZ.confirm('Il round in corso non conta. Si va dritti alla classifica.', { title: 'Chiudere qui?', okLabel: 'Chiudi', cancelLabel: 'Si continua', danger: true }).then(function (ok) {
             if (ok) finish();
         });
     });
-    $('#pause-chip').innerHTML = QZ.icon('pause') + 'Pausa · la miccia è ferma';
+    $('#pause-chip').textContent = 'PAUSA · MICCIA FERMA';
     paintPause();
 
     /* ---------- Helper ---------- */
@@ -117,29 +121,23 @@
     }
     function secs(ms) { return (ms / 1000).toFixed(1).replace('.', ',') + ' s'; }
     function roundLabel() { return 'Round ' + G.round + (CFG.mode === 'points' ? '/' + CFG.rounds : ''); }
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function roundLED() { return pad(G.round) + (CFG.mode === 'points' ? '/' + pad(CFG.rounds) : ''); }
     function boardHTML(holder) {
         return G.players.map(function (p, i) {
             var pts = CFG.mode === 'points' ? ' <b>' + p.score + '</b>' : '';
             return '<span class="chip' + (i === holder ? ' is-hold' : '') + (p.out ? ' is-out' : '') + '" style="--c:' + p.color + '"><i></i>' + QZ.esc(p.name) + pts + '</span>';
         }).join('');
     }
-    function nameHTML(p) { return '<span>' + QZ.esc(p.name) + '</span>'; }
-
-    /** La nuvola a punte del fumetto: due stelle irregolari, gialla e rossa. */
-    function burstSVG() {
-        function star(n, rx, ry, k, jit) {
-            var pts = [];
-            for (var i = 0; i < n * 2; i++) {
-                var a = Math.PI * i / n - Math.PI / 2;
-                var f = (i % 2 ? k : 1) * (1 + (Math.random() - 0.5) * jit);
-                pts.push((Math.cos(a) * rx * f).toFixed(1) + ',' + (Math.sin(a) * ry * f).toFixed(1));
-            }
-            return pts.join(' ');
-        }
-        return '<svg class="bb-burst" viewBox="-118 -88 236 176" aria-hidden="true">' +
-            '<polygon points="' + star(13, 110, 80, 0.64, 0.24) + '" fill="#f3c21b" stroke="#1d1913" stroke-width="5" stroke-linejoin="round"/>' +
-            '<polygon points="' + star(11, 80, 56, 0.7, 0.2) + '" fill="#cf2a1e" stroke="#1d1913" stroke-width="4" stroke-linejoin="round"/></svg>';
+    function nameHTML(p) {
+        // un nome corto sta su una riga sola; uno lungo va a capo, ma ogni parola resta intera
+        var name = String(p.name);
+        var n = name.length <= 14 ? name.length : Math.max.apply(null, name.split(/\s+/).map(function (x) { return x.length; }));
+        return '<span style="--n:' + Math.max(6, n) + '">' + QZ.esc(p.name) + '</span>';
     }
+
+    /** Il BOOM sul tabellone: LED rossi che si accendono a scatti (decorativo, lo scoppio si annuncia a parte). */
+    function boomLED() { return '<span class="bb-ledboom" aria-hidden="true">BOOM!</span>'; }
 
     /* ---------- Partita ---------- */
     function startGame() {
@@ -183,7 +181,8 @@
         $('#boom').innerHTML = '';
         $('#game').classList.remove('bb-paused');
         $('#g-pass').disabled = true;
-        $('#g-round').innerHTML = QZ.icon('flag') + '<b>' + roundLabel() + '</b>';
+        $('#g-round').textContent = roundLED();
+        $('#g-passes').textContent = '00';
         drawTopic();
         resetFuse();
         renderHolder(false);
@@ -215,7 +214,7 @@
         S.max = r[1] * 1000;
         S.elapsed = 0;
         drawFuse(0);
-        stage.style.setProperty('--heat', 0);
+        game.style.setProperty('--heat', 0);
     }
     function drawFuse(b) {
         var vis = fuseLen * (1 - 0.88 * Math.min(1, b));
@@ -246,12 +245,13 @@
         var vis = S.elapsed / S.max;
         var q = Math.min(1, 0.5 * vis + 0.5 * (S.elapsed / S.fuse));
         drawFuse(vis);
-        stage.style.setProperty('--heat', q.toFixed(3));
+        game.style.setProperty('--heat', q.toFixed(3));
         stage.classList.toggle('is-hot', q > 0.72 && !QZ.reducedMotion());
         if (ts >= S.nextTick) {
             S.tock = !S.tock;
             if (S.tock) QZ.sound.tick(); else QZ.sound.tock();
             QZ.fx.replay(stage, 'is-tick');
+            QZ.fx.replay(sb, 'is-tick');
             S.nextTick = ts + interval(q);
         }
         if (S.elapsed >= S.fuse) { explode(); return; }
@@ -279,8 +279,7 @@
     }
     function paintPause() {
         var paused = !S.running && $('#game').classList.contains('bb-paused');
-        $('#g-pause').innerHTML = QZ.icon(paused ? 'play' : 'pause');
-        $('#g-pause').setAttribute('aria-label', paused ? 'Riprendi' : 'Pausa');
+        $('#g-pause').innerHTML = QZ.icon(paused ? 'play' : 'pause') + (paused ? 'Riprendi' : 'Pausa');
         $('#g-pass').disabled = paused || !!S.exploded || !S.running;
     }
     // cambio app o schermo spento: la bomba si ferma
@@ -304,6 +303,7 @@
         S.lastPass = now;
         S.passes++;
         G.passes++;
+        $('#g-passes').textContent = pad(S.passes);
         G.holder = nextAlive(G.holder);
         renderHolder(true);
         QZ.sound.whoosh();
@@ -314,6 +314,7 @@
         drawTopic();
         resetFuse();
         S.passes = 0;
+        $('#g-passes').textContent = '00';
         QZ.toast('Tema cambiato, miccia nuova.', { icon: 'shuffle' });
     }
 
@@ -325,20 +326,23 @@
         G.lens.push(S.elapsed);
         $('#g-pass').disabled = true;
         stage.classList.remove('is-hot');
-        $('#boom').innerHTML = burstSVG() + '<span class="bb-boom__txt" aria-hidden="true">BOOM!</span>';
+        $('#boom').innerHTML = boomLED();
         stage.classList.add('is-boom');
         QZ.say('Boom! La bomba è scoppiata in mano a ' + G.players[S.loser].name + '.', true);
         QZ.sound.boom();
         QZ.vibrate([400, 80, 250]);
         if (!QZ.reducedMotion()) {
+            // tutto lo stadio lampeggia: rosso, ambra, rosso, poi buio
             var f = document.createElement('div');
             f.className = 'bb-flash';
+            f.setAttribute('aria-hidden', 'true');
+            f.innerHTML = '<span>BOOM</span>';
             document.body.appendChild(f);
             f.addEventListener('animationend', f.remove.bind(f));
         }
         QZ.fx.shake($('#app'));
-        QZ.fx.sparks(stage, 'var(--yellow)', 26);
-        setTimeout(function () { QZ.fx.sparks(stage, 'var(--red)', 16); }, 160);
+        QZ.fx.sparks(stage, 'var(--led)', 26);
+        setTimeout(function () { QZ.fx.sparks(stage, 'var(--led-red)', 16); }, 160);
         setTimeout(showBoom, QZ.reducedMotion() ? 400 : 1700);
     }
 
@@ -348,7 +352,7 @@
         var preview = G.players.map(function (p, i) { return CFG.mode === 'points' && !p.out && i !== S.loser ? 1 : 0; });
         var others = aliveIdx().filter(function (i) { return i !== S.loser; });
         $('#boom-host').innerHTML =
-            '<div class="bb-mini">' + burstSVG() + '<span class="bb-mini__txt">BOOM!</span></div>' +
+            '<div class="bb-mini">' + boomLED() + '</div>' +
             '<div class="card bb-loser">' +
             '<span class="eyebrow">' + roundLabel() + '</span>' +
             '<span class="bb-holder__kicker">' + (CFG.mode === 'elim' ? 'saltato in aria, è fuori' : 'saltato in aria') + '</span>' +

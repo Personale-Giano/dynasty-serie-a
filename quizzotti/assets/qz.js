@@ -1193,7 +1193,7 @@
             '<a class="qz-brand" href="index.html" aria-label="Quizzotti, torna alla prima pagina">' +
             '<img src="logo1.webp" alt="" width="44" height="44" decoding="async">' +
             '<span class="qz-brand__text"><span class="qz-brand__name">Quiz<b>zotti</b></span>' +
-            '<span class="qz-brand__tag">' + (g ? 'N° ' + String(QZ.GAMES.indexOf(g) + 1).padStart(2, '0') + ' · ' + QZ.esc(g.name) : QZ.esc(today) + ' · edizione n° ' + (played + 1)) + '</span></span>' +
+            '<span class="qz-brand__tag">' + (g ? 'Gioco ' + String(QZ.GAMES.indexOf(g) + 1).padStart(2, '0') + ' · ' + QZ.esc(g.name) : QZ.esc(today) + ' · edizione n° ' + (played + 1)) + '</span></span>' +
             '</a>' +
             '<div class="qz-header__spacer"></div>' +
             '<button class="qz-iconbtn" type="button" data-sound aria-label="Audio"></button>' +
