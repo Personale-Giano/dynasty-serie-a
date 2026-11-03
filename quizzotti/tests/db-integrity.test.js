@@ -131,3 +131,62 @@ test('db-cruciverba.js: parole A-Z 3-13, definizioni brevi senza la risposta, ca
     });
     noDuplicates(cruciverba.map((e) => e.answer), 'risposte cruciverba');
 });
+
+test('cruciverba-schede.js: 5 schede coerenti, risposte uniche e prese dal database', () => {
+    const { cruciverbaSchede } = load('cruciverba-schede.js');
+    const { cruciverba } = load('db-cruciverba.js');
+    const clueOf = new Map(cruciverba.map((x) => [x.answer, x.clue]));
+    assert.equal(cruciverbaSchede.length, 5);
+    assert.deepEqual(cruciverbaSchede.map((p) => p.n), [1, 2, 3, 4, 5]);
+    const allAnswers = [];
+    for (const p of cruciverbaSchede) {
+        const tag = `N° ${p.n}`;
+        assert.ok(p.title && typeof p.title === 'string', `${tag}: titolo mancante`);
+        assert.ok(p.w >= 3 && p.w <= 15 && p.h >= 3 && p.h <= 15, `${tag}: misure fuori range ${p.w}x${p.h}`);
+        assert.ok(p.words.length >= 12, `${tag}: troppe poche parole`);
+        const cells = new Map(); // "r,c" -> { ch, A, D }
+        p.words.forEach((w, i) => {
+            assert.match(w.answer, /^[A-Z]{3,15}$/, `${tag}: risposta non valida ${w.answer}`);
+            assert.ok(w.dir === 'A' || w.dir === 'D', `${tag}: verso non valido`);
+            assert.equal(clueOf.get(w.answer), w.clue, `${tag}: ${w.answer} assente dal database o con definizione diversa`);
+            const [dr, dc] = w.dir === 'A' ? [0, 1] : [1, 0];
+            const endR = w.row + dr * (w.answer.length - 1), endC = w.col + dc * (w.answer.length - 1);
+            assert.ok(w.row >= 0 && w.col >= 0 && endR < p.h && endC < p.w, `${tag}: ${w.answer} esce dalla griglia`);
+            for (let k = 0; k < w.answer.length; k++) {
+                const key = (w.row + dr * k) + ',' + (w.col + dc * k);
+                const cell = cells.get(key) || { ch: w.answer[k] };
+                assert.equal(cell.ch, w.answer[k], `${tag}: incrocio con lettere diverse in ${key}`);
+                assert.equal(cell[w.dir], undefined, `${tag}: due parole sovrapposte nello stesso verso in ${key}`);
+                cell[w.dir] = i;
+                cells.set(key, cell);
+            }
+            // prima e dopo la parola non ci sono lettere (parola "chiusa")
+            for (const [r, c] of [[w.row - dr, w.col - dc], [endR + dr, endC + dc]]) {
+                assert.ok(!p.words.some((o) => o !== w && covers(o, r, c)), `${tag}: ${w.answer} non e' delimitata`);
+            }
+        });
+        // ogni parola ne incrocia almeno un'altra
+        p.words.forEach((w, i) => {
+            const crosses = [...cells.values()].some((c) => c.A !== undefined && c.D !== undefined && (c.A === i || c.D === i));
+            assert.ok(crosses, `${tag}: ${w.answer} non incrocia nessuna parola`);
+        });
+        // numerazione da cruciverba: scansione per righe delle caselle iniziali
+        const starts = [...new Set(p.words.map((w) => w.row * p.w + w.col))].sort((a, b) => a - b);
+        p.words.forEach((w) => assert.equal(w.num, starts.indexOf(w.row * p.w + w.col) + 1, `${tag}: numero sbagliato per ${w.answer}`));
+        // nessuna parola accidentale: ogni sequenza di 2+ lettere in riga/colonna e' una parola della scheda
+        for (const [dir, dr, dc] of [['A', 0, 1], ['D', 1, 0]]) {
+            for (const [key, cell] of cells) {
+                const [r, c] = key.split(',').map(Number);
+                if (cells.has((r - dr) + ',' + (c - dc)) || !cells.has((r + dr) + ',' + (c + dc))) continue;
+                assert.ok(cell[dir] !== undefined && p.words[cell[dir]].row === r && p.words[cell[dir]].col === c, `${tag}: sequenza di lettere senza definizione da ${key} (${dir})`);
+            }
+        }
+        allAnswers.push(...p.words.map((w) => w.answer));
+    }
+    noDuplicates(allAnswers, 'cruciverba-schede.js');
+
+    function covers(w, r, c) {
+        return w.dir === 'A' ? r === w.row && c >= w.col && c < w.col + w.answer.length
+            : c === w.col && r >= w.row && r < w.row + w.answer.length;
+    }
+});

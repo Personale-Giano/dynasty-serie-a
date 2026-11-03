@@ -22,12 +22,35 @@
 <style>
   /* ---------- copertina ---------- */
   .xw-title { font-size: clamp(44px, 7vw, 78px); }
-  .xw-form { padding: 18px 18px 20px; }
-  .xw-form__title { font-size: 24px; padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
-  .xw-setup { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
-  @media (min-width: 760px) { .xw-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .xw-setup .segmented { flex-wrap: nowrap; }
-  .xw-setup .segmented button { flex: 1 1 0; min-width: 0; min-height: 48px; padding: 0 6px; font-size: 16px; }
+
+  /* le schede numerate */
+  .xw-sheets__head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .xw-sheets__head h2 { font-size: 26px; }
+  .xw-count { display: inline-flex; align-items: baseline; gap: 10px; padding: 6px 14px; background: #000; border: 1px solid var(--line-2); border-radius: var(--r); }
+  .xw-count .led { font-size: 30px; }
+  .xw-cards { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(156px, 1fr)); margin: 0; padding: 0; list-style: none; }
+  .xw-cards li { display: flex; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 50ms); }
+  .xw-card {
+    position: relative; flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-height: 172px; padding: 14px 14px 12px;
+    border: 1px solid var(--line); border-top: 3px solid var(--line-2); border-radius: var(--r-lg); background: var(--panel); color: var(--text); text-align: left;
+    transition: background .15s, border-color .15s, transform .15s;
+  }
+  .xw-card:hover { background: var(--panel-2); border-color: var(--line-2); transform: translateY(-2px); }
+  .xw-card.is-new { border-top-color: var(--accent); }
+  .xw-card.is-play { border-top-color: var(--led); }
+  .xw-card.is-done { border-top-color: var(--led-green); }
+  .xw-card__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; width: 100%; }
+  .xw-card__n { white-space: nowrap; font-family: var(--font-led); font-weight: 700; font-size: 30px; line-height: 1; color: var(--led); text-shadow: var(--led-glow); }
+  .xw-card__status { padding: 3px 8px; border-radius: var(--r-sm); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--accent-ink); background: rgba(var(--accent-rgb), .1); border: 1px solid rgba(var(--accent-rgb), .45); white-space: nowrap; }
+  .is-play .xw-card__status { color: var(--led); background: rgba(255, 182, 39, .08); border-color: rgba(255, 182, 39, .45); }
+  .is-done .xw-card__status { color: var(--ok); background: rgba(var(--ok-rgb), .08); border-color: rgba(var(--ok-rgb), .45); }
+  .xw-card__title { font-family: var(--font-display); font-weight: 800; font-size: 19px; line-height: 1.1; letter-spacing: -.01em; }
+  .xw-card__meta { font-size: 13px; color: var(--text-2); }
+  .xw-card__led { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 4px 8px; background: #000; border: 1px solid var(--line); border-radius: var(--r-sm); }
+  .xw-card__led .led { font-size: 19px; }
+  .xw-card__go { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; padding-top: 4px; font-weight: 700; font-size: 14px; color: var(--accent-ink); }
+  .is-done .xw-card__go { color: var(--text-2); }
+  .xw-card__go .ico { width: 16px; height: 16px; }
 
   /* ---------- impaginazione della partita ---------- */
   .xw-layout { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
@@ -41,6 +64,15 @@
     .xw-side .xw-aid { flex-direction: row; min-height: 48px; gap: 8px; font-size: 14px; }
     .xw-side .kbd-hint { font-size: 13px; line-height: 2; }
   }
+
+  .xw-sheet-title { margin-bottom: -4px; }
+  .xw-review { padding: 16px 18px; }
+  .xw-review p { color: var(--text-2); }
+  .xw-back { align-self: center; }
+  .is-review .xw-board, .is-review .kbd-hint { display: none; }
+  .xw-clue__ans { display: none; }
+  .is-review .xw-clue__ans { display: block; margin-top: 2px; font-family: var(--font-led); font-weight: 700; font-size: 16px; letter-spacing: .04em; color: var(--led-green); }
+  .is-review .xw-clue.is-solved .xw-clue__t { color: var(--text); text-decoration: none; }
 
   /* il tabellone: tempo, parole, aiuti, definizione */
   .xw-board__n { font-size: clamp(26px, 5vw, 36px); }
@@ -176,13 +208,11 @@
       <div data-stagger>
         <span class="eyebrow">Gioco 11 · Da solo</span>
         <h1 class="intro__title xw-title">Il&nbsp;<em>cruciverba</em> del&nbsp;pallone</h1>
-        <p class="intro__lead">Definizioni cattive, incroci al millimetro e una griglia nuova a ogni partita. Campioni, bidoni, stadi e gergo da bar: se le sai, le scrivi. Se non le sai, la panchina ti dà una mano.</p>
+        <p class="intro__lead">Definizioni cattive, incroci al millimetro e schede numerate, uguali per tutti: il N° 1 di oggi è il N° 1 del tuo amico. Campioni, bidoni, stadi e gergo da bar: se le sai, le scrivi.</p>
         <div class="row mt-3">
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
-          <button class="btn btn--lg" type="button" id="resume-btn" hidden></button>
         </div>
-        <p class="small muted mt-2" id="resume-info"></p>
-        <p class="small muted mt-1" id="start-record"></p>
+        <p class="small muted mt-2" id="start-record"></p>
       </div>
       <div class="stack" style="--gap:22px;align-items:center">
         <div class="medal" id="medal"></div>
@@ -192,13 +222,13 @@
       </div>
     </div>
 
-    <div class="card xw-form mt-4">
-      <h2 class="xw-form__title">Che griglia vuoi?</h2>
-      <div class="xw-setup">
-        <div class="field"><span class="label" id="lbl-size">Grandezza</span><div id="set-size" aria-labelledby="lbl-size"></div></div>
-        <div class="field"><span class="label" id="lbl-diff">Definizioni</span><div id="set-diff" aria-labelledby="lbl-diff"></div></div>
+    <section class="mt-4 xw-sheets" aria-labelledby="xw-sheets-t">
+      <div class="xw-sheets__head">
+        <h2 id="xw-sheets-t">Le schede</h2>
+        <p class="xw-count"><span class="led" id="xw-count" aria-hidden="true">0/5</span><span class="board__label" aria-hidden="true">completati</span><span class="sr-only" id="xw-count-sr"></span></p>
       </div>
-    </div>
+      <ul class="xw-cards" id="xw-cards"></ul>
+    </section>
   </section>
 
   <!-- ============ PARTITA ============ -->
@@ -206,6 +236,7 @@
     <h1 class="sr-only">Il cruciverba del pallone: la partita</h1>
     <div class="xw-layout">
       <div class="xw-main">
+        <p class="eyebrow xw-sheet-title" id="xw-title"></p>
         <div class="board xw-board">
           <div class="board__cell"><span class="board__label">Tempo</span><span class="led xw-board__n" id="xw-time">00:00</span></div>
           <div class="board__cell"><span class="board__label">Parole</span><span class="led xw-board__n" id="xw-words">00/00</span></div>
@@ -233,12 +264,17 @@
 
       <div class="xw-side">
         <div class="xw-aids" id="xw-aids" role="group" aria-label="Aiuti"></div>
+        <div class="card card--glow xw-review" id="xw-review" hidden>
+          <p id="xw-review-txt"></p>
+          <button type="button" class="btn btn--primary btn--block mt-2" id="xw-back-2"></button>
+        </div>
         <aside class="card xw-clues" id="xw-clues" aria-label="Definizioni">
           <div class="xw-clues__cols">
             <div><h2>Orizzontali</h2><ol id="xw-across"></ol></div>
             <div><h2>Verticali</h2><ol id="xw-down"></ol></div>
           </div>
         </aside>
+        <button type="button" class="btn btn--ghost btn--sm xw-back" id="xw-back"></button>
         <p class="small center kbd-hint">Lettere per scrivere, <span class="kbd">←</span><span class="kbd">→</span><span class="kbd">↑</span><span class="kbd">↓</span> per muoverti, <span class="kbd">Tab</span> parola dopo, <span class="kbd">Spazio</span> cambia verso</p>
       </div>
     </div>
@@ -250,7 +286,7 @@
 </main>
 
 <script src="assets/qz.js?v=cccf38d2" defer></script>
-<script src="assets/db-cruciverba.js?v=6c397a3d" defer></script>
-<script src="assets/games/cruciverba.js?v=ddb66ec3" defer></script>
+<script src="assets/cruciverba-schede.js?v=a0677716" defer></script>
+<script src="assets/games/cruciverba.js?v=4ba8fd6e" defer></script>
 </body>
 </html>

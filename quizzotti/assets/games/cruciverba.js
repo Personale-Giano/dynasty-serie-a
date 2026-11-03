@@ -1,257 +1,69 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Il cruciverba del pallone
-   Dati: assets/db-cruciverba.js (`cruciverba`: [{ answer, clue, cat, diff }]).
-   Ogni partita costruisce una griglia nuova a schema libero: le parole si
-   incrociano, le caselle vuote non fanno parte del gioco. Il generatore fa
-   molti tentativi in ~150 ms e tiene il migliore (piu' parole, piu' incroci,
-   piu' compatto). La partita in corso resta salvata: ricaricando si riprende.
+   Dati: assets/cruciverba-schede.js (`cruciverbaSchede`), schede fisse e
+   numerate costruite da scripts/build-cruciverba.js a partire da
+   assets/db-cruciverba.js. Il N° 1 e' sempre la stessa griglia: una volta
+   completata resta da rivedere, non da rigiocare. Ogni scheda ha il suo
+   salvataggio: si puo' lasciare a meta' e riprenderla quando si vuole.
    ========================================================================== */
-/* global cruciverba */
+/* global cruciverbaSchede */
 (function () {
     'use strict';
 
-    /* =====================================================================
-       GENERATORE
-       ===================================================================== */
-    var OFF = 64;          // le coordinate durante la costruzione possono essere negative
-    var SPAN = 256;
-    function key(r, c) { return (r + OFF) * SPAN + (c + OFF); }
     var STEP = { a: [0, 1], d: [1, 0] };
     var OTHER = { a: 'd', d: 'a' };
-
-    function shuffle(a) {
-        for (var i = a.length - 1; i > 0; i--) {
-            var j = Math.floor(Math.random() * (i + 1));
-            var t = a[i]; a[i] = a[j]; a[j] = t;
-        }
-        return a;
-    }
-
-    /** Un tentativo: parte da una parola lunga al centro e aggiunge la migliore a ogni giro. */
-    function attempt(pool, o) {
-        var cells = new Map();     // key -> { ch, a: idx|-1, d: idx|-1 }
-        var byLetter = {};         // lettera -> [key]
-        var placed = [];
-        var used = new Set();
-        var bb = null;
-        var crossings = 0;
-
-        function get(r, c) { return cells.get(key(r, c)); }
-
-        function place(w, r, c, dir) {
-            var s = STEP[dir], idx = placed.length;
-            for (var i = 0; i < w.answer.length; i++) {
-                var rr = r + s[0] * i, cc = c + s[1] * i, k = key(rr, cc);
-                var cell = cells.get(k);
-                if (cell) { cell[dir] = idx; crossings++; }
-                else {
-                    cell = { ch: w.answer[i], a: -1, d: -1, r: rr, c: cc };
-                    cell[dir] = idx;
-                    cells.set(k, cell);
-                    (byLetter[cell.ch] = byLetter[cell.ch] || []).push(k);
-                }
-            }
-            var r1 = r + s[0] * (w.answer.length - 1), c1 = c + s[1] * (w.answer.length - 1);
-            bb = bb ? { r0: Math.min(bb.r0, r), c0: Math.min(bb.c0, c), r1: Math.max(bb.r1, r1), c1: Math.max(bb.c1, c1) } : { r0: r, c0: c, r1: r1, c1: c1 };
-            placed.push({ w: w, r: r, c: c, dir: dir });
-            used.add(w.answer);
-        }
-
-        /** Le regole del cruciverba: lettere uguali agli incroci, niente parole affiancate, niente parole nate per sbaglio. */
-        function check(ans, r, c, dir) {
-            var s = STEP[dir], len = ans.length;
-            if (get(r - s[0], c - s[1]) || get(r + s[0] * len, c + s[1] * len)) return null;
-            var r1 = r + s[0] * (len - 1), c1 = c + s[1] * (len - 1);
-            var nb = { r0: Math.min(bb.r0, r), c0: Math.min(bb.c0, c), r1: Math.max(bb.r1, r1), c1: Math.max(bb.c1, c1) };
-            if (nb.r1 - nb.r0 + 1 > o.max || nb.c1 - nb.c0 + 1 > o.max) return null;
-            var cross = 0;
-            for (var i = 0; i < len; i++) {
-                var rr = r + s[0] * i, cc = c + s[1] * i;
-                var cell = get(rr, cc);
-                if (cell) {
-                    if (cell.ch !== ans[i] || cell[dir] !== -1) return null;
-                    cross++;
-                } else if (get(rr + s[1], cc + s[0]) || get(rr - s[1], cc - s[0])) {
-                    return null;
-                }
-            }
-            if (!cross || cross === len) return null;
-            var area = (nb.r1 - nb.r0 + 1) * (nb.c1 - nb.c0 + 1);
-            var oldArea = (bb.r1 - bb.r0 + 1) * (bb.c1 - bb.c0 + 1);
-            var hh = nb.r1 - nb.r0 + 1, ww = nb.c1 - nb.c0 + 1;
-            return cross * 12 + (cross >= 2 ? 14 : 0) - (area - oldArea) * 0.3 - Math.abs(hh - ww) * 1.2 + len * 0.5 + Math.random() * 5;
-        }
-
-        function bestFor(w) {
-            var best = null, ans = w.answer;
-            for (var i = 0; i < ans.length; i++) {
-                var list = byLetter[ans[i]];
-                if (!list) continue;
-                for (var j = 0; j < list.length; j++) {
-                    var cell = cells.get(list[j]);
-                    var dir = cell.a === -1 ? 'a' : cell.d === -1 ? 'd' : null;
-                    if (!dir) continue;
-                    var s = STEP[dir];
-                    var r = cell.r - s[0] * i, c = cell.c - s[1] * i;
-                    var sc = check(ans, r, c, dir);
-                    if (sc != null && (!best || sc > best.score)) best = { w: w, r: r, c: c, dir: dir, score: sc };
-                }
-            }
-            return best;
-        }
-
-        var rest = shuffle(pool.slice());
-        // la prima parola: una delle piu' lunghe tra le prime estratte, al centro
-        var head = rest.slice(0, 14).filter(function (w) { return w.answer.length <= o.max; });
-        head.sort(function (x, y) { return y.answer.length - x.answer.length; });
-        var first = head[Math.floor(Math.random() * Math.min(3, head.length))];
-        if (!first) return null;
-        rest.splice(rest.indexOf(first), 1);
-        bb = null;
-        place(first, 0, 0, Math.random() < 0.5 ? 'a' : 'd');
-
-        var K = 70;
-        while (placed.length < o.words && rest.length) {
-            var pick = null, fails = [];
-            var look = rest.slice(0, K);
-            for (var i = 0; i < look.length; i++) {
-                if (used.has(look[i].answer)) { fails.push(look[i]); continue; }
-                var p = bestFor(look[i]);
-                if (!p) fails.push(look[i]);
-                else if (!pick || p.score > pick.score) pick = p;
-            }
-            if (!pick) break;
-            place(pick.w, pick.r, pick.c, pick.dir);
-            rest.splice(rest.indexOf(pick.w), 1);
-            // chi non entra adesso passa in fondo alla fila: magari entra piu' avanti
-            fails.forEach(function (f) { var at = rest.indexOf(f); if (at >= 0) { rest.splice(at, 1); if (!used.has(f.answer)) rest.push(f); } });
-        }
-        var h = bb.r1 - bb.r0 + 1, wd = bb.c1 - bb.c0 + 1;
-        var letters = cells.size;
-        return {
-            placed: placed, bb: bb, h: h, w: wd, crossings: crossings, letters: letters,
-            score: placed.length * 1000 + crossings * 30 + (letters / (h * wd)) * 300 - Math.max(h, wd) * 6
-        };
-    }
-
-    /** Ritaglia, mette in verticale (piu' alta che larga: sta meglio sul telefono) e numera. */
-    function finalize(g) {
-        var flip = g.w > g.h;
-        var words = g.placed.map(function (p) {
-            var r = p.r - g.bb.r0, c = p.c - g.bb.c0, dir = p.dir;
-            if (flip) { var t = r; r = c; c = t; dir = OTHER[dir]; }
-            return { answer: p.w.answer, clue: p.w.clue, cat: p.w.cat || '', diff: p.w.diff || 0, r: r, c: c, dir: dir, n: 0 };
-        });
-        var w = flip ? g.h : g.w, h = flip ? g.w : g.h;
-        var starts = {};
-        words.forEach(function (x) { starts[x.r * w + x.c] = true; });
-        var n = 0, num = {};
-        for (var i = 0; i < w * h; i++) if (starts[i]) num[i] = ++n;
-        words.forEach(function (x) { x.n = num[x.r * w + x.c]; });
-        words.sort(function (x, y) { return x.dir === y.dir ? x.n - y.n : x.dir === 'a' ? -1 : 1; });
-        return { w: w, h: h, words: words, crossings: g.crossings, letters: g.letters };
-    }
-
-    /**
-     * Costruisce un cruciverba.
-     * @param {Array} pool parole candidate [{answer, clue, cat, diff}]
-     * @param {{words:number, max:number, ms?:number, attempts?:number}} o
-     */
-    function generate(pool, o) {
-        var t0 = performance.now(), best = null, tries = 0;
-        var ms = o.ms || 150, maxTries = o.attempts || 80;
-        while (tries < maxTries && (performance.now() - t0 < ms || !best)) {
-            tries++;
-            var g = attempt(pool, o);
-            if (g && (!best || g.score > best.score)) best = g;
-            if (tries > 400) break;
-        }
-        if (!best) return null;
-        var p = finalize(best);
-        p.tries = tries;
-        p.ms = Math.round(performance.now() - t0);
-        return p;
-    }
+    var STORE_KEY = 'qz.cruciverba.v2';
 
     /* =====================================================================
-       DATI
+       LE SCHEDE
        ===================================================================== */
-    var SIZES = {
-        s: { label: 'Piccolo', words: 8, max: 11, name: 'piccola' },
-        m: { label: 'Medio', words: 12, max: 13, name: 'media' },
-        l: { label: 'Grande', words: 16, max: 15, name: 'grande' }
-    };
-    var DIFFS = {
-        easy: { label: 'Facile', ok: function (d) { return d <= 2; } },
-        mix: { label: 'Misto', ok: function () { return true; } },
-        hard: { label: 'Difficile', ok: function (d) { return d >= 2; } }
-    };
-    var SAVE_KEY = 'qz.cruciverba.save';
-    var SET_KEY = 'qz.cruciverba.set';
+    var SCHEDE = (typeof cruciverbaSchede !== 'undefined' && Array.isArray(cruciverbaSchede) ? cruciverbaSchede : []).map(function (p) {
+        return {
+            n: p.n, title: p.title, w: p.w, h: p.h,
+            words: p.words.map(function (x) { return { answer: x.answer, clue: x.clue, r: x.row, c: x.col, dir: x.dir === 'D' ? 'd' : 'a', n: x.num }; })
+        };
+    });
+    function scheda(n) { return SCHEDE.filter(function (p) { return p.n === n; })[0] || null; }
 
-    function loadDB() {
-        // il database dichiara `const cruciverba`: e' globale ma non sta su window
-        var raw = typeof cruciverba !== 'undefined' && Array.isArray(cruciverba) ? cruciverba : [];
-        var seen = {};
-        return raw.map(function (x) {
-            return { answer: String(x.answer || '').toUpperCase().replace(/[^A-Z]/g, ''), clue: String(x.clue || '').trim(), cat: x.cat || '', diff: Number(x.diff) || 2 };
-        }).filter(function (x) {
-            var k = x.answer + '|' + x.clue;
-            if (seen[k] || x.answer.length < 3 || x.answer.length > 15 || !x.clue) return false;
-            seen[k] = true;
-            return true;
-        });
+    /** Progressi: { play: { n: partita in corso }, done: { n: esito } } */
+    function getStore() {
+        var x = QZ.store.get(STORE_KEY, null) || {};
+        return { play: x.play || {}, done: x.done || {} };
     }
-
-    // esposto per i test automatici del generatore (statistiche, tempi)
-    window.QZCruciverba = { generate: generate, loadDB: loadDB, SIZES: SIZES, DIFFS: DIFFS };
-
-    var DB = loadDB();
-    var deck = new QZ.Deck('cruciverba', DB, function (x) { return x.answer; });
-
-    function buildPuzzle(sizeId, diffId) {
-        var size = SIZES[sizeId], diff = DIFFS[diffId];
-        var pool = DB.filter(function (x) { return x.answer.length <= size.max && diff.ok(x.diff); });
-        if (pool.length < size.words * 3) pool = DB.filter(function (x) { return x.answer.length <= size.max; });
-        // prima le parole mai viste: se sono troppo poche si rimescola tutto il mazzo
-        var fresh = pool.filter(function (x) { return !deck.seen.has(x.answer); });
-        var cand = fresh.length >= size.words * 8 ? fresh : pool;
-        var p = generate(cand, { words: size.words, max: size.max, ms: 150, attempts: 80 });
-        if (!p) return null;
-        p.words.forEach(function (w) { deck.draw(function (x) { return x.answer === w.answer && x.clue === w.clue; }); });
-        return p;
+    function putStore(x) { QZ.store.set(STORE_KEY, x); }
+    function validPlay(p, x) {
+        return !!(p && x && Array.isArray(x.fill) && x.fill.length === p.w * p.h && Array.isArray(x.solved) && x.solved.length === p.words.length);
     }
+    function nextOpen(after) {
+        var st = getStore();
+        var list = SCHEDE.filter(function (p) { return !st.done[p.n]; });
+        return list.filter(function (p) { return p.n > (after || 0); })[0] || list[0] || null;
+    }
+    function votoOf(ratio) { var v = QZ.pagella(ratio).voto; return (v % 1 ? Math.floor(v) + '½' : String(v)); }
 
     /* =====================================================================
        STATO E MARKUP
        ===================================================================== */
     var $ = QZ.$;
-    var S = null;              // partita in corso
+    var S = null;              // scheda aperta (in gioco o in revisione)
     var clock = null;
     var starting = false;
     var cellEls = [];
-    var set = Object.assign({ size: 'm', diff: 'mix' }, QZ.store.get(SET_KEY, {}) || {});
-    if (!SIZES[set.size]) set.size = 'm';
-    if (!DIFFS[set.diff]) set.diff = 'mix';
 
     var gridEl = $('#xw-grid');
     var wrapEl = $('#xw-wrap');
     var inputEl = $('#xw-input');
-    var SENT = ' ';         // sentinella nel campo nascosto: serve a sentire il tasto cancella dei telefoni
+    var SENT = String.fromCharCode(160);   // sentinella nel campo nascosto: serve a sentire il tasto cancella dei telefoni
 
-    $('#start-btn').innerHTML = 'Fischio d\'inizio' + QZ.icon('arrow');
-    $('#resume-btn').innerHTML = QZ.icon('play') + 'Riprendi la griglia';
     $('#medal').innerHTML = QZ.icon('xword');
     $('#rules').innerHTML = [
-        ['Una griglia nuova', 'a ogni partita: le parole si incrociano, le caselle scure non contano.'],
+        ['Schede numerate:', 'il N° 1 è uguale per tutti. Una volta chiusa, la scheda resta in bacheca.'],
         ['Tocca una casella', 'e scrivi. Toccala di nuovo per passare da orizzontale a verticale.'],
         ['Parola giusta, gol:', 'si accende di verde e non si tocca più.'],
         ['Tre aiuti dalla panchina:', 'controlla, svela una lettera, svela la parola. Ognuno pesa sul voto.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
-    QZ.segmented($('#set-size'), Object.keys(SIZES).map(function (k) { return { label: SIZES[k].label, value: k }; }), set.size, function (v) { set.size = v; QZ.store.set(SET_KEY, set); });
-    QZ.segmented($('#set-diff'), Object.keys(DIFFS).map(function (k) { return { label: DIFFS[k].label, value: k }; }), set.diff, function (v) { set.diff = v; QZ.store.set(SET_KEY, set); });
 
     var AIDS = [
         { id: 'check', label: 'Controlla', ico: 'check', fn: aidCheck },
@@ -271,10 +83,17 @@
 
     $('#xw-prev').innerHTML = QZ.icon('left');
     $('#xw-next').innerHTML = QZ.icon('right');
-    $('#start-btn').addEventListener('click', onStart);
-    $('#resume-btn').addEventListener('click', function () {
-        var saved = QZ.store.get(SAVE_KEY, null);
-        if (saved && validSave(saved)) begin(saved);
+    $('#xw-back').innerHTML = QZ.icon('back') + 'Torna alle schede';
+    $('#xw-back-2').innerHTML = QZ.icon('back') + 'Torna alle schede';
+    $('#xw-back').addEventListener('click', backToList);
+    $('#xw-back-2').addEventListener('click', backToList);
+    $('#start-btn').addEventListener('click', function () {
+        var p = nextOpen(0);
+        if (p) open(p.n);
+    });
+    $('#xw-cards').addEventListener('click', function (e) {
+        var b = e.target.closest('[data-n]');
+        if (b) open(Number(b.dataset.n));
     });
     paintIntro();
 
@@ -289,81 +108,126 @@
     }
     function dirName(d) { return d === 'a' ? 'orizzontale' : 'verticale'; }
     function aidsCount() { return S.aids.check + S.aids.letter + S.aids.word; }
+    function canNav() { return !!(S && (!S.done || S.review)); }
 
-    function validSave(x) {
-        return x && x.p && Array.isArray(x.p.words) && x.p.words.length && Array.isArray(x.fill) && x.fill.length === x.p.w * x.p.h && !x.done;
+    /* ---------- La copertina: le schede ---------- */
+    function paintIntro() {
+        var st = getStore();
+        var doneN = SCHEDE.filter(function (p) { return st.done[p.n]; }).length;
+        $('#xw-count').textContent = doneN + '/' + SCHEDE.length;
+        $('#xw-count-sr').textContent = doneN + ' schede completate su ' + SCHEDE.length;
+        var nx = nextOpen(0);
+        var btn = $('#start-btn');
+        btn.hidden = !nx;
+        if (nx) btn.innerHTML = (validPlay(nx, st.play[nx.n]) ? 'Riprendi il N° ' + nx.n : 'Fischio d\'inizio: N° ' + nx.n) + QZ.icon('arrow');
+        $('#start-record').textContent = !SCHEDE.length ? 'Le schede stanno arrivando in sala stampa: riprova tra poco.'
+            : !nx ? 'Tutte le schede completate. Nuove griglie in arrivo: torna a trovarci.' : '';
+        $('#xw-cards').innerHTML = SCHEDE.map(function (p, i) {
+            var d = st.done[p.n], play = validPlay(p, st.play[p.n]) ? st.play[p.n] : null;
+            var status, cls, action, detail = '';
+            if (d) {
+                cls = 'is-done';
+                status = d.quit ? 'Soluzione vista' : 'Completato';
+                action = 'Rivedi la soluzione';
+                detail = '<span class="xw-card__led"><span class="led">' + fmtTime(d.time) + '</span>' +
+                    (d.quit ? '<span class="led led--red">RESA</span>' : '<span class="led led--green">VOTO ' + QZ.esc(votoOf(d.ratio)) + '</span>') + '</span>';
+            } else if (play) {
+                cls = 'is-play';
+                status = 'In corso';
+                action = 'Riprendi';
+                var solved = play.solved.filter(Boolean).length;
+                detail = '<span class="xw-card__led"><span class="led">' + solved + '/' + p.words.length + '</span><span class="led">' + fmtTime(play.elapsed) + '</span></span>';
+            } else {
+                cls = 'is-new';
+                status = 'Nuovo';
+                action = 'Gioca';
+            }
+            var label = 'Cruciverba numero ' + p.n + ', ' + p.title + ', ' + p.words.length + ' parole. ' + status +
+                (d ? (d.quit ? '' : ', voto ' + votoOf(d.ratio)) + ', tempo ' + timeWords(d.time) : play ? ', ' + play.solved.filter(Boolean).length + ' parole su ' + p.words.length : '') + '. ' + action;
+            return '<li style="--i:' + i + '"><button type="button" class="xw-card ' + cls + '" data-n="' + p.n + '" aria-label="' + QZ.esc(label) + '">' +
+                '<span class="xw-card__top"><span class="xw-card__n">N° ' + p.n + '</span><span class="xw-card__status">' + status + '</span></span>' +
+                '<span class="xw-card__title">' + QZ.esc(p.title) + '</span>' +
+                '<span class="xw-card__meta">' + p.w + '×' + p.h + ' · ' + p.words.length + ' parole</span>' +
+                detail +
+                '<span class="xw-card__go">' + action + QZ.icon('arrow') + '</span></button></li>';
+        }).join('');
     }
 
-    function paintIntro() {
-        var saved = QZ.store.get(SAVE_KEY, null);
-        var ok = validSave(saved);
-        $('#resume-btn').hidden = !ok;
-        var info = $('#resume-info');
-        if (ok) {
-            var solved = saved.solved.filter(Boolean).length;
-            info.textContent = 'In sospeso: griglia ' + SIZES[saved.size].name + ', ' + solved + (solved === 1 ? ' parola' : ' parole') + ' su ' + saved.p.words.length + ', ' + fmtTime(saved.elapsed) + ' sul cronometro.';
-        } else info.textContent = '';
-        var rec = QZ.profile.best('cruciverba');
-        $('#start-record').textContent = rec ? 'Il tuo voto migliore: ' + (Math.round((4 + rec / 100 * 6) * 2) / 2).toString().replace('.', ',') + ' in pagella' : '';
-        if (!DB.length) {
-            $('#start-btn').disabled = true;
-            $('#start-record').textContent = 'Le definizioni stanno arrivando in sala stampa: riprova tra poco.';
-        }
+    function backToList() {
+        if (S && !S.done) save();
+        stopClock();
+        S = null;
+        paintIntro();
+        QZ.show('s-start');
     }
 
     /* =====================================================================
        FLUSSO
        ===================================================================== */
-    function onStart() {
-        if (starting) return;
-        var saved = QZ.store.get(SAVE_KEY, null);
-        if (validSave(saved) && saved.fill.some(Boolean)) {
-            QZ.confirm('Hai una griglia a metà: se ne cominci una nuova, quella va persa.', { title: 'Griglia nuova?', okLabel: 'Griglia nuova', cancelLabel: 'Ci penso' }).then(function (ok) { if (ok) newGame(); });
-        } else newGame();
+    function blank(p) {
+        var size = p.w * p.h;
+        return {
+            fill: new Array(size).fill(''), rev: new Array(size).fill(0), solved: new Array(p.words.length).fill(0),
+            aids: { check: 0, letter: 0, word: 0 }, elapsed: 0, cur: -1, dir: 'a'
+        };
     }
 
-    function newGame() {
+    function open(n) {
         if (starting) return;
-        starting = true;
-        var p = buildPuzzle(set.size, set.diff);
-        if (!p) {
-            starting = false;
-            QZ.toast('Non riesco a costruire la griglia: poche parole in archivio.', { icon: 'x', type: 'bad' });
+        var p = scheda(n);
+        if (!p) return;
+        var st = getStore();
+        if (st.done[n]) {
+            // completata: si rivede la soluzione, senza punti in palio
+            var d = st.done[n], ro = blank(p);
+            ro.solved = new Array(p.words.length).fill(1);
+            ro.aids = d.aids || ro.aids;
+            ro.elapsed = d.time || 0;
+            begin(p, ro, d);
             return;
         }
-        var n = p.w * p.h;
-        begin({
-            v: 1, p: p, size: set.size, diff: set.diff,
-            fill: new Array(n).fill(''), rev: new Array(n).fill(0),
-            solved: new Array(p.words.length).fill(0),
-            aids: { check: 0, letter: 0, word: 0 }, elapsed: 0, cur: -1, dir: 'a'
-        });
+        begin(p, validPlay(p, st.play[n]) ? st.play[n] : blank(p), null);
     }
 
-    function begin(state) {
+    function begin(p, play, review) {
         starting = true;
-        S = state;
-        S.done = false;
+        S = {
+            n: p.n, p: { n: p.n, title: p.title, w: p.w, h: p.h, words: p.words.map(function (w) { return Object.assign({}, w); }) },
+            fill: play.fill.slice(), rev: play.rev.slice(), solved: play.solved.slice(),
+            aids: Object.assign({ check: 0, letter: 0, word: 0 }, play.aids), elapsed: play.elapsed || 0,
+            cur: play.cur, dir: play.dir || 'a', done: !!review, review: review
+        };
         index();
+        if (review) Object.keys(S.map).forEach(function (ci) { S.fill[ci] = S.map[ci].ch; });
+        $('#xw-title').textContent = 'N° ' + p.n + ' · ' + p.title;
+        $('#s-game').classList.toggle('is-review', !!review);
+        $('#xw-aids').hidden = !!review;
+        $('#xw-back').hidden = !!review;
+        $('#xw-review').hidden = !review;
+        if (review) {
+            $('#xw-review-txt').textContent = review.quit
+                ? 'La soluzione del N° ' + p.n + '. Qui hai alzato bandiera bianca: la scheda resta in bacheca, senza voto.'
+                : 'La soluzione del N° ' + p.n + ', chiuso in ' + fmtTime(review.time) + ' con voto ' + votoOf(review.ratio) + '. Niente punti da rigiocare: goditela.';
+        }
         buildGrid();
         buildClues();
         QZ.show('s-game');
-        QZ.sound.start();
+        if (!review) QZ.sound.start();
         var first = S.cur >= 0 && S.map[S.cur] ? S.cur : null;
         if (first == null) {
-            var w0 = firstUnsolved(0, 1);
-            first = w0 >= 0 ? firstFreeCell(w0) : 0;
-            S.dir = w0 >= 0 ? S.p.words[w0].dir : 'a';
+            var w0 = review ? 0 : firstUnsolved(0, 1);
+            first = w0 >= 0 ? firstFreeCell(w0) : S.p.words[0].cells[0];
+            S.dir = S.p.words[Math.max(0, w0)].dir;
         }
         select(first, S.dir, true);
         paintBoard();
-        startClock();
-        save();
+        if (!review) { startClock(); save(); }
         setTimeout(function () {
             starting = false;
             fit();
             // sul telefono la tastiera si apre al primo tocco sulla griglia, non da sola
-            if (matchMedia('(pointer: fine)').matches) inputEl.focus({ preventScroll: true });
+            if (review) $('#xw-back-2').focus({ preventScroll: true });
+            else if (matchMedia('(pointer: fine)').matches) inputEl.focus({ preventScroll: true });
         }, 320);
     }
 
@@ -460,7 +324,8 @@
             host.innerHTML = S.p.words.map(function (w, wi) {
                 if (w.dir !== d) return '';
                 return '<li><button type="button" class="xw-clue" data-w="' + wi + '"><span class="xw-clue__n">' + w.n + '</span>' +
-                    '<span class="xw-clue__t">' + QZ.esc(w.clue) + ' <span class="xw-clue__len">(' + w.answer.length + ')</span></span></button></li>';
+                    '<span class="xw-clue__t">' + QZ.esc(w.clue) + ' <span class="xw-clue__len">(' + w.answer.length + ')</span>' +
+                    (S.review ? '<span class="xw-clue__ans">' + w.answer + '</span>' : '') + '</span></button></li>';
             }).join('');
         });
         QZ.$$('.xw-clue').forEach(function (b) {
@@ -728,7 +593,7 @@
     /* ---------- Input da tastiera e da telefono ---------- */
     inputEl.value = SENT;
     inputEl.addEventListener('keydown', function (e) {
-        if (!S || S.done || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+        if (!canNav() || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
         var k = e.key;
         if (k === 'Tab') {
             // Tab passa da una definizione all'altra; dall'ultima (o dalla prima con Maiusc) esce dalla griglia: nessuna trappola
@@ -738,7 +603,7 @@
             select(firstFreeCell(wi + (e.shiftKey ? -1 : 1)), S.p.words[wi + (e.shiftKey ? -1 : 1)].dir);
             return;
         }
-        if (k === 'Escape') { e.preventDefault(); $('[data-aid="check"]').focus(); return; }
+        if (k === 'Escape') { e.preventDefault(); (S.review ? $('#xw-back-2') : $('[data-aid="check"]')).focus(); return; }
         if (/^[a-zA-Z]$/.test(k)) { e.preventDefault(); type(k.toUpperCase()); return; }
         var map = {
             Backspace: back, Delete: clearCell,
@@ -770,7 +635,7 @@
 
     gridEl.addEventListener('click', function (e) {
         var el = e.target.closest('.xw-cell');
-        if (!el || !S || S.done) return;
+        if (!el || !canNav()) return;
         var ci = Number(el.dataset.ci);
         if (ci === S.cur) toggleDir();
         else select(ci, S.dir);
@@ -779,9 +644,9 @@
     // il tocco sulla griglia non deve togliere il fuoco al campo (la tastiera del telefono resta su)
     gridEl.addEventListener('pointerdown', function (e) { if (document.activeElement === inputEl) e.preventDefault(); });
 
-    $('#xw-prev').addEventListener('click', function () { if (S && !S.done) { jumpWord(-1); keepFocus(); } });
-    $('#xw-next').addEventListener('click', function () { if (S && !S.done) { jumpWord(1); keepFocus(); } });
-    $('#xw-bar-main').addEventListener('click', function () { if (S && !S.done) { toggleDir(); inputEl.focus({ preventScroll: true }); } });
+    $('#xw-prev').addEventListener('click', function () { if (canNav()) { jumpWord(-1); keepFocus(); } });
+    $('#xw-next').addEventListener('click', function () { if (canNav()) { jumpWord(1); keepFocus(); } });
+    $('#xw-bar-main').addEventListener('click', function () { if (canNav()) { toggleDir(); if (!S.review) inputEl.focus({ preventScroll: true }); } });
     ['#xw-prev', '#xw-next', '#xw-bar-main'].forEach(function (s) {
         $(s).addEventListener('pointerdown', function (e) { if (document.activeElement === inputEl) e.preventDefault(); });
     });
@@ -879,7 +744,6 @@
             if (!ok || !S || S.done) return;
             S.done = true;
             stopClock();
-            QZ.store.set(SAVE_KEY, null);
             QZ.say('Ecco la soluzione.');
             var cells = Object.keys(S.map).map(Number).filter(function (ci) { return S.fill[ci] !== S.map[ci].ch; });
             cells.forEach(function (ci, k) {
@@ -924,11 +788,12 @@
 
     function save() {
         if (!S || S.done) return;
-        QZ.store.set(SAVE_KEY, {
-            v: 1, p: { w: S.p.w, h: S.p.h, words: S.p.words.map(function (w) { return { answer: w.answer, clue: w.clue, cat: w.cat, r: w.r, c: w.c, dir: w.dir, n: w.n }; }) },
-            size: S.size, diff: S.diff, fill: S.fill, rev: S.rev, solved: S.solved, aids: S.aids,
+        var st = getStore();
+        st.play[S.n] = {
+            fill: S.fill, rev: S.rev, solved: S.solved, aids: S.aids,
             elapsed: Math.floor(S.elapsed), cur: S.cur, dir: S.dir
-        });
+        };
+        putStore(st);
     }
 
     /* =====================================================================
@@ -939,7 +804,6 @@
         S.done = true;
         S.finished = true;
         stopClock();
-        QZ.store.set(SAVE_KEY, null);
         try { inputEl.blur(); } catch { /* niente */ }
         var p = S.p, tot = p.words.length;
         var mine = S.solved.filter(function (x) { return x === 1; }).length;
@@ -954,16 +818,26 @@
         } else {
             ratio = (mine / tot) * 0.55;
         }
-        var bonus = { s: 0, m: 10, l: 20 }[S.size] || 0;
-        var xp = mine * 5 + (type === 'win' ? 25 + bonus : 0) + (type === 'win' && !aids ? 25 : 0);
-        var size = SIZES[S.size];
-        var r = QZ.profile.record('cruciverba', { xp: xp, label: 'Griglia ' + size.name + ' · ' + mine + '/' + tot + ' parole · ' + fmtTime(S.elapsed), score: Math.round(ratio * 100) });
+
+        // la scheda si chiude una volta sola: i punti si prendono alla prima
+        var st = getStore();
+        var first = !st.done[S.n];
+        delete st.play[S.n];
+        if (first) st.done[S.n] = { time: Math.floor(S.elapsed), ratio: Math.round(ratio * 1000) / 1000, aids: S.aids, mine: mine, tot: tot, quit: type !== 'win', date: Date.now() };
+        putStore(st);
+        var r = null;
+        if (first) {
+            var xp = mine * 5 + (type === 'win' ? 40 : 0) + (type === 'win' && !aids ? 25 : 0);
+            r = QZ.profile.record('cruciverba', { xp: xp, label: 'N° ' + S.n + ' · ' + mine + '/' + tot + ' parole · ' + fmtTime(S.elapsed), score: Math.round(ratio * 100) });
+        }
+        var doneN = SCHEDE.filter(function (x) { return st.done[x.n]; }).length;
+        var nx = nextOpen(S.n);
 
         var title, sub;
         if (type === 'win' && !aids) { title = 'Griglia pulita'; sub = 'Tutte e ' + tot + ' le parole senza chiedere niente alla panchina. In tribuna stampa si tolgono il cappello.'; }
         else if (type === 'win' && mine >= tot / 2) { title = 'Griglia chiusa'; sub = 'Qualche dritta dalla panchina, ma le parole decisive le hai trovate tu: ' + mine + ' su ' + tot + '.'; }
-        else if (type === 'win') { title = 'Chiusa col VAR'; sub = 'La griglia è piena, ma più della metà l\'ha scritta la panchina. La prossima volta prova da solo.'; }
-        else if (mine) { title = 'Bandiera bianca'; sub = 'Ti fermi a ' + mine + (mine === 1 ? ' parola' : ' parole') + ' su ' + tot + '. La soluzione è qui sotto: ripassala, alla prossima non scappa.'; }
+        else if (type === 'win') { title = 'Chiusa col VAR'; sub = 'La griglia è piena, ma più della metà l\'ha scritta la panchina. Nella prossima scheda prova da solo.'; }
+        else if (mine) { title = 'Bandiera bianca'; sub = 'Ti fermi a ' + mine + (mine === 1 ? ' parola' : ' parole') + ' su ' + tot + '. La soluzione è qui sotto: ripassala per le prossime schede.'; }
         else { title = 'Non pervenuto'; sub = 'Nessuna parola trovata da solo. La soluzione è qui sotto: studiala e torna in campo.'; }
 
         setTimeout(function () {
@@ -977,16 +851,17 @@
                     { label: 'Tempo', value: fmtTime(S.elapsed) },
                     { label: 'Parole tue', value: mine + '/' + tot },
                     { label: 'Aiuti', value: aids },
-                    { label: 'Griglia', value: p.w + '×' + p.h }
+                    { label: 'Completati', value: doneN + '/' + SCHEDE.length }
                 ],
                 extraHTML: solutionHTML(),
                 share: type === 'win'
-                    ? 'Ho chiuso il cruciverba del pallone di Quizzotti (' + tot + ' parole) in ' + fmtTime(S.elapsed) + (aids ? ' con ' + aids + (aids === 1 ? ' aiuto' : ' aiuti') : ' senza aiuti') + '. Ci provi?'
-                    : 'Al cruciverba del pallone di Quizzotti ho trovato ' + mine + ' parole su ' + tot + '. Fai di meglio?',
-                onRetry: function () { newGame(); },
-                secondary: { label: 'Cambia griglia', icon: 'grid', onClick: function () { paintIntro(); QZ.show('s-start'); } }
+                    ? 'Ho chiuso il Cruciverba N° ' + S.n + ' di Quizzotti in ' + fmtTime(S.elapsed) + (aids ? ' con ' + aids + (aids === 1 ? ' aiuto' : ' aiuti') : ' senza aiuti') + '. Ci provi?'
+                    : 'Al Cruciverba N° ' + S.n + ' di Quizzotti ho trovato ' + mine + ' parole su ' + tot + '. Fai di meglio?',
+                retryLabel: 'Torna alle schede',
+                onRetry: backToList,
+                secondary: nx ? { label: 'Prossimo cruciverba: N° ' + nx.n, icon: 'arrow', onClick: function () { open(nx.n); } } : null
             });
-            QZ.say((type === 'win' ? 'Griglia completata in ' : 'Partita finita dopo ') + timeWords(S.elapsed) + '.');
+            QZ.say((type === 'win' ? 'Griglia completata in ' : 'Partita finita dopo ') + timeWords(S.elapsed) + '. Schede completate: ' + doneN + ' su ' + SCHEDE.length + '.');
         }, type === 'win' ? 1100 : 0);
     }
 
