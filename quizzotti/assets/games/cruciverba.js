@@ -60,7 +60,7 @@
         ['Schede numerate:', 'il N° 1 è uguale per tutti. Una volta chiusa, la scheda resta in bacheca.'],
         ['Tocca una casella', 'e scrivi. Toccala di nuovo per passare da orizzontale a verticale.'],
         ['Niente suggerimenti in corsa:', 'scrivi tutto, correggi quanto vuoi. Nessuna parola si accende prima del tempo.'],
-        ['Verifica finale:', 'quando sei pronto, un solo tasto corregge tutta la griglia. Lettere sbagliate in rosso, giuste in verde.'],
+        ['Verifica quando vuoi:', 'le lettere giuste diventano verdi, le sbagliate rosse. Correggi e riprova: tentativi infiniti, la scheda si chiude solo quando è tutta giusta.'],
         ['Due aiuti dalla panchina:', 'svela una lettera o una parola intera. Ognuno pesa sul voto.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
@@ -88,9 +88,12 @@
     $('#xw-back-2').innerHTML = QZ.icon('back') + 'Torna alle schede';
     $('#xw-back').addEventListener('click', backToList);
     $('#xw-back-2').addEventListener('click', backToList);
+    // nessun ordine obbligato: il bottone porta alle schede, si sceglie quale giocare
     $('#start-btn').addEventListener('click', function () {
-        var p = nextOpen(0);
-        if (p) open(p.n);
+        var list = $('#xw-cards');
+        list.scrollIntoView({ behavior: QZ.reducedMotion() ? 'auto' : 'smooth', block: 'center' });
+        var first = list.querySelector('.xw-card');
+        if (first) setTimeout(function () { first.focus({ preventScroll: true }); }, 350);
     });
     $('#xw-cards').addEventListener('click', function (e) {
         var b = e.target.closest('[data-n]');
@@ -120,7 +123,7 @@
         var nx = nextOpen(0);
         var btn = $('#start-btn');
         btn.hidden = !nx;
-        if (nx) btn.innerHTML = (validPlay(nx, st.play[nx.n]) ? 'Riprendi il N° ' + nx.n : 'Fischio d\'inizio: N° ' + nx.n) + QZ.icon('arrow');
+        btn.innerHTML = 'Scegli la scheda' + QZ.icon('arrow');
         $('#start-record').textContent = !SCHEDE.length ? 'Le schede stanno arrivando in sala stampa: riprova tra poco.'
             : !nx ? 'Tutte le schede completate. Nuove griglie in arrivo: torna a trovarci.' : '';
         $('#xw-cards').innerHTML = SCHEDE.map(function (p, i) {
@@ -179,8 +182,8 @@
     function blank(p) {
         var size = p.w * p.h;
         return {
-            fill: new Array(size).fill(''), rev: new Array(size).fill(0), solved: new Array(p.words.length).fill(0),
-            aids: { check: 0, letter: 0, word: 0 }, elapsed: 0, cur: -1, dir: 'a'
+            fill: new Array(size).fill(''), rev: new Array(size).fill(0), ok: new Array(size).fill(0), solved: new Array(p.words.length).fill(0),
+            aids: { check: 0, letter: 0, word: 0 }, verifies: 0, elapsed: 0, cur: -1, dir: 'a'
         };
     }
 
@@ -206,6 +209,8 @@
         S = {
             n: p.n, p: { n: p.n, title: p.title, w: p.w, h: p.h, words: p.words.map(function (w) { return Object.assign({}, w); }) },
             fill: play.fill.slice(), rev: play.rev.slice(), solved: play.solved.slice(),
+            ok: Array.isArray(play.ok) && play.ok.length === play.fill.length ? play.ok.slice() : new Array(play.fill.length).fill(0),
+            verifies: play.verifies || 0,
             aids: Object.assign({ check: 0, letter: 0, word: 0 }, play.aids), elapsed: play.elapsed || 0,
             cur: play.cur, dir: play.dir || 'a', done: !!review, review: review
         };
@@ -263,7 +268,7 @@
 
     function isLocked(ci) {
         var m = S.map[ci];
-        return !!(S.rev[ci] || (m.a != null && S.solved[m.a]) || (m.d != null && S.solved[m.d]));
+        return !!(S.rev[ci] || S.ok[ci] || (m.a != null && S.solved[m.a]) || (m.d != null && S.solved[m.d]));
     }
 
     /* ---------- Griglia ---------- */
@@ -294,6 +299,7 @@
         var solved = (m.a != null && S.solved[m.a]) || (m.d != null && S.solved[m.d]);
         el.classList.toggle('is-solved', !!solved && !!(S.review || S.verified));
         el.classList.toggle('is-rev', !!S.rev[ci]);
+        el.classList.toggle('is-right', !!S.ok[ci] && !S.rev[ci]);
     }
 
     /** La misura delle caselle segue la larghezza disponibile (375 px compresi). */
@@ -518,10 +524,11 @@
         var ci = S.cur;
         if (S.fill[ci] && !isLocked(ci)) {
             S.fill[ci] = '';
+            cellEls[ci].classList.remove('is-wrong');
         } else {
             var prev = nextInWord(curWord(), ci, -1);
             if (prev < 0) return;
-            if (!isLocked(prev)) S.fill[prev] = '';
+            if (!isLocked(prev)) { S.fill[prev] = ''; cellEls[prev].classList.remove('is-wrong'); }
             ci = prev;
             select(prev, S.dir, true);
         }
@@ -534,6 +541,7 @@
     function clearCell() {
         if (!S || S.done || isLocked(S.cur)) return;
         S.fill[S.cur] = '';
+        cellEls[S.cur].classList.remove('is-wrong');
         paintCell(S.cur);
         paintClues();
         save();
@@ -542,11 +550,11 @@
     var fullWarned = '';
     function checkFull() {
         if (S.done) return;
+        // l'avviso arriva una volta sola per scheda, e mai dopo una verifica
+        if (fullWarned === S.n || S.verifies) return;
         var all = Object.keys(S.map).every(function (ci) { return S.fill[ci]; });
-        if (!all) { fullWarned = ''; return; }
-        var sig = S.fill.join('');
-        if (sig === fullWarned) return;
-        fullWarned = sig;
+        if (!all) return;
+        fullWarned = S.n;
         QZ.toast('Griglia piena. Quando sei convinto, premi «Verifica».', { icon: 'check', ms: 3400 });
         QZ.say('Griglia piena. Quando sei pronto, premi Verifica.');
         QZ.fx.pop($('[data-aid="verify"]'));
@@ -618,47 +626,57 @@
     /* =====================================================================
        AIUTI
        ===================================================================== */
-    /* ---------- La verifica finale: una volta sola, corregge tutto ---------- */
+    /* ---------- La verifica: quante volte vuoi, la scheda si chiude solo tutta giusta ---------- */
     function verify() {
         if (!S || S.done) return;
         var cells = Object.keys(S.map).map(Number);
-        var empty = cells.filter(function (ci) { return !S.fill[ci]; }).length;
-        var msg = empty
-            ? (empty === 1 ? 'C\'è ancora una casella vuota' : 'Ci sono ancora ' + empty + ' caselle vuote') + '. Se verifichi ora conta come sbagliata e la scheda si chiude.'
-            : 'Si corregge tutta la griglia e la scheda si chiude: dopo non si torna indietro.';
-        QZ.confirm(msg, { title: 'Verifica finale?', okLabel: 'Verifica', cancelLabel: 'Ci penso ancora' }).then(function (ok) {
-            if (!ok || !S || S.done) return;
+        S.verifies++;
+        var wrong = [], empty = 0, newOk = 0;
+        cells.forEach(function (ci) {
+            if (!S.fill[ci]) { empty++; return; }
+            if (S.fill[ci] === S.map[ci].ch) {
+                if (!S.ok[ci]) { S.ok[ci] = 1; newOk++; }
+                cellEls[ci].classList.remove('is-wrong');
+            } else {
+                wrong.push(ci);
+            }
+            paintCell(ci);
+        });
+        // le parole tutte confermate si chiudono: si saltano scrivendo
+        S.p.words.forEach(function (w, wi) {
+            if (!S.solved[wi] && w.cells.every(function (x) { return S.ok[x] || S.rev[x]; })) S.solved[wi] = w.cells.every(function (x) { return S.rev[x]; }) ? 2 : 1;
+        });
+        wrong.forEach(function (ci, k) {
+            setTimeout(function () { cellEls[ci].classList.add('is-wrong'); }, QZ.reducedMotion() ? 0 : Math.min(k * 25, 500));
+        });
+        paintClues();
+        paintBoard();
+        save();
+        if (!wrong.length && !empty) {
             S.done = true;
             S.verified = true;
             stopClock();
             try { inputEl.blur(); } catch { /* niente */ }
-            // parola giusta se tutte le lettere tornano; tua se non l'ha svelata intera la panchina
-            S.p.words.forEach(function (w, wi) {
-                var ok2 = w.cells.every(function (x) { return S.fill[x] === S.map[x].ch; });
-                if (S.solved[wi] === 2) return;
-                S.solved[wi] = ok2 ? 1 : 0;
-            });
-            var wrong = cells.filter(function (ci) { return S.fill[ci] !== S.map[ci].ch; });
-            QZ.$$('.xw-cell.is-word, .xw-cell.is-cur', gridEl).forEach(function (el) { el.classList.remove('is-word', 'is-cur'); });
-            cells.forEach(function (ci, k) {
-                setTimeout(function () {
-                    var bad = S.fill[ci] !== S.map[ci].ch;
-                    paintCell(ci);
-                    cellEls[ci].classList.toggle('is-wrong', bad);
-                    cellEls[ci].classList.toggle('is-right', !bad);
-                }, QZ.reducedMotion() ? 0 : Math.min(k * 14, 900));
-            });
-            paintClues();
-            setTimeout(function () {
-                if (wrong.length) { QZ.sound.wrong(); QZ.fx.shake(gridEl); } else QZ.sound.correct();
-                var good = S.solved.filter(function (x) { return x === 1; }).length;
-                QZ.fx.stamp(gridEl, wrong.length ? good + '/' + S.p.words.length : 'Perfetta!', wrong.length ? 'ink' : 'ok', {
-                    size: 26, x: 50, y: 50, ms: 1500,
-                    say: wrong.length ? 'Verifica: ' + good + ' parole giuste su ' + S.p.words.length + ', ' + wrong.length + (wrong.length === 1 ? ' lettera sbagliata.' : ' lettere sbagliate.') : 'Verifica: griglia perfetta.'
-                });
-                setTimeout(function () { finish(wrong.length ? 'checked' : 'win'); }, 1500);
-            }, QZ.reducedMotion() ? 50 : 1000);
-        });
+            QZ.sound.correct();
+            QZ.fx.stamp(gridEl, 'Perfetta!', 'ok', { size: 26, x: 50, y: 50, ms: 1500, say: 'Verifica: griglia tutta giusta.' });
+            setTimeout(function () { finish('win'); }, 1300);
+            return;
+        }
+        var parts = [];
+        if (wrong.length) parts.push(wrong.length === 1 ? 'una lettera sbagliata' : wrong.length + ' lettere sbagliate');
+        if (empty) parts.push(empty === 1 ? 'una casella vuota' : empty + ' caselle vuote');
+        var txt = parts.join(' e ');
+        txt = txt.charAt(0).toUpperCase() + txt.slice(1) + '.';
+        if (wrong.length) { QZ.sound.wrong(); QZ.fx.shake(gridEl); } else QZ.sound.pop();
+        QZ.toast(txt + (wrong.length ? ' Le rosse sono da correggere, le verdi sono giuste.' : ' Quelle scritte sono tutte giuste.'), { icon: wrong.length ? 'flag' : 'check', type: wrong.length ? 'bad' : 'ok', ms: 3600 });
+        QZ.say('Verifica numero ' + S.verifies + ': ' + txt + (newOk ? ' ' + newOk + ' lettere confermate.' : ''));
+        // si riparte dalla prima casella da sistemare
+        var target = wrong[0] != null ? wrong[0] : cells.filter(function (ci) { return !S.fill[ci]; })[0];
+        if (target != null) {
+            var m = S.map[target];
+            select(target, m[S.dir] != null ? S.dir : (m.a != null ? 'a' : 'd'), true);
+            keepFocus();
+        }
     }
 
     function aidLetter() {
@@ -757,7 +775,7 @@
         if (!S || S.done) return;
         var st = getStore();
         st.play[S.n] = {
-            fill: S.fill, rev: S.rev, solved: S.solved, aids: S.aids,
+            fill: S.fill, rev: S.rev, ok: S.ok, solved: S.solved, aids: S.aids, verifies: S.verifies,
             elapsed: Math.floor(S.elapsed), cur: S.cur, dir: S.dir
         };
         putStore(st);
@@ -779,7 +797,7 @@
         var target = S.total * 7;                      // ~7 secondi a casella: il passo di chi se la cava bene
         var speed = QZ.clamp(target / Math.max(S.elapsed, 1), 0, 1);
         var ratio;
-        var clean = QZ.clamp(1 - (revCells / S.total) * 1.6, 0, 1);
+        var clean = QZ.clamp(1 - (revCells / S.total) * 1.6 - Math.max(0, S.verifies - 1) * 0.04, 0, 1);
         if (type === 'win') {
             ratio = clean * (0.72 + 0.28 * speed);
         } else if (type === 'checked') {
@@ -793,7 +811,7 @@
         var st = getStore();
         var first = !st.done[S.n];
         delete st.play[S.n];
-        if (first) st.done[S.n] = { time: Math.floor(S.elapsed), ratio: Math.round(ratio * 1000) / 1000, aids: S.aids, mine: mine, tot: tot, quit: type === 'quit', date: Date.now() };
+        if (first) st.done[S.n] = { time: Math.floor(S.elapsed), ratio: Math.round(ratio * 1000) / 1000, aids: S.aids, mine: mine, tot: tot, quit: type === 'quit', verifies: S.verifies || 0, date: Date.now() };
         putStore(st);
         var r = null;
         if (first) {
@@ -804,7 +822,8 @@
         var nx = nextOpen(S.n);
 
         var title, sub;
-        if (type === 'win' && !aids) { title = 'Griglia pulita'; sub = 'Tutte e ' + tot + ' le parole senza chiedere niente alla panchina. In tribuna stampa si tolgono il cappello.'; }
+        if (type === 'win' && !aids && S.verifies <= 1) { title = 'Griglia pulita'; sub = 'Tutte e ' + tot + ' le parole senza chiedere niente alla panchina. In tribuna stampa si tolgono il cappello.'; }
+        else if (type === 'win' && !aids) { title = 'Chiusa al ' + S.verifies + '° tentativo'; sub = 'Tutte e ' + tot + ' le parole senza aiuti, con ' + (S.verifies - 1) + (S.verifies === 2 ? ' correzione' : ' correzioni') + ' dopo la verifica. Testa e pazienza.'; }
         else if (type === 'win' && mine >= tot / 2) { title = 'Griglia chiusa'; sub = 'Qualche dritta dalla panchina, ma le parole decisive le hai trovate tu: ' + mine + ' su ' + tot + '.'; }
         else if (type === 'win') { title = 'Chiusa col VAR'; sub = 'La griglia è piena, ma più della metà l\'ha scritta la panchina. Nella prossima scheda prova da solo.'; }
         else if (type === 'checked' && mine >= tot * 0.8) { title = 'Quasi perfetta'; sub = mine + ' parole giuste su ' + tot + '. Le lettere sbagliate le trovi in rosso qui sotto, con quello che avevi scritto.'; }
@@ -824,6 +843,7 @@
                     { label: 'Tempo', value: fmtTime(S.elapsed) },
                     { label: 'Parole giuste', value: mine + '/' + tot },
                     { label: 'Aiuti', value: aids },
+                    { label: 'Verifiche', value: S.verifies || 0 },
                     { label: 'Completati', value: doneN + '/' + SCHEDE.length }
                 ],
                 extraHTML: solutionHTML(),
