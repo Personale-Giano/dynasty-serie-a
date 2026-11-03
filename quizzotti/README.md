@@ -2,7 +2,7 @@
 
 10 minigiochi di calcio gratuiti, ispirati a format TV italiani (Chi Vuol Essere Milionario, Jeopardy, Avanti un Altro, Taboo, Intesa Vincente, Mr. White, L'Eredità…). HTML/CSS/JS statico, senza framework né bundler: si apre `index.html` e si gioca.
 
-La v2 è un rifacimento completo: nuovo design "Notte di Coppa" (fari dello stadio, oro del logo, un colore d'accento per ogni gioco), animazioni ovunque, un solo motore condiviso al posto del codice duplicato in ogni pagina.
+La v2 è un rifacimento completo. L'identità visiva si chiama **"L'Almanacco"**: carta di giornale, figurine Panini, schedina del Totocalcio, pagelle del lunedì, timbri e pennarello. Le regole di stile e di tono sono in [DESIGN.md](DESIGN.md): leggerlo prima di toccare una pagina.
 
 ## Avvio rapido
 

@@ -51,3 +51,6 @@ Italiano da bar dello sport: diretto, ironico, affettuoso. Frasi corte. Gergo ca
 - Ombre: solo `var(--shadow-print)` / `var(--shadow-print-sm)` o nessuna. Niente `box-shadow` sfocati colorati, niente `filter: drop-shadow` luminosi, niente `backdrop-filter`.
 - Testo grande e leggibile a un metro di distanza nei giochi di gruppo (telefono sul tavolo).
 - Contrasto AA minimo su carta: il testo secondario è `--ink-2`, mai più chiaro di `--ink-3` per testo utile.
+- Il colore della maglia come **testo** su carta o figurina è `var(--accent-ink)` (la tinta piena `--accent` è per i fondi, con sopra `--on-accent`). Le tinte delle squadre (`QZ.TEAM_COLORS`) reggono tutte un testo color panna.
+- Timbri, segni a pennarello e colori sono decorativi (`aria-hidden`): l'esito va anche **detto**, con `opts.say` di `QZ.fx.stamp` o con `QZ.say()`. La parola da far indovinare si annuncia solo a chi tiene il telefono mentre gioca (Taboo, Intesa); la bustina di Mr. White mai in automatico, solo "bustina aperta". Il cronometro non si annuncia a ogni secondo (al massimo a 10 secondi e allo scadere).
+- Ogni schermata ha un solo `h1` (se non ce l'ha, `QZ.show` ne aggiunge uno nascosto col nome del gioco; nel resoconto è il titolo). Comandi di gioco alti almeno 44px.

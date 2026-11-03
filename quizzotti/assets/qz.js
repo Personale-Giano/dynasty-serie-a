@@ -22,7 +22,7 @@
         { id: 'taboo', file: 'Taboo.html', name: 'Taboo', short: 'Taboo', icon: 'ban', color: '#cf2a1e', color2: '#1d1913', on: '#fbf6ec', rgb: '207, 42, 30', players: '2-6 squadre', kind: 'party', desc: 'Fai indovinare «Catenaccio» senza dire difesa, Italia e chiuso. Auguri.', tags: ['Squadre', 'Parole', 'Timer'] },
         { id: 'intesavincente', file: 'IntesaVincente.html', name: 'Intesa Vincente', short: 'Intesa Vincente', icon: 'users', color: '#1672ad', color2: '#fbf6ec', on: '#fbf6ec', rgb: '22, 114, 173', players: '2-6 squadre', kind: 'party', desc: 'Uno spiega, gli altri prenotano e rispondono. Il cronometro non fa sconti.', tags: ['Squadre', 'Parole', 'Timer'] },
         { id: 'mrwhite', file: 'MrWhite.html', name: 'Mr. White', short: 'Mr. White', icon: 'spy', color: '#1d1913', color2: '#fbf6ec', on: '#fbf6ec', rgb: '29, 25, 19', players: '3+ giocatori', kind: 'party', desc: 'Tutti sanno chi è il calciatore segreto. Tutti tranne uno, che fa finta di saperlo.', tags: ['Bluff', 'Deduzione', 'Ruoli'] },
-        { id: 'bomba', file: 'Bomba.html', name: 'Bomba', short: 'Bomba', icon: 'bomb', color: '#e23b1b', color2: '#f3c21b', on: '#fbf6ec', rgb: '226, 59, 27', players: '2+ giocatori', kind: 'party', desc: 'Un tema e una bomba che passa di mano in mano. Quando scoppia, qualcuno ci resta.', tags: ['Turni', 'Tempo', 'Eliminazione'] },
+        { id: 'bomba', file: 'Bomba.html', name: 'Bomba', short: 'Bomba', icon: 'bomb', color: '#cc3418', color2: '#f3c21b', on: '#fbf6ec', rgb: '204, 52, 24', players: '2+ giocatori', kind: 'party', desc: 'Un tema e una bomba che passa di mano in mano. Quando scoppia, qualcuno ci resta.', tags: ['Turni', 'Tempo', 'Eliminazione'] },
         { id: 'sfidaeredita', file: 'sfidaEredita.html', name: 'Derby delle Parole', short: 'Derby', icon: 'ball', color: '#0e7a43', color2: '#fbf6ec', on: '#fbf6ec', rgb: '14, 122, 67', players: '2 squadre', kind: 'party', desc: 'Una definizione, le lettere che spuntano piano piano. Chi la sa, tira in porta.', tags: ['Definizioni', 'Squadre', 'Voce'] },
         { id: 'giocatoributget', file: 'GiocatoriBudget.html', name: 'Sfida dei Budget', short: 'Budget', icon: 'coins', color: '#8e1b3f', color2: '#fbf6ec', on: '#fbf6ec', rgb: '142, 27, 63', players: '1-6 giocatori', kind: 'party', desc: 'Fai mercato a occhio: i prezzi sono nascosti e il presidente non perdona.', tags: ['Mercato', 'Strategia', 'Budget'] }
     ];
@@ -34,7 +34,19 @@
 
     /* Colori per squadre/giocatori (party game) */
     // tinte da tipografia, tutte abbastanza scure da reggere un numero color panna
-    QZ.TEAM_COLORS = ['#cf2a1e', '#1f3c88', '#0e7a43', '#e3a21a', '#6b3fa0', '#e8641b', '#1672ad', '#8e1b3f', '#2b7a78', '#6f6555'];
+    QZ.TEAM_COLORS = ['#cf2a1e', '#1f3c88', '#0e7a43', '#946400', '#6b3fa0', '#b4500e', '#1672ad', '#8e1b3f', '#2b7a78', '#6f6555'];
+    /** Colore del testo da stampare su una tinta: inchiostro sulle tinte chiare (oro, arancio), panna sulle scure. */
+    QZ.onColor = function (hex) {
+        var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex || ''));
+        if (!m) return '#fbf6ec';
+        var lum = [m[1], m[2], m[3]].map(function (h) {
+            var v = parseInt(h, 16) / 255;
+            return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+        });
+        var L = 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2];
+        // contrasto con la panna (#fbf6ec, L~0.92) contro quello con l'inchiostro (#1d1913, L~0.011)
+        return (0.97 / (L + 0.05)) >= ((L + 0.05) / 0.061) ? '#fbf6ec' : '#1d1913';
+    };
 
     /* ---------------------------------------------------------------------
        Icone SVG (24x24, tratto) — QZ.icon('nome', 'classe-extra')
@@ -213,6 +225,38 @@
         }
     };
 
+    /**
+     * Annuncio per i lettori di schermo (regione live nascosta): esiti, punteggi,
+     * turni. Quello che si vede soltanto (timbri, segni, colori) passa da qui.
+     * QZ.say('Gol! Risposta giusta'), QZ.say('Tempo scaduto', true) per l'urgenza.
+     */
+    QZ.say = (function () {
+        var regions = {};
+        var timers = {};
+        function region(kind) {
+            if (regions[kind] && regions[kind].isConnected) return regions[kind];
+            var r = doc.createElement('div');
+            r.className = 'sr-only';
+            r.setAttribute('aria-live', kind);
+            r.setAttribute('aria-atomic', 'true');
+            doc.body.appendChild(r);
+            regions[kind] = r;
+            return r;
+        }
+        var pending = { polite: [], assertive: [] };
+        return function (msg, assertive) {
+            if (!msg || !doc.body) return;
+            var kind = assertive ? 'assertive' : 'polite';
+            var r = region(kind);
+            // messaggi ravvicinati (esito + punteggio + turno) escono in un annuncio solo,
+            // invece di cancellarsi a vicenda; svuotare prima fa rileggere anche un testo uguale
+            pending[kind].push(String(msg));
+            r.textContent = '';
+            clearTimeout(timers[kind]);
+            timers[kind] = setTimeout(function () { r.textContent = pending[kind].join(' '); pending[kind] = []; }, 90);
+        };
+    })();
+
     QZ.reducedMotion = function () {
         return global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches;
     };
@@ -242,7 +286,8 @@
         // Safari/iOS e i browser in-app creano il contesto sospeso: si aspetta
         // davvero il resume prima di schedulare, altrimenti il suono resta muto.
         function run(fn) {
-            if (muted) return;
+            // a pagina nascosta il contesto e' fermo: i suoni si accumulerebbero e partirebbero tutti insieme al ritorno
+            if (muted || doc.hidden) return;
             var c = getCtx();
             if (!c) return;
             if (c.state === 'running') { fn(c); return; }
@@ -345,6 +390,7 @@
         });
         doc.addEventListener('visibilitychange', function () {
             if (!doc.hidden) S.unlock();
+            else if (ctx && ctx.state === 'running') ctx.suspend().catch(function () {});
         });
         return S;
     })();
@@ -410,7 +456,8 @@
             b.style.setProperty('--p', pr.pct);
             b.querySelector('[data-lv]').textContent = pr.level;
             b.querySelector('[data-xp]').textContent = QZ.fmt(p.totalXP) + ' XP';
-            b.setAttribute('aria-label', 'Profilo: livello ' + pr.level + ', ' + p.totalXP + ' XP');
+            // il nome comincia con quello che si legge sul bottone ("Liv. 3"), poi dice cosa apre
+            b.setAttribute('aria-label', 'Liv. ' + pr.level + ', ' + QZ.fmt(p.totalXP) + ' XP: apri il tuo album');
             if (bump) { b.classList.remove('is-bump'); void b.offsetWidth; b.classList.add('is-bump'); }
         }
 
@@ -460,10 +507,23 @@
     /* ---------------------------------------------------------------------
        Schermate: QZ.show('s-game') con transizione in uscita/entrata
        ------------------------------------------------------------------- */
+    var historyArmed = false;
     QZ.show = function (id, opts) {
         opts = opts || {};
         var next = typeof id === 'string' ? doc.getElementById(id) : id;
         if (!next) return;
+        // Lasciata la copertina, il tasto Indietro del browser riporta alla copertina del
+        // gioco (ricaricandola: timer, suoni e stato ripartono puliti) invece di uscire.
+        var first = QZ.$('.screen');
+        if (!historyArmed && first && next !== first && global.history && global.history.pushState) {
+            historyArmed = true;
+            try {
+                global.history.pushState({ qzPlay: 1 }, '');
+                global.addEventListener('popstate', function (e) {
+                    if (!(e.state && e.state.qzPlay)) global.location.reload();
+                });
+            } catch { /* history non disponibile */ }
+        }
         var current = QZ.$$('.screen.is-active').filter(function (s) { return s !== next; });
         var enter = function () {
             current.forEach(function (s) { s.classList.remove('is-active', 'is-leaving'); });
@@ -471,6 +531,10 @@
             next.classList.remove('is-active');
             void next.offsetWidth;
             next.classList.add('is-active');
+            if (!next.querySelector('h1')) {
+                var gg = QZ.game(doc.body.dataset.game);
+                if (gg) next.insertAdjacentHTML('afterbegin', '<h1 class="sr-only" data-qz-h1>' + QZ.esc(gg.name) + '</h1>');
+            }
             if (opts.scroll !== false) global.scrollTo({ top: 0, behavior: QZ.reducedMotion() ? 'auto' : 'smooth' });
             var focusEl = next.querySelector('[data-autofocus]');
             if (focusEl) setTimeout(function () { focusEl.focus({ preventScroll: true }); }, 60);
@@ -509,24 +573,28 @@
     QZ.Timer.prototype.render = function () {
         var o = this.o, ratio = Math.max(0, this.remaining / this.duration);
         var host = o.ring || o.bar;
+        // gira a ogni frame: il testo e le classi si toccano solo quando cambia il secondo
+        var sec = String(Math.ceil(this.remaining));
+        var secChanged = sec !== this._painted;
+        this._painted = sec;
         if (o.ring) {
-            var c = o.ring.querySelector('.t-fill');
-            if (c) c.style.strokeDashoffset = String(c.__len * (1 - ratio));
-            var l = o.ring.querySelector('.timer-ring__label');
-            if (l) l.textContent = Math.ceil(this.remaining);
+            if (!this._fill) { this._fill = o.ring.querySelector('.t-fill'); this._ringLabel = o.ring.querySelector('.timer-ring__label'); }
+            if (this._fill) this._fill.style.strokeDashoffset = String(this._fill.__len * (1 - ratio));
+            if (this._ringLabel && secChanged) this._ringLabel.textContent = sec;
         }
         if (o.bar) {
-            var f = o.bar.querySelector('.timer-bar__fill');
-            if (f) f.style.transform = 'scaleX(' + ratio + ')';
+            if (!this._barFill) this._barFill = o.bar.querySelector('.timer-bar__fill');
+            if (this._barFill) this._barFill.style.transform = 'scaleX(' + ratio + ')';
         }
-        if (o.label) o.label.textContent = Math.ceil(this.remaining);
-        if (host) {
+        if (o.label && secChanged) o.label.textContent = sec;
+        if (host && secChanged) {
             host.classList.toggle('is-warn', ratio <= this.warnAt && ratio > this.dangerAt);
             host.classList.toggle('is-danger', ratio <= this.dangerAt && this.remaining > 0);
         }
     };
     QZ.Timer.prototype.start = function () {
         if (this.running || this.remaining <= 0) return this;
+        if (doc.hidden && this.o.pauseHidden !== false) { this._autoPaused = true; return this; }
         this.running = true;
         this._last = performance.now();
         var self = this;
@@ -554,17 +622,19 @@
         if (seconds != null) this.duration = seconds;
         this.remaining = this.duration;
         this._lastSec = Math.ceil(this.remaining);
+        this._painted = null;
         this.render();
         return this;
     };
     QZ.Timer.prototype.add = function (s) {
         this.remaining = Math.min(this.duration + s, this.remaining + s);
         if (this.remaining > this.duration) this.duration = this.remaining;
+        this._painted = null;
         this.render();
         return this;
     };
     QZ.Timer.prototype.elapsed = function () { return this.duration - this.remaining; };
-    QZ.Timer.prototype.destroy = function () { this.pause(); doc.removeEventListener('visibilitychange', this._onVis); };
+    QZ.Timer.prototype.destroy = function () { this.pause(); this._autoPaused = false; doc.removeEventListener('visibilitychange', this._onVis); };
 
     /** HTML dell'anello timer; poi QZ.ring(el) per inizializzarlo. */
     QZ.ringHTML = function (extraCls) {
@@ -593,6 +663,7 @@
         var colors = opts.colors || ['#cf2a1e', '#0e7a43', '#f3c21b', '#1f3c88', '#fbf6ec', '#e8641b'];
         var cv = doc.createElement('canvas');
         cv.className = 'qz-confetti';
+        cv.setAttribute('aria-hidden', 'true');
         doc.body.appendChild(cv);
         var dpr = Math.min(2, global.devicePixelRatio || 1);
         var W = global.innerWidth, H = global.innerHeight;
@@ -641,7 +712,7 @@
                     var s = doc.createElement('div');
                     s.textContent = symbol;
                     s.setAttribute('aria-hidden', 'true');
-                    s.style.cssText = 'position:fixed;top:-60px;left:' + (Math.random() * 100) + 'vw;z-index:965;pointer-events:none;font-size:' + (22 + Math.random() * 26) + 'px;font-weight:900;color:var(--accent);text-shadow:0 0 20px rgba(var(--accent-rgb),.6);transition:transform ' + (2 + Math.random() * 1.6) + 's linear, opacity .4s ease ' + 2.2 + 's';
+                    s.style.cssText = 'position:fixed;top:-60px;left:' + (Math.random() * 100) + 'vw;z-index:965;pointer-events:none;font-size:' + (22 + Math.random() * 26) + 'px;font-family:var(--font-display);font-style:italic;font-weight:900;color:var(--accent);-webkit-text-stroke:1.5px var(--ink);text-shadow:2px 2px 0 var(--ink);transition:transform ' + (2 + Math.random() * 1.6) + 's linear, opacity .4s ease ' + 2.2 + 's';
                     doc.body.appendChild(s);
                     requestAnimationFrame(function () {
                         s.style.transform = 'translateY(' + (global.innerHeight + 120) + 'px) rotate(' + (Math.random() * 720 - 360) + 'deg)';
@@ -663,7 +734,7 @@
             s.className = 'qz-spark';
             var a = (Math.PI * 2 * i) / n + Math.random() * 0.4, d = 50 + Math.random() * 80;
             s.style.left = cx + 'px'; s.style.top = cy + 'px';
-            s.style.background = color || (i % 3 ? 'var(--accent)' : '#fff');
+            s.style.background = color || (i % 3 ? 'var(--accent)' : 'var(--card)');
             s.style.setProperty('--dx', Math.cos(a) * d + 'px');
             s.style.setProperty('--dy', Math.sin(a) * d + 'px');
             s.style.setProperty('--rot', (Math.random() * 360) + 'deg');
@@ -688,14 +759,17 @@
         if (QZ.reducedMotion()) return;
         var f = doc.createElement('div');
         f.className = 'qz-flash';
-        f.style.background = 'radial-gradient(circle at 50% 50%, ' + (color || 'rgba(var(--accent-rgb),.5)') + ', transparent 70%)';
+        f.style.background = color || 'rgba(var(--accent-rgb), .28)';
         doc.body.appendChild(f);
         f.addEventListener('animationend', f.remove.bind(f));
     };
 
     /**
-     * Timbro sulla carta: QZ.fx.stamp(el, 'Gol!', 'ok' | 'bad' | 'ink', {rot, size, ms}).
+     * Timbro sulla carta: QZ.fx.stamp(el, 'Gol!', 'ok' | 'bad' | 'ink', {rot, size, ms, quiet, x, y, say}).
      * Si appoggia dentro l'elemento (che diventa position:relative se serve).
+     * Il timbro e' decorativo (aria-hidden): il suo testo viene annunciato con QZ.say,
+     * oppure opts.say (stringa) al suo posto; opts.say === false quando l'esito
+     * e' gia' annunciato altrove.
      */
     QZ.fx.stamp = function (el, text, kind, opts) {
         if (!el) return null;
@@ -708,17 +782,23 @@
         s.setAttribute('aria-hidden', 'true');
         s.style.setProperty('--rot', (opts.rot != null ? opts.rot : (Math.random() * 14 - 18)) + 'deg');
         if (opts.size) s.style.setProperty('--stamp-size', opts.size + 'px');
+        // posizione opzionale in percentuale dell'elemento (default: al centro)
+        if (opts.x != null) s.style.left = opts.x + '%';
+        if (opts.y != null) s.style.top = opts.y + '%';
         el.appendChild(s);
-        QZ.sound.thud();
+        if (opts.say !== false) QZ.say(typeof opts.say === 'string' ? opts.say : text);
+        if (!opts.quiet) QZ.sound.thud();
         if (opts.ms) setTimeout(function () { s.remove(); }, opts.ms);
         return s;
     };
 
     /**
      * Segno a pennarello disegnato sopra un elemento: 'circle' (cerchiato),
-     * 'cross' (la X della schedina) o 'tick'. Colore opzionale (default rosso).
+     * 'cross' (la X della schedina) o 'tick'. Colore opzionale (default rosso);
+     * opts.static disegna il segno gia' finito, senza animazione.
      */
-    QZ.fx.mark = function (el, kind, color) {
+    QZ.fx.mark = function (el, kind, color, opts) {
+        opts = opts || {};
         if (!el) return null;
         if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
         QZ.$$('.qz-mark', el).forEach(function (x) { x.remove(); });
@@ -733,7 +813,14 @@
         el.appendChild(svg);
         // lunghezza del tratto in pixel reali (il viewBox e' stirato sull'elemento)
         var r = el.getBoundingClientRect();
-        svg.querySelector('path').style.setProperty('--len', Math.ceil((r.width + r.height) * 2.4));
+        var path = svg.querySelector('path');
+        // a disegno finito il tratteggio va tolto, altrimenti si spezza se l'elemento cambia misura
+        var settle = function () { path.style.animation = 'none'; path.style.strokeDasharray = 'none'; path.style.strokeDashoffset = '0'; };
+        if (opts.static || QZ.reducedMotion()) settle();
+        else {
+            path.style.setProperty('--len', Math.ceil((r.width + r.height) * 2.4));
+            path.addEventListener('animationend', settle, { once: true });
+        }
         return svg;
     };
 
@@ -784,11 +871,21 @@
      * Modale accessibile. actions: [{label, primary, ghost, danger, icon, value, onClick}]
      * Restituisce una Promise risolta col value dell'azione scelta (o null).
      */
+    var modalSeq = 0;
+    /** Tiene il Tab dentro un dialogo (modale, raccoglitore dei giochi). */
+    function trapTab(e, box) {
+        var f = QZ.$$('button, input, a[href], select, textarea, [tabindex]:not([tabindex="-1"])', box).filter(function (x) { return !x.disabled && x.offsetParent !== null; });
+        if (!f.length) return;
+        if (!box.contains(doc.activeElement)) { e.preventDefault(); f[0].focus(); return; }
+        if (e.shiftKey && doc.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && doc.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+    }
+
     QZ.modal = function (o) {
         return new Promise(function (resolve) {
             var lastFocus = doc.activeElement;
             var m = QZ.el(
-                '<div class="qz-modal" role="dialog" aria-modal="true">' +
+                '<div class="qz-modal" role="dialog" aria-modal="true"' + (o.title ? ' aria-labelledby="qz-modal-t' + (++modalSeq) + '"' : ' aria-label="' + QZ.esc(o.label || 'Avviso') + '"') + '>' +
                 '<div class="qz-modal__scrim"></div>' +
                 '<div class="qz-modal__box">' +
                 (o.dismissable === false ? '' : '<button class="qz-iconbtn qz-modal__close" type="button" aria-label="Chiudi">' + QZ.icon('x') + '</button>') +
@@ -796,7 +893,7 @@
                 '<div class="qz-modal__body"></div>' +
                 '<div class="qz-modal__actions"></div></div></div>'
             );
-            if (o.title) m.querySelector('h2').textContent = o.title;
+            if (o.title) { m.querySelector('h2').textContent = o.title; m.querySelector('h2').id = 'qz-modal-t' + modalSeq; }
             var body = m.querySelector('.qz-modal__body');
             if (o.html) body.innerHTML = o.html;
             else if (o.node) body.appendChild(o.node);
@@ -808,7 +905,13 @@
                 done = true;
                 m.classList.add('is-closing');
                 doc.removeEventListener('keydown', onKey);
-                setTimeout(function () { m.remove(); if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true }); }, 200);
+                setTimeout(function () {
+                    m.remove();
+                    // se dalla risposta e' nata un'altra finestra (es. conferma), il fuoco resta li'
+                    var other = QZ.$$('.qz-modal').some(function (x) { return !x.classList.contains('is-closing'); });
+                    // ...e non torna su un bottone sparito con la schermata (resterebbe sul body)
+                    if (!other && lastFocus && lastFocus.focus && lastFocus.isConnected && lastFocus.offsetParent !== null) lastFocus.focus({ preventScroll: true });
+                }, 200);
                 resolve(val === undefined ? null : val);
             }
             (o.actions || [{ label: 'OK', primary: true }]).forEach(function (a) {
@@ -824,12 +927,7 @@
             if (!acts.children.length) acts.remove();
             function onKey(e) {
                 if (e.key === 'Escape' && o.dismissable !== false) close(null);
-                if (e.key === 'Tab') {
-                    var f = QZ.$$('button, input, a[href], select, textarea', m).filter(function (x) { return !x.disabled; });
-                    if (!f.length) return;
-                    if (e.shiftKey && doc.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
-                    else if (!e.shiftKey && doc.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
-                }
+                if (e.key === 'Tab') trapTab(e, m);
             }
             doc.addEventListener('keydown', onKey);
             if (o.dismissable !== false) {
@@ -918,7 +1016,8 @@
         var saved = o.key ? QZ.store.get('qz.names.' + o.key, null) : null;
         var names = Array.isArray(saved) && saved.length >= min ? saved.slice(0, max) : [];
         var initial = o.initial || min;
-        while (names.length < initial) names.push('');
+        // una lista salvata vale cosi' com'e': si completa solo fino al minimo
+        while (names.length < (saved && names.length ? min : initial)) names.push('');
         host.innerHTML =
             '<div class="row row--between" style="margin-bottom:10px"><span class="label">' + QZ.esc(o.title || (label + ' (' + min + '-' + max + ')')) + '</span>' +
             '<div class="stepper"><button type="button" data-act="minus" aria-label="Rimuovi">' + QZ.icon('minus') + '</button><output data-count></output>' +
@@ -930,7 +1029,8 @@
         function render(animateLast) {
             list.innerHTML = '';
             names.forEach(function (n, i) {
-                var row = QZ.el('<div class="players__row"><div class="players__dot" style="background:' + QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length] + '">' + (i + 1) + '</div>' +
+                var tint = QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length];
+                var row = QZ.el('<div class="players__row"><div class="players__dot" aria-hidden="true" style="background:' + tint + ';color:' + QZ.onColor(tint) + '">' + (i + 1) + '</div>' +
                     '<input class="input" maxlength="18" autocomplete="off" aria-label="' + QZ.esc(label) + ' ' + (i + 1) + '"></div>');
                 if (!animateLast || i < names.length - 1) row.style.animation = 'none';
                 var inp = row.querySelector('input');
@@ -1017,7 +1117,7 @@
         host.innerHTML =
             '<div class="result" data-stagger>' +
             '<div class="result__badge' + (o.win === false ? ' result__badge--bad' : '') + '">' + QZ.icon(o.icon || (o.win === false ? 'flag' : 'trophy')) + '</div>' +
-            '<h2 class="result__title"></h2>' +
+            '<h1 class="result__title" tabindex="-1"></h1>' +
             '<p class="muted result__sub" style="max-width:52ch"></p>' +
             (o.big != null ? '<div class="result__big">0</div>' : '') +
             (o.ratio != null ? (function () {
@@ -1030,24 +1130,38 @@
                 (o.record.newRecord ? '<span class="note" style="font-size:22px">nuovo record!</span>' : '') +
                 (o.record.xp ? '<span class="chip">' + QZ.icon('star') + '+' + o.record.xp + ' XP</span>' : '') + '</div>' : '') +
             '</div>' +
-            (o.stats && o.stats.length ? '<div class="stats mt-3">' + o.stats.map(function (s) {
+            (o.stats && o.stats.filter(Boolean).length ? '<div class="stats mt-3">' + o.stats.filter(function (x) { return x && x.value != null; }).map(function (s) {
                 return '<div class="stat"><div class="stat__label">' + QZ.esc(s.label) + '</div><div class="stat__value">' + QZ.esc(s.value) + '</div></div>';
             }).join('') + '</div>' : '') +
             (o.extraHTML || '') +
-            '<div class="row row--center mt-3">' +
+            '<div class="result__actions">' +
             '<button type="button" class="btn btn--primary btn--lg" data-retry>' + QZ.icon('refresh') + (QZ.esc(o.retryLabel || 'Rigioca')) + '</button>' +
             (o.secondary ? '<button type="button" class="btn btn--lg" data-secondary>' + (o.secondary.icon ? QZ.icon(o.secondary.icon) : '') + QZ.esc(o.secondary.label) + '</button>' : '') +
             (o.share ? '<button type="button" class="btn btn--lg" data-share>' + QZ.icon('share') + 'Condividi</button>' : '') +
             '<a class="btn btn--ghost btn--lg" href="index.html#giochi">' + QZ.icon('grid') + 'Cambia gioco</a>' +
             '</div>';
-        host.querySelector('.result__title').textContent = o.title || '';
+        var titleEl = host.querySelector('.result__title');
+        titleEl.textContent = o.title || '';
+        // l'h1 di riserva della schermata non serve piu': il titolo del resoconto e' l'h1
+        var scr = host.closest('.screen');
+        if (scr) QZ.$$('[data-qz-h1]', scr).forEach(function (h) { h.remove(); });
+        // il bottone appena premuto e' sparito con la schermata precedente: il fuoco va sul titolo
+        // (dopo il cambio schermata, che senza movimento ridotto dura ~200 ms)
+        setTimeout(function () {
+            // (una conferma che si sta chiudendo non conta: e' spesso lei ad aver portato qui)
+            var openModal = QZ.$$('.qz-modal').some(function (x) { return !x.classList.contains('is-closing'); });
+            if (titleEl.isConnected && titleEl.offsetParent !== null && !openModal) titleEl.focus({ preventScroll: true });
+        }, QZ.reducedMotion() ? 60 : 280);
         host.querySelector('.result__sub').textContent = o.subtitle || '';
         if (o.big != null) {
             QZ.fx.count(host.querySelector('.result__big'), o.bigFrom || 0, o.big, 1300, { prefix: o.bigPrefix, suffix: o.bigSuffix, decimals: o.bigDecimals });
         }
-        host.querySelector('[data-retry]').addEventListener('click', function () { if (o.onRetry) o.onRetry(); });
+        // un tocco solo: il doppio tap non deve far partire due partite
+        var used = false;
+        var once = function (fn) { return function () { if (used) return; used = true; if (fn) fn(); }; };
+        host.querySelector('[data-retry]').addEventListener('click', once(o.onRetry));
         var sec = host.querySelector('[data-secondary]');
-        if (sec) sec.addEventListener('click', function () { if (o.secondary.onClick) o.secondary.onClick(); });
+        if (sec) sec.addEventListener('click', once(o.secondary.onClick));
         var sh = host.querySelector('[data-share]');
         if (sh) sh.addEventListener('click', function () { QZ.share(o.share, 'Quizzotti · ' + (g.name || '')); });
         if (o.win !== false) {
@@ -1128,7 +1242,7 @@
         var openBtn = doc.querySelector('[data-launcher]');
         function openL() { launcher.classList.add('is-open'); QZ.sound.whoosh(); setTimeout(function () { launcher.querySelector('[data-close]').focus(); }, 60); doc.addEventListener('keydown', escL); }
         function closeL() { launcher.classList.remove('is-open'); doc.removeEventListener('keydown', escL); openBtn.focus({ preventScroll: true }); }
-        function escL(e) { if (e.key === 'Escape') closeL(); }
+        function escL(e) { if (e.key === 'Escape') closeL(); else if (e.key === 'Tab') trapTab(e, launcher.querySelector('.qz-launcher__sheet')); }
         openBtn.addEventListener('click', openL);
         launcher.querySelector('[data-close]').addEventListener('click', closeL);
         launcher.querySelector('.qz-launcher__scrim').addEventListener('click', closeL);

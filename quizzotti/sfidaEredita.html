@@ -4,79 +4,116 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Derby delle Parole · Quizzotti</title>
-<meta name="description" content="Due squadre, un cronometro a testa e una parola misteriosa da indovinare dalla definizione, lettera dopo lettera. Rispondi a voce, scrivendo o con l'arbitro. Gioco gratuito su Quizzotti.">
+<meta name="description" content="Due squadre, un cronometro a testa e una parola misteriosa da indovinare dalla definizione, lettera dopo lettera. Rispondi scrivendo, con l'arbitro o a voce. Gioco gratuito su Quizzotti.">
 <meta name="theme-color" content="#f1e8d6">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
 <meta property="og:title" content="Derby delle Parole · Quizzotti">
 <meta property="og:description" content="Indovina la parola misteriosa dalla definizione, lettera dopo lettera. Chi finisce il tempo perde il derby.">
 <meta property="og:image" content="logo2.png">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="logo1.webp" type="image/webp">
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Permanent+Marker&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=1faa7d11">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Permanent+Marker&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=6820c77e">
 <style>
   .db-wrap { max-width: 680px; margin: 0 auto; }
   .db-setup, .db-opt { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
   .db-opt { gap: 8px; }
   #teams-host .stepper { display: none; }
+  .db-micnote { display: flex; gap: 10px; align-items: flex-start; padding-top: 14px; border-top: 1.5px dashed var(--rule); color: var(--ink-2); font-size: 15px; }
+  .db-micnote .ico { flex: none; margin-top: 2px; color: var(--ink); }
 
-  /* Tabellone */
-  .db-sb { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: stretch; padding: 10px; border-radius: var(--r-lg); background: linear-gradient(180deg, #0d1426, #070b16); border: 1px solid var(--line-2); box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.06); }
-  .db-team { --c: var(--accent); display: grid; gap: 4px; align-content: center; padding: 8px 10px; border-radius: 14px; border: 1px solid transparent; transition: border-color .3s, background .3s, box-shadow .3s; min-width: 0; }
+  /* ---------- Il tabellone dello stadio, stampato ---------- */
+  .db-sb { border: var(--bw) solid var(--ink); background: var(--card); box-shadow: var(--shadow-print); }
+  .db-sb__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 5px 12px 4px; background: var(--ink); color: var(--card); font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 16px; text-transform: uppercase; letter-spacing: .04em; }
+  .db-sb__head span:last-child { color: var(--yellow); }
+  .db-sb__row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; }
+  .db-team { --c: var(--accent); position: relative; display: grid; gap: 6px; align-content: center; min-width: 0; padding: 10px 12px 12px; transition: background .2s; }
   .db-team:last-child { text-align: right; }
-  .db-team__name { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 13px; min-width: 0; }
+  .db-team__name { display: flex; align-items: center; gap: 7px; min-width: 0; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 18px; line-height: 1; text-transform: uppercase; }
   .db-team:last-child .db-team__name { flex-direction: row-reverse; }
-  .db-team__name span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: break-word; line-height: 1.2; }
-  @media (max-width: 479px) { .db-team__name i { display: none; } .db-team__name { color: var(--c); font-size: 12px; } .db-sb { gap: 6px; padding: 8px; } .db-team { padding: 8px; } }
-  .db-team__name i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); }
-  .db-team__clock { font-family: var(--font-display); font-size: clamp(22px, 7vw, 32px); font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .db-team__name i { flex: none; width: 13px; height: 13px; border-radius: 50%; background: var(--c); border: var(--bw) solid var(--ink); }
+  .db-team__name span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .db-team__clock { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: clamp(34px, 10vw, 46px); line-height: .9; font-variant-numeric: tabular-nums; color: var(--ink-2); }
   .db-team__clock small { font-size: .5em; margin-left: 2px; }
-  .db-team .timer-bar { height: 5px; }
+  /* il cronometro come una barra stampata, con le tacche ogni 10 secondi */
+  .db-team .timer-bar { position: relative; height: 14px; }
+  .db-team .timer-bar::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(var(--tick) - 1.5px), var(--ink) calc(var(--tick) - 1.5px) var(--tick)); opacity: .45; }
   .db-team .timer-bar__fill { background: var(--c); }
   .db-team:last-child .timer-bar__fill { transform-origin: right; }
-  .db-team.is-active { border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); box-shadow: 0 0 24px -6px var(--c); }
-  .db-team.is-active .db-team__clock { color: var(--text); }
-  .db-team.is-danger .db-team__clock { color: var(--bad); animation: qz-heartbeat .8s ease-in-out infinite; }
-  .db-goals { display: flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 14px; background: #03050b; border: 1px solid var(--line); font-family: var(--font-display); font-weight: 900; font-size: clamp(26px, 8vw, 44px); font-variant-numeric: tabular-nums; color: #fff; text-shadow: 0 0 18px rgba(var(--accent-rgb), .55); }
-  .db-goals i { font-style: normal; color: var(--faint); font-size: .6em; }
+  .db-team.is-active { background: #fff3c4; }
+  .db-team.is-active .db-team__clock { color: var(--ink); }
+  .db-team.is-active::after { content: "tocca a voi"; position: absolute; bottom: -13px; left: 10px; z-index: 1; padding: 0 6px; font-family: var(--font-hand); font-size: 14px; line-height: 1.4; color: var(--card); background: var(--red); transform: rotate(-3deg); }
+  .db-team:last-child.is-active::after { left: auto; right: 10px; transform: rotate(3deg); }
+  .db-team.is-danger .db-team__clock { color: var(--red); animation: qz-heartbeat .8s ease-in-out infinite; }
+  .db-goals { display: flex; align-items: center; gap: 5px; padding: 0 8px; border-inline: var(--bw) solid var(--ink); background: var(--paper-2); }
+  .db-goals span { display: grid; place-items: center; min-width: 42px; height: 54px; padding: 0 4px; background: var(--ink); color: var(--card); font-family: var(--font-display); font-weight: 900; font-size: 42px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .db-goals i { font-style: normal; font-family: var(--font-display); font-weight: 900; font-size: 24px; }
 
-  /* Parola */
-  .db-def { text-align: center; padding: 18px; }
-  .db-def .eyebrow { justify-content: center; margin-bottom: 8px; }
-  .db-word { --tw: 36px; position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 14px; min-height: calc(var(--tw) * 1.2); }
-  .db-w { display: flex; gap: var(--tg, 4px); }
-  .db-t { width: var(--tw); height: calc(var(--tw) * 1.2); border-radius: calc(var(--tw) * .22); display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: calc(var(--tw) * .55); color: transparent; background: rgba(255,255,255,.05); border: 1px solid var(--line-2); border-bottom: 3px solid rgba(var(--accent-rgb), .35); }
-  .db-t.is-on { color: var(--text); background: rgba(var(--accent-rgb), .14); border-color: rgba(var(--accent-rgb), .5); animation: db-flip .45s var(--ease-spring) both; }
-  .db-t.is-solved { color: #02130c; background: var(--ok); border-color: transparent; animation: db-flip .5s var(--ease-spring) both; animation-delay: calc(var(--i, 0) * 35ms); }
-  .db-t.is-fail { color: #fff; background: var(--bad); border-color: transparent; animation: db-flip .5s var(--ease-spring) both; animation-delay: calc(var(--i, 0) * 35ms); }
-  .db-p { width: auto; min-width: calc(var(--tw) * .3); background: none; border: 0; color: var(--muted); }
-  @keyframes db-flip { from { transform: rotateX(90deg); } }
-  .db-goal { position: absolute; inset: -20px 0; display: grid; place-items: center; pointer-events: none; }
-  .db-goal span { font-family: var(--font-display); font-weight: 900; font-size: clamp(44px, 14vw, 80px); color: #fff; text-shadow: 0 0 30px rgba(var(--ok-rgb), .9), 0 5px 0 #0b6b45; transform: rotate(-5deg); animation: qz-pop-in .55s var(--ease-spring) both; }
+  /* ---------- La definizione e la parola: il cruciverba ---------- */
+  .db-def { text-align: center; padding: 16px 16px 18px; }
+  .db-def .eyebrow { margin-bottom: 10px; }
+  .db-def h2 { font-size: clamp(26px, 6.6vw, 38px); font-weight: 800; line-height: 1.05; text-wrap: balance; }
+  .db-def h2.is-in { animation: qz-rise .35s var(--ease-out) both; }
+  .db-word { --tw: 40px; position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 16px; min-height: var(--tw); padding: 6px 0; }
+  .db-w { display: flex; box-shadow: var(--shadow-print-sm); }
+  .db-t { position: relative; width: var(--tw); height: var(--tw); display: grid; place-items: center; margin-left: calc(var(--bw) * -1); background: var(--card); border: var(--bw) solid var(--ink); font-family: var(--font-display); font-weight: 900; font-size: calc(var(--tw) * .62); line-height: 1; text-transform: uppercase; color: var(--ink); }
+  .db-t:first-child { margin-left: 0; }
+  .db-t[data-n]::before { content: attr(data-n); position: absolute; top: 1px; left: 3px; font-family: var(--font-body); font-weight: 700; font-size: max(9px, calc(var(--tw) * .24)); line-height: 1; color: var(--ink-2); }
+  .db-t.is-on { animation: db-write .3s var(--ease-spring) both; }
+  .db-t.is-solved { color: var(--green); background: #e3f3e6; }
+  .db-t.is-fail { color: var(--red); background: #fbe5e0; }
+  .db-t.is-solved, .db-t.is-fail { animation: db-write .3s var(--ease-spring) both; animation-delay: calc(var(--i, 0) * 30ms); }
+  .db-t.db-p { width: auto; min-width: calc(var(--tw) * .4); margin-left: 0; background: none; border: 0; color: var(--ink); }
+  .db-w .db-p + .db-t { margin-left: 0; }
 
-  .db-feed { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 10px 14px; border-radius: 14px; background: rgba(0,0,0,.28); border: 1px solid var(--line); font-weight: 700; }
-  .db-feed .ico { color: var(--faint); }
-  .db-feed__txt { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--muted); }
-  .db-feed.is-bad .db-feed__txt { color: var(--bad); }
-  .db-feed.is-ok .db-feed__txt { color: var(--ok); }
-  .db-live { display: none; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: .08em; color: var(--bad); }
-  .db-live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); animation: mw-dot 1s ease-in-out infinite; }
+  @keyframes db-write { from { opacity: 0; transform: scale(1.5) rotate(-8deg); } }
+
+  .db-cover { position: absolute; inset: 0; display: none; place-items: center; z-index: 3; background: repeating-linear-gradient(-45deg, var(--ink) 0 3px, var(--card) 3px 11px); border: var(--bw) solid var(--ink); }
+  .db-cover span { padding: 4px 12px 2px; background: var(--card); border: var(--bw) solid var(--ink); font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 20px; text-transform: uppercase; transform: rotate(-3deg); }
+  .db-paused .db-cover { display: grid; }
+  .db-board { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+
+  /* la radiocronaca */
+  .db-feed { display: flex; align-items: stretch; min-height: 48px; border: var(--bw) solid var(--ink); background: var(--card); }
+  .db-feed__label { flex: none; display: flex; align-items: center; gap: 6px; padding: 0 10px; background: var(--ink); color: var(--yellow); font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 16px; text-transform: uppercase; }
+  .db-feed__label .ico { width: 17px; height: 17px; }
+  .db-feed__txt { flex: 1; min-width: 0; align-self: center; padding: 8px 12px; overflow-wrap: anywhere; font-weight: 700; font-size: 16px; line-height: 1.3; color: var(--ink-2); }
+  .db-feed.is-bad .db-feed__txt { color: var(--red); }
+  .db-feed.is-ok .db-feed__txt { color: var(--green); }
+  .db-live { display: none; align-items: center; gap: 6px; padding: 0 10px; font-family: var(--font-hand); font-size: 15px; color: var(--red); }
+  .db-live::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--red); border: 1.5px solid var(--ink); }
   .db-feed.is-listening .db-live { display: inline-flex; }
-  @keyframes mw-dot { 50% { opacity: .25; } }
 
   .db-form { display: flex; gap: 8px; }
-  .db-form .input { flex: 1; min-width: 0; text-transform: uppercase; }
-  .db-form .input::placeholder { text-transform: none; }
-  .db-ref { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-  .db-ref .btn { padding: 0 8px; }
-  .db-mic[aria-pressed="true"] { --b-bg: rgba(var(--bad-rgb), .16); --b-bd: rgba(var(--bad-rgb), .5); color: var(--bad); }
+  .db-form .input { flex: 1; min-width: 0; text-transform: uppercase; font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: .03em; }
+  .db-form .input::placeholder { text-transform: none; font-family: var(--font-body); font-weight: 400; font-size: 17px; letter-spacing: 0; }
+  .db-ref { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .db-ref .btn { min-height: 58px; padding: 0 6px; font-size: 21px; }
+  .db-ref small { font-size: .72em; text-transform: none; white-space: nowrap; }
+  .db-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 10px; }
+  .db-mic[aria-pressed="true"] { --b-bg: var(--red); --b-fg: var(--card); }
 
-  .db-paused .db-def .question, .db-paused .db-word { filter: blur(10px); opacity: .4; }
-  .db-pausebar { display: none; }
-  .db-paused .db-pausebar { display: flex; }
+  /* calcio d'inizio */
+  .db-kick { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 6px 0; }
+  .db-kick__k { font-family: var(--font-hand); font-size: 21px; color: var(--red); transform: rotate(-2deg); }
+  .db-kick__team { --c: var(--accent); max-width: 100%; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: clamp(48px, 14vw, 84px); line-height: .9; text-transform: uppercase; overflow-wrap: anywhere; }
+  .db-kick__team span { padding: 0 .08em; background: linear-gradient(transparent 58%, color-mix(in srgb, var(--c) 40%, var(--card)) 58% 92%, transparent 92%); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .db-kick.is-pop { animation: qz-slap .35s var(--ease-spring) both; }
+
+  @media (max-width: 479px) {
+    .db-team { padding: 9px 8px 10px; gap: 5px; }
+    .db-team__name { font-size: 16px; }
+    .db-team__name i { width: 11px; height: 11px; }
+    .db-goals { padding: 0 5px; gap: 3px; }
+    .db-goals span { min-width: 34px; height: 46px; font-size: 34px; }
+    .db-goals i { font-size: 18px; }
+    .db-ref .btn { font-size: 19px; }
+  }
   @media (min-width: 900px) { #s-start .intro { align-items: start; } #s-start .intro > .stack { position: sticky; top: calc(var(--header-h) + 32px); } }
 </style>
 </head>
@@ -87,9 +124,9 @@
   <section class="screen is-active" id="s-start">
     <div class="intro">
       <div data-stagger>
-        <span class="eyebrow">Party · 2 squadre</span>
+        <span class="eyebrow">N° 09 · Due squadre</span>
         <h1 class="intro__title">Il derby delle <em>parole</em></h1>
-        <p class="intro__lead">Una definizione, una parola misteriosa che si svela lettera dopo lettera. Ogni squadra ha il suo cronometro: indovina, segna e passa la palla agli avversari. Chi resta senza tempo perde il derby.</p>
+        <p class="intro__lead">Una definizione, una parola che si scrive da sola lettera dopo lettera, due squadre col cronometro a scacchi. Chi la sa tira in porta. Chi resta senza tempo perde il derby.</p>
         <div class="card mt-3">
           <div class="db-setup">
             <div id="teams-host"></div>
@@ -98,13 +135,10 @@
               <div id="opt-clock" aria-labelledby="lbl-clock"></div>
             </div>
             <div class="db-opt">
-              <span class="label" id="lbl-speed">Velocità delle lettere</span>
+              <span class="label" id="lbl-speed">Lettere</span>
               <div id="opt-speed" aria-labelledby="lbl-speed"></div>
             </div>
-            <div class="db-opt" id="mic-opt">
-              <label class="switch"><input type="checkbox" id="opt-mic"><span>Rispondi a voce con il microfono</span></label>
-              <p class="small muted" id="mic-note"></p>
-            </div>
+            <p class="db-micnote" id="mic-note"></p>
           </div>
         </div>
         <div class="row mt-3">
@@ -123,61 +157,67 @@
 
   <!-- ============ PARTITA ============ -->
   <section class="screen" id="s-game">
-    <div class="db-wrap stack" style="--gap:14px" id="game">
-      <div class="db-sb" id="sb" aria-label="Tabellone">
-        <div class="db-team" id="t0">
-          <div class="db-team__name"><i></i><span data-name></span></div>
-          <div class="db-team__clock"><span data-clock>60</span><small>s</small></div>
-          <div class="timer-bar" data-bar><div class="timer-bar__fill"></div></div>
-        </div>
-        <div class="db-goals" aria-live="polite"><span id="g0">0</span><i>–</i><span id="g1">0</span></div>
-        <div class="db-team" id="t1">
-          <div class="db-team__name"><i></i><span data-name></span></div>
-          <div class="db-team__clock"><span data-clock>60</span><small>s</small></div>
-          <div class="timer-bar" data-bar><div class="timer-bar__fill"></div></div>
+    <div class="db-wrap stack" style="--gap:16px" id="game">
+      <div class="db-sb" id="sb" role="group" aria-label="Tabellone">
+        <div class="db-sb__head"><span>Derby delle Parole</span><span id="sb-word"></span></div>
+        <div class="db-sb__row">
+          <div class="db-team" id="t0">
+            <div class="db-team__name"><i></i><span data-name></span></div>
+            <div class="db-team__clock"><span data-clock>60</span><small>s</small></div>
+            <div class="timer-bar" data-bar><div class="timer-bar__fill"></div></div>
+          </div>
+          <div class="db-goals"><span id="g0">0</span><i aria-hidden="true">–</i><span id="g1">0</span></div>
+          <div class="db-team" id="t1">
+            <div class="db-team__name"><i></i><span data-name></span></div>
+            <div class="db-team__clock"><span data-clock>60</span><small>s</small></div>
+            <div class="timer-bar" data-bar><div class="timer-bar__fill"></div></div>
+          </div>
         </div>
       </div>
 
       <!-- calcio d'inizio: passaggio del telefono tra le squadre -->
-      <div id="kick" class="stack center" style="--gap:16px">
-        <div class="result" style="padding-bottom:0">
+      <div id="kick" class="stack" style="--gap:18px">
+        <div class="db-kick" id="k-box">
           <span class="eyebrow" id="k-eyebrow"></span>
-          <h2 class="result__title" id="k-title"></h2>
-          <p class="muted" id="k-sub"></p>
+          <span class="db-kick__k">palla a</span>
+          <h2 class="db-kick__team" id="k-title"></h2>
+          <p class="muted result__sub" id="k-sub"></p>
         </div>
         <button class="btn btn--primary btn--xl btn--block" type="button" id="k-go"></button>
-        <button class="btn btn--ghost btn--sm" type="button" id="k-quit" style="justify-self:center;margin:0 auto"></button>
+        <button class="btn btn--ghost btn--sm" type="button" id="k-quit" style="margin:0 auto"></button>
       </div>
 
       <!-- gioco -->
       <div id="play" class="stack" style="--gap:14px" hidden>
-        <div class="card card--glow db-def">
-          <span class="eyebrow" id="p-eyebrow"></span>
-          <h2 class="question" id="p-def"></h2>
+        <div class="db-board">
+          <div class="card card--glow db-def">
+            <span class="eyebrow" id="p-eyebrow"></span>
+            <h2 id="p-def" tabindex="-1"></h2>
+          </div>
+          <div class="db-word" id="word" role="img" aria-label="Parola misteriosa"></div>
+          <div class="db-cover" aria-hidden="true"><span>Partita ferma</span></div>
         </div>
-        <div class="db-word" id="word" role="img" aria-label="Parola misteriosa"></div>
-        <div class="db-pausebar row row--center"><span class="chip chip--accent" id="pause-chip"></span></div>
         <div class="db-feed" id="feed">
-          <span id="feed-ico"></span>
+          <span class="db-feed__label" id="feed-ico"></span>
           <span class="db-feed__txt" id="feed-txt" aria-live="polite"></span>
-          <span class="db-live">IN ASCOLTO</span>
+          <span class="db-live">ascolto</span>
         </div>
         <form class="db-form" id="form" autocomplete="off">
           <label class="sr-only" for="guess">La vostra risposta</label>
-          <input class="input" id="guess" maxlength="40" placeholder="La vostra risposta" autocapitalize="characters" spellcheck="false" enterkeyhint="send">
+          <input class="input" id="guess" maxlength="40" placeholder="Scrivete la risposta" autocapitalize="characters" spellcheck="false" enterkeyhint="send">
           <button class="btn btn--primary" type="submit" id="shoot"></button>
-          <button class="btn btn--icon db-mic" type="button" id="mic" aria-pressed="false"></button>
         </form>
         <div class="db-ref" role="group" aria-label="Arbitro">
           <button class="btn btn--ok" type="button" id="ref-goal"></button>
           <button class="btn btn--bad" type="button" id="ref-post"></button>
           <button class="btn" type="button" id="ref-pass"></button>
         </div>
-        <div class="row row--center">
-          <button class="btn btn--ghost btn--sm" type="button" id="p-pause"></button>
+        <div class="db-tools">
+          <button class="btn btn--sm db-mic" type="button" id="mic" aria-pressed="false"></button>
+          <button class="btn btn--sm" type="button" id="p-pause"></button>
           <button class="btn btn--ghost btn--sm" type="button" id="p-quit"></button>
         </div>
-        <p class="small faint center kbd-hint" style="justify-content:center;gap:6px;flex-wrap:wrap">Tastiera: <span class="kbd">G</span> gol · <span class="kbd">X</span> palo · <span class="kbd">S</span> passo · <span class="kbd">P</span> pausa · <span class="kbd">/</span> scrivi</p>
+        <p class="small muted center kbd-hint">Da tastiera: <span class="kbd">G</span> gol · <span class="kbd">X</span> palo · <span class="kbd">S</span> passo · <span class="kbd">P</span> pausa · <span class="kbd">/</span> scrivi</p>
       </div>
     </div>
   </section>
@@ -187,8 +227,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=9c216f8a" defer></script>
-<script src="assets/db-sfidaeredita.js?v=cd63df4d" defer></script>
-<script src="assets/games/sfidaeredita.js?v=f3c17a7a" defer></script>
+<script src="assets/qz.js?v=bc54ed5a" defer></script>
+<script src="assets/db-sfidaeredita.js?v=27078a03" defer></script>
+<script src="assets/games/sfidaeredita.js?v=6b6aeaf7" defer></script>
 </body>
 </html>

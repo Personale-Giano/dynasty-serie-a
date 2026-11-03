@@ -7,61 +7,113 @@
 <meta name="description" content="Intesa Vincente a tema calcio: i suggeritori danno una parola a testa, chi indovina prenota e risponde prima che scada il tempo. Gioca gratis a squadre su Quizzotti.">
 <meta name="theme-color" content="#f1e8d6">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
 <meta property="og:title" content="Intesa Vincente · Quizzotti">
 <meta property="og:description" content="Una parola a testa, prenota e indovina: il gioco a squadre a tema calcio.">
 <meta property="og:image" content="logo2.png">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="logo1.webp" type="image/webp">
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Permanent+Marker&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=1faa7d11">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Permanent+Marker&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=6820c77e">
 <style>
-  .iv-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 28px; }
+  /* ---------- Impostazioni ---------- */
+  .iv-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; margin-top: 34px; }
   @media (min-width: 900px) { .iv-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
-  .iv-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .iv-setup > .card:nth-child(2) { --tilt: .4deg; }
+  .iv-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .field__hint { font-size: 14px; color: var(--ink-2); margin-top: -4px; }
 
-  /* passaggio del telefono */
-  .iv-hand { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; justify-items: center; text-align: center; padding-top: 8px; }
-  .iv-hand__badge { width: 96px; height: 96px; border-radius: 32%; display: grid; place-items: center; color: #0b1020; background: var(--c); box-shadow: 0 24px 60px -18px var(--c); animation: qz-pop-in .6s var(--ease-spring) both, qz-float 5s ease-in-out .6s infinite; }
-  .iv-hand__badge .ico { width: 46px; height: 46px; }
-  .iv-hand__name { font-size: clamp(30px, 8vw, 54px); font-weight: 900; color: var(--c); overflow-wrap: anywhere; }
-  .iv-hand .teams { width: 100%; }
-  .iv-hand .card { width: 100%; text-align: left; }
+  /* ---------- Il cambio: passa il telefono ---------- */
+  .handoff { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; text-align: center; padding-top: 6px; }
+  .handoff__card { --tilt: -1deg; padding: 0 0 20px; overflow: hidden; animation: qz-slap .4s var(--ease-spring) both; }
+  .handoff__band { height: 30px; border-bottom: var(--bw) solid var(--ink); background: repeating-linear-gradient(-45deg, var(--c) 0 12px, var(--card) 12px 24px); }
+  .handoff__round { display: inline-block; margin-top: 18px; padding: 2px 10px 1px; border: var(--bw) solid var(--ink); background: var(--yellow); font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 17px; text-transform: uppercase; transform: rotate(-2deg); }
+  .handoff__call { display: block; margin-top: 12px; font-size: 22px; transform: rotate(-2deg); }
+  .handoff__name { margin: 6px 16px 0; font-size: clamp(46px, 13vw, 84px); font-style: italic; font-weight: 900; text-transform: uppercase; line-height: .86; color: var(--c); overflow-wrap: anywhere; }
+  .handoff .rules { margin: 20px 20px 0; padding-top: 16px; border-top: 1.5px dashed var(--rule); text-align: left; }
+  .handoff .rules__n { background: var(--c); color: var(--card); }
+  .handoff .teams { padding-top: 12px; text-align: left; }
 
-  /* partita */
-  .iv-play { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 620px; margin: 0 auto; }
-  .iv-hud { display: flex; align-items: center; gap: 12px; }
-  .iv-hud .timer-ring { --size: 68px; }
-  .iv-hud__team { display: grid; min-width: 0; flex: 1; }
-  .iv-hud__team b { font-family: var(--font-display); font-size: 18px; color: var(--c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .iv-hud__pts { font-family: var(--font-display); font-size: 28px; font-variant-numeric: tabular-nums; text-align: right; line-height: 1; }
-  .iv-hud__pts small { display: block; font-family: var(--font-body); font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
-  .iv-stage { overflow: hidden; margin: -12px; padding: 12px; }
-  .iv-card { min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 26px 18px; text-align: center; border-radius: var(--r-xl); transition: background .3s; }
-  .iv-card .bigword { font-size: clamp(32px, 10vw, 66px); }
-  .iv-card.is-buzz { background: linear-gradient(180deg, rgba(var(--accent-rgb), .22), rgba(var(--accent-rgb), .06)); }
-  .iv-state { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 6px 12px; border-radius: 999px; }
-  .iv-card.is-buzz .iv-state { color: var(--accent); animation: qz-pulse-accent 1s ease-in-out infinite; }
-  .iv-card .timer-bar { width: min(260px, 100%); }
-  .iv-card.is-in { animation: iv-in .36s var(--ease-spring) both; }
-  .iv-card.is-go { animation: iv-go .2s ease-in both; }
-  @keyframes iv-in { from { opacity: 0; transform: translateY(24px) scale(.94); } }
-  @keyframes iv-go { to { opacity: 0; transform: translateY(-16px) scale(.96); } }
-  .iv-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr); gap: 10px; }
-  .iv-actions .btn { min-height: 72px; padding: 0 10px; }
-  .iv-actions .btn small { font-size: 11px; font-weight: 700; opacity: .8; }
+  /* ---------- In campo ---------- */
+  .hud-strip { display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 8px; border: var(--bw) solid var(--ink); background: var(--card); box-shadow: var(--shadow-print-sm); }
+  .hud-strip .timer-ring { --size: 66px; box-shadow: none; }
+  .hud-strip__team { display: grid; min-width: 0; flex: 1; line-height: 1.05; }
+  .hud-strip__team span { font-family: var(--font-hand); font-size: 15px; color: var(--red); }
+  .hud-strip__team b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 24px; line-height: .95; text-transform: uppercase; color: var(--c); overflow-wrap: anywhere; }
+  .hud-strip__pts { display: grid; justify-items: center; min-width: 62px; padding: 2px 8px; border-left: 1.5px solid var(--ink); }
+  .hud-strip__pts b { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 36px; line-height: .95; font-variant-numeric: tabular-nums; }
+  .hud-strip__pts small { font-size: 11px; font-weight: 800; color: var(--ink-2); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* ---------- Il taccuino del turno ---------- */
+  .sum-head { text-align: center; }
+  .sum-head .note { font-size: 22px; }
+  .sum-head__team { margin-top: 6px; font-size: clamp(42px, 11vw, 72px); font-style: italic; font-weight: 900; text-transform: uppercase; line-height: .88; color: var(--c); overflow-wrap: anywhere; }
+  .sum-head .result__big { margin-top: 6px; }
+  .taccuino { --tilt: .6deg; padding: 0; overflow: hidden; }
+  .taccuino__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; padding: 12px 16px 10px 52px; border-bottom: 3px double var(--ink); }
+  .taccuino__head b { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 22px; text-transform: uppercase; }
+  .taccuino__head span { font-size: 14px; color: var(--ink-2); }
+  .taccuino__list { background: linear-gradient(to right, transparent 38px, rgba(var(--bad-rgb), .45) 38px 40px, transparent 40px); }
+  .taccuino__row {
+    position: relative; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 6px 14px 6px 52px;
+    border: 0; border-bottom: 1.5px solid rgba(31, 60, 136, .22); background: transparent; text-align: left; transition: background .12s;
+  }
+  .taccuino__row:last-child { border-bottom: 0; }
+  .taccuino__row:hover { background: rgba(var(--ink-rgb), .04); }
+  .taccuino__n { position: absolute; left: 0; width: 36px; text-align: center; font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 15px; color: var(--ink-2); }
+  .taccuino__word { flex: 1; min-width: 0; font-weight: 700; font-size: 19px; line-height: 1.2; overflow-wrap: anywhere; }
+  .taccuino__word small { display: block; font-family: var(--font-hand); font-weight: 400; font-size: 14px; color: var(--ink-2); }
+  .taccuino__row[data-res="bad"] .taccuino__word span { text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 2px; }
+  .taccuino__row[data-res="skip"] .taccuino__word span { color: var(--ink-2); }
+  .taccuino__mark { position: relative; flex: none; width: 46px; height: 34px; display: grid; place-items: center; font-family: var(--font-hand); font-size: 15px; color: var(--ink-2); }
+  .taccuino__mark .qz-mark { inset: 0; width: 100%; height: 100%; }
+  .taccuino__mark .qz-mark path { stroke-width: 4; }
+  .taccuino__empty { padding: 20px 16px 20px 52px; color: var(--ink-2); }
+
+  .iv-play { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; max-width: 600px; margin: 0 auto; }
+
+  /* il cartellone dello studio, stampato */
+  .iv-card {
+    position: relative; display: flex; flex-direction: column; min-height: 330px; padding: 0; overflow: hidden; text-align: center;
+    border: 3px solid var(--ink); border-radius: var(--r-lg); background: var(--card); box-shadow: var(--shadow-print-lg);
+    transition: background .15s;
+  }
+  .iv-card__strip { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 7px 12px 6px; border-bottom: var(--bw) solid var(--ink); background: var(--accent); color: var(--on-accent); font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 19px; text-transform: uppercase; letter-spacing: .03em; transition: background .15s, color .15s; }
+  .iv-card__strip .ico { width: 19px; height: 19px; }
+  .iv-card__stage { position: relative; flex: 1; display: grid; place-items: center; gap: 16px; padding: 26px 16px; background: radial-gradient(rgba(var(--accent-rgb), .16) 1.2px, transparent 1.6px) 0 0 / 10px 10px; }
+  .iv-card .bigword { font-size: clamp(42px, 12vw, 76px); }
+  .iv-card > .timer-bar { height: 14px; border: 0; border-top: var(--bw) solid var(--ink); }
+  .iv-card.is-buzz { background: #fff3c4; }
+  .iv-card.is-buzz .iv-card__strip { background: var(--ink); color: var(--yellow); }
+  .iv-card.is-buzz .iv-card__stage { background: none; }
+  .iv-card .qz-stamp.is-low { top: 80%; }
+  .iv-card.is-in { animation: iv-in .28s var(--ease-spring) both; }
+  .iv-card.is-go { animation: iv-go .18s ease-in both; }
+  .iv-word.is-in { animation: qz-word-in .3s var(--ease-spring) both; }
+  @keyframes iv-in { from { opacity: 0; transform: translateY(-14px) rotate(-1.5deg); } }
+  @keyframes iv-go { to { opacity: 0; transform: translateY(14px) rotate(1deg); } }
+
+  .iv-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr); gap: 12px; }
+  .iv-actions .btn { min-height: 80px; padding: 0 10px; }
   .iv-actions--judge { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .iv-skip { flex-direction: column; gap: 2px; font-size: 14px; }
+  .iv-skip { flex-direction: column; gap: 4px; font-size: 20px; }
+  .iv-skip small { font-family: var(--font-body); font-style: normal; font-size: 12px; font-weight: 700; text-transform: none; letter-spacing: 0; }
 
-  /* riepilogo turno */
-  .iv-sum { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .iv-sum__row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; font-weight: 800; transition: background .2s, border-color .2s; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
-  .iv-sum__row span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  .iv-sum__row[data-res="ok"] { border-color: rgba(var(--ok-rgb), .4); background: rgba(var(--ok-rgb), .08); }
-  .iv-sum__row[data-res="bad"] { border-color: rgba(var(--bad-rgb), .4); background: rgba(var(--bad-rgb), .08); }
-  .iv-sum__row small { display: block; font-size: 11px; color: var(--faint); font-weight: 700; }
+  /* i passi: tacche a pennarello, la quinta di traverso */
+  .tally { display: block; height: 30px; overflow: visible; }
+  .tally path { fill: none; stroke-linecap: round; stroke-width: 3.2; stroke: var(--ink-3); stroke-dasharray: 2 4; opacity: .7; }
+  .tally path.is-used { stroke: var(--ink); stroke-dasharray: none; opacity: 1; }
+  .tally path.is-new { stroke-dasharray: 40; stroke-dashoffset: 0; animation: iv-tally .3s ease-out both; }
+  @keyframes iv-tally { from { stroke-dashoffset: 40; } }
+  .btn:disabled .tally path { stroke: var(--ink); }
+
+  /* time-out: la carta si gira a faccia in giu' */
+  .iv-card.is-covered { background: repeating-linear-gradient(-45deg, var(--accent) 0 14px, var(--card) 14px 28px); }
+  .iv-card.is-covered > * { visibility: hidden; }
 </style>
 </head>
 <body data-game="intesavincente">
@@ -71,13 +123,13 @@
   <section class="screen is-active" id="s-start">
     <div class="intro">
       <div data-stagger>
-        <span class="eyebrow">Party · 2-6 squadre</span>
+        <span class="eyebrow">N° 06 · Da 2 a 6 squadre</span>
         <h1 class="intro__title">Questione di <em>intesa</em></h1>
-        <p class="intro__lead">Due suggeritori, una parola a testa. Chi indovina prenota, ferma il tempo e risponde. Più parole indovinate prima del gong, più punti per la squadra.</p>
+        <p class="intro__lead">Due suggeritori, una parola a testa. Chi indovina prenota, ferma il cronometro e risponde. Più parole prima del fischio, più punti per la squadra.</p>
         <div class="row mt-3">
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
-        <p class="small muted mt-2" id="start-record"></p>
+        <p class="note mt-2" id="start-record"></p>
       </div>
       <div class="stack" style="--gap:22px;align-items:center">
         <div class="medal" id="medal"></div>
@@ -91,22 +143,21 @@
       <div class="card" id="teams-host"></div>
       <div class="card iv-opts">
         <div class="field"><span class="label" id="lbl-time">Tempo per turno</span><div id="opt-time" aria-labelledby="lbl-time"></div></div>
-        <div class="field"><span class="label" id="lbl-rounds">Giri (ogni squadra gioca un turno per giro)</span><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
+        <div class="field"><span class="label" id="lbl-rounds">Giri</span><p class="field__hint">A ogni giro ogni squadra gioca un turno.</p><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
         <div class="field"><span class="label" id="lbl-skips">Passi per turno</span><div id="opt-skips" aria-labelledby="lbl-skips"></div></div>
-        <div class="field"><span class="label" id="lbl-answer">Tempo per rispondere dopo la prenotazione</span><div id="opt-answer" aria-labelledby="lbl-answer"></div></div>
+        <div class="field"><span class="label" id="lbl-answer">Tempo per rispondere</span><p class="field__hint">Dopo la prenotazione: chi tentenna, perde la parola.</p><div id="opt-answer" aria-labelledby="lbl-answer"></div></div>
       </div>
     </div>
   </section>
 
-  <!-- ============ PASSA IL TELEFONO ============ -->
+  <!-- ============ IL CAMBIO: PASSA IL TELEFONO ============ -->
   <section class="screen" id="s-turn">
-    <div class="iv-hand qz-main--narrow" style="margin:0 auto" data-stagger>
-      <div class="iv-hand__badge" id="hand-badge"></div>
-      <div>
-        <span class="eyebrow" id="hand-round"></span>
-        <h2 class="iv-hand__name mt-1" id="hand-name"></h2>
-      </div>
-      <div class="card card--tight">
+    <div class="handoff qz-main--narrow" style="margin:0 auto">
+      <div class="card handoff__card">
+        <div class="handoff__band"></div>
+        <span class="handoff__round" id="hand-round"></span>
+        <span class="note handoff__call">in campo</span>
+        <h2 class="handoff__name" id="hand-name"></h2>
         <ul class="rules" id="hand-rules"></ul>
       </div>
       <button class="btn btn--primary btn--xl btn--block" type="button" id="go-btn" data-autofocus></button>
@@ -114,45 +165,48 @@
     </div>
   </section>
 
-  <!-- ============ PARTITA ============ -->
-  <section class="screen" id="s-game">
+  <!-- ============ IN CAMPO ============ -->
+  <section class="screen" id="s-game" aria-labelledby="game-h">
     <div class="iv-play">
-      <div class="iv-hud">
+      <h2 class="sr-only" id="game-h" tabindex="-1" data-autofocus>In campo</h2>
+      <div class="hud-strip">
         <div id="timer-host"></div>
-        <div class="iv-hud__team"><span class="small muted">In campo</span><b id="hud-team"></b></div>
-        <div class="iv-hud__pts"><span id="hud-pts" aria-live="polite">0</span><small>punti turno</small></div>
-        <button class="btn btn--ghost btn--icon btn--sm" type="button" id="pause-btn" aria-label="Pausa"></button>
+        <div class="hud-strip__team"><span>in campo</span><b id="hud-team"></b></div>
+        <div class="hud-strip__pts"><b id="hud-pts">0</b><small>turno</small></div>
+        <button class="btn btn--sm btn--icon" type="button" id="pause-btn" aria-label="Time-out"></button>
       </div>
-      <div class="iv-stage">
-        <div class="card card--glow iv-card" id="card">
-          <span class="iv-state" id="state"></span>
-          <div class="bigword" id="word" aria-live="assertive"></div>
-          <div class="timer-bar" id="answer-bar" hidden><div class="timer-bar__fill"></div></div>
+      <div class="iv-card" id="card">
+        <div class="iv-card__strip" id="state"></div>
+        <div class="iv-card__stage" id="stage">
+          <div class="bigword iv-word" id="word"></div>
         </div>
+        <div class="timer-bar" id="answer-bar" hidden><div class="timer-bar__fill"></div></div>
       </div>
       <div class="iv-actions" id="act-play">
-        <button class="btn iv-skip" type="button" id="skip-btn"></button>
-        <button class="btn btn--primary btn--xl" type="button" id="buzz-btn"></button>
+        <button class="btn iv-skip" type="button" id="skip-btn" data-silent></button>
+        <button class="btn btn--primary btn--xl" type="button" id="buzz-btn" data-silent></button>
       </div>
       <div class="iv-actions iv-actions--judge" id="act-judge" hidden>
-        <button class="btn btn--bad btn--lg" type="button" id="ko-btn"></button>
-        <button class="btn btn--ok btn--lg" type="button" id="ok-btn"></button>
+        <button class="btn btn--bad btn--lg" type="button" id="ko-btn" data-silent></button>
+        <button class="btn btn--ok btn--lg" type="button" id="ok-btn" data-silent></button>
       </div>
-      <p class="small faint center kbd-hint" style="justify-content:center;gap:6px;flex-wrap:wrap">Tastiera: <span class="kbd">Spazio</span> prenota · <span class="kbd">→</span> giusta · <span class="kbd">←</span> sbagliata · <span class="kbd">↓</span> passo · <span class="kbd">Esc</span> pausa</p>
+      <p class="small center kbd-hint">Da tastiera: <span class="kbd">Spazio</span> prenota · <span class="kbd">→</span> giusta · <span class="kbd">←</span> sbagliata · <span class="kbd">↓</span> passo · <span class="kbd">Esc</span> time-out</p>
     </div>
   </section>
 
-  <!-- ============ RIEPILOGO TURNO ============ -->
+  <!-- ============ IL TACCUINO DEL TURNO ============ -->
   <section class="screen" id="s-sum">
-    <div class="qz-main--narrow stack" style="--gap:18px;margin:0 auto">
-      <div class="center" data-stagger>
-        <span class="eyebrow" id="sum-eyebrow"></span>
-        <h2 class="result__title mt-1" id="sum-title" style="color:var(--c);overflow-wrap:anywhere"></h2>
-        <div class="result__big" id="sum-pts" aria-live="polite">0</div>
+    <div class="qz-main--narrow stack" style="--gap:22px;margin:0 auto">
+      <div class="sum-head">
+        <span class="note" id="sum-eyebrow"></span>
+        <h2 class="sum-head__team" id="sum-title" tabindex="-1" data-autofocus></h2>
+        <div class="result__big" id="sum-pts">0</div>
         <p class="muted" id="sum-total"></p>
-        <p class="small faint mt-1">Tocca una parola per correggerla se avete premuto il tasto sbagliato.</p>
       </div>
-      <div class="iv-sum" id="sum-list"></div>
+      <div class="card taccuino">
+        <div class="taccuino__head"><b>Il taccuino</b><span>Segnato male? Tocca la riga.</span></div>
+        <div class="taccuino__list" id="sum-list"></div>
+      </div>
       <button class="btn btn--primary btn--xl btn--block" type="button" id="sum-next"></button>
     </div>
   </section>
@@ -162,8 +216,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=9c216f8a" defer></script>
-<script src="assets/db-intesavincente.js?v=2a2223c8" defer></script>
-<script src="assets/games/intesavincente.js?v=186bae0a" defer></script>
+<script src="assets/qz.js?v=bc54ed5a" defer></script>
+<script src="assets/db-intesavincente.js?v=3979b373" defer></script>
+<script src="assets/games/intesavincente.js?v=4d8f476a" defer></script>
 </body>
 </html>

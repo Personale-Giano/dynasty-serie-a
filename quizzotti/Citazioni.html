@@ -4,62 +4,112 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Chi l'ha detto · Quizzotti</title>
-<meta name="description" content="Indovina il campione o l'allenatore dietro le frasi più celebri del calcio. Scrivi il nome o usa le opzioni: oltre 270 citazioni da riconoscere.">
+<meta name="description" content="Indovina il campione o l'allenatore dietro le frasi più celebri del calcio. Scrivi il nome o usa le opzioni: oltre 100 citazioni da riconoscere.">
 <meta name="theme-color" content="#f1e8d6">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
 <meta property="og:title" content="Chi l'ha detto · Quizzotti">
 <meta property="og:description" content="Le frasi più celebri del calcio: riconosci chi le ha pronunciate.">
 <meta property="og:image" content="logo2.png">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="logo1.webp" type="image/webp">
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Permanent+Marker&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=1faa7d11">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Permanent+Marker&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=6820c77e">
 <style>
   .intro { grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px) { .intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
+
+  .ch-form { padding: 18px 18px 20px; }
+  .ch-form__title { font-size: 28px; font-style: italic; text-transform: uppercase; padding-bottom: 8px; margin-bottom: 16px; border-bottom: 3px double var(--ink); }
   .ch-setup { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 760px) { .ch-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-
   .ch-setup .segmented { flex-wrap: nowrap; }
-  .ch-setup .segmented button { flex: 1 1 0; min-width: 0; padding: 0 6px; font-size: 13px; }
-  .ch-game { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); max-width: 820px; margin: 0 auto; }
-  .ch-top { display: flex; align-items: center; gap: 12px; }
-  .ch-score { display: grid; line-height: 1; }
-  .ch-score__label { font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
-  .ch-score__value { font-family: var(--font-display); font-size: clamp(28px, 6vw, 40px); font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; margin-top: 4px; }
-  .ch-top .timer-ring { --size: 58px; }
+  .ch-setup .segmented button { flex: 1 1 0; min-width: 0; min-height: 48px; padding: 0 6px; font-size: 17px; }
 
-  .ch-quote { padding: 34px 22px 26px; text-align: center; overflow: hidden; }
-  .ch-quote__mark { position: absolute; top: -8px; left: 12px; width: 92px; height: 92px; color: rgba(var(--accent-rgb), .16); }
-  .ch-quote__mark .ico { width: 100%; height: 100%; fill: currentcolor; stroke: none; }
-  .ch-quote .eyebrow { justify-content: center; margin-bottom: 14px; }
-  .ch-quote .question { position: relative; font-size: clamp(19px, 3.3vw, 28px); font-weight: 500; font-style: italic; }
+  .ch-game { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); max-width: 780px; margin: 0 auto; }
+  .ch-top { display: flex; align-items: center; gap: 14px; }
+  .ch-score { display: grid; line-height: 1; min-width: 0; }
+  .ch-score__label { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 16px; text-transform: uppercase; color: var(--ink-2); }
+  .ch-score__value { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: clamp(38px, 8vw, 52px); line-height: .95; font-variant-numeric: tabular-nums; text-shadow: 3px 3px 0 var(--accent-2); }
+  .ch-top .timer-ring { --size: 62px; }
 
-  .ch-type { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
-  .ch-type .btn { padding: 0 18px; }
-  .ch-tools { display: flex; flex-wrap: wrap; gap: 8px; }
+  /* ---- il ritaglio di giornale: nastro adesivo in alto, bordo strappato in basso ---- */
+  .ch-clip {
+    --tear: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='12'%3E%3Cpath d='M0 0H120V6L112 9 104 5 95 10 88 6 80 11 71 7 64 10 55 5 47 9 40 6 31 11 24 7 15 10 8 5 0 8Z'/%3E%3C/svg%3E");
+    position: relative; margin: 10px 6px 0 0; transform: rotate(-0.8deg);
+  }
+  .ch-clip__under, .ch-clip__paper {
+    -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 11px) no-repeat, var(--tear) bottom left / 120px 12px repeat-x;
+    mask: linear-gradient(#000 0 0) top / 100% calc(100% - 11px) no-repeat, var(--tear) bottom left / 120px 12px repeat-x;
+  }
+  .ch-clip__under { position: absolute; inset: 0; transform: translate(5px, 5px); background: var(--ink); }
+  .ch-clip__paper { position: relative; padding: 16px 20px 34px; background: var(--card); border: var(--bw) solid var(--ink); border-bottom: 0; }
+  .ch-clip::before, .ch-clip::after {
+    content: ""; position: absolute; z-index: 3; top: -12px; width: 86px; height: 26px;
+    background: rgba(243, 194, 27, 0.62); border-inline: 2px dashed rgba(var(--ink-rgb), 0.18);
+  }
+  .ch-clip::before { left: -14px; transform: rotate(-28deg); }
+  .ch-clip::after { right: -14px; transform: rotate(24deg); }
+  .ch-clip__head { display: flex; justify-content: space-between; gap: 10px; padding-bottom: 6px; margin-bottom: 14px; border-bottom: 3px double var(--ink); font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 15px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+  .ch-clip__mark { float: left; width: clamp(40px, 9vw, 58px); margin: 4px 12px 0 -2px; color: var(--accent); transform: rotate(-4deg); }
+  .ch-clip__mark .ico { width: 100%; height: auto; aspect-ratio: 1; fill: currentcolor; stroke: var(--ink); stroke-width: 1.2; }
+  .ch-clip__quote { margin: 0; font-family: var(--font-display); font-style: italic; font-weight: 700; font-size: clamp(25px, 5.6vw, 38px); line-height: 1.08; text-wrap: pretty; overflow-wrap: break-word; }
+  .ch-clip__quote.is-long { font-size: clamp(21px, 4.4vw, 30px); }
+  .ch-clip__quote.is-in { animation: qz-rise .35s var(--ease-out) both; }
+  .ch-clip__quote q { quotes: none; }
+  .ch-clip__close { color: var(--accent-ink); font-weight: 900; }
+  .ch-clip__cap { clear: both; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-top: 18px; padding-top: 10px; border-top: 1.5px solid var(--ink); }
+  .ch-clip__by { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 15px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+  .ch-clip__name { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 28px; line-height: 1; text-transform: uppercase; }
+  .ch-clip__name.is-blank { display: inline-block; width: 150px; height: 22px; border-bottom: 2px dotted var(--ink-2); }
+  .ch-clip__name.is-in { animation: qz-slap .35s var(--ease-spring) both; }
+  .ch-clip__stamp { position: absolute; right: 96px; bottom: 58px; width: 0; height: 0; }
+  /* sul telefono il nome va a capo: il timbro sale sulla testatina */
+  @media (max-width: 599px) { .ch-clip__stamp { right: 84px; bottom: auto; top: 30px; } }
+
+  /* ---- il quaderno a righe dove si scrive il nome ---- */
+  .ch-note {
+    position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center;
+    padding: 8px 8px 8px 36px; border: var(--bw) solid var(--ink); border-radius: var(--r); box-shadow: var(--shadow-print-sm);
+    background: repeating-linear-gradient(180deg, transparent 0 33px, rgba(31, 60, 136, .3) 33px 34.5px) 0 2px / 100% 100%, var(--card);
+    transition: box-shadow .15s;
+  }
+  .ch-note::before { content: ""; position: absolute; left: 24px; top: 0; bottom: 0; border-left: 2px solid rgba(207, 42, 30, .55); }
+  .ch-note:focus-within { outline: 3px solid var(--blue); outline-offset: 2px; }
+  .ch-note input { width: 100%; min-width: 0; min-height: 58px; padding: 0 4px; border: 0; background: transparent; font-family: var(--font-hand); font-size: 27px; color: var(--ink); }
+  .ch-note input::placeholder { color: var(--ink-3); opacity: 1; }
+  .ch-note input:focus { outline: none; }
+  .ch-note .btn { padding: 0 18px; }
+  .ch-hint span { display: inline-block; white-space: nowrap; margin: 0 .35em; }
+  .ch-hint { margin: 0; font-family: var(--font-hand); font-size: 22px; letter-spacing: .04em; color: var(--accent-ink); text-align: center; overflow-wrap: anywhere; transform: rotate(-1deg); }
+  .ch-hint small { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-2); margin-right: 8px; }
+  .ch-hint.is-in { animation: qz-pop-in .4s var(--ease-spring); }
+  .ch-tools { display: flex; flex-wrap: wrap; gap: 10px; }
   .ch-tools .btn { flex: 1 1 auto; }
-  .ch-hint { font-family: var(--font-display); font-size: 15px; letter-spacing: .12em; color: var(--accent-2); text-align: center; overflow-wrap: anywhere; }
-  .ch-hint.is-in { animation: qz-pop-in .45s var(--ease-spring); }
+  .ch-tools .btn--ghost { box-shadow: none; } /* .btn--sm rimette l'ombra al ghost */
 
-  .ch-feedback { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
-  .ch-feedback__ico { flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; }
-  .ch-feedback__ico .ico { width: 24px; height: 24px; }
-  .ch-feedback.is-ok .ch-feedback__ico { background: rgba(var(--ok-rgb), .16); color: var(--ok); }
-  .ch-feedback.is-bad .ch-feedback__ico { background: rgba(var(--bad-rgb), .16); color: var(--bad); }
-  .ch-feedback__name { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
-  .ch-feedback__pts { margin-left: auto; font-family: var(--font-display); font-size: 22px; font-weight: 800; color: var(--ok); white-space: nowrap; }
-  .ch-feedback.is-bad .ch-feedback__pts { color: var(--faint); }
+  /* ---- l'esito: il voto scritto a pennarello ---- */
+  .ch-verdict { display: flex; align-items: center; gap: 16px; padding: 12px 16px; }
+  .ch-verdict__pts { position: relative; flex: none; width: 64px; height: 56px; display: grid; place-items: center; font-family: var(--font-hand); font-size: 30px; line-height: 1; color: var(--green); }
+  .ch-verdict__pts::before { content: ""; position: absolute; inset: 0; border: 3px solid currentcolor; border-radius: 48% 52% 45% 55% / 55% 45%; transform: rotate(-8deg); }
+  .ch-verdict.is-bad .ch-verdict__pts { color: var(--red); }
+  .ch-verdict__label { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 22px; line-height: 1.05; text-transform: uppercase; }
+  .ch-verdict__sub { font-size: 15px; color: var(--ink-2); }
 
-  .ch-review { display: grid; gap: 8px; margin-top: 24px; text-align: left; }
-  .ch-review summary { cursor: pointer; font-weight: 800; padding: 12px 0; }
-  .ch-review__row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); }
-  .ch-review__row .ico { flex: none; width: 18px; height: 18px; margin-top: 2px; }
-  .ch-review__row q { display: block; font-style: italic; color: var(--muted); font-size: 14px; }
-  .ch-review__row b { font-size: 14px; }
+  /* ---- riepilogo finale: la rassegna stampa ---- */
+  .ch-review { margin-top: 26px; text-align: left; border: var(--bw) solid var(--ink); background: var(--card); box-shadow: var(--shadow-print); }
+  .ch-review summary { cursor: pointer; padding: 12px 16px; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 21px; text-transform: uppercase; }
+  .ch-review[open] summary { border-bottom: 3px double var(--ink); }
+  .ch-review__row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border-bottom: 1.5px dotted rgba(var(--ink-rgb), .35); }
+  .ch-review__row:last-child { border-bottom: 0; }
+  .ch-review__row > .ico { flex: none; width: 20px; height: 20px; margin-top: 3px; stroke-width: 3; }
+  .ch-review__row q { display: block; font-style: italic; color: var(--ink-2); font-size: 15px; line-height: 1.35; }
+  .ch-review__row b { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 17px; text-transform: uppercase; }
+  .ch-review__pts { font-family: var(--font-hand); font-size: 17px; color: var(--green); margin-left: 6px; }
 </style>
 </head>
 <body data-game="citazioni">
@@ -69,9 +119,9 @@
   <section class="screen is-active" id="s-start">
     <div class="intro">
       <div data-stagger>
-        <span class="eyebrow">Frasi celebri · Solo</span>
+        <span class="eyebrow">N° 04 · Da solo</span>
         <h1 class="intro__title">Chi l'ha <em>detto?</em></h1>
-        <p class="intro__lead">Dalle conferenze stampa leggendarie alle battute in telecronaca: leggi la frase e scrivi chi l'ha pronunciata. Se non ti viene, apri le opzioni, ma valgono meno.</p>
+        <p class="intro__lead">Conferenze stampa leggendarie, battute a bordocampo, sfoghi in diretta. Leggi la frase e scrivi chi l'ha detta. Se proprio non ti viene, chiedi le opzioni: valgono meno, ma valgono.</p>
         <div class="row mt-3">
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
@@ -85,7 +135,8 @@
       </div>
     </div>
 
-    <div class="card card--flat mt-4">
+    <div class="card ch-form mt-4">
+      <h2 class="ch-form__title">Come giochiamo</h2>
       <div class="ch-setup">
         <div class="field"><span class="label" id="lbl-len">Frasi per partita</span><div id="set-len" aria-labelledby="lbl-len"></div></div>
         <div class="field"><span class="label" id="lbl-time">Tempo</span><div id="set-time" aria-labelledby="lbl-time"></div></div>
@@ -95,6 +146,7 @@
 
   <!-- ============ PARTITA ============ -->
   <section class="screen" id="s-game">
+    <h1 class="sr-only">Chi l'ha detto: la partita</h1>
     <div class="ch-game">
       <div class="ch-top">
         <div id="timer-host"></div>
@@ -106,18 +158,23 @@
       </div>
       <div class="progress"><div class="progress__fill" id="g-progress" style="transform:scaleX(0)"></div></div>
 
-      <div class="card card--glow ch-quote" id="g-card">
-        <span class="ch-quote__mark" id="g-mark" aria-hidden="true"></span>
-        <span class="eyebrow" id="g-eyebrow"></span>
-        <blockquote class="question" id="g-quote" style="margin:0" aria-live="polite"></blockquote>
-      </div>
+      <figure class="ch-clip" id="g-card">
+        <div class="ch-clip__under" aria-hidden="true"></div>
+        <div class="ch-clip__paper" id="g-paper">
+          <div class="ch-clip__head"><span>Il virgolettato</span><span id="g-num"></span></div>
+          <span class="ch-clip__mark" id="g-mark" aria-hidden="true"></span>
+          <blockquote class="ch-clip__quote" id="g-quote" aria-live="polite" tabindex="-1"></blockquote>
+          <figcaption class="ch-clip__cap"><span class="ch-clip__by">Parole di</span><span class="ch-clip__name is-blank" id="g-name"></span></figcaption>
+          <span class="ch-clip__stamp" id="g-stamp" aria-hidden="true"></span>
+        </div>
+      </figure>
 
       <!-- risposta scritta -->
-      <form class="stack" style="--gap:10px" id="g-typeform" autocomplete="off" novalidate>
+      <form class="stack" style="--gap:12px" id="g-typeform" autocomplete="off" novalidate>
         <label class="sr-only" for="g-input">Scrivi chi ha detto questa frase</label>
-        <div class="ch-type">
-          <input class="input input--lg" id="g-input" type="text" placeholder="Scrivi il nome…" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="send" maxlength="40">
-          <button class="btn btn--primary btn--lg" type="submit" id="g-send"></button>
+        <div class="ch-note" id="g-note">
+          <input id="g-input" type="text" placeholder="Scrivi il nome…" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="send" maxlength="40">
+          <button class="btn btn--primary" type="submit" id="g-send"></button>
         </div>
         <p class="ch-hint" id="g-hint" hidden></p>
         <div class="ch-tools">
@@ -131,12 +188,12 @@
       <div class="answers answers--2col" id="g-answers" hidden></div>
 
       <!-- esito -->
-      <div id="g-result" hidden aria-live="polite">
-        <div class="card card--tight ch-feedback" id="g-feedback"></div>
+      <div id="g-result" hidden>
+        <div class="card card--tight ch-verdict" id="g-feedback"></div>
         <button class="btn btn--primary btn--lg btn--block mt-2" type="button" id="g-next"></button>
       </div>
 
-      <p class="small faint center kbd-hint" style="justify-content:center;gap:6px" id="g-kbd"></p>
+      <p class="small center kbd-hint" id="g-kbd"></p>
     </div>
   </section>
 
@@ -145,8 +202,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=9c216f8a" defer></script>
-<script src="assets/db-citazioni.js?v=2377bc04" defer></script>
-<script src="assets/games/citazioni.js?v=69a5e432" defer></script>
+<script src="assets/qz.js?v=bc54ed5a" defer></script>
+<script src="assets/db-citazioni.js?v=40d75ba8" defer></script>
+<script src="assets/games/citazioni.js?v=5bde9397" defer></script>
 </body>
 </html>

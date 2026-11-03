@@ -7,73 +7,113 @@
 <meta name="description" content="Passatevi il telefono nominando calciatori, squadre e stadi sul tema: la miccia è nascosta e chi tiene la bomba quando scoppia perde. Gioco di gruppo gratuito su Quizzotti.">
 <meta name="theme-color" content="#f1e8d6">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
 <meta property="og:title" content="Bomba · Quizzotti">
 <meta property="og:description" content="Passatevi la bomba nominando qualcosa sul tema. Chi la tiene quando scoppia perde.">
 <meta property="og:image" content="logo2.png">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="logo1.webp" type="image/webp">
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Permanent+Marker&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=1faa7d11">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Permanent+Marker&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=6820c77e">
 <style>
   .bb-wrap { max-width: 600px; margin: 0 auto; }
   .bb-setup, .bb-opt { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
   .bb-opt { gap: 8px; }
   .bb-opt .segmented button { padding: 0 8px; }
-  .bb-cats summary { cursor: pointer; font-weight: 800; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .bb-cats summary { cursor: pointer; min-height: 44px; font-weight: 800; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .bb-cats summary::-webkit-details-marker { display: none; }
-  .bb-cats summary .ico { transition: transform .25s; }
+  .bb-cats summary .ico { transition: transform .2s; }
   .bb-cats[open] summary .ico { transform: rotate(90deg); }
-  .bb-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-  .bb-chips button { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font-weight: 800; font-size: 12px; transition: background .2s, color .2s, border-color .2s; }
-  .bb-chips button[aria-pressed="true"] { background: rgba(var(--accent-rgb), .16); color: var(--accent-2); border-color: rgba(var(--accent-rgb), .5); }
+  .bb-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .bb-chips button { min-height: 44px; padding: 0 12px; border-radius: var(--r-sm); border: 1.5px solid var(--ink); background: var(--card); color: var(--ink); font-weight: 700; font-size: 15px; transition: background .12s, color .12s; }
+  .bb-chips button span { color: var(--ink-2); font-weight: 600; }
+  .bb-chips button:hover { background: var(--paper-2); }
+  .bb-chips button[aria-pressed="true"] { background: var(--ink); color: var(--card); }
+  .bb-chips button[aria-pressed="true"] span { color: var(--paper-3); }
 
-  /* Palco della bomba */
-  .bb-topic { text-align: center; padding: 18px 18px 20px; }
-  .bb-topic .eyebrow { justify-content: center; margin-bottom: 8px; }
-  .bb-topic .question { transition: filter .3s, opacity .3s; }
-  .bb-stage { --heat: 0; position: relative; display: grid; place-items: center; height: clamp(200px, 33vh, 300px); }
-  .bb-stage::before { content: ""; position: absolute; width: 78%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(255, 90, 60, calc(.12 + var(--heat) * .5)), transparent 65%); filter: blur(10px); }
-  .bb-bomb { position: relative; width: min(250px, 66vw); height: 100%; overflow: visible; }
+  /* ---------- Il tema ---------- */
+  .bb-topic { position: relative; text-align: center; padding: 16px 16px 18px; }
+  .bb-topic .eyebrow { margin-bottom: 8px; }
+  .bb-topic h2 { font-size: clamp(30px, 8vw, 46px); font-style: italic; font-weight: 900; text-transform: uppercase; line-height: .95; text-wrap: balance; }
+  .bb-topic h2.is-in { animation: qz-word-in .3s var(--ease-spring) both; }
+  .bb-topic__cover { position: absolute; inset: 44px 14px 14px; display: none; place-items: center; background: repeating-linear-gradient(-45deg, var(--ink) 0 3px, var(--card) 3px 11px); border: var(--bw) solid var(--ink); }
+  .bb-topic__cover span { padding: 4px 12px 2px; background: var(--card); border: var(--bw) solid var(--ink); font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 20px; text-transform: uppercase; transform: rotate(-3deg); }
+  .bb-paused .bb-topic__cover { display: grid; }
+
+  /* ---------- La bomba: disegnata a china, come la figurina degli anni '90 ---------- */
+  .bb-stage { --heat: 0; position: relative; display: grid; place-items: center; height: clamp(176px, 30vh, 290px); }
+  /* il retino rosso da fumetto che cresce con la tensione */
+  .bb-stage::before { content: ""; position: absolute; width: min(300px, 80%); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(var(--red) 1.6px, transparent 2.2px) 0 0 / 8px 8px; opacity: calc(.12 + var(--heat) * .7); transform: scale(calc(.6 + var(--heat) * .5)); mask-image: radial-gradient(circle, #000 45%, transparent 71%); transition: transform .4s var(--ease-out); }
+  .bb-bomb { position: relative; height: clamp(176px, 30vh, 290px); width: auto; aspect-ratio: 236 / 262; max-width: 72vw; overflow: visible; }
   .bb-bomb__body { transform-origin: 50% 60%; transform-box: fill-box; }
   .bb-stage.is-tick .bb-bomb__body { animation: bb-tick .18s ease-out; }
-  @keyframes bb-tick { 40% { transform: scale(1.045); } }
   .bb-stage.is-hot .bb-bomb { animation: bb-wobble .12s linear infinite; }
-  @keyframes bb-wobble { 25% { transform: translate(-1.5px, 1px) rotate(-1deg); } 75% { transform: translate(1.5px, -1px) rotate(1deg); } }
-  .bb-spark { animation: bb-spark .09s steps(2) infinite; }
-  @keyframes bb-spark { 50% { transform: scale(1.35) rotate(25deg); opacity: .8; } }
+  .bb-shake { opacity: clamp(0, calc((var(--heat) - .45) * 2.5), 1); }
+  .bb-spark { animation: bb-spark .1s steps(2) infinite; }
   .bb-spark, .bb-spark * { transform-box: fill-box; transform-origin: center; }
-  .bb-paused .bb-spark { animation: none; opacity: .4; }
-  .bb-paused .bb-topic .question { filter: blur(8px); opacity: .5; }
-  .bb-pausebadge { position: absolute; inset: auto 0 12px; display: none; justify-content: center; }
+  .bb-paused .bb-spark { animation: none; }
+  .bb-pausebadge { position: absolute; inset: auto 0 6px; display: none; justify-content: center; }
   .bb-paused .bb-pausebadge { display: flex; }
 
-  .bb-boom { position: absolute; inset: 0; display: none; place-items: center; pointer-events: none; }
-  .bb-boom::before { content: ""; position: absolute; width: 60%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, #fff 0 12%, #ffd36b 22%, #ff7a2f 45%, rgba(255, 50, 30, .6) 62%, transparent 72%); animation: bb-blast .9s var(--ease-out) both; }
-  .bb-boom span { position: relative; font-family: var(--font-display); font-weight: 900; font-size: clamp(54px, 18vw, 96px); color: #fff; text-shadow: 0 0 30px #ff7a2f, 0 6px 0 #a3221a; animation: qz-pop-in .5s var(--ease-spring) .1s both; transform: rotate(-6deg); }
+  @keyframes bb-tick { 40% { transform: scale(1.05); } }
+
+  @keyframes bb-wobble { 25% { transform: translate(-2px, 1px) rotate(-1.5deg); } 75% { transform: translate(2px, -1px) rotate(1.5deg); } }
+
+  @keyframes bb-spark { 50% { transform: scale(1.3) rotate(22deg); } }
+
+  /* lo scoppio: la nuvola a punte del fumetto */
+  .bb-boom { position: absolute; inset: -10px -16px; display: none; place-items: center; pointer-events: none; }
   .bb-stage.is-boom .bb-bomb { display: none; }
   .bb-stage.is-boom .bb-boom { display: grid; }
-  @keyframes bb-blast { 0% { transform: scale(.1); opacity: 1; } 60% { opacity: 1; } 100% { transform: scale(2.4); opacity: .22; } }
+  .bb-burst { width: 100%; max-width: 420px; height: 100%; overflow: visible; }
+  .bb-boom .bb-burst { animation: bb-burst .45s cubic-bezier(.2, 1.4, .4, 1) both; }
+  .bb-boom__txt, .bb-mini__txt { position: absolute; font-family: var(--font-display); font-style: italic; font-weight: 900; line-height: 1; color: var(--card); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 4px 4px 0 var(--ink); transform: rotate(-8deg); }
+  .bb-boom__txt { font-size: clamp(64px, 20vw, 112px); animation: bb-boomtxt .4s var(--ease-spring) .08s both; }
+  .bb-flash { position: fixed; inset: 0; z-index: 940; pointer-events: none; background: var(--yellow); animation: bb-flash .32s ease-out forwards; }
 
-  .bb-holder { display: grid; justify-items: center; gap: 6px; text-align: center; }
-  .bb-holder__name { --c: var(--accent); font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 8vw, 40px); line-height: 1.05; color: var(--c); text-shadow: 0 0 24px color-mix(in srgb, var(--c) 45%, transparent); overflow-wrap: anywhere; }
-  .bb-holder__name.is-in { animation: bb-in .35s var(--ease-spring) both; }
-  @keyframes bb-in { from { opacity: 0; transform: translateX(40px) scale(.9); } }
-  .bb-pass { min-height: 84px; font-size: 21px; }
+  @keyframes bb-burst { 0% { opacity: 0; transform: scale(.2) rotate(-20deg); } 100% { opacity: 1; transform: none; } }
 
-  .bb-board { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-  .bb-board .chip { --c: var(--muted); color: var(--text); }
-  .bb-board .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
-  .bb-board .chip b { font-family: var(--font-display); font-weight: 700; }
-  .bb-board .chip.is-hold { border-color: var(--c); background: color-mix(in srgb, var(--c) 18%, transparent); }
-  .bb-board .chip.is-out { opacity: .35; text-decoration: line-through; }
+  @keyframes bb-boomtxt { 0% { opacity: 0; transform: scale(2) rotate(-14deg); } 100% { opacity: 1; transform: rotate(-8deg); } }
 
-  .bb-loser { display: grid; justify-items: center; gap: 10px; text-align: center; }
-  .bb-fix { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
-  .bb-standings { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); }
-  .bb-delta { font-family: var(--font-display); font-size: 13px; padding: 3px 8px; border-radius: 8px; color: var(--ok); background: rgba(var(--ok-rgb), .12); }
+  @keyframes bb-flash { from { opacity: .75; } to { opacity: 0; } }
+
+  /* ---------- Chi ce l'ha in mano: il titolone ---------- */
+  .bb-holder { display: grid; justify-items: center; gap: 4px; text-align: center; }
+  .bb-holder__kicker { font-family: var(--font-hand); font-size: 20px; color: var(--red); transform: rotate(-2deg); }
+  #game .bb-holder { margin-top: 10px; }
+  .bb-holder__name { --c: var(--accent); max-width: 100%; font-family: var(--font-display); font-style: italic; font-weight: 900; text-transform: uppercase; font-size: clamp(46px, 14vw, 80px); line-height: .9; color: var(--ink); overflow-wrap: anywhere; }
+  .bb-holder__name span { padding: 0 .08em; background: linear-gradient(transparent 58%, color-mix(in srgb, var(--c) 45%, var(--card)) 58% 92%, transparent 92%); -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  .bb-holder__name.is-in { animation: bb-in .3s var(--ease-spring) both; }
+  .bb-holder__next { font-size: 18px; font-weight: 600; color: var(--ink-2); }
+  .bb-holder__next b { color: var(--ink); }
+  .bb-pass { min-height: 84px; font-size: 28px; }
+
+  @keyframes bb-in { from { opacity: 0; transform: translateX(46px) rotate(3deg); } }
+
+  .bb-board { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .bb-board .chip { --c: var(--ink-3); font-size: 15px; padding: 4px 10px; background: var(--card); }
+  .bb-board .chip i { width: 11px; height: 11px; border-radius: 50%; background: var(--c); border: 1.5px solid var(--ink); }
+  .bb-board .chip b { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 17px; }
+  .bb-board .chip.is-hold { background: var(--yellow); box-shadow: var(--shadow-print-sm); transform: rotate(-2deg); }
+  .bb-board .chip.is-out { color: var(--ink-2); text-decoration: line-through; text-decoration-thickness: 2px; background: transparent; border-style: dashed; }
+
+  /* ---------- Dopo lo scoppio ---------- */
+  .bb-mini { position: relative; display: grid; place-items: center; width: 220px; height: 150px; margin: 0 auto; }
+  .bb-mini .bb-burst { animation: bb-burst .45s cubic-bezier(.2, 1.4, .4, 1) both; }
+  .bb-mini__txt { font-size: 54px; -webkit-text-stroke: 2.5px var(--ink); text-shadow: 3px 3px 0 var(--ink); animation: bb-boomtxt .4s var(--ease-spring) .08s both; }
+  .bb-loser { display: grid; justify-items: center; gap: 8px; text-align: center; }
+  .bb-loser .bb-holder__name { font-size: clamp(44px, 13vw, 72px); }
+  .bb-fix { display: grid; gap: 8px; justify-items: center; padding-top: 12px; margin-top: 4px; border-top: 1.5px dashed var(--rule); width: 100%; }
+  .bb-fix > div { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .bb-standings { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+  /* chi e' saltato resta leggibile: cancellato a penna, non sbiadito */
+  .bb-standings .team.is-out { opacity: 1; background: var(--paper-2); box-shadow: none; }
+  .bb-delta { font-family: var(--font-hand); font-size: 19px; line-height: 1; color: var(--green); }
+
   @media (min-width: 900px) { #s-start .intro { align-items: start; } #s-start .intro > .stack { position: sticky; top: calc(var(--header-h) + 32px); } }
 </style>
 </head>
@@ -84,14 +124,14 @@
   <section class="screen is-active" id="s-start">
     <div class="intro">
       <div data-stagger>
-        <span class="eyebrow">Party · 2-12 giocatori</span>
+        <span class="eyebrow">N° 08 · Da 2 a 12</span>
         <h1 class="intro__title">Occhio alla <em>bomba</em></h1>
-        <p class="intro__lead">Esce un tema: chi ha la bomba in mano nomina qualcosa e la passa al vicino. La miccia è nascosta e il ticchettio accelera. Quando esplode, chi la tiene perde.</p>
+        <p class="intro__lead">Esce un tema. Chi ha la bomba dice una cosa giusta e la passa al vicino. La miccia non si vede e il ticchettio accelera: quando scoppia, chi ce l'ha in mano paga.</p>
         <div class="card mt-3">
           <div class="bb-setup">
             <div id="players-host"></div>
             <div class="bb-opt">
-              <span class="label" id="lbl-mode">Modalità</span>
+              <span class="label" id="lbl-mode">Si gioca</span>
               <div id="opt-mode" aria-labelledby="lbl-mode"></div>
               <p class="small muted" id="mode-desc"></p>
             </div>
@@ -125,69 +165,70 @@
 
   <!-- ============ PRIMA DEL ROUND ============ -->
   <section class="screen" id="s-ready">
-    <div class="bb-wrap stack" style="--gap:18px">
+    <div class="bb-wrap stack" style="--gap:20px">
       <div class="result" data-stagger>
         <span class="eyebrow" id="rd-eyebrow"></span>
-        <h2 class="result__title" id="rd-title"></h2>
-        <p class="muted" id="rd-sub"></p>
+        <span class="bb-holder__kicker">la bomba parte da</span>
+        <h2 class="bb-holder__name" id="rd-title"></h2>
+        <p class="result__sub muted" id="rd-sub"></p>
       </div>
-      <div class="bb-board" id="rd-board" aria-label="Giocatori"></div>
-      <button class="btn btn--primary btn--xl btn--block" type="button" id="rd-go"></button>
-      <p class="small faint center kbd-hint" style="justify-content:center;gap:6px">Tastiera: <span class="kbd">Spazio</span> passa · <span class="kbd">P</span> pausa · <span class="kbd">S</span> salta tema</p>
+      <div class="bb-board" id="rd-board" role="group" aria-label="Giocatori"></div>
+      <button class="btn btn--primary btn--xl btn--block" type="button" id="rd-go" data-autofocus></button>
+      <p class="small muted center kbd-hint">Da tastiera: <span class="kbd">Spazio</span> passa · <span class="kbd">P</span> pausa · <span class="kbd">S</span> cambia tema</p>
     </div>
   </section>
 
   <!-- ============ PARTITA ============ -->
   <section class="screen" id="s-game">
-    <div class="bb-wrap stack" style="--gap:14px" id="game">
+    <div class="bb-wrap stack" style="--gap:12px" id="game">
       <div class="hud" style="margin:0;flex-wrap:nowrap">
         <span class="hud__item" id="g-round"></span>
         <span class="grow"></span>
-        <button class="btn btn--sm btn--icon" type="button" id="g-skip" aria-label="Salta tema" title="Salta tema (S)"></button>
+        <button class="btn btn--sm btn--icon" type="button" id="g-skip" aria-label="Cambia tema" title="Cambia tema (S)"></button>
         <button class="btn btn--sm btn--icon" type="button" id="g-pause" aria-label="Pausa" title="Pausa (P)"></button>
-        <button class="btn btn--ghost btn--sm btn--icon" type="button" id="g-quit" aria-label="Termina la partita" title="Termina la partita"></button>
+        <button class="btn btn--sm btn--icon" type="button" id="g-quit" aria-label="Chiudi la partita" title="Chiudi la partita"></button>
       </div>
       <div class="card card--glow bb-topic">
         <span class="eyebrow" id="g-cat"></span>
-        <h2 class="question" id="g-topic" aria-live="polite"></h2>
+        <h2 id="g-topic" aria-live="polite" tabindex="-1" data-autofocus></h2>
+        <div class="bb-topic__cover" aria-hidden="true"><span>Tema coperto</span></div>
       </div>
       <div class="bb-stage" id="stage">
-        <svg class="bb-bomb" id="bomb" viewBox="0 -14 220 236" aria-hidden="true">
+        <svg class="bb-bomb" id="bomb" viewBox="-6 -22 236 262" aria-hidden="true">
           <defs>
-            <radialGradient id="bb-g" cx="35%" cy="30%" r="75%">
-              <stop offset="0" stop-color="#5a6380"/>
-              <stop offset=".35" stop-color="#262c40"/>
-              <stop offset="1" stop-color="#07090f"/>
-            </radialGradient>
-            <radialGradient id="bb-s" cx="50%" cy="50%" r="50%">
-              <stop offset="0" stop-color="#fff"/>
-              <stop offset=".35" stop-color="#ffe08a"/>
-              <stop offset=".7" stop-color="#ff7a2f" stop-opacity=".7"/>
-              <stop offset="1" stop-color="#ff5a3c" stop-opacity="0"/>
-            </radialGradient>
+            <pattern id="bb-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2.2" height="6" fill="#1d1913"/></pattern>
           </defs>
-          <g class="bb-bomb__body">
-            <circle cx="100" cy="138" r="72" fill="url(#bb-g)" stroke="#000" stroke-opacity=".5" stroke-width="2"/>
-            <ellipse cx="74" cy="108" rx="20" ry="11" fill="#fff" opacity=".22" transform="rotate(-35 74 108)"/>
-            <rect x="128" y="58" width="34" height="26" rx="5" fill="#3a4157" stroke="#000" stroke-opacity=".5" stroke-width="2" transform="rotate(42 145 71)"/>
-            <rect x="133" y="64" width="24" height="5" rx="2" fill="#fff" opacity=".18" transform="rotate(42 145 71)"/>
+          <!-- ombra a tratteggio sul pavimento -->
+          <ellipse cx="100" cy="218" rx="66" ry="9" fill="url(#bb-hatch)"/>
+          <!-- segni del tremolio, compaiono quando scotta -->
+          <g class="bb-shake" fill="none" stroke="#1d1913" stroke-width="5" stroke-linecap="round">
+            <path d="M14 112 Q4 136 14 160"/><path d="M-2 122 Q-8 136 -2 150"/>
+            <path d="M186 132 Q196 156 186 180"/><path d="M202 142 Q208 156 202 170"/>
           </g>
-          <path id="fuse" d="M154 60 C 168 44 190 52 192 32 C 194 14 172 12 178 -4" fill="none" stroke="#c9a46a" stroke-width="5" stroke-linecap="round"/>
+          <g class="bb-bomb__body">
+            <rect x="124" y="60" width="42" height="32" rx="4" fill="#4b4337" stroke="#1d1913" stroke-width="6" stroke-linejoin="round" transform="rotate(42 145 76)"/>
+            <path d="M131 73 L157 82" stroke="#fbf6ec" stroke-width="4" stroke-linecap="round" transform="rotate(42 145 76)" opacity=".7"/>
+            <circle cx="100" cy="142" r="72" fill="#2a251d" stroke="#1d1913" stroke-width="7"/>
+            <path d="M52 128 C55 104 72 86 96 80" fill="none" stroke="#fbf6ec" stroke-width="10" stroke-linecap="round"/>
+            <circle cx="49" cy="146" r="5.5" fill="#fbf6ec"/>
+          </g>
+          <path id="fuse-ink" d="M156 62 C 170 46 192 54 194 34 C 196 16 174 14 180 -2" fill="none" stroke="#1d1913" stroke-width="11" stroke-linecap="round"/>
+          <path id="fuse" d="M156 62 C 170 46 192 54 194 34 C 196 16 174 14 180 -2" fill="none" stroke="#d9b77a" stroke-width="5" stroke-linecap="round"/>
           <g id="spark"><g class="bb-spark">
-            <circle r="18" fill="url(#bb-s)"/>
-            <path d="M0 -14V14M-14 0H14M-9 -9 9 9M-9 9 9 -9" stroke="#ffe08a" stroke-width="2" stroke-linecap="round"/>
+            <polygon points="0,-24 6,-8 22,-12 10,0 22,12 6,8 0,24 -6,8 -22,12 -10,0 -22,-12 -6,-8" fill="#f3c21b" stroke="#1d1913" stroke-width="3" stroke-linejoin="round"/>
+            <polygon points="0,-10 3,-3 10,0 3,3 0,10 -3,3 -10,0 -3,-3" fill="#cf2a1e"/>
           </g></g>
         </svg>
-        <div class="bb-boom"><span>BOOM!</span></div>
-        <div class="bb-pausebadge"><span class="chip chip--accent" id="pause-chip"></span></div>
+        <div class="bb-boom" id="boom"></div>
+        <div class="bb-pausebadge"><span class="chip" id="pause-chip"></span></div>
       </div>
       <div class="bb-holder" aria-live="polite">
-        <span class="label">La bomba è in mano a</span>
+        <span class="bb-holder__kicker">ce l'ha in mano</span>
         <div class="bb-holder__name" id="g-holder"></div>
-        <span class="small muted" id="g-next"></span>
+        <span class="bb-holder__next" id="g-next"></span>
       </div>
       <button class="btn btn--primary btn--xl btn--block bb-pass" type="button" id="g-pass"></button>
-      <div class="bb-board" id="g-board" aria-label="Classifica"></div>
+      <div class="bb-board" id="g-board" role="group" aria-label="Classifica"></div>
     </div>
   </section>
 
@@ -201,8 +242,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=9c216f8a" defer></script>
-<script src="assets/db-bomba.js?v=f01f340f" defer></script>
-<script src="assets/games/bomba.js?v=d8916df9" defer></script>
+<script src="assets/qz.js?v=bc54ed5a" defer></script>
+<script src="assets/db-bomba.js?v=8f996a85" defer></script>
+<script src="assets/games/bomba.js?v=76e39e1e" defer></script>
 </body>
 </html>

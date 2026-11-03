@@ -7,70 +7,126 @@
 <meta name="description" content="Il tabellone a categorie di calcio: Serie A, Champions League, Mondiali, calciomercato e leggende. Sfida i tuoi amici a squadre su Quizzotti.">
 <meta name="theme-color" content="#f1e8d6">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
 <meta property="og:title" content="Jeopardy · Quizzotti">
 <meta property="og:description" content="Scegli categoria e valore, rispondi e scala la classifica: il quiz a squadre a tema calcio.">
 <meta property="og:image" content="logo2.png">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="logo1.webp" type="image/webp">
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Permanent+Marker&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=1faa7d11">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Permanent+Marker&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=6820c77e">
 <style>
-  .jp-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 28px; }
+  /* ---------- Impostazioni ---------- */
+  .jp-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; margin-top: 34px; }
   @media (min-width: 900px) { .jp-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
-  .switch input { flex: none; }
-  .jp-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
-  .jp-cats { display: flex; flex-wrap: wrap; gap: 8px; }
-  .jp-cat { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); color: var(--muted); font-weight: 800; font-size: 13px; transition: background .2s, color .2s, border-color .2s, transform .15s; }
-  .jp-cat:active { transform: scale(.95); }
-  .jp-cat[aria-pressed="true"] { background: rgba(var(--accent-rgb), .18); border-color: rgba(var(--accent-rgb), .7); color: var(--text); }
+  .jp-setup > .card:nth-child(2) { --tilt: .4deg; }
+  .jp-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .switch { align-items: flex-start; font-weight: 600; color: var(--ink-2); }
+  .switch b { color: var(--ink); }
+  .switch input { flex: none; margin-top: 1px; }
 
-  .jp-scores { margin-bottom: 16px; }
-  .jp-scores .team { cursor: default; }
-  .jp-turn { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
-  .jp-turn__who { font-family: var(--font-display); font-size: clamp(18px, 4.6vw, 24px); }
-  .jp-turn__who b { color: var(--c, var(--accent)); }
-
-  @media (max-width: 479px) { .jp-tools .btn { width: 40px; padding: 0; } .jp-tools .btn span { display: none; } }
-  .jp-board { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
-  .jp-col { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 10px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); animation: qz-rise .5s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 60ms); }
-  .jp-col__head { grid-column: 1 / -1; font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent-2); padding: 2px 4px 4px; }
-  .jp-cell {
-    --c: var(--accent); position: relative; min-height: 54px; padding: 0 2px; border-radius: 12px;
-    border: 1px solid rgba(var(--accent-rgb), .4); background: linear-gradient(180deg, rgba(var(--accent-rgb), .28), rgba(var(--accent-rgb), .08));
-    color: #fff; font-family: var(--font-display); font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums;
-    box-shadow: 0 3px 0 rgba(0, 0, 0, .35); transition: transform .15s var(--ease-spring), background .25s, border-color .25s;
+  /* le categorie come le caselle della schedina */
+  .jp-cats { display: grid; grid-template-columns: minmax(0, 1fr); border: var(--bw) solid var(--ink); background: var(--card); }
+  @media (min-width: 480px) { .jp-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .jp-cat:nth-child(odd) { border-right: 1.5px solid var(--rule); } }
+  .jp-cat {
+    display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 12px; border: 0; border-bottom: 1.5px solid var(--rule);
+    background: transparent; text-align: left; font-weight: 600; font-size: 16px; color: var(--ink-2); transition: background .12s;
   }
-  .jp-cell:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--accent-2); background: linear-gradient(180deg, rgba(var(--accent-rgb), .45), rgba(var(--accent-rgb), .15)); }
-  .jp-cell:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
-  .jp-cell:disabled { cursor: default; color: transparent; background: transparent; border-style: dashed; border-color: var(--line-2); box-shadow: none; }
-  .jp-cell:disabled::after { content: ""; position: absolute; inset: 0; margin: auto; width: 12px; height: 12px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); }
-  .jp-cell.is-miss:disabled::after { width: 14px; height: 2px; border-radius: 2px; background: var(--faint); box-shadow: none; }
+  .jp-cat:hover { background: var(--paper-2); }
+  /* nelle griglie stampate il contorno del fuoco sta dentro la casella, sennò la vicina lo copre */
+  .jp-cat:focus-visible, .jp-cell:focus-visible { position: relative; z-index: 6; outline-offset: -5px; }
+  .jp-cat__box { position: relative; flex: none; width: 26px; height: 26px; border: var(--bw) solid var(--ink); background: var(--card); }
+  .jp-cat__box svg { position: absolute; inset: -5px; width: 32px; height: 32px; max-width: none; display: none; }
+  .jp-cat__box path { fill: none; stroke: var(--red); stroke-width: 3.4; stroke-linecap: round; stroke-dasharray: 40; stroke-dashoffset: 0; }
+  .jp-cat[aria-pressed="true"] { color: var(--ink); font-weight: 800; }
+  .jp-cat[aria-pressed="true"] .jp-cat__box svg { display: block; }
+  .jp-cat.is-drawn .jp-cat__box path { animation: jp-draw .28s ease-out both; }
+  @keyframes jp-draw { from { stroke-dashoffset: 40; } }
+  .jp-cats__foot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+
+  /* ---------- Testata del turno ---------- */
+  .jp-scores { margin-bottom: 20px; padding-top: 10px; }
+  .jp-scores .team { cursor: default; }
+  .jp-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 3px double var(--ink); }
+  .jp-who { min-width: 0; }
+  .jp-who small { display: block; font-family: var(--font-hand); font-size: 19px; line-height: 1.1; color: var(--red); transform: rotate(-2deg); transform-origin: left; }
+  .jp-who b { display: block; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: clamp(32px, 8vw, 50px); line-height: .9; text-transform: uppercase; color: var(--c, var(--ink)); overflow-wrap: anywhere; }
+  .jp-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .jp-round { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 17px; text-transform: uppercase; padding: 3px 10px 2px; border: var(--bw) solid var(--ink); background: var(--yellow); transform: rotate(-1.5deg); }
+  /* sotto i 480px resta l'icona, ma la scritta continua a dare il nome al bottone */
+  @media (max-width: 479px) { .jp-tools .btn { width: 44px; padding: 0; } .jp-tools .btn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; } }
+
+  /* ---------- Il tabellone: una griglia stampata ---------- */
+  .jp-board { display: grid; grid-template-columns: minmax(0, 1fr); border: var(--bw) solid var(--ink); background: var(--card); box-shadow: var(--shadow-print); }
+  .jp-col { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: var(--bw) solid var(--ink); animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 45ms); }
+  .jp-col:last-child { border-bottom: 0; }
+  .jp-col__head {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 5px 10px 4px;
+    background: var(--ink); color: var(--card); font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 17px; line-height: 1.1; text-transform: uppercase; letter-spacing: .03em;
+  }
+  .jp-col__head::before { content: ""; flex: none; width: 9px; height: 9px; background: var(--yellow); transform: rotate(45deg); }
+  .jp-cell {
+    position: relative; min-height: 60px; padding: 0 2px; border: 0; border-right: 1.5px solid var(--ink); background: transparent;
+    font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 25px; line-height: 1; color: var(--accent-ink); font-variant-numeric: tabular-nums;
+    transition: background .1s, color .1s;
+  }
+  .jp-cell:last-child { border-right: 0; }
+  .jp-cell:hover:not(:disabled) { background: var(--yellow); color: var(--ink); }
+  .jp-cell:active:not(:disabled) { background: var(--accent); color: var(--on-accent); }
+  .jp-cell:disabled { cursor: default; color: var(--ink-3); background: repeating-linear-gradient(-45deg, transparent 0 7px, rgba(var(--ink-rgb), .08) 7px 8px); }
+  .jp-cell .qz-mark { inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); }
+  .jp-cell .qz-mark path { stroke-width: 3.5; }
+  .jp-cell.is-static .qz-mark path { animation: none; stroke-dasharray: none; stroke-dashoffset: 0; }
+  .jp-cell__by { position: absolute; z-index: 5; right: 3px; bottom: 1px; font-family: var(--font-hand); font-style: normal; font-weight: 400; font-size: 14px; line-height: 1; color: var(--c); transform: rotate(-8deg); animation: qz-pop-in .3s var(--ease-spring) .3s both; }
+  .jp-cell.is-static .jp-cell__by { animation: none; }
   @media (min-width: 760px) {
     .jp-board { grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr)); }
-    .jp-col { grid-template-columns: minmax(0, 1fr); padding: 8px; }
-    .jp-col__head { min-height: 62px; display: grid; place-items: center; text-align: center; font-size: 12px; line-height: 1.25; }
-    .jp-cell { min-height: 74px; font-size: 24px; }
+    .jp-col { grid-template-columns: minmax(0, 1fr); border-bottom: 0; border-right: var(--bw) solid var(--ink); }
+    .jp-col:last-child { border-right: 0; }
+    .jp-col__head { min-height: 66px; justify-content: center; text-align: center; padding: 8px 10px; font-size: 18px; }
+    .jp-col__head::before { display: none; }
+    .jp-cell { min-height: 84px; font-size: 40px; border-right: 0; border-top: 1.5px solid var(--ink); }
+    .jp-col__head + .jp-cell { border-top: 0; }
+    .jp-cell .qz-mark { left: 50%; width: min(calc(100% - 12px), 130px); transform: translateX(-50%); }
+    .jp-cell__by { font-size: 19px; right: auto; left: calc(50% + 46px); bottom: 6px; }
   }
+  @media (min-width: 760px) { .jp-board { max-width: calc(var(--cols, 5) * 250px); margin: 0 auto; } }
 
-  .jp-q { padding: 26px 20px; text-align: center; }
-  .jp-q .eyebrow { justify-content: center; }
-  .jp-q__value { font-family: var(--font-display); font-size: clamp(34px, 9vw, 56px); font-weight: 900; color: var(--accent); line-height: 1; margin: 8px 0 18px; font-variant-numeric: tabular-nums; }
-  .jp-q__value.is-double { color: var(--gold); text-shadow: 0 0 30px rgba(245, 197, 66, .5); }
-  .jp-q .question { margin: 0 auto; max-width: 30ch; }
-  .jp-q .timer-ring { margin: 20px auto 0; }
-  .jp-ans { margin-top: 22px; padding: 16px; border-radius: var(--r); background: rgba(var(--ok-rgb), .1); border: 1px solid rgba(var(--ok-rgb), .35); animation: qz-pop-in .5s var(--ease-spring) both; }
-  .jp-ans__label { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ok); }
-  .jp-ans__text { font-family: var(--font-display); font-size: clamp(20px, 5vw, 30px); font-weight: 800; margin-top: 4px; overflow-wrap: anywhere; }
-  .jp-steal { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px; }
-  .jp-steal .btn { --b-bd: var(--c); }
-  .jp-steal .team__dot { width: 10px; height: 10px; }
+  /* ---------- La domanda: un cartoncino ---------- */
+  .jp-q { --tilt: -.5deg; padding: 0; overflow: hidden; text-align: center; }
+  .jp-q__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; background: var(--accent); color: var(--on-accent); border-bottom: var(--bw) solid var(--ink); }
+  .jp-q__cat { display: flex; align-items: center; gap: 8px; min-width: 0; text-align: left; font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 18px; line-height: 1.05; text-transform: uppercase; }
+  .jp-q__value { flex: none; padding: 2px 10px 1px; background: var(--yellow); color: var(--ink); border: var(--bw) solid var(--ink); font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 26px; line-height: 1.05; font-variant-numeric: tabular-nums; transform: rotate(2deg); }
+  .jp-q__value { position: relative; }
+  .jp-q__value.is-double { background: var(--red); color: var(--card); }
+  .jp-q__value.is-double::after { content: "vale doppio"; position: absolute; top: calc(100% + 8px); right: -4px; font-family: var(--font-hand); font-style: normal; font-weight: 400; font-size: 17px; color: var(--red); white-space: nowrap; transform: rotate(-5deg); }
+  .jp-q__body {
+    position: relative; padding: 30px 22px 30px 30px;
+    background:
+      linear-gradient(to right, transparent 16px, rgba(var(--bad-rgb), .4) 16px 18px, transparent 18px),
+      repeating-linear-gradient(to bottom, transparent 0 35px, rgba(31, 60, 136, .14) 35px 36px);
+  }
+  .jp-q .question { margin: 0 auto; max-width: 28ch; }
+  .jp-q .timer-ring { margin: 22px auto 0; }
+  .jp-ans { padding: 14px 18px 20px; border-top: 2px dashed var(--ink); background: var(--paper); animation: jp-unfold .3s var(--ease-out) both; }
+  .jp-ans__label { display: inline-block; font-family: var(--font-hand); font-size: 19px; color: var(--red); transform: rotate(-2deg); }
+  .jp-ans__text { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 6vw, 38px); line-height: 1.02; margin-top: 2px; overflow-wrap: anywhere; text-wrap: balance; }
+  @keyframes jp-unfold { from { opacity: 0; transform: translateY(-8px); } }
+  .jp-steal { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; }
+  .jp-steal .btn { justify-content: flex-start; min-width: 0; text-align: left; line-height: 1.05; overflow-wrap: anywhere; }
+  .jp-steal .btn--ghost { justify-content: center; }
+  .jp-steal__title { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 30px; text-transform: uppercase; text-align: center; }
+  .jp-steal__title small { display: block; font-family: var(--font-body); font-style: normal; font-weight: 600; font-size: 15px; text-transform: none; color: var(--ink-2); }
 
-  .jp-adjust { display: grid; gap: 8px; }
-  .jp-adjust__row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
-  .jp-adjust__row output { min-width: 64px; text-align: center; font-family: var(--font-display); font-variant-numeric: tabular-nums; }
+  /* ---------- Correzione punteggi ---------- */
+  .jp-adjust { display: grid; border: var(--bw) solid var(--ink); }
+  .jp-adjust__row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1.5px solid var(--rule); }
+  .jp-adjust__row:last-child { border-bottom: 0; }
+  .jp-adjust__row output { min-width: 64px; text-align: center; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 24px; font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body data-game="jeopardy">
@@ -80,13 +136,13 @@
   <section class="screen is-active" id="s-start">
     <div class="intro">
       <div data-stagger>
-        <span class="eyebrow">Party · 1-6 squadre</span>
+        <span class="eyebrow">N° 02 · Da 1 a 6 squadre</span>
         <h1 class="intro__title">Il tabellone del <em>calcio</em></h1>
-        <p class="intro__lead">Scegliete categoria e valore, rispondete e scalate la classifica. Più alta la posta, più difficile la domanda: chi sbaglia paga.</p>
+        <p class="intro__lead">Cinque caselle per categoria, da 100 a 500 punti. Più alta la posta, più cattiva la domanda. Chi sbaglia paga, e gli altri ringraziano.</p>
         <div class="row mt-3">
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
-        <p class="small muted mt-2" id="start-record"></p>
+        <p class="note mt-2" id="start-record"></p>
       </div>
       <div class="stack" style="--gap:22px;align-items:center">
         <div class="medal" id="medal"></div>
@@ -100,60 +156,64 @@
       <div class="card" id="teams-host"></div>
       <div class="card jp-opts">
         <div class="field">
-          <div class="row row--between"><span class="label" id="cats-label">Categorie</span><button class="btn btn--ghost btn--sm" type="button" id="cats-random"></button></div>
+          <div class="row row--between"><span class="label" id="cats-label">Categorie</span><button class="btn btn--sm" type="button" id="cats-random"></button></div>
           <div class="jp-cats" id="cats" role="group" aria-labelledby="cats-label"></div>
-          <p class="small faint" id="cats-hint"></p>
+          <div class="jp-cats__foot"><span class="small muted" id="cats-hint"></span></div>
         </div>
-        <div class="field"><span class="label" id="lbl-rounds">Round</span><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
+        <div class="field"><span class="label" id="lbl-rounds">Durata</span><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
         <div class="field"><span class="label" id="lbl-time">Tempo per rispondere</span><div id="opt-time" aria-labelledby="lbl-time"></div></div>
-        <div class="field"><span class="label" id="lbl-penalty">Risposta sbagliata</span><div id="opt-penalty" aria-labelledby="lbl-penalty"></div></div>
-        <label class="switch"><input type="checkbox" id="opt-steal" checked> Rubata: se una squadra sbaglia, le altre possono rubare i punti</label>
-        <label class="switch"><input type="checkbox" id="opt-double" checked> Doppia posta: una casella a sorpresa per round vale doppio</label>
+        <div class="field"><span class="label" id="lbl-penalty">Chi sbaglia</span><div id="opt-penalty" aria-labelledby="lbl-penalty"></div></div>
+        <label class="switch"><input type="checkbox" id="opt-steal" checked><span><b>Rubata.</b> Se una squadra sbaglia, le altre possono soffiarle i punti.</span></label>
+        <label class="switch"><input type="checkbox" id="opt-double" checked><span><b>Doppia posta.</b> Una casella a sorpresa per tempo vale il doppio.</span></label>
       </div>
     </div>
   </section>
 
   <!-- ============ TABELLONE + DOMANDA (punteggi condivisi) ============ -->
   <div id="scorebar" hidden>
-    <div class="teams jp-scores" id="scores" aria-live="polite"></div>
+    <div class="teams jp-scores" id="scores" role="group" aria-label="Punteggi"></div>
   </div>
 
   <section class="screen" id="s-board">
-    <div class="jp-turn">
-      <div class="jp-turn__who" id="turn-who" aria-live="polite"></div>
-      <div class="row jp-tools" style="--gap:8px">
-        <span class="chip chip--accent" id="round-chip"></span>
-        <button class="btn btn--ghost btn--sm" type="button" id="adjust-btn"></button>
-        <button class="btn btn--ghost btn--sm" type="button" id="end-btn"></button>
+    <div class="jp-head">
+      <div class="jp-who" id="turn-who" aria-live="polite"></div>
+      <div class="jp-tools">
+        <span class="jp-round" id="round-chip"></span>
+        <button class="btn btn--sm" type="button" id="adjust-btn"></button>
+        <button class="btn btn--sm" type="button" id="end-btn"></button>
       </div>
     </div>
     <div class="jp-board" id="board"></div>
   </section>
 
   <section class="screen" id="s-q">
-    <div class="qz-main--narrow stack" style="--gap:16px;margin:0 auto">
-      <div class="card card--glow jp-q">
-        <span class="eyebrow" id="q-cat"></span>
-        <div class="jp-q__value" id="q-value"></div>
-        <h2 class="question" id="q-text" aria-live="polite"></h2>
-        <div id="q-timer"></div>
-        <div class="jp-ans" id="q-ans" hidden aria-live="polite">
-          <div class="jp-ans__label">Risposta</div>
+    <div class="qz-main--narrow stack" style="--gap:18px;margin:0 auto">
+      <div class="card jp-q" id="q-card">
+        <div class="jp-q__top">
+          <span class="jp-q__cat" id="q-cat"></span>
+          <span class="jp-q__value" id="q-value"></span>
+        </div>
+        <div class="jp-q__body" id="q-body">
+          <h2 class="question" id="q-text" aria-live="polite"></h2>
+          <div id="q-timer"></div>
+        </div>
+        <div class="jp-ans" id="q-ans" hidden>
+          <span class="jp-ans__label">la risposta</span>
           <div class="jp-ans__text" id="q-ans-text"></div>
         </div>
       </div>
       <div id="act-reveal">
-        <button class="btn btn--primary btn--xl btn--block" type="button" id="reveal-btn"></button>
+        <button class="btn btn--primary btn--xl btn--block" type="button" id="reveal-btn" data-autofocus></button>
       </div>
       <div id="act-judge" class="grid-2" hidden>
-        <button class="btn btn--ok btn--lg" type="button" id="ok-btn"></button>
         <button class="btn btn--bad btn--lg" type="button" id="ko-btn"></button>
+        <button class="btn btn--ok btn--lg" type="button" id="ok-btn"></button>
       </div>
-      <div id="act-steal" class="stack" style="--gap:10px" hidden>
-        <p class="label center">Qualcuno ruba la risposta?</p>
+      <div id="act-steal" class="stack" style="--gap:12px" hidden>
+        <p class="jp-steal__title">Chi la ruba?<small id="steal-sub"></small></p>
         <div class="jp-steal" id="steal-list"></div>
       </div>
-      <p class="small faint center kbd-hint" style="justify-content:center;gap:6px;flex-wrap:wrap">Tastiera: <span class="kbd">Spazio</span> risposta · <span class="kbd">G</span> giusta · <span class="kbd">S</span> sbagliata</p>
+      <p class="small center kbd-hint">Da tastiera: <span class="kbd">Spazio</span> risposta · <span class="kbd">G</span> giusta · <span class="kbd">S</span> sbagliata</p>
     </div>
   </section>
 
@@ -162,8 +222,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=9c216f8a" defer></script>
-<script src="assets/db-jeopardy.js?v=bd0e704b" defer></script>
-<script src="assets/games/jeopardy.js?v=1d401475" defer></script>
+<script src="assets/qz.js?v=bc54ed5a" defer></script>
+<script src="assets/db-jeopardy.js?v=eaec42e1" defer></script>
+<script src="assets/games/jeopardy.js?v=a2d6f78c" defer></script>
 </body>
 </html>

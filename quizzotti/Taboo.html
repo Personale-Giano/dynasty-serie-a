@@ -4,75 +4,133 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Taboo · Quizzotti</title>
-<meta name="description" content="Taboo a tema calcio: fai indovinare calciatori, squadre, stadi e trofei ai compagni senza dire le parole vietate. Oltre 2.000 carte, gratis su Quizzotti.">
+<meta name="description" content="Taboo a tema calcio: fai indovinare calciatori, squadre, stadi e trofei ai compagni senza dire le parole vietate. Oltre 1.700 carte, gratis su Quizzotti.">
 <meta name="theme-color" content="#f1e8d6">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
 <meta property="og:title" content="Taboo · Quizzotti">
-<meta property="og:description" content="Fai indovinare la parola senza dire quelle vietate: oltre 2.000 carte a tema calcio.">
+<meta property="og:description" content="Fai indovinare la parola senza dire quelle vietate: oltre 1.700 carte a tema calcio.">
 <meta property="og:image" content="logo2.png">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="logo1.webp" type="image/webp">
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Permanent+Marker&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=1faa7d11">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Permanent+Marker&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=6820c77e">
 <style>
-  .switch input { flex: none; }
-  .tb-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 28px; }
+  /* ---------- Impostazioni ---------- */
+  .tb-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; margin-top: 34px; }
   @media (min-width: 900px) { .tb-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
-  .tb-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
-  .tb-groups { display: flex; flex-wrap: wrap; gap: 8px; }
-  .tb-group { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); color: var(--muted); font-weight: 800; font-size: 13px; transition: background .2s, color .2s, border-color .2s, transform .15s; }
-  .tb-group small { font-weight: 700; color: var(--faint); }
-  .tb-group:active { transform: scale(.95); }
-  .tb-group[aria-pressed="true"] { background: rgba(var(--accent-rgb), .18); border-color: rgba(var(--accent-rgb), .7); color: var(--text); }
-  .tb-group[aria-pressed="true"] small { color: var(--accent-2); }
+  .tb-setup > .card:nth-child(2) { --tilt: .4deg; }
+  .tb-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .field__hint { font-size: 14px; color: var(--ink-2); margin-top: -4px; }
 
-  /* passaggio del telefono */
-  .tb-hand { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; justify-items: center; text-align: center; padding-top: 8px; }
-  .tb-hand__badge { width: 96px; height: 96px; border-radius: 32%; display: grid; place-items: center; color: #0b1020; background: var(--c); box-shadow: 0 24px 60px -18px var(--c); animation: qz-pop-in .6s var(--ease-spring) both, qz-float 5s ease-in-out .6s infinite; }
-  .tb-hand__badge .ico { width: 46px; height: 46px; }
-  .tb-hand__name { font-size: clamp(30px, 8vw, 54px); font-weight: 900; color: var(--c); overflow-wrap: anywhere; }
-  .tb-hand .teams { width: 100%; }
-  .tb-hand .card { width: 100%; text-align: left; }
+  /* gli argomenti come caselle della schedina */
+  .tb-groups { display: grid; grid-template-columns: minmax(0, 1fr); border: var(--bw) solid var(--ink); background: var(--card); }
+  .tb-group {
+    display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 12px; border: 0; border-bottom: 1.5px solid var(--rule);
+    background: transparent; text-align: left; font-weight: 600; font-size: 16px; color: var(--ink-2); transition: background .12s;
+  }
+  .tb-group:last-child { border-bottom: 0; }
+  .tb-group:hover { background: var(--paper-2); }
+  /* nelle liste stampate il contorno del fuoco sta dentro la riga, sennò viene tagliato */
+  .tb-group:focus-visible, .taccuino__row:focus-visible { position: relative; z-index: 1; outline-offset: -5px; }
+  .tb-group small { margin-left: auto; font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 17px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+  .tb-group__box { position: relative; flex: none; width: 26px; height: 26px; border: var(--bw) solid var(--ink); background: var(--card); }
+  .tb-group__box svg { position: absolute; inset: -5px; width: 32px; height: 32px; max-width: none; display: none; }
+  .tb-group__box path { fill: none; stroke: var(--red); stroke-width: 3.4; stroke-linecap: round; stroke-dasharray: 40; stroke-dashoffset: 0; }
+  .tb-group[aria-pressed="true"] { color: var(--ink); font-weight: 800; }
+  .tb-group[aria-pressed="true"] .tb-group__box svg { display: block; }
+  .tb-group.is-drawn .tb-group__box path { animation: tb-draw .28s ease-out both; }
+  @keyframes tb-draw { from { stroke-dashoffset: 40; } }
 
-  /* partita */
-  .tb-play { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 620px; margin: 0 auto; }
-  .tb-hud { display: flex; align-items: center; gap: 12px; }
-  .tb-hud .timer-ring { --size: 68px; }
-  .tb-hud__team { display: grid; min-width: 0; flex: 1; }
-  .tb-hud__team b { font-family: var(--font-display); font-size: 18px; color: var(--c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tb-hud__pts { font-family: var(--font-display); font-size: 28px; font-variant-numeric: tabular-nums; text-align: right; line-height: 1; }
-  .tb-hud__pts small { display: block; font-family: var(--font-body); font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
-  .tb-stage { overflow: hidden; margin: -12px; padding: 12px; }
-  .tb-card { text-align: center; padding: 26px 18px 18px; border-radius: var(--r-xl); min-height: 330px; display: flex; flex-direction: column; }
-  .tb-card .bigword { font-size: clamp(30px, 9vw, 58px); min-height: 1.1em; display: grid; place-items: center; flex: 1; }
-  .tb-card__label { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 18px 0 10px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--bad); }
-  .tb-card__label::before, .tb-card__label::after { content: ""; flex: 1; height: 1px; background: rgba(var(--bad-rgb), .35); }
-  .tb-taboo { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; }
-  .tb-taboo li { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 12px; border-radius: 12px; background: rgba(var(--bad-rgb), .1); border: 1px solid rgba(var(--bad-rgb), .25); font-weight: 800; font-size: 17px; overflow-wrap: anywhere; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 50ms + .12s); }
-  .tb-taboo .ico { color: var(--bad); width: 16px; height: 16px; }
-  .tb-card__cat { margin-top: 12px; font-size: 12px; color: var(--faint); font-weight: 700; }
-  .tb-card.is-in { animation: tb-in .38s var(--ease-spring) both; }
-  .tb-card.is-go-ok { animation: tb-go-ok .22s ease-in both; }
-  .tb-card.is-go-bad { animation: tb-go-bad .22s ease-in both; }
-  .tb-card.is-go-skip { animation: tb-go-skip .22s ease-in both; }
-  @keyframes tb-in { from { opacity: 0; transform: translateY(26px) scale(.94) rotate(-1.5deg); } }
-  @keyframes tb-go-ok { to { opacity: 0; transform: translateX(40%) rotate(7deg); } }
-  @keyframes tb-go-skip { to { opacity: 0; transform: translateX(-40%) rotate(-7deg); } }
-  @keyframes tb-go-bad { to { opacity: 0; transform: translateY(18%) scale(.9); } }
-  .tb-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 8px; }
-  .tb-actions .btn { padding: 0 8px; min-height: 64px; flex-direction: column; gap: 2px; font-size: 14px; }
-  .tb-actions .btn small { font-size: 11px; font-weight: 700; opacity: .8; }
+  /* ---------- Il cambio: passa il telefono ---------- */
+  .handoff { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; text-align: center; padding-top: 6px; }
+  .handoff__card { --tilt: -1deg; padding: 0 0 20px; overflow: hidden; animation: qz-slap .4s var(--ease-spring) both; }
+  .handoff__band { height: 30px; border-bottom: var(--bw) solid var(--ink); background: repeating-linear-gradient(-45deg, var(--c) 0 12px, var(--card) 12px 24px); }
+  .handoff__round { display: inline-block; margin-top: 18px; padding: 2px 10px 1px; border: var(--bw) solid var(--ink); background: var(--yellow); font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 17px; text-transform: uppercase; transform: rotate(-2deg); }
+  .handoff__call { display: block; margin-top: 12px; font-size: 22px; transform: rotate(-2deg); }
+  .handoff__name { margin: 6px 16px 0; font-size: clamp(46px, 13vw, 84px); font-style: italic; font-weight: 900; text-transform: uppercase; line-height: .86; color: var(--c); overflow-wrap: anywhere; }
+  .handoff .rules { margin: 20px 20px 0; padding-top: 16px; border-top: 1.5px dashed var(--rule); text-align: left; }
+  .handoff .rules__n { background: var(--c); color: var(--card); }
+  .handoff .teams { padding-top: 12px; text-align: left; }
 
-  /* riepilogo turno */
-  .tb-sum { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .tb-sum__row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; font-weight: 800; transition: background .2s, border-color .2s; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
-  .tb-sum__row span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  .tb-sum__row[data-res="ok"] { border-color: rgba(var(--ok-rgb), .4); background: rgba(var(--ok-rgb), .08); }
-  .tb-sum__row[data-res="bad"] { border-color: rgba(var(--bad-rgb), .4); background: rgba(var(--bad-rgb), .08); }
-  .tb-sum__row small { display: block; font-size: 11px; color: var(--faint); font-weight: 700; }
+  /* ---------- In campo ---------- */
+  .tb-play { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; max-width: 600px; margin: 0 auto; }
+  .hud-strip { display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 8px; border: var(--bw) solid var(--ink); background: var(--card); box-shadow: var(--shadow-print-sm); }
+  .hud-strip .timer-ring { --size: 66px; box-shadow: none; }
+  .hud-strip__team { display: grid; min-width: 0; flex: 1; line-height: 1.05; }
+  .hud-strip__team span { font-family: var(--font-hand); font-size: 15px; color: var(--red); }
+  .hud-strip__team b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 24px; line-height: .95; text-transform: uppercase; color: var(--c); overflow-wrap: anywhere; }
+  .hud-strip__pts { display: grid; justify-items: center; min-width: 62px; padding: 2px 8px; border-left: 1.5px solid var(--ink); }
+  .hud-strip__pts b { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 36px; line-height: .95; font-variant-numeric: tabular-nums; }
+  .hud-strip__pts small { font-size: 11px; font-weight: 800; color: var(--ink-2); text-transform: uppercase; letter-spacing: .06em; }
+
+  /* il mazzo: due carte storte sotto quella in gioco */
+  .tb-stage { position: relative; padding: 4px 2px 8px; }
+  .tb-stage::before, .tb-stage::after { content: ""; position: absolute; inset: 12px 8px 2px; border: var(--bw) solid var(--ink); border-radius: var(--r-lg); background: var(--paper-2); }
+  .tb-stage::before { transform: rotate(2.6deg); }
+  .tb-stage::after { transform: rotate(-1.7deg); background: var(--card); }
+
+  /* la carta, stampata su cartoncino */
+  .tb-card {
+    position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 400px; padding: 16px 16px 18px; text-align: center;
+    border: 3px solid var(--ink); border-radius: var(--r-lg); background: var(--card);
+    box-shadow: var(--shadow-print), inset 0 0 0 6px var(--card), inset 0 0 0 8px var(--accent);
+  }
+  .tb-card__cat { padding: 4px 6px 0; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tb-card .bigword { flex: 1; display: grid; place-items: center; min-height: 128px; padding: 8px 4px 14px; font-size: clamp(38px, 11vw, 66px); }
+  .tb-forbid { border: 3px solid var(--red); border-radius: var(--r); background: var(--card); text-align: center; }
+  .tb-forbid__head { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 3px 10px 2px; background: var(--red); color: var(--card); font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 18px; letter-spacing: .06em; text-transform: uppercase; }
+  .tb-forbid__head .ico { width: 17px; height: 17px; }
+  .tb-taboo { list-style: none; margin: 0; padding: 2px 10px; }
+  .tb-taboo li { padding: 6px 4px 5px; border-top: 2px dotted rgba(var(--bad-rgb), .35); font-family: var(--font-display); font-weight: 800; font-size: 25px; line-height: 1.05; text-transform: uppercase; overflow-wrap: anywhere; }
+  .tb-taboo li:first-child { border-top: 0; }
+  .tb-card.is-in { animation: tb-deal .3s var(--ease-spring) both; }
+  .tb-card.is-go-ok { animation: tb-go-ok .2s ease-in both; }
+  .tb-card.is-go-bad { animation: tb-go-bad .2s ease-in both; }
+  .tb-card.is-go-skip { animation: tb-go-skip .2s ease-in both; }
+  @keyframes tb-deal { from { opacity: 0; transform: translate(-18px, -10px) rotate(-5deg) scale(1.03); } }
+  @keyframes tb-go-ok { to { opacity: 0; transform: translateX(45%) rotate(9deg); } }
+  @keyframes tb-go-skip { to { opacity: 0; transform: translateX(-45%) rotate(-9deg); } }
+  @keyframes tb-go-bad { to { opacity: 0; transform: translateY(22%) rotate(3deg) scale(.92); } }
+  .tb-card .qz-stamp { top: 32%; }
+
+  .tb-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr) minmax(0, 1.3fr); gap: 10px; }
+  .tb-actions .btn { min-height: 78px; padding: 6px 6px; flex-direction: column; gap: 3px; font-size: 20px; }
+  .tb-actions .btn .ico { width: 24px; height: 24px; }
+  .tb-actions .btn small { font-family: var(--font-body); font-style: normal; font-size: 12px; font-weight: 700; text-transform: none; letter-spacing: 0; opacity: .9; }
+
+  /* ---------- Il taccuino del turno ---------- */
+  .sum-head { text-align: center; }
+  .sum-head .note { font-size: 22px; }
+  .sum-head__team { margin-top: 6px; font-size: clamp(42px, 11vw, 72px); font-style: italic; font-weight: 900; text-transform: uppercase; line-height: .88; color: var(--c); overflow-wrap: anywhere; }
+  .sum-head .result__big { margin-top: 6px; }
+  .taccuino { --tilt: .6deg; padding: 0; overflow: hidden; }
+  .taccuino__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; padding: 12px 16px 10px 52px; border-bottom: 3px double var(--ink); }
+  .taccuino__head b { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 22px; text-transform: uppercase; }
+  .taccuino__head span { font-size: 14px; color: var(--ink-2); }
+  .taccuino__list { background: linear-gradient(to right, transparent 38px, rgba(var(--bad-rgb), .45) 38px 40px, transparent 40px); }
+  .taccuino__row {
+    position: relative; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px; padding: 6px 14px 6px 52px;
+    border: 0; border-bottom: 1.5px solid rgba(31, 60, 136, .22); background: transparent; text-align: left; transition: background .12s;
+  }
+  .taccuino__row:last-child { border-bottom: 0; }
+  .taccuino__row:hover { background: rgba(var(--ink-rgb), .04); }
+  .taccuino__n { position: absolute; left: 0; width: 36px; text-align: center; font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 15px; color: var(--ink-2); }
+  .taccuino__word { flex: 1; min-width: 0; font-weight: 700; font-size: 19px; line-height: 1.2; overflow-wrap: anywhere; }
+  .taccuino__word small { display: block; font-family: var(--font-hand); font-weight: 400; font-size: 14px; color: var(--ink-2); }
+  .taccuino__row[data-res="bad"] .taccuino__word span { text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 2px; }
+  .taccuino__row[data-res="skip"] .taccuino__word span { color: var(--ink-2); }
+  .taccuino__mark { position: relative; flex: none; width: 46px; height: 34px; display: grid; place-items: center; font-family: var(--font-hand); font-size: 15px; color: var(--ink-2); }
+  .taccuino__mark .qz-mark { inset: 0; width: 100%; height: 100%; }
+  .taccuino__mark .qz-mark path { stroke-width: 4; }
+  .taccuino__empty { padding: 20px 16px 20px 52px; color: var(--ink-2); }
+  /* time-out: la carta si gira a faccia in giu' */
+  .tb-card.is-covered { background: repeating-linear-gradient(-45deg, var(--accent) 0 14px, var(--card) 14px 28px); }
+  .tb-card.is-covered > * { visibility: hidden; }
 </style>
 </head>
 <body data-game="taboo">
@@ -82,13 +140,13 @@
   <section class="screen is-active" id="s-start">
     <div class="intro">
       <div data-stagger>
-        <span class="eyebrow">Party · 2-6 squadre</span>
+        <span class="eyebrow">N° 05 · Da 2 a 6 squadre</span>
         <h1 class="intro__title">Dillo senza <em>dirlo</em></h1>
-        <p class="intro__lead">Fai indovinare calciatori, squadre, stadi e trofei ai tuoi compagni, senza mai pronunciare le parole vietate. Oltre 2.000 carte a tema calcio.</p>
+        <p class="intro__lead">Fai indovinare «Catenaccio» senza dire difesa, Italia e chiuso. Oltre 1.700 carte di calcio, un cronometro e un avversario che ti fa le pulci.</p>
         <div class="row mt-3">
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
-        <p class="small muted mt-2" id="start-record"></p>
+        <p class="note mt-2" id="start-record"></p>
       </div>
       <div class="stack" style="--gap:22px;align-items:center">
         <div class="medal" id="medal"></div>
@@ -102,71 +160,77 @@
       <div class="card" id="teams-host"></div>
       <div class="card tb-opts">
         <div class="field"><span class="label" id="lbl-time">Tempo per turno</span><div id="opt-time" aria-labelledby="lbl-time"></div></div>
-        <div class="field"><span class="label" id="lbl-rounds">Giri (ogni squadra gioca un turno per giro)</span><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
-        <div class="field"><span class="label" id="lbl-pen">Parola vietata detta</span><div id="opt-pen" aria-labelledby="lbl-pen"></div></div>
+        <div class="field"><span class="label" id="lbl-rounds">Giri</span><p class="field__hint">A ogni giro ogni squadra gioca un turno.</p><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
+        <div class="field"><span class="label" id="lbl-pen">Parola vietata</span><div id="opt-pen" aria-labelledby="lbl-pen"></div></div>
         <div class="field"><span class="label" id="lbl-skip">Passi per turno</span><div id="opt-skip" aria-labelledby="lbl-skip"></div></div>
         <div class="field">
-          <div class="row row--between"><span class="label" id="lbl-groups">Argomenti</span><button class="btn btn--ghost btn--sm" type="button" id="groups-all">Tutti</button></div>
+          <div class="row row--between"><span class="label" id="lbl-groups">Argomenti</span><button class="btn btn--sm" type="button" id="groups-all"></button></div>
           <div class="tb-groups" id="groups" role="group" aria-labelledby="lbl-groups"></div>
-          <p class="small faint" id="groups-hint"></p>
+          <p class="small muted" id="groups-hint"></p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ============ PASSA IL TELEFONO ============ -->
+  <!-- ============ IL CAMBIO: PASSA IL TELEFONO ============ -->
   <section class="screen" id="s-turn">
-    <div class="tb-hand qz-main--narrow" style="margin:0 auto" data-stagger>
-      <div class="tb-hand__badge" id="hand-badge"></div>
-      <div>
-        <span class="eyebrow" id="hand-round"></span>
-        <h2 class="tb-hand__name mt-1" id="hand-name"></h2>
-      </div>
-      <div class="card card--tight">
+    <h1 class="sr-only">Taboo, cambio di squadra</h1>
+    <div class="handoff qz-main--narrow" style="margin:0 auto">
+      <div class="card handoff__card">
+        <div class="handoff__band"></div>
+        <span class="handoff__round" id="hand-round"></span>
+        <span class="note handoff__call">passa il telefono a</span>
+        <h2 class="handoff__name" id="hand-name"></h2>
         <ul class="rules" id="hand-rules"></ul>
       </div>
       <button class="btn btn--primary btn--xl btn--block" type="button" id="go-btn" data-autofocus></button>
-      <div class="teams" id="hand-scores" aria-label="Classifica"></div>
+      <div class="teams" id="hand-scores" role="group" aria-label="Classifica"></div>
     </div>
   </section>
 
-  <!-- ============ PARTITA ============ -->
+  <!-- ============ IN CAMPO ============ -->
   <section class="screen" id="s-game">
+    <h1 class="sr-only">Taboo, in campo</h1>
     <div class="tb-play">
-      <div class="tb-hud">
+      <div class="hud-strip">
         <div id="timer-host"></div>
-        <div class="tb-hud__team"><span class="small muted">Spiega</span><b id="hud-team"></b></div>
-        <div class="tb-hud__pts"><span id="hud-pts" aria-live="polite">0</span><small>punti turno</small></div>
-        <button class="btn btn--ghost btn--icon btn--sm" type="button" id="pause-btn" aria-label="Pausa"></button>
+        <div class="hud-strip__team"><span>spiega</span><b id="hud-team"></b></div>
+        <div class="hud-strip__pts"><b id="hud-pts">0</b><small>turno</small></div>
+        <button class="btn btn--sm btn--icon" type="button" id="pause-btn" aria-label="Time-out"></button>
       </div>
       <div class="tb-stage">
-        <div class="card card--glow tb-card" id="card">
-          <div class="bigword" id="word" aria-live="assertive"></div>
-          <div class="tb-card__label">Vietate</div>
-          <ul class="tb-taboo" id="taboo" aria-label="Parole vietate"></ul>
+        <div class="tb-card" id="card">
           <div class="tb-card__cat" id="word-cat"></div>
+          <div class="bigword" id="word"></div>
+          <div class="tb-forbid">
+            <div class="tb-forbid__head" id="forbid-head"></div>
+            <ul class="tb-taboo" id="taboo" aria-label="Parole vietate"></ul>
+          </div>
         </div>
       </div>
       <div class="tb-actions">
-        <button class="btn btn--bad" type="button" id="bad-btn"></button>
-        <button class="btn" type="button" id="skip-btn"></button>
-        <button class="btn btn--ok" type="button" id="ok-btn"></button>
+        <button class="btn btn--bad" type="button" id="bad-btn" data-silent></button>
+        <button class="btn" type="button" id="skip-btn" data-silent></button>
+        <button class="btn btn--ok" type="button" id="ok-btn" data-silent></button>
       </div>
-      <p class="small faint center kbd-hint" style="justify-content:center;gap:6px;flex-wrap:wrap">Tastiera: <span class="kbd">→</span> indovinata · <span class="kbd">←</span> vietata · <span class="kbd">↓</span> passo · <span class="kbd">Esc</span> pausa</p>
+      <p class="small center kbd-hint">Da tastiera: <span class="kbd">→</span> indovinata · <span class="kbd">←</span> vietata · <span class="kbd">↓</span> passo · <span class="kbd">Esc</span> time-out</p>
     </div>
   </section>
 
-  <!-- ============ RIEPILOGO TURNO ============ -->
+  <!-- ============ IL TACCUINO DEL TURNO ============ -->
   <section class="screen" id="s-sum">
-    <div class="qz-main--narrow stack" style="--gap:18px;margin:0 auto">
-      <div class="center" data-stagger>
-        <span class="eyebrow" id="sum-eyebrow"></span>
-        <h2 class="result__title mt-1" id="sum-title" style="color:var(--c);overflow-wrap:anywhere"></h2>
-        <div class="result__big" id="sum-pts" aria-live="polite">0</div>
+    <h1 class="sr-only">Taboo, fine del turno</h1>
+    <div class="qz-main--narrow stack" style="--gap:22px;margin:0 auto">
+      <div class="sum-head">
+        <span class="note" id="sum-eyebrow"></span>
+        <h2 class="sum-head__team" id="sum-title" tabindex="-1" data-autofocus></h2>
+        <div class="result__big" id="sum-pts">0</div>
         <p class="muted" id="sum-total"></p>
-        <p class="small faint mt-1">Tocca una parola per correggerla se avete premuto il tasto sbagliato.</p>
       </div>
-      <div class="tb-sum" id="sum-list"></div>
+      <div class="card taccuino">
+        <div class="taccuino__head"><b>Il taccuino</b><span>Segnato male? Tocca la riga.</span></div>
+        <div class="taccuino__list" id="sum-list"></div>
+      </div>
       <button class="btn btn--primary btn--xl btn--block" type="button" id="sum-next"></button>
     </div>
   </section>
@@ -176,8 +240,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=9c216f8a" defer></script>
-<script src="assets/db-taboo.js?v=0fd96ecb" defer></script>
-<script src="assets/games/taboo.js?v=e5927a05" defer></script>
+<script src="assets/qz.js?v=bc54ed5a" defer></script>
+<script src="assets/db-taboo.js?v=9719a43f" defer></script>
+<script src="assets/games/taboo.js?v=4deb73d0" defer></script>
 </body>
 </html>

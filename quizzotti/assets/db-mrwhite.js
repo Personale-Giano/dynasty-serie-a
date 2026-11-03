@@ -1,64 +1,72 @@
 /* ==========================================================================
    QUIZZOTTI — Database: Mr.White (nomi calciatori)
-   Estratto da MrWhite.html per separare i dati dalla logica di gioco.
+   Solo calciatori famosi, che un gruppo di tifosi "normali" sa descrivere
+   senza difficolta' (club, nazionale, ruolo, soprannome, momenti iconici).
    ========================================================================== */
 
 const wordsList = [
+  // --- Leggende italiane ---
   "Alessandro Del Piero", "Francesco Totti", "Roberto Baggio", "Gianluigi Buffon", "Paolo Maldini", "Fabio Cannavaro",
-  "Andrea Pirlo", "Gennaro Gattuso", "Alessandro Nesta", "Filippo Inzaghi", "Christian Vieri", "Gabriel Batistuta",
-  "Roberto Bettega", "Gianni Rivera", "Giuseppe Bergomi", "Dino Zoff", "Marco van Basten", "Ruud Gullit",
-  "Frank Rijkaard", "Dennis Bergkamp", "Patrick Kluivert", "Edgar Davids", "Clarence Seedorf", "Johan Cruyff",
-  "Ronald Koeman", "Zinedine Zidane", "Thierry Henry", "Patrick Vieira", "Robert Pirès", "David Trezeguet",
-  "Eric Cantona", "Jean-Pierre Papin", "Michel Platini", "Marcel Desailly", "Lilian Thuram", "Lionel Messi",
-  "Cristiano Ronaldo", "Neymar", "Kylian Mbappé", "Sergio Ramos", "Luka Modric", "Toni Kroos",
-  "Manuel Neuer", "Thomas Müller", "Robert Lewandowski", "Karim Benzema", "Eden Hazard", "Kevin De Bruyne",
-  "Virgil van Dijk", "Mohamed Salah", "Sadio Mané", "Harry Kane", "Raheem Sterling", "Paul Pogba",
-  "N'Golo Kanté", "Antoine Griezmann", "Romelu Lukaku", "Erling Haaland", "Bruno Fernandes", "Jadon Sancho",
-  "Phil Foden", "Mason Mount", "Frenkie de Jong", "Matthijs de Ligt", "Kai Havertz", "Trent Alexander-Arnold",
-  "Andrew Robertson", "Alisson Becker", "Jan Oblak", "Marc-André ter Stegen", "Giorgio Chiellini", "Leonardo Bonucci",
-  "Kalidou Koulibaly", "Raphaël Varane", "Aymeric Laporte", "Joshua Kimmich", "Marquinhos", "Thiago Silva",
-  "Sergio Busquets", "Casemiro", "Fabinho", "Ilkay Gündogan", "Marco Reus", "Leroy Sané",
-  "Memphis Depay", "Ángel Di María", "Paulo Dybala", "Luis Suárez", "Sergio Agüero", "Gareth Bale",
-  "Ivan Rakitic", "Arturo Vidal", "Dani Alves", "Jordi Alba", "David Silva", "Cesc Fàbregas",
-  "Xabi Alonso", "Andrés Iniesta", "Fernandinho", "David Luiz", "Diego Godín", "Edinson Cavani",
-  "Radamel Falcao", "James Rodríguez", "Alexis Sánchez", "Gianluigi Donnarumma", "Keylor Navas", "Hugo Lloris",
-  "Samir Handanovic", "Wojciech Szczesny", "Milan Škriniar", "Nicolás Otamendi", "Diego Costa", "Mauro Icardi",
-  "Dries Mertens", "Lorenzo Insigne", "Ciro Immobile", "Edin Džeko", "Miralem Pjanic", "Ivan Perišic",
-  "Aleksandar Kolarov", "Stefan de Vrij", "Nicolò Barella", "Federico Chiesa", "Nicolo Zaniolo", "Sandro Tonali",
-  "Gianluca Mancini", "Merih Demiral", "Achraf Hakimi", "Theo Hernandez", "Dušan Tadic", "Hakim Ziyech",
-  "Donny van de Beek", "Steven Bergwijn", "Ryan Gravenberch", "Martin Ødegaard", "Pedri", "Ansu Fati",
-  "Ferran Torres", "Eduardo Camavinga", "Jude Bellingham", "Bukayo Saka", "Mason Greenwood", "Reece James",
-  "Declan Rice", "Federico Valverde", "Rodrygo", "Vinícius Júnior", "Federico Bernardeschi", "Moise Kean",
-  "Nicolò Cambiaso", "Fabio Miretti", "Tommaso Baldanzi", "Lorenzo Lucca", "Riccardo Sottil", "Nicolò Rovella",
-  "Raoul Bellanova", "Nicolò Fagioli", "Samuele Ricci", "Alessandro Buongiorno", "Davide Frattesi", "Marco Carnesecchi",
-  "Gianluca Frabotta", "Giuseppe Pezzella", "Gianluca Scamacca", "Alessandro Bastoni", "Davide Calabria", "Giovanni Di Lorenzo",
-  "Andrea Pinamonti", "Federico Dimarco", "Matteo Pessina", "Luca Pellegrini", "Gianluca Caprari", "Riccardo Orsolini",
-  "Fabio Miccoli", "Duván Zapata", "Luis Muriel", "Vanja Milinkovic-Savic", "Marcus Thuram", "Kenneth Reijnders",
-  "Ademola Lookman", "Christian Pulisic", "Nico Paz", "David de Gea", "Kenan Yildiz", "Rafael Leão",
-  "Florian Thauvin", "Axel Rrahmani", "Manuel Locatelli", "Ederson", "Scott McTominay", "Issa Ndoye",
-  "Marten de Roon", "André-Frank Zambo Anguissa", "Yann Sommer", "Matteo Politano", "Gabriele Savona", "Gabriel Strefezza",
-  "Matheus da Cunha", "Tiquinho Soares", "Angeliño", "Evan Ndicka", "Denny Dumfries", "Matías Soulé",
-  "Eldor Shomurodov", "Bryan Cristante", "Leandro Paredes", "Manu Koné", "Mert Müldür", "Saul Niguez",
-  "Mbangula", "Nicolò Casadei", "Eljif Elmas", "Adama Tameze", "Yann Karamoh", "Che Adams",
-  "Randal Kolo Muani", "Nico González", "Koopmeiners", "Timothy Weah", "Ajdin Hrustic", "Kalidou Kalulu",
-  "Cabal", "Liam Kelly", "Salvatore Sirigu", "David Neres", "Noah Okafor", "Giacomo Raspadori",
-  "Michel-Ange Ngongé", "Billy Gilmour", "Pasquale Mazzocchi", "Leonardo Spinazzola", "Alex Meret", "Pierluigi Montipò",
-  "Vitinha", "Jeremie De Winter", "Tom Dele-Bashiru", "Valentín Castellanos", "Alessio Romagnoli", "Mandas",
-  "Dele Alli", "Saliou Diao", "Folorunsho Balogun", "Birkir Bjarnason", "Rolando Mandragora", "Dodo",
-  "Bonny", "Dennis Man", "Bernabe Pavlovic", "Matej Bijol", "Matteo Gabbia", "Fikayo Tomori",
-  "Hien", "Germán Djimsiti", "Mario Pasalic", "Davide Zappacosta", "Lucas Castro", "Joshua Dallinga",
-  "Jhon Lucumí", "Lucas Vázquez", "Antonio Rüdiger", "Mikel Merino", "Gabriel Martinelli", "Jurriën Timber",
-  "Eric Dier", "Michael Olise", "Urbig", "Antonín Barák", "Jordan Veretout", "Alessandro Matri",
-  "Tanguy Ndombele", "Sam Lammers", "Kaoru Mitoma", "Daniele Padelli", "Renan Lodi",
-  "Andrea Consigli", "Diego Milito", "Simone Verdi", "Lucas Digne", "Mario Götze",
-  "Filip Kostic", "Claudio Marchisio", "Alexandre Lacazette", "Saud Abdulhamid",
+  "Andrea Pirlo", "Gennaro Gattuso", "Alessandro Nesta", "Filippo Inzaghi", "Christian Vieri", "Franco Baresi",
+  "Gianni Rivera", "Giuseppe Bergomi", "Dino Zoff", "Paolo Rossi", "Roberto Mancini", "Gianluca Vialli",
+  "Gigi Riva", "Gianfranco Zola", "Walter Zenga", "Daniele De Rossi", "Giorgio Chiellini", "Leonardo Bonucci",
+  "Antonio Cassano", "Luca Toni", "Marco Materazzi", "Fabio Grosso", "Antonio Di Natale", "Gianluca Zambrotta",
+  "Mauro Camoranesi", "Alberto Gilardino", "Claudio Marchisio", "Mario Balotelli", "Ciro Immobile", "Lorenzo Insigne",
+  "Marco Verratti", "Stephan El Shaarawy", "Andrea Belotti", "Domenico Berardi", "Salvatore Schillaci", "Roberto Bettega",
+  "Javier Zanetti", "Simone Perrotta", "Gianluca Pagliuca", "Massimo Ambrosini",
+
+  // --- Italiani di oggi ---
+  "Gianluigi Donnarumma", "Nicolò Barella", "Federico Chiesa", "Sandro Tonali", "Alessandro Bastoni", "Federico Dimarco",
+  "Giovanni Di Lorenzo", "Davide Frattesi", "Moise Kean", "Mateo Retegui", "Giacomo Raspadori", "Manuel Locatelli",
+  "Riccardo Calafiori", "Gianluca Scamacca", "Lorenzo Pellegrini", "Bryan Cristante", "Matteo Politano", "Jorginho",
+  "Nicolò Zaniolo", "Federico Bernardeschi", "Leonardo Spinazzola", "Alex Meret", "Riccardo Orsolini", "Francesco Acerbi",
+  "Destiny Udogie", "Andrea Cambiaso", "Guglielmo Vicario", "Alessandro Buongiorno", "Samuele Ricci",
+
+  // --- Stranieri che hanno fatto la storia della Serie A ---
+  "Diego Maradona", "Michel Platini", "Marco van Basten", "Ruud Gullit", "Frank Rijkaard", "Gabriel Batistuta",
+  "Zinedine Zidane", "Ronaldo Nazário", "Kaká", "Andriy Shevchenko", "Zlatan Ibrahimović", "Pavel Nedvěd",
+  "David Trezeguet", "Hernán Crespo", "Clarence Seedorf", "Edgar Davids", "Lilian Thuram", "Diego Milito",
+  "Samuel Eto'o", "Wesley Sneijder", "Juan Sebastián Verón", "Gonzalo Higuaín", "Paulo Dybala", "Edinson Cavani",
+  "Marek Hamšík", "Dries Mertens", "Kalidou Koulibaly", "George Weah", "Ronaldinho", "Alexandre Pato",
+  "Lothar Matthäus", "Jürgen Klinsmann", "Rui Costa", "Adriano", "Miralem Pjanić", "Arturo Vidal",
+  "Paul Pogba", "Mario Mandžukić", "Juan Cuadrado", "Wojciech Szczęsny", "Samir Handanović", "Edin Džeko",
+  "Mauro Icardi", "Ivan Perišić", "Romelu Lukaku", "Josip Iličić", "Papu Gómez", "Duván Zapata",
+  "Sergej Milinković-Savić", "Luis Alberto", "Cristiano Ronaldo", "Olivier Giroud", "Hakan Çalhanoğlu", "Milan Škriniar",
+  "Fabio Quagliarella", "Hernanes", "Miroslav Klose", "Radja Nainggolan", "Kevin-Prince Boateng", "Dejan Stanković",
+
+  // --- Protagonisti recenti della Serie A ---
+  "Lautaro Martínez", "Marcus Thuram", "Khvicha Kvaratskhelia", "Victor Osimhen", "Rafael Leão", "Theo Hernández",
+  "Mike Maignan", "Christian Pulisic", "Dušan Vlahović", "Kenan Yıldız", "Scott McTominay", "Kevin De Bruyne",
+  "Luka Modrić", "Ademola Lookman", "Teun Koopmeiners", "Tijjani Reijnders", "Rasmus Højlund", "Denzel Dumfries",
+  "Henrikh Mkhitaryan", "Stanislav Lobotka", "Yann Sommer", "Nico Paz", "Artem Dovbyk",
+  "Matías Soulé", "Mohamed Salah", "Alisson Becker", "Antonio Rüdiger", "Achraf Hakimi",
+
+  // --- Leggende mondiali ---
+  "Pelé", "Johan Cruijff", "Franz Beckenbauer", "Alfredo Di Stéfano", "Ferenc Puskás", "Eusébio",
+  "George Best", "Romário", "Rivaldo", "Roberto Carlos", "Cafu", "Luís Figo",
+  "Raúl", "Iker Casillas", "Carles Puyol", "Xavi", "Andrés Iniesta", "Fernando Torres",
+  "David Villa", "Thierry Henry", "Eric Cantona", "Dennis Bergkamp", "David Beckham", "Wayne Rooney",
+  "Steven Gerrard", "Frank Lampard", "Didier Drogba", "Ryan Giggs", "Paul Scholes", "Oliver Kahn",
+  "Peter Schmeichel", "Michael Owen", "Petr Čech", "Philipp Lahm", "Bastian Schweinsteiger", "Arjen Robben",
+  "Franck Ribéry", "Robin van Persie", "Ruud van Nistelrooy", "Carlos Tevez", "Juan Román Riquelme", "Diego Forlán",
+  "Mesut Özil", "Javier Mascherano", "Gerard Piqué", "Sergio Busquets", "Dani Alves", "Marcelo",
+  "Gareth Bale", "Eden Hazard", "Sergio Agüero", "Luis Suárez", "Radamel Falcao", "James Rodríguez",
+
+  // --- Stelle di oggi e di ieri l'altro ---
+  "Lionel Messi", "Neymar", "Kylian Mbappé", "Erling Haaland", "Sergio Ramos", "Toni Kroos",
+  "Manuel Neuer", "Thomas Müller", "Robert Lewandowski", "Karim Benzema", "Virgil van Dijk", "Harry Kane",
+  "Antoine Griezmann", "N'Golo Kanté", "Ángel Di María", "Thiago Silva", "Casemiro", "Hugo Lloris",
+  "Jude Bellingham", "Lamine Yamal", "Pedri", "Vinícius Júnior", "Bukayo Saka", "Phil Foden",
+  "Cole Palmer", "Jamal Musiala", "Florian Wirtz", "Rodri", "Declan Rice", "Martin Ødegaard",
+  "Federico Valverde", "Ousmane Dembélé", "Bruno Fernandes", "Bernardo Silva", "Son Heung-min", "Sadio Mané",
+  "Joshua Kimmich", "Alphonso Davies", "Thibaut Courtois", "Jan Oblak", "Marc-André ter Stegen", "Emiliano Martínez",
+  "Julián Álvarez", "Enzo Fernández", "Alexis Mac Allister", "Raphinha", "Rodrygo", "Gavi",
+  "Nico Williams", "Dani Olmo", "Álvaro Morata", "Trent Alexander-Arnold", "Marcus Rashford", "Jack Grealish",
+  "Raheem Sterling", "Riyad Mahrez", "Marquinhos", "Raphaël Varane", "Kingsley Coman", "Leroy Sané",
+  "Mario Götze", "Marco Reus", "Ilkay Gündoğan", "Frenkie de Jong", "Matthijs de Ligt", "Viktor Gyökeres",
+  "Alexander Isak", "Michael Olise", "Désiré Doué", "Vitinha", "João Neves", "Alessandro Florenzi",
 ];
 
-const playerImages = {
-      'Alessandro Del Piero': 'https://example.com/delpiero.jpg',
-      'Francesco Totti': 'https://example.com/totti.jpg',
-      'Roberto Baggio': 'https://example.com/baggio.jpg',
-      // Aggiungi altre immagini qui...
-    };
+const playerImages = {};
 
 if (typeof module !== "undefined" && module.exports) { module.exports = { wordsList, playerImages }; }

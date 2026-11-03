@@ -7,96 +7,160 @@
 <meta name="description" content="Costruisci la squadra dei tuoi sogni avvicinandoti il più possibile al budget: i valori di mercato dei calciatori sono nascosti, dovrai indovinarli. Da 1 a 6 giocatori.">
 <meta name="theme-color" content="#f1e8d6">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
 <meta property="og:title" content="Sfida dei Budget · Quizzotti">
 <meta property="og:description" content="Prezzi nascosti, budget fisso: chi costruisce la squadra che ci va più vicino?">
 <meta property="og:image" content="logo2.png">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="logo1.webp" type="image/webp">
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Permanent+Marker&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=1faa7d11">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Permanent+Marker&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=6820c77e">
 <style>
   .intro { grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px) { .intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
-  .bg-setup { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
+
+  /* ---- il modulo delle regole ---- */
+  .bg-form { padding: 18px 18px 20px; }
+  .bg-form__title { font-size: 28px; font-style: italic; text-transform: uppercase; padding-bottom: 8px; margin-bottom: 16px; border-bottom: 3px double var(--ink); }
+  .bg-setup { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 860px) { .bg-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
-  .bg-presets { display: flex; flex-wrap: wrap; gap: 6px; }
-  .bg-presets button { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font-weight: 800; font-size: 13px; }
-  .bg-presets button[aria-pressed="true"] { background: rgba(var(--accent-rgb), .16); color: var(--accent); border-color: rgba(var(--accent-rgb), .5); }
-  .stepper output small { font-size: 12px; color: var(--muted); }
+  .bg-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bg-presets button {
+    min-height: 44px; padding: 0 12px; border: 1.5px solid var(--ink); border-radius: var(--r-sm); background: var(--card); color: var(--ink);
+    font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 17px; font-variant-numeric: tabular-nums;
+    transition: background .12s, transform .1s;
+  }
+  .bg-presets button:hover { background: var(--yellow); }
+  .bg-presets button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow-print-sm); transform: rotate(-2deg); }
+  .stepper output small { font-size: 13px; color: var(--ink-2); }
+  .bg-setup .segmented { flex-wrap: nowrap; }
+  .bg-setup .segmented button { flex: 1 1 0; min-width: 0; min-height: 48px; padding: 0 6px; font-size: 17px; }
 
-  /* ---- passaggio del telefono ---- */
-  .bg-hand { max-width: 520px; margin: 4vh auto 0; text-align: center; display: grid; justify-items: center; gap: 16px; }
-  .bg-avatar { width: 112px; height: 112px; border-radius: 34%; display: grid; place-items: center; font-family: var(--font-display); font-size: 44px; font-weight: 900; color: #0b1020; background: var(--c); box-shadow: 0 24px 60px -18px var(--c); animation: qz-float 4s ease-in-out infinite; }
-  .bg-hand h2 { font-size: clamp(26px, 6vw, 40px); overflow-wrap: anywhere; }
-  .bg-hand h2 em { font-style: normal; color: var(--c); }
+  /* ---- passaggio del telefono: la figurina del prossimo ---- */
+  .bg-hand { max-width: 520px; margin: 3vh auto 0; text-align: center; display: grid; justify-items: center; gap: 18px; }
+  .bg-hand h2 { font-size: clamp(34px, 8vw, 52px); font-style: italic; text-transform: uppercase; overflow-wrap: anywhere; }
+  .bg-hand h2 em { color: var(--c); }
+  .bg-hand p { font-size: 18px; color: var(--ink-2); }
+  .bg-card { --tilt: -4deg; width: 132px; display: grid; background: var(--card); border: 3px solid var(--ink); border-radius: var(--r); box-shadow: var(--shadow-print-lg); transform: rotate(var(--tilt)); animation: qz-slap .45s var(--ease-spring) both; overflow: hidden; }
+  .bg-card__n { padding: 3px 8px; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 15px; text-align: left; border-bottom: var(--bw) solid var(--ink); }
+  .bg-card__face { height: 112px; display: grid; place-items: center; background: var(--c); color: var(--card); font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 74px; line-height: 1; }
+  .bg-card__name { padding: 4px 6px; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 17px; text-transform: uppercase; border-top: var(--bw) solid var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-  /* ---- scelta ---- */
-  .bg-pick { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
-  @media (min-width: 980px) { .bg-pick { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; } .bg-side { position: sticky; top: calc(var(--header-h) + 16px); order: 2; } }
-  .bg-turn { display: flex; align-items: center; gap: 12px; }
-  .bg-turn .players__dot { width: 44px; height: 44px; font-size: 16px; }
-  .bg-turn__name { font-family: var(--font-display); font-size: 20px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  /* ---- la scelta: il taccuino del ds + la pagina del calciomercato ---- */
+  .bg-pick { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) { .bg-pick { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; } .bg-side { position: sticky; top: calc(var(--header-h) + 24px); order: 2; } }
 
-  .bg-slots { display: grid; gap: 8px; margin-top: 14px; grid-template-columns: minmax(0, 1fr); }
-  .bg-slot { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 6px 6px 12px; border-radius: 14px; border: 1px dashed var(--line-2); color: var(--faint); font-size: 14px; font-weight: 700; }
-  .bg-slot.is-full { border-style: solid; border-color: rgba(var(--accent-rgb), .45); background: rgba(var(--accent-rgb), .08); color: var(--text); animation: qz-pop-in .35s var(--ease-spring); }
-  .bg-slot__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bg-slot__name small { display: block; font-size: 12px; color: var(--muted); font-weight: 600; }
-  .bg-slot .qz-iconbtn { height: 38px; min-width: 38px; padding: 0; }
+  .bg-side { padding: 14px 14px 16px; }
+  .bg-turn { display: flex; align-items: center; gap: 12px; padding-bottom: 10px; border-bottom: 3px double var(--ink); }
+  .bg-turn .players__dot { width: 42px; height: 42px; }
+  .bg-turn__label { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 14px; text-transform: uppercase; color: var(--ink-2); line-height: 1; }
+  .bg-turn__name { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 24px; line-height: 1.05; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bg-side .qz-iconbtn { height: 44px; min-width: 44px; padding: 0; }
 
+  .bg-ledger { margin-top: 10px; }
+  .bg-ledger__budget { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 2px 2px 6px; }
+  .bg-ledger__budget span { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 16px; text-transform: uppercase; color: var(--ink-2); }
+  .bg-ledger__budget b { font-family: var(--font-hand); font-weight: 400; font-size: 26px; color: var(--accent-ink); transform: rotate(-2deg); }
+  .bg-slots { list-style: none; margin: 0; padding: 0 0 0 28px; position: relative; display: grid; grid-template-columns: minmax(0, 1fr); }
+  .bg-slots::before { content: ""; position: absolute; left: 22px; top: 0; bottom: 0; border-left: 2px solid rgba(207, 42, 30, .5); }
+  .bg-slot { position: relative; display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 2px 0 2px 6px; border-bottom: 1.5px solid rgba(31, 60, 136, .28); }
+  .bg-slot__n { position: absolute; left: -28px; width: 20px; text-align: right; font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 15px; color: var(--ink-3); }
+  .bg-slot__name { flex: 1; min-width: 0; font-family: var(--font-hand); font-size: 19px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bg-slot__name small { display: block; font-family: var(--font-body); font-size: 12px; color: var(--ink-2); }
+  .bg-slot__price { flex: none; font-family: var(--font-hand); font-size: 16px; color: var(--ink-3); }
+  .bg-slot.is-empty .bg-slot__name { font-family: var(--font-body); font-size: 14px; color: var(--ink-3); }
+  .bg-slot.is-new .bg-slot__name { animation: bg-write .35s var(--ease-out) both; }
+  .bg-slot .qz-iconbtn { height: 44px; min-width: 44px; box-shadow: none; }
+  @keyframes bg-write { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+
+  /* ruoli coi colori dell'album: POR giallo, DIF blu, CEN verde, ATT rosso */
+  .bg-role { flex: none; display: inline-grid; place-items: center; width: 40px; height: 24px; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 14px; letter-spacing: .02em; color: var(--rt, var(--card)); background: var(--rc, var(--ink-3)); border: 1.5px solid var(--ink); border-radius: 2px; }
+
+  .bg-tools { position: sticky; top: 75px; z-index: 15; display: grid; gap: 10px; padding: 10px 0 8px; margin-top: -10px; background: var(--paper); border-bottom: 1.5px solid var(--rule); }
   .bg-search { position: relative; }
-  .bg-search .ico { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--faint); pointer-events: none; }
-  .bg-search .input { padding-left: 46px; }
-  .bg-roles button { flex: 1 1 0; min-width: 0; padding: 0 6px; }
-  .bg-count { font-size: 13px; color: var(--muted); font-weight: 700; }
+  .bg-search > .ico { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--ink-2); pointer-events: none; }
+  .bg-search .input { padding-left: 44px; padding-right: 50px; }
+  .bg-search .input::-webkit-search-cancel-button { display: none; }
+  .bg-search__clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center; border: 0; background: transparent; color: var(--ink); border-radius: var(--r-sm); }
+  .bg-search__clear:hover { background: var(--paper-2); }
+  .bg-roles button { flex: 1 1 0; min-width: 0; padding: 0 4px; }
+  .bg-roles button[aria-pressed="true"] { background: var(--rc, var(--accent)); color: var(--rt, var(--on-accent)); }
+  .bg-count { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 16px; text-transform: uppercase; color: var(--ink-2); }
 
-  .bg-list { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); }
+  .bg-list { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 640px) { .bg-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .bg-player { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 12px 8px 8px; border-radius: 14px; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--text); transition: border-color .2s, background .2s, transform .15s; }
-  .bg-player:hover:not(:disabled) { border-color: rgba(var(--accent-rgb), .55); background: rgba(var(--accent-rgb), .07); }
-  .bg-player:active:not(:disabled) { transform: scale(.98); }
-  .bg-player:disabled { cursor: default; opacity: .4; }
-  .bg-player[aria-pressed="true"] { border-color: var(--accent); background: rgba(var(--accent-rgb), .14); opacity: 1; }
-  .bg-player__info { flex: 1; min-width: 0; }
-  .bg-player__name { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bg-player__team { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bg-player__state { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); }
-  .bg-player__state .ico { width: 18px; height: 18px; }
-  .bg-player[aria-pressed="true"] .bg-player__state { background: var(--accent); color: var(--on-accent); }
-  .bg-role { flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--rc); background: color-mix(in srgb, var(--rc) 16%, transparent); border: 1px solid color-mix(in srgb, var(--rc) 40%, transparent); }
-  .bg-empty { padding: 28px 12px; text-align: center; color: var(--muted); grid-column: 1 / -1; }
+  /* la figurina del calciatore */
+  .bg-player {
+    display: grid; grid-template-columns: 46px minmax(0, 1fr) 46px; align-items: stretch; width: 100%; min-height: 62px; padding: 0; text-align: left;
+    background: var(--card); color: var(--ink); border: var(--bw) solid var(--ink); border-radius: var(--r-sm); box-shadow: var(--shadow-print-sm); overflow: hidden;
+    transition: transform .1s, box-shadow .1s, background .15s;
+  }
+  .bg-player .bg-role { width: auto; height: auto; border: 0; border-right: var(--bw) solid var(--ink); border-radius: 0; font-size: 16px; }
+  .bg-player:hover:not(:disabled) { background: #fff8e1; transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--ink); }
+  .bg-player:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
+  .bg-player__info { min-width: 0; padding: 8px 4px 8px 12px; display: grid; align-content: center; }
+  .bg-player__name { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 20px; line-height: 1.05; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bg-player__team { font-size: 14px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bg-player__state { display: grid; place-items: center; }
+  .bg-player__state span { width: 28px; height: 28px; display: grid; place-items: center; border: 1.5px solid var(--ink); border-radius: 2px; background: var(--paper); }
+  .bg-player__state .ico { width: 17px; height: 17px; stroke-width: 2.8; }
+  .bg-player[aria-pressed="true"] { background: #fff3c4; transform: rotate(-1deg); }
+  .bg-player[aria-pressed="true"] .bg-player__state span { background: var(--accent); color: var(--on-accent); }
+  .bg-player:disabled { cursor: default; box-shadow: none; opacity: .5; }
+  .bg-player.is-taken { opacity: .75; background: repeating-linear-gradient(-45deg, rgba(var(--ink-rgb), .09) 0 2px, transparent 2px 7px), var(--paper-2); }
+  .bg-player.is-taken .bg-player__name { text-decoration: line-through; text-decoration-thickness: 2px; }
+  .bg-player.is-taken .bg-player__team { color: var(--red); font-weight: 700; }
+  .bg-empty { padding: 26px 12px; text-align: center; color: var(--ink-2); grid-column: 1 / -1; font-size: 17px; }
 
-  .bg-dock { position: sticky; bottom: 0; z-index: 20; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, transparent, var(--bg) 35%); }
+  .bg-dock { position: sticky; bottom: 0; z-index: 20; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); background: var(--paper); border-top: 3px double var(--ink); }
 
-  /* ---- rivelazione ---- */
-  .bg-reveal { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); max-width: 760px; margin: 0 auto; }
-  .bg-rcard { --c: var(--accent); opacity: .45; transition: opacity .4s, transform .4s var(--ease-out), border-color .3s; }
-  .bg-rcard.is-on { opacity: 1; border-color: var(--c); transform: scale(1.01); }
-  .bg-rcard.is-done { opacity: 1; }
-  .bg-rhead { display: flex; align-items: center; gap: 10px; }
-  .bg-rhead .team__dot { --c: inherit; }
-  .bg-rtotal { margin-left: auto; font-family: var(--font-display); font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .bg-rlist { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 4px; }
-  .bg-rlist li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
-  .bg-rlist li:last-child { border-bottom: 0; }
+  /* ---- la resa dei conti: la pagina dei prezzi ---- */
+  .bg-reveal { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); max-width: 760px; margin: 0 auto; }
+  /* le schede in attesa restano leggibili: fondo di carta e ombra corta invece della trasparenza */
+  .bg-rcard { --c: var(--accent); padding: 16px 16px 14px; background: var(--paper-2); box-shadow: var(--shadow-print-sm); transition: background .3s, transform .3s var(--ease-out); }
+  .bg-rcard.is-on { background: var(--card); box-shadow: var(--shadow-print); transform: rotate(-.6deg); }
+  .bg-rcard.is-done { background: var(--card); box-shadow: var(--shadow-print); }
+  .bg-rhead { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 3px double var(--ink); }
+  .bg-rhead .team__dot { width: 18px; height: 18px; }
+  .bg-rhead__name { flex: 1; min-width: 0; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 24px; text-transform: uppercase; line-height: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bg-rlist { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); }
+  .bg-rlist li { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 4px 0; border-bottom: 1.5px dotted rgba(var(--ink-rgb), .35); font-size: 16px; }
   .bg-rlist .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bg-rval { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--faint); white-space: nowrap; }
-  .bg-rval.is-shown { color: var(--accent); animation: qz-pop-in .4s var(--ease-spring); }
-  .bg-meter { position: relative; height: 14px; margin-top: 14px; border-radius: 999px; background: var(--surface-2); }
-  .bg-meter__fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .5s var(--ease-out), background .3s; }
-  .bg-meter__fill.is-over { background: linear-gradient(90deg, var(--warn), var(--bad)); }
-  .bg-meter__mark { position: absolute; top: -5px; bottom: -5px; width: 3px; border-radius: 2px; background: #fff; box-shadow: 0 0 10px rgba(255, 255, 255, .7); }
-  .bg-verdict { margin-top: 10px; font-weight: 800; font-size: 14px; min-height: 1.4em; }
+  .bg-rlist .grow b { font-weight: 800; }
+  .bg-rval { --rot: -6deg; flex: none; min-width: 86px; text-align: center; font-family: var(--font-hand); font-size: 18px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bg-rval.is-shown { padding: 1px 8px 0; color: var(--ink); border: 3px double currentcolor; border-radius: 4px; background: var(--card); transform: rotate(var(--rot)); animation: bg-stamp .3s cubic-bezier(.2, .9, .3, 1.2) both; }
+  .bg-rval.is-big { color: var(--accent-ink); }
+  .bg-rval.is-quiet { animation: none; }
+  @keyframes bg-stamp { 0% { opacity: 0; transform: rotate(var(--rot)) scale(2.2); } 60% { opacity: 1; transform: rotate(var(--rot)) scale(.94); } 100% { opacity: 1; transform: rotate(var(--rot)); } }
+
+  .bg-rtot { position: relative; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 10px 0 2px; }
+  .bg-rtot span { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 18px; text-transform: uppercase; }
+  .bg-rtot b { position: relative; font-family: var(--font-hand); font-weight: 400; font-size: 32px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .bg-rtot b::after { content: ""; position: absolute; left: -4px; right: -6px; bottom: -6px; height: 7px; border-block: 2px solid var(--ink); transform: scaleX(0) rotate(-1deg); transform-origin: left; transition: transform .35s ease-out; }
+  .bg-rcard.is-done .bg-rtot b::after { transform: scaleX(1) rotate(-1deg); }
+  .bg-rcard__stamp { position: absolute; right: 120px; top: 30px; width: 0; height: 0; }
+
+  /* il righello del budget */
+  .bg-meter { position: relative; height: 20px; margin: 30px 0 4px; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 1.5px), rgba(var(--ink-rgb), .4) calc(10% - 1.5px) 10%), var(--card); border: var(--bw) solid var(--ink); }
+  .bg-meter__fill { position: absolute; inset: 0 auto 0 0; width: 0; background: repeating-linear-gradient(-45deg, var(--accent) 0 6px, color-mix(in srgb, var(--accent) 75%, #000) 6px 12px); transition: width .5s var(--ease-out); }
+  .bg-meter__fill.is-over { background: repeating-linear-gradient(-45deg, var(--red) 0 6px, #f9dcd6 6px 12px); }
+  .bg-meter__mark { position: absolute; top: -9px; bottom: -9px; width: 4px; margin-left: -2px; background: var(--ink); }
+  .bg-meter__mark::before { content: "budget"; position: absolute; bottom: calc(100% + 1px); left: 50%; transform: translateX(-50%) rotate(-4deg); font-family: var(--font-hand); font-size: 15px; color: var(--ink); white-space: nowrap; }
+  .bg-verdict { margin-top: 8px; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 20px; text-transform: uppercase; min-height: 1.2em; }
+  .bg-verdict.ok { color: var(--green); }
+  .bg-verdict.bad { color: var(--red); }
 
   #end-host .stat__label { overflow-wrap: anywhere; }
-  .bg-detail { display: grid; gap: 8px; margin-top: 20px; text-align: left; }
-  .bg-detail details { border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); padding: 0 14px; }
-  .bg-detail summary { cursor: pointer; padding: 12px 0; font-weight: 800; }
-  .bg-detail .bg-rlist { margin: 0 0 10px; }
+  .bg-detail { display: grid; gap: 12px; margin-top: 22px; text-align: left; }
+  .bg-detail details { border: var(--bw) solid var(--ink); background: var(--card); box-shadow: var(--shadow-print-sm); padding: 0 14px; }
+  .bg-detail summary { cursor: pointer; padding: 11px 0; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 20px; text-transform: uppercase; }
+  .bg-detail details[open] summary { border-bottom: 3px double var(--ink); }
+  .bg-detail .bg-rlist { margin: 0 0 8px; }
+  .bg-detail .bg-rval { min-width: 0; color: var(--ink); font-size: 17px; }
 </style>
 </head>
 <body data-game="giocatoributget">
@@ -106,9 +170,9 @@
   <section class="screen is-active" id="s-start">
     <div class="intro">
       <div data-stagger>
-        <span class="eyebrow">Mercato · 1-6 giocatori</span>
+        <span class="eyebrow">N° 10 · Da 1 a 6 giocatori</span>
         <h1 class="intro__title">Sfida dei <em>budget</em></h1>
-        <p class="intro__lead">Hai un budget e una rosa da costruire, ma i cartellini sono coperti. A turno scegliete i calciatori stimando quanto valgono: vince chi chiude il mercato più vicino alla cifra esatta.</p>
+        <p class="intro__lead">Hai un budget e una rosa da fare, ma i cartellini sono coperti. A turno scegliete i calciatori a occhio: vince chi chiude il mercato più vicino alla cifra. Il presidente controlla.</p>
         <div class="row mt-3">
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
@@ -122,18 +186,19 @@
       </div>
     </div>
 
-    <div class="card card--flat mt-4">
+    <div class="card bg-form mt-4" id="setup">
+      <h2 class="bg-form__title">Le regole del mercato</h2>
       <div class="bg-setup">
         <div id="set-players"></div>
         <div class="stack" style="--gap:20px">
           <div class="field">
-            <div class="row row--between"><span class="label" id="lbl-budget">Budget (milioni di euro)</span>
+            <div class="row row--between"><span class="label" id="lbl-budget">Budget (milioni)</span>
               <div class="stepper" role="group" aria-labelledby="lbl-budget"><button type="button" id="budget-minus" aria-label="Diminuisci budget"></button><output id="budget-out" aria-live="polite"></output><button type="button" id="budget-plus" aria-label="Aumenta budget"></button></div></div>
             <div class="bg-presets" id="budget-presets" role="group" aria-label="Budget rapidi"></div>
           </div>
           <div class="row row--between"><span class="label" id="lbl-picks">Calciatori a testa</span>
             <div class="stepper" role="group" aria-labelledby="lbl-picks"><button type="button" id="picks-minus" aria-label="Meno calciatori"></button><output id="picks-out" aria-live="polite"></output><button type="button" id="picks-plus" aria-label="Più calciatori"></button></div></div>
-          <div class="field"><span class="label" id="lbl-rule">Se sfori il budget</span><div id="set-rule" aria-labelledby="lbl-rule"></div><p class="small faint" id="rule-help"></p></div>
+          <div class="field"><span class="label" id="lbl-rule">Se sfori il budget</span><div id="set-rule" aria-labelledby="lbl-rule"></div><p class="small muted" id="rule-help"></p></div>
           <div class="row">
             <button class="btn btn--sm" type="button" id="randomize"></button>
             <button class="btn btn--primary grow" type="button" id="start-btn-2"></button>
@@ -153,23 +218,28 @@
     <div class="bg-pick">
       <aside class="bg-side card card--tight" aria-label="La tua squadra">
         <div class="bg-turn">
-          <div class="players__dot" id="p-dot"></div>
-          <div class="grow"><div class="small muted">Sta scegliendo</div><div class="bg-turn__name" id="p-name"></div></div>
+          <div class="players__dot" id="p-dot" aria-hidden="true"></div>
+          <div class="grow" style="min-width:0"><div class="bg-turn__label" id="p-label">Sta comprando</div><div class="bg-turn__name" id="p-name" tabindex="-1"></div></div>
           <button class="qz-iconbtn" type="button" id="p-exit" aria-label="Esci dalla partita"></button>
         </div>
-        <div class="bg-chips" id="p-chips"></div>
-        <div class="bg-slots" id="p-slots" aria-live="polite"></div>
+        <div class="bg-ledger">
+          <div class="bg-ledger__budget"><span>Budget</span><b id="p-budget"></b></div>
+          <ol class="bg-slots" id="p-slots" aria-label="La tua rosa"></ol>
+        </div>
       </aside>
 
       <div class="stack" style="--gap:12px">
-        <div class="bg-search">
-          <label class="sr-only" for="p-search">Cerca calciatore o squadra</label>
-          <input class="input" id="p-search" type="search" placeholder="Cerca nome o squadra…" autocomplete="off" spellcheck="false" enterkeyhint="search">
+        <div class="bg-tools">
+          <div class="bg-search">
+            <label class="sr-only" for="p-search">Cerca calciatore o squadra</label>
+            <input class="input" id="p-search" type="search" placeholder="Cerca nome o squadra…" autocomplete="off" spellcheck="false" enterkeyhint="search">
+            <button class="bg-search__clear" type="button" id="p-clear" aria-label="Svuota la ricerca" hidden></button>
+          </div>
+          <div class="segmented bg-roles" id="p-roles" aria-label="Filtra per ruolo"></div>
+          <div class="row row--between"><span class="bg-count" id="p-count" aria-live="polite"></span><span class="small kbd-hint" style="margin:0"><span class="kbd">/</span> cerca · <span class="kbd">Invio</span> prende il primo</span></div>
         </div>
-        <div class="segmented bg-roles" id="p-roles" aria-label="Filtra per ruolo"></div>
-        <div class="row row--between"><span class="bg-count" id="p-count" aria-live="polite"></span><span class="small faint kbd-hint" style="gap:6px;align-items:center"><span class="kbd">/</span> cerca · <span class="kbd">Invio</span> prende il primo</span></div>
         <div class="bg-list" id="p-list"></div>
-        <button class="btn btn--ghost btn--block" type="button" id="p-more" hidden></button>
+        <button class="btn btn--block" type="button" id="p-more" hidden></button>
         <div class="bg-dock"><button class="btn btn--primary btn--lg btn--block" type="button" id="p-confirm"></button></div>
       </div>
     </div>
@@ -179,13 +249,13 @@
   <section class="screen" id="s-reveal">
     <div class="bg-reveal">
       <div class="center" data-stagger>
-        <span class="eyebrow">Si scoprono le carte</span>
+        <span class="eyebrow">Si scoprono i cartellini</span>
         <h2 class="result__title mt-1">La resa dei conti</h2>
-        <p class="muted" id="r-sub"></p>
+        <p class="muted mt-1" id="r-sub"></p>
       </div>
-      <div class="stack" style="--gap:12px" id="r-cards"></div>
+      <div class="stack" style="--gap:22px" id="r-cards"></div>
       <div class="row row--center">
-        <button class="btn btn--ghost" type="button" id="r-skip"></button>
+        <button class="btn btn--ghost" type="button" id="r-skip" data-autofocus></button>
         <button class="btn btn--primary btn--lg" type="button" id="r-next" hidden></button>
       </div>
     </div>
@@ -196,8 +266,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=9c216f8a" defer></script>
-<script src="assets/db-giocatoributget.js?v=7129ffa1" defer></script>
-<script src="assets/games/giocatoributget.js?v=42d864e8" defer></script>
+<script src="assets/qz.js?v=bc54ed5a" defer></script>
+<script src="assets/db-giocatoributget.js?v=fe492e9e" defer></script>
+<script src="assets/games/giocatoributget.js?v=da261c63" defer></script>
 </body>
 </html>

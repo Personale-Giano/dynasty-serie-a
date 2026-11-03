@@ -2,10 +2,11 @@
    QUIZZOTTI v2 — Chi l'ha detto (citazioni)
    Dati: assets/db-citazioni.js (`quotes`, {quote, correct, options[4]}).
    Si scrive il nome (3 punti, basta il cognome, errori di battitura
-   tollerati) oppure si aprono le opzioni (1 punto). Novita' rispetto alla
-   v1: partite a numero fisso di frasi, niente frasi ripetute, confronto
-   tollerante al posto dell'uguaglianza esatta, aiuto "iniziali", serie
-   bonus, modalita' a tempo e riepilogo finale delle frasi.
+   tollerati) oppure si aprono le opzioni (1 punto). Partite a numero fisso
+   di frasi, niente frasi ripetute, confronto tollerante, aiuto "iniziali",
+   serie bonus, modalita' a tempo e riepilogo finale delle frasi.
+   Almanacco: la frase e' un ritaglio di giornale col nastro adesivo, il nome
+   si scrive sul quaderno a righe e la risposta arriva come didascalia.
    ========================================================================== */
 (function () {
     'use strict';
@@ -36,25 +37,28 @@
     var set = Object.assign({ len: 10, time: 0 }, QZ.store.get('qz.citazioni.settings', {}) || {});
     var S = {};
     var timer = null;
+    var starting = false; // blocca il doppio tap sul fischio d'inizio
     var finePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
     /* ---------- Markup statico ---------- */
-    $('#start-btn').innerHTML = QZ.icon('play', 'ico-fill') + 'Inizia';
+    $('#start-btn').innerHTML = 'Fischio d\'inizio' + QZ.icon('arrow');
     $('#medal').innerHTML = QZ.icon('quote');
     $('#g-mark').innerHTML = QZ.icon('quote');
     $('#rules').innerHTML = [
-        ['Leggi la frase', 'e scrivi chi l\'ha detta: basta il cognome, accenti e piccoli refusi non contano.'],
-        ['Scritta giusta: 3 punti.', 'Se chiedi le iniziali come aiuto, 2 punti.'],
-        ['Opzioni: 1 punto.', 'Aprile subito, oppure dopo un tentativo a vuoto.'],
-        ['Serie di fuoco:', 'dalla terza risposta giusta di fila +1 punto a frase.']
+        ['Leggi il virgolettato', 'e scrivi chi l\'ha detto: basta il cognome, accenti e piccoli refusi non contano.'],
+        ['A memoria: 3 punti.', 'Con le iniziali come aiutino, 2.'],
+        ['Con le opzioni: 1 punto.', 'Le apri quando vuoi, o arrivano da sole dopo un tentativo a vuoto.'],
+        ['Serie calda:', 'dalla terza giusta di fila, +1 a frase.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
-    $('#g-send').innerHTML = QZ.icon('arrow') + '<span class="sr-only">Rispondi</span>';
+    $('#g-send').innerHTML = 'Tira' + QZ.icon('arrow');
+    // il nome accessibile comincia con la parola che si vede ("Tira")
+    $('#g-send').setAttribute('aria-label', 'Tira: invia la risposta');
     $('#g-options').innerHTML = QZ.icon('list') + 'Opzioni · 1 pt';
     $('#g-initials').innerHTML = QZ.icon('bulb') + 'Iniziali · −1 pt';
-    $('#g-skip').innerHTML = QZ.icon('skip') + 'Salta';
-    $('#g-kbd').innerHTML = '<span>Tastiera: <span class="kbd">Invio</span> risponde · <span class="kbd">1</span>–<span class="kbd">4</span> sceglie un\'opzione</span>';
+    $('#g-skip').innerHTML = QZ.icon('skip') + 'Passo';
+    $('#g-kbd').innerHTML = 'Tastiera: <span class="kbd">Invio</span> risponde · <span class="kbd">1</span>–<span class="kbd">4</span> sceglie un\'opzione';
 
     function saveSet() { QZ.store.set('qz.citazioni.settings', set); }
     QZ.segmented($('#set-len'), [{ label: '10', value: 10 }, { label: '15', value: 15 }, { label: '20', value: 20 }], set.len, function (v) { set.len = v; saveSet(); });
@@ -131,15 +135,43 @@
         return 0;
     }
 
+    /** Iniziali come trattini da riempire, una parola per blocco (non va a capo a meta'). */
     function initials(name) {
         return name.split(/\s+/).map(function (t) {
             var letters = t.replace(/[^\p{L}]/gu, '');
-            return letters.charAt(0).toUpperCase() + new Array(letters.length).join(' _');
-        }).join('   ');
+            return '<span>' + QZ.esc(letters.charAt(0).toUpperCase() + new Array(letters.length).join(' _')) + '</span>';
+        }).join(' ');
+    }
+
+    /* ---------- Il ritaglio ---------- */
+    function paintClip() {
+        var qe = $('#g-quote');
+        qe.innerHTML = '<q></q>';
+        qe.querySelector('q').textContent = S.q.quote.replace(/^[«"“\s]+|[»"”\s]+$/g, '');
+        qe.classList.toggle('is-long', S.q.quote.length > 130);
+        QZ.fx.replay(qe);
+        $('#g-num').textContent = 'N° ' + String(S.n).padStart(2, '0');
+        var nm = $('#g-name');
+        nm.className = 'ch-clip__name is-blank';
+        nm.innerHTML = '<span class="sr-only">nome da indovinare</span>';
+        QZ.$$('.qz-stamp', $('#g-stamp')).forEach(function (s) { s.remove(); });
+    }
+
+    /** La didascalia: il nome si attacca sotto la frase, poi il timbro. */
+    function caption(stampText, kind, say) {
+        var nm = $('#g-name');
+        nm.className = 'ch-clip__name';
+        nm.textContent = S.q.correct;
+        QZ.fx.replay(nm);
+        setTimeout(function () {
+            QZ.fx.stamp($('#g-stamp'), stampText, kind, { size: window.innerWidth < 420 ? 24 : 30, rot: -12, say: say });
+        }, QZ.reducedMotion() ? 0 : 160);
     }
 
     /* ---------- Flusso ---------- */
     function start() {
+        if (starting) return;
+        starting = true;
         S = { len: set.len, time: set.time, n: 0, score: 0, streak: 0, bestStreak: 0, typed: 0, opts: 0, log: [], phase: 'idle' };
         $('#timer-host').hidden = !S.time;
         if (timer) timer.destroy();
@@ -152,10 +184,12 @@
         paintStreak();
         QZ.show('s-game');
         QZ.sound.start();
-        setTimeout(load, 380);
+        setTimeout(function () { starting = false; load(); }, 380);
     }
 
     function load() {
+        // solo a frase chiusa: il doppio tap su "Avanti" non deve saltarne una
+        if (S.phase !== 'done' && S.phase !== 'idle') return;
         if (S.n >= S.len) { finish(); return; }
         var raw = deck.draw();
         S.q = { quote: raw.quote, correct: raw.correct, options: QZ.shuffle(raw.options) };
@@ -167,15 +201,11 @@
 
         $('#g-count').textContent = 'Frase ' + S.n + ' di ' + S.len;
         $('#g-progress').style.transform = 'scaleX(' + ((S.n - 1) / S.len) + ')';
-        $('#g-eyebrow').innerHTML = QZ.icon('message') + 'Chi l\'ha detto?';
-        var qe = $('#g-quote');
-        qe.textContent = '«' + S.q.quote + '»';
-        QZ.fx.replay(qe);
+        paintClip();
 
         var inp = $('#g-input');
         inp.value = '';
         inp.disabled = false;
-        inp.classList.remove('is-shake');
         $('#g-typeform').hidden = false;
         $('#g-hint').hidden = true;
         $('#g-initials').disabled = false;
@@ -185,9 +215,13 @@
         answerEls.forEach(function (el, i) {
             el.className = 'answer';
             el.disabled = false;
+            QZ.$$('.qz-mark', el).forEach(function (m) { m.remove(); });
             el.querySelector('.answer__text').textContent = S.q.options[i];
         });
+        if (S.n > 1) $('#g-card').scrollIntoView({ behavior: QZ.reducedMotion() ? 'auto' : 'smooth', block: 'nearest' });
+        var lost = !document.activeElement || document.activeElement === document.body || document.activeElement.offsetParent === null;
         if (finePointer) setTimeout(function () { inp.focus({ preventScroll: true }); }, 60);
+        else if (lost) $('#g-quote').focus({ preventScroll: true }); // senza tastiera a schermo: il fuoco va sulla frase
         if (S.time) { timer.reset(S.time); timer.start(); }
     }
 
@@ -196,27 +230,27 @@
         var inp = $('#g-input');
         var val = inp.value.trim();
         if (!val) {
-            QZ.fx.shake(inp);
-            QZ.toast('Scrivi un nome, o apri le opzioni', { icon: 'type' });
+            QZ.fx.shake($('#g-note'));
+            QZ.toast('Scrivi un nome, o chiedi le opzioni', { icon: 'type' });
             return;
         }
         var v = judge(val, S.q);
-        if (v === 1) { win(S.hinted ? 'hinted' : 'typed', inp); return; }
+        if (v === 1) { win(S.hinted ? 'hinted' : 'typed', $('#g-note')); return; }
         if (v === 2 && !S.nearUsed) {
             S.nearUsed = true;
-            QZ.fx.shake(inp);
+            QZ.fx.shake($('#g-note'));
             QZ.sound.tock();
-            QZ.toast('Ci sei quasi! Controlla come si scrive', { icon: 'bulb' });
+            QZ.toast('Quasi. Controlla come si scrive', { icon: 'bulb' });
             return;
         }
         // tentativo a vuoto: restano le opzioni per 1 punto
         S.missed = true;
         S.streak = 0;
         paintStreak();
-        QZ.fx.shake(inp);
+        QZ.fx.shake($('#g-note'));
         QZ.sound.wrong();
         QZ.vibrate([50, 30, 50]);
-        QZ.toast('Non è «' + val + '». Prova con le opzioni', { icon: 'x', type: 'bad' });
+        QZ.toast('Non è «' + val + '». Ecco le opzioni, per 1 punto', { icon: 'x', type: 'bad' });
         showOptions();
     }
 
@@ -225,7 +259,9 @@
         S.hinted = true;
         $('#g-initials').disabled = true;
         var h = $('#g-hint');
-        h.textContent = initials(S.q.correct);
+        var sayInit = 'Iniziali: ' + S.q.correct.split(/\s+/).map(function (t) { return t.charAt(0); }).join(' ');
+        h.innerHTML = '<span aria-hidden="true"><small>Iniziali</small>' + initials(S.q.correct) + '</span><span class="sr-only">' + QZ.esc(sayInit) + '</span>';
+        QZ.say(sayInit);
         h.hidden = false;
         QZ.fx.replay(h);
         QZ.sound.lifeline();
@@ -233,16 +269,18 @@
     }
 
     function showOptions() {
+        var hadFocus = $('#g-typeform').contains(document.activeElement);
         S.phase = 'options';
         $('#g-typeform').hidden = true;
         $('#g-answers').hidden = false;
         answerEls.forEach(function (el) { QZ.fx.replay(el); });
         QZ.sound.whoosh();
-        if (finePointer) answerEls[0].focus({ preventScroll: true });
+        if (finePointer || hadFocus) answerEls[0].focus({ preventScroll: true });
     }
 
     function pickOption(i) {
         if (S.phase !== 'options') return;
+        QZ.fx.mark(answerEls[i].querySelector('.answer__key'), 'cross', 'var(--ink)');
         if (S.q.options[i] === S.q.correct) win('options', answerEls[i]);
         else lose('wrong', answerEls[i]);
     }
@@ -262,12 +300,11 @@
         if (how === 'options') { el.classList.add('is-correct'); lockOptions(); }
         QZ.sound.correct();
         QZ.vibrate(40);
-        QZ.fx.sparks(el, null, how === 'options' ? 14 : 24);
         QZ.fx.floatText(el, '+' + pts);
-        if (how !== 'options' && !QZ.reducedMotion()) QZ.fx.flash();
         paintStreak();
-        var label = how === 'typed' ? 'Scritto a memoria' : how === 'hinted' ? 'Scritto con le iniziali' : 'Con le opzioni';
-        showResult(true, pts, label + (bonus.length ? ' · bonus ' + bonus.join(' e ') : ''));
+        caption(how === 'typed' ? QZ.pick(['Esatto!', 'Che memoria', 'Gol!']) : 'Esatto', 'ok', 'Esatto! L\'ha detto ' + S.q.correct + '. Più ' + pts + (pts === 1 ? ' punto.' : ' punti.'));
+        var label = how === 'typed' ? 'Scritto a memoria' : how === 'hinted' ? 'Con le iniziali' : 'Con le opzioni';
+        showResult(true, pts, label, bonus.length ? 'Bonus ' + bonus.join(' e ') : '');
     }
 
     function lose(how, el) {
@@ -283,8 +320,10 @@
         }
         if (how === 'skip') QZ.sound.whoosh();
         else { QZ.sound.wrong(); QZ.vibrate([60, 40, 60]); QZ.fx.shake($('#g-card')); }
-        var label = { wrong: 'Risposta sbagliata', skip: 'Frase saltata', time: 'Tempo scaduto' }[how];
-        showResult(false, 0, label);
+        caption({ wrong: 'Fuorigioco', skip: 'Passata', time: 'Tempo!' }[how], how === 'skip' ? 'ink' : 'bad',
+            { wrong: 'Sbagliato', skip: 'Frase passata', time: 'Tempo scaduto' }[how] + '. L\'ha detto ' + S.q.correct + '.');
+        var label = { wrong: 'Niente da fare', skip: 'Frase passata', time: 'Tempo scaduto' }[how];
+        showResult(false, 0, label, 'La prossima volta te la ricordi.');
     }
 
     function lockOptions() {
@@ -294,19 +333,18 @@
         });
     }
 
-    function showResult(ok, pts, label) {
+    function showResult(ok, pts, label, sub) {
         $('#g-typeform').hidden = true;
         $('#g-input').disabled = true;
         $('#g-progress').style.transform = 'scaleX(' + (S.n / S.len) + ')';
         var fb = $('#g-feedback');
-        fb.className = 'card card--tight ch-feedback ' + (ok ? 'is-ok' : 'is-bad');
+        fb.className = 'card card--tight ch-verdict ' + (ok ? 'is-ok' : 'is-bad');
         fb.innerHTML =
-            '<div class="ch-feedback__ico">' + QZ.icon(ok ? 'check' : 'x') + '</div>' +
-            '<div class="grow"><div class="small muted">' + QZ.esc(label) + '</div>' +
-            '<div class="ch-feedback__name">' + QZ.esc(S.q.correct) + '</div></div>' +
-            '<div class="ch-feedback__pts">' + (ok ? '+' + pts : '0') + '</div>';
+            '<span class="ch-verdict__pts">' + (ok ? '+' + pts : '0') + '</span>' +
+            '<div class="grow"><div class="ch-verdict__label">' + QZ.esc(label) + '</div>' +
+            (sub ? '<div class="ch-verdict__sub">' + QZ.esc(sub) + '</div>' : '') + '</div>';
         QZ.fx.replay(fb, 'is-pop');
-        $('#g-next').innerHTML = S.n >= S.len ? QZ.icon('trophy') + 'Vedi il risultato' : 'Prossima frase' + QZ.icon('arrow');
+        $('#g-next').innerHTML = S.n >= S.len ? QZ.icon('trophy') + 'Vediamo il voto' : 'Avanti la prossima' + QZ.icon('arrow');
         $('#g-result').hidden = false;
         setTimeout(function () { $('#g-next').focus({ preventScroll: true }); }, 80);
     }
@@ -332,25 +370,25 @@
         if (timer) timer.pause();
         var right = S.typed + S.opts;
         var pct = Math.round((right / S.len) * 100);
-        var max = S.len * PTS.typed;
         var xp = S.score * 2 + S.bestStreak * 2 + (S.time ? 10 : 0);
         var r = QZ.profile.record(GAME, { xp: xp, label: S.score + ' punti su ' + S.len + ' frasi', score: S.score });
 
-        var review = '<details class="ch-review"><summary>Rivedi le ' + S.len + ' frasi</summary>' + S.log.map(function (l) {
+        var review = '<details class="ch-review"><summary>La rassegna stampa · ' + S.len + ' frasi</summary>' + S.log.map(function (l) {
             return '<div class="ch-review__row">' + QZ.icon(l.ok ? 'check' : 'x', l.ok ? 'ok' : 'bad') +
-                '<div class="grow"><q>' + QZ.esc(l.q.quote) + '</q><b>' + QZ.esc(l.q.correct) + '</b>' +
-                (l.pts ? ' <span class="small ok">+' + l.pts + '</span>' : '') + '</div></div>';
+                '<div class="grow"><span class="sr-only">' + (l.ok ? 'Indovinata: ' : 'Mancata: ') + '</span><q>' + QZ.esc(l.q.quote) + '</q><b>' + QZ.esc(l.q.correct) + '</b>' +
+                (l.pts ? '<span class="ch-review__pts">+' + l.pts + '</span>' : '') + '</div></div>';
         }).join('') + '</details>';
 
-        var title = pct >= 90 ? 'Enciclopedia vivente!' : pct >= 60 ? 'Orecchio da intenditore' : pct >= 30 ? 'Qualcosa ti è sfuggito' : 'Serve un ripasso';
+        var title = pct >= 90 ? 'Archivio vivente' : pct >= 60 ? 'Orecchio fino' : pct >= 30 ? 'Qualcosa ti è sfuggito' : 'Rimandato a settembre';
         QZ.show('s-end');
         QZ.results($('#end-host'), {
             win: pct >= 50,
             icon: pct >= 50 ? 'quote' : 'flag',
             title: title,
-            subtitle: 'Hai riconosciuto ' + right + ' frasi su ' + S.len + ', ' + S.typed + ' scrivendo il nome. Punteggio massimo teorico: ' + max + ' più i bonus.',
+            subtitle: 'Ne hai riconosciute ' + right + ' su ' + S.len + ', ' + S.typed + ' scrivendo il nome a memoria.',
             big: S.score, bigSuffix: ' pt',
             record: r,
+            ratio: QZ.clamp(S.score / (S.len * PTS.typed), 0, 1),
             stats: [
                 { label: 'Scritte giuste', value: S.typed },
                 { label: 'Con le opzioni', value: S.opts },
@@ -359,7 +397,8 @@
             ],
             extraHTML: review,
             share: 'A Chi l\'ha detto su Quizzotti ho riconosciuto ' + right + ' frasi celebri su ' + S.len + ' (' + S.score + ' punti). Tu sai chi le ha dette?',
-            onRetry: start
+            onRetry: start,
+            secondary: { label: 'Cambia partita', icon: 'list', onClick: function () { QZ.show('s-start'); } }
         });
         $('#start-record').textContent = 'Il tuo record: ' + QZ.profile.best(GAME) + ' punti';
     }

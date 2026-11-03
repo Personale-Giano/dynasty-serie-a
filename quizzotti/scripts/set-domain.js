@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /* ==========================================================================
    QUIZZOTTI — Imposta il dominio di produzione
-   sitemap.xml e robots.txt richiedono URL assoluti con un dominio reale,
-   che questo progetto non conosce finche' non viene pubblicato. Questo
-   script sostituisce il placeholder con il dominio effettivo in entrambi
-   i file in un solo comando.
+   sitemap.xml, robots.txt e i meta Open Graph (og:image, og:url) richiedono
+   URL assoluti con un dominio reale, che questo progetto non conosce
+   finche' non viene pubblicato. Questo script li imposta tutti in un solo
+   comando (si puo' rilanciare: aggiorna gli og:url gia' presenti).
 
    Uso: node scripts/set-domain.js https://iltuodominio.it
    ========================================================================== */
@@ -32,4 +32,19 @@ if (!/^https?:\/\/[^/]+$/.test(domain)) {
     content = content.split(PLACEHOLDER).join(domain);
     fs.writeFileSync(filePath, content, 'utf8');
     console.log(file + ': sostituite ' + count + ' occorrenze del placeholder con ' + domain);
+});
+
+// Open Graph: i social vogliono URL assoluti per og:image e og:url
+fs.readdirSync(ROOT).filter((f) => f.endsWith('.html')).forEach((file) => {
+    const filePath = path.join(ROOT, file);
+    let html = fs.readFileSync(filePath, 'utf8');
+    const pageUrl = domain + '/' + file;
+    html = html.replace(/<meta property="og:image" content="(?:https?:\/\/[^"]*\/)?([^"/]+)">/, (m, img) => '<meta property="og:image" content="' + domain + '/' + img + '">');
+    if (/<meta property="og:url" content="[^"]*">/.test(html)) {
+        html = html.replace(/<meta property="og:url" content="[^"]*">/, '<meta property="og:url" content="' + pageUrl + '">');
+    } else {
+        html = html.replace(/(<meta property="og:type" content="website">)/, '$1\n<meta property="og:url" content="' + pageUrl + '">');
+    }
+    fs.writeFileSync(filePath, html, 'utf8');
+    console.log(file + ': og:image e og:url assoluti su ' + domain);
 });

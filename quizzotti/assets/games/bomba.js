@@ -1,10 +1,10 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Bomba
    Dati: assets/db-bomba.js (`topics`: { categoria, topic }).
-   Novita' rispetto alla v1: si vede chi ha la bomba e si passa con un tasto
-   (nella v1 la rotazione era invisibile e il perdente si sceglieva a mano),
-   miccia nascosta con ticchettio che accelera, pausa, scelta delle categorie,
-   modalita' a punti o a eliminazione con fine partita, temi senza ripetizioni.
+   Si vede chi ha la bomba e si passa con un tasto, miccia nascosta con
+   ticchettio che accelera, pausa, scelta delle categorie, modalita' a punti
+   o a eliminazione, temi senza ripetizioni. La bomba e' disegnata a china
+   come nei fumetti: trema quando scotta e fa BOOM in una nuvola a punte.
    ========================================================================== */
 (function () {
     'use strict';
@@ -18,28 +18,29 @@
 
     var G = null;   // partita
     var S = {};     // round in corso
-    var fuseEl = $('#fuse'), sparkEl = $('#spark'), stage = $('#stage');
+    var lastStart = 0;
+    var fuseEl = $('#fuse'), fuseInk = $('#fuse-ink'), sparkEl = $('#spark'), stage = $('#stage');
     var fuseLen = fuseEl.getTotalLength();
 
     /* ---------- Markup statico ---------- */
-    $('#start-btn').innerHTML = QZ.icon('bomb') + 'Accendi la partita';
+    $('#start-btn').innerHTML = 'Fischio d\'inizio' + QZ.icon('arrow');
     $('#medal').innerHTML = QZ.icon('bomb');
     $('#rules').innerHTML = [
         ['Esce un tema', 'di calcio: giocatori di una squadra, stadi, allenatori…'],
-        ['Chi ha la bomba', 'nomina qualcosa di valido e preme «Passa», poi dà il telefono al vicino.'],
-        ['Niente ripetizioni:', 'una risposta già detta o sbagliata non vale, si riprova.'],
-        ['Miccia nascosta:', 'nessuno sa quando scoppia. Chi la tiene in mano perde il round.']
+        ['Dici una cosa valida,', 'premi «Passa» e molla il telefono al vicino.'],
+        ['Niente doppioni:', 'una risposta già detta o sbagliata non vale. Riprova, e in fretta.'],
+        ['La miccia è nascosta:', 'nessuno sa quando scoppia. Chi ce l\'ha in mano perde il round.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
     var played = QZ.profile.get().gamesPlayed.bomba;
-    $('#start-record').textContent = played ? 'Partite giocate su questo dispositivo: ' + played : '';
+    $('#start-record').textContent = played ? 'Su questo telefono: ' + played + (played === 1 ? ' partita giocata' : ' partite giocate') + '.' : '';
 
     var players = QZ.playerList($('#players-host'), { key: 'bomba', min: 2, max: 12, initial: 3, label: 'Giocatore', title: 'Giocatori (2-12)' });
 
     var MODE_DESC = {
-        points: 'Chi non ha la bomba quando esplode prende un punto. Vince chi ne ha di più alla fine.',
-        elim: 'Chi resta con la bomba in mano è eliminato. L\'ultimo sopravvissuto vince.'
+        points: 'Quando scoppia, tutti gli altri prendono un punto. Vince chi ne ha di più alla fine.',
+        elim: 'Chi resta con la bomba in mano è fuori. L\'ultimo in piedi vince.'
     };
     QZ.segmented($('#opt-mode'), [{ label: 'A punti', value: 'points' }, { label: 'Eliminazione', value: 'elim' }], CFG.mode, function (v) {
         CFG.mode = v; saveCfg(); paintMode();
@@ -58,7 +59,7 @@
     $('#cats-ico').innerHTML = QZ.icon('right');
     $('#cats').innerHTML = '<button type="button" data-all>Tutti</button>' + CATS.map(function (c) {
         var n = topics.filter(function (t) { return t.categoria === c; }).length;
-        return '<button type="button" data-cat="' + QZ.esc(c) + '">' + QZ.esc(c) + ' <span class="faint">' + n + '</span></button>';
+        return '<button type="button" data-cat="' + QZ.esc(c) + '">' + QZ.esc(c) + ' <span>' + n + '</span></button>';
     }).join('');
     $('#cats').addEventListener('click', function (e) {
         var b = e.target.closest('button');
@@ -68,7 +69,7 @@
         } else {
             var c = b.getAttribute('data-cat');
             if (sel.has(c)) {
-                if (sel.size === 1) { QZ.toast('Serve almeno un tema', { icon: 'info' }); return; }
+                if (sel.size === 1) { QZ.toast('Almeno un tema ci vuole', { icon: 'info' }); return; }
                 sel.delete(c);
             } else sel.add(c);
         }
@@ -80,7 +81,7 @@
     function paintCats() {
         QZ.$$('#cats [data-cat]').forEach(function (b) { b.setAttribute('aria-pressed', String(sel.has(b.getAttribute('data-cat')))); });
         $('#cats [data-all]').setAttribute('aria-pressed', String(sel.size === CATS.length));
-        $('#cats-label').textContent = sel.size === CATS.length ? 'Temi: tutti (' + CATS.length + ' categorie)' : 'Temi: ' + sel.size + ' categori' + (sel.size === 1 ? 'a' : 'e') + ' su ' + CATS.length;
+        $('#cats-label').textContent = sel.size === CATS.length ? 'Temi: tutti, ' + CATS.length + ' categorie' : 'Temi: ' + sel.size + ' categori' + (sel.size === 1 ? 'a' : 'e') + ' su ' + CATS.length;
     }
     paintCats();
     function saveCfg() { QZ.store.set('qz.bomba.cfg', CFG); }
@@ -88,7 +89,7 @@
     $('#start-btn').addEventListener('click', startGame);
     $('#rd-go').innerHTML = QZ.icon('flame') + 'Accendi la miccia';
     $('#rd-go').addEventListener('click', go);
-    $('#g-pass').innerHTML = QZ.icon('arrow') + 'Passa la bomba';
+    $('#g-pass').innerHTML = 'Passa la bomba' + QZ.icon('arrow');
     $('#g-pass').addEventListener('click', pass);
     $('#g-skip').innerHTML = QZ.icon('shuffle');
     $('#g-skip').addEventListener('click', skip);
@@ -96,11 +97,11 @@
     $('#g-quit').innerHTML = QZ.icon('x');
     $('#g-quit').addEventListener('click', function () {
         if (S.running) pause();
-        QZ.confirm('Il round in corso non verrà conteggiato.', { title: 'Terminare la partita?', okLabel: 'Termina', danger: true }).then(function (ok) {
+        QZ.confirm('Il round in corso non conta. Si va dritti alla classifica.', { title: 'Chiudere qui?', okLabel: 'Chiudi', cancelLabel: 'Si continua', danger: true }).then(function (ok) {
             if (ok) finish();
         });
     });
-    $('#pause-chip').innerHTML = QZ.icon('pause') + 'In pausa · il tema è nascosto';
+    $('#pause-chip').innerHTML = QZ.icon('pause') + 'Pausa · la miccia è ferma';
     paintPause();
 
     /* ---------- Helper ---------- */
@@ -116,15 +117,35 @@
     }
     function secs(ms) { return (ms / 1000).toFixed(1).replace('.', ',') + ' s'; }
     function roundLabel() { return 'Round ' + G.round + (CFG.mode === 'points' ? '/' + CFG.rounds : ''); }
-    function boardHTML(holder, preview) {
+    function boardHTML(holder) {
         return G.players.map(function (p, i) {
-            var pts = CFG.mode === 'points' ? ' <b>' + (p.score + (preview && preview[i] || 0)) + '</b>' : '';
+            var pts = CFG.mode === 'points' ? ' <b>' + p.score + '</b>' : '';
             return '<span class="chip' + (i === holder ? ' is-hold' : '') + (p.out ? ' is-out' : '') + '" style="--c:' + p.color + '"><i></i>' + QZ.esc(p.name) + pts + '</span>';
         }).join('');
+    }
+    function nameHTML(p) { return '<span>' + QZ.esc(p.name) + '</span>'; }
+
+    /** La nuvola a punte del fumetto: due stelle irregolari, gialla e rossa. */
+    function burstSVG() {
+        function star(n, rx, ry, k, jit) {
+            var pts = [];
+            for (var i = 0; i < n * 2; i++) {
+                var a = Math.PI * i / n - Math.PI / 2;
+                var f = (i % 2 ? k : 1) * (1 + (Math.random() - 0.5) * jit);
+                pts.push((Math.cos(a) * rx * f).toFixed(1) + ',' + (Math.sin(a) * ry * f).toFixed(1));
+            }
+            return pts.join(' ');
+        }
+        return '<svg class="bb-burst" viewBox="-118 -88 236 176" aria-hidden="true">' +
+            '<polygon points="' + star(13, 110, 80, 0.64, 0.24) + '" fill="#f3c21b" stroke="#1d1913" stroke-width="5" stroke-linejoin="round"/>' +
+            '<polygon points="' + star(11, 80, 56, 0.7, 0.2) + '" fill="#cf2a1e" stroke="#1d1913" stroke-width="4" stroke-linejoin="round"/></svg>';
     }
 
     /* ---------- Partita ---------- */
     function startGame() {
+        // doppio tocco sul fischio d'inizio: una partita sola
+        if (Date.now() - lastStart < 1000) return;
+        lastStart = Date.now();
         var seen = {};
         var names = players.get().map(function (n) {
             var k = n.toLowerCase();
@@ -145,15 +166,21 @@
         stopLoop();
         S = { running: false, passes: 0, committed: false };
         var h = G.players[G.holder];
-        $('#rd-eyebrow').innerHTML = QZ.icon('flag') + roundLabel() + (CFG.mode === 'elim' ? ' · in gioco ' + aliveIdx().length : '');
-        $('#rd-title').textContent = 'Inizia ' + h.name;
-        $('#rd-sub').textContent = 'Il tema si scopre quando si accende la miccia. ' + h.name + ', prendi il telefono!';
+        $('#rd-eyebrow').innerHTML = QZ.icon('flag') + roundLabel() + (CFG.mode === 'elim' ? ' · in campo ' + aliveIdx().length : '');
+        $('#rd-title').innerHTML = nameHTML(h);
+        $('#rd-title').style.setProperty('--c', h.color);
+        $('#rd-sub').textContent = 'Il tema esce quando si accende la miccia. Prendi il telefono, ' + h.name + '.';
         $('#rd-board').innerHTML = boardHTML(G.holder);
         QZ.show('s-ready');
+        QZ.say(roundLabel() + '. La bomba parte da ' + h.name + '.');
     }
 
     function go() {
+        // doppio tocco su "Accendi la miccia": un conto alla rovescia solo
+        if (S.going) return;
+        S.going = true;
         stage.classList.remove('is-boom', 'is-hot');
+        $('#boom').innerHTML = '';
         $('#game').classList.remove('bb-paused');
         $('#g-pass').disabled = true;
         $('#g-round').innerHTML = QZ.icon('flag') + '<b>' + roundLabel() + '</b>';
@@ -193,6 +220,7 @@
     function drawFuse(b) {
         var vis = fuseLen * (1 - 0.88 * Math.min(1, b));
         fuseEl.style.strokeDasharray = vis + ' ' + fuseLen;
+        fuseInk.style.strokeDasharray = vis + ' ' + fuseLen;
         var pt = fuseEl.getPointAtLength(vis);
         sparkEl.setAttribute('transform', 'translate(' + pt.x.toFixed(1) + ' ' + pt.y.toFixed(1) + ')');
     }
@@ -233,6 +261,7 @@
     function pause() {
         if (!S.running) return;
         stopLoop();
+        stage.classList.remove('is-hot');
         $('#game').classList.add('bb-paused');
         paintPause();
     }
@@ -245,6 +274,7 @@
     function togglePause() {
         if (S.exploded || !S.armed) return;
         if (S.running) pause(); else resume();
+        QZ.say(S.running ? 'Si riparte, la miccia brucia.' : 'Pausa: la miccia è ferma.');
         QZ.sound.click();
     }
     function paintPause() {
@@ -260,10 +290,10 @@
     function renderHolder(anim) {
         var h = G.players[G.holder];
         var el = $('#g-holder');
-        el.textContent = h.name;
+        el.innerHTML = nameHTML(h);
         el.style.setProperty('--c', h.color);
         var nx = nextAlive(G.holder);
-        $('#g-next').textContent = nx !== G.holder ? 'Poi tocca a ' + G.players[nx].name : '';
+        $('#g-next').innerHTML = nx !== G.holder ? 'Poi tocca a <b>' + QZ.esc(G.players[nx].name) + '</b>' : '';
         $('#g-board').innerHTML = boardHTML(G.holder);
         if (anim) QZ.fx.replay(el);
     }
@@ -284,7 +314,7 @@
         drawTopic();
         resetFuse();
         S.passes = 0;
-        QZ.toast('Nuovo tema, nuova miccia', { icon: 'shuffle' });
+        QZ.toast('Tema cambiato, miccia nuova.', { icon: 'shuffle' });
     }
 
     /* ---------- Esplosione ---------- */
@@ -295,13 +325,20 @@
         G.lens.push(S.elapsed);
         $('#g-pass').disabled = true;
         stage.classList.remove('is-hot');
+        $('#boom').innerHTML = burstSVG() + '<span class="bb-boom__txt" aria-hidden="true">BOOM!</span>';
         stage.classList.add('is-boom');
+        QZ.say('Boom! La bomba è scoppiata in mano a ' + G.players[S.loser].name + '.', true);
         QZ.sound.boom();
         QZ.vibrate([400, 80, 250]);
-        QZ.fx.flash('rgba(255, 130, 50, .9)');
+        if (!QZ.reducedMotion()) {
+            var f = document.createElement('div');
+            f.className = 'bb-flash';
+            document.body.appendChild(f);
+            f.addEventListener('animationend', f.remove.bind(f));
+        }
         QZ.fx.shake($('#app'));
-        QZ.fx.sparks(stage, '#ffb020', 34);
-        setTimeout(function () { QZ.fx.sparks(stage, '#ff5a3c', 20); }, 160);
+        QZ.fx.sparks(stage, 'var(--yellow)', 26);
+        setTimeout(function () { QZ.fx.sparks(stage, 'var(--red)', 16); }, 160);
         setTimeout(showBoom, QZ.reducedMotion() ? 400 : 1700);
     }
 
@@ -311,22 +348,20 @@
         var preview = G.players.map(function (p, i) { return CFG.mode === 'points' && !p.out && i !== S.loser ? 1 : 0; });
         var others = aliveIdx().filter(function (i) { return i !== S.loser; });
         $('#boom-host').innerHTML =
-            '<div class="result" data-stagger>' +
-            '<div class="result__badge result__badge--bad">' + QZ.icon('bomb') + '</div>' +
-            '<span class="eyebrow">' + roundLabel() + ' · ' + QZ.esc(S.topic.topic) + '</span>' +
-            '<h2 class="result__title">BOOM!</h2>' +
-            '<p class="muted">Esplosa dopo ' + secs(S.elapsed) + ' e ' + S.passes + ' passaggi' + (S.passes === 1 ? 'o' : '') + '.</p></div>' +
-            '<div class="card card--glow bb-loser">' +
-            '<span class="label">' + (CFG.mode === 'elim' ? 'Eliminato' : 'Ha perso il round') + '</span>' +
-            '<div class="bb-holder__name" style="--c:' + L.color + '">' + QZ.esc(L.name) + '</div>' +
-            (others.length ? '<span class="small muted">Non era in mano sua? Correggi:</span><div class="bb-fix">' + others.map(function (i) {
+            '<div class="bb-mini">' + burstSVG() + '<span class="bb-mini__txt">BOOM!</span></div>' +
+            '<div class="card bb-loser">' +
+            '<span class="eyebrow">' + roundLabel() + '</span>' +
+            '<span class="bb-holder__kicker">' + (CFG.mode === 'elim' ? 'saltato in aria, è fuori' : 'saltato in aria') + '</span>' +
+            '<h2 class="bb-holder__name" style="--c:' + L.color + '">' + nameHTML(L) + '</h2>' +
+            '<p class="muted">Scoppiata dopo ' + secs(S.elapsed) + ' e ' + S.passes + (S.passes === 1 ? ' passaggio' : ' passaggi') + '. Il tema era «' + QZ.esc(S.topic.topic) + '».</p>' +
+            (others.length ? '<div class="bb-fix"><span class="small muted">Non ce l\'aveva lui? Correggi a mano:</span><div>' + others.map(function (i) {
                 return '<button type="button" class="btn btn--sm" data-fix="' + i + '">' + QZ.esc(G.players[i].name) + '</button>';
-            }).join('') + '</div>' : '') + '</div>' +
+            }).join('') + '</div></div>' : '') + '</div>' +
             (CFG.mode === 'points'
                 ? '<div class="bb-standings">' + G.players.map(function (p, i) { return { p: p, i: i }; })
                     .sort(function (a, b) { return (b.p.score + preview[b.i]) - (a.p.score + preview[a.i]); })
                     .map(function (x, k) {
-                        return '<div class="team' + (x.i === S.loser ? ' is-out' : '') + '" style="--c:' + x.p.color + ';animation:qz-rise .45s var(--ease-out) both;animation-delay:' + (k * 50 + 150) + 'ms"><span class="team__dot"></span><span class="team__name">' + QZ.esc(x.p.name) + '</span>' +
+                        return '<div class="team' + (x.i === S.loser ? ' is-out' : '') + '" style="--c:' + x.p.color + ';animation:qz-rise .35s var(--ease-out) both;animation-delay:' + (k * 50 + 150) + 'ms"><span class="team__dot"></span><span class="team__name">' + QZ.esc(x.p.name) + '</span>' +
                             (preview[x.i] ? '<span class="bb-delta">+1</span>' : '') + '<span class="team__score">' + (x.p.score + preview[x.i]) + '</span></div>';
                     }).join('') + '</div>'
                 : '<div class="bb-board">' + G.players.map(function (p, i) {
@@ -336,13 +371,20 @@
             '<div class="row row--center">' +
             (last ? '<button type="button" class="btn btn--primary btn--lg" id="bm-end">' + QZ.icon('trophy') + 'Classifica finale</button>'
                 : '<button type="button" class="btn btn--primary btn--lg" id="bm-next">' + QZ.icon('play', 'ico-fill') + 'Prossimo round</button>' +
-                '<button type="button" class="btn btn--ghost btn--lg" id="bm-end">' + QZ.icon('flag') + 'Termina qui</button>') +
+                '<button type="button" class="btn btn--ghost btn--lg" id="bm-end">' + QZ.icon('flag') + 'Chiudi qui</button>') +
             '</div>';
+        // un tocco solo per schermata: il doppio tap non deve saltare un round
+        var acted = false;
+        var once = function (fn) { return function () { if (acted) return; acted = true; fn(); }; };
         QZ.$$('#boom-host [data-fix]').forEach(function (b) {
-            b.addEventListener('click', function () { S.loser = Number(b.dataset.fix); showBoom(); });
+            b.addEventListener('click', once(function () {
+                S.loser = Number(b.dataset.fix);
+                showBoom();
+                QZ.say('Corretto: la bomba ce l\'aveva ' + G.players[S.loser].name + '.');
+            }));
         });
-        if ($('#bm-next')) $('#bm-next').addEventListener('click', function () { commit(); if (!isOver()) newRound(); else finish(); });
-        $('#bm-end').addEventListener('click', function () { commit(); finish(); });
+        if ($('#bm-next')) $('#bm-next').addEventListener('click', once(function () { commit(); if (!isOver()) newRound(); else finish(); }));
+        $('#bm-end').addEventListener('click', once(function () { commit(); finish(); }));
         if (!$('#s-boom').classList.contains('is-active')) {
             QZ.show('s-boom');
             QZ.sound.lose();
@@ -380,7 +422,7 @@
         } else {
             rows = G.players.slice().sort(function (a, b) {
                 return (a.out ? a.outRound : 999) < (b.out ? b.outRound : 999) ? 1 : -1;
-            }).map(function (p) { return { name: p.name, color: p.color, score: p.out ? 'Fuori al round ' + p.outRound : 'In piedi', v: p.out ? p.outRound : 999 }; });
+            }).map(function (p) { return { name: p.name, color: p.color, score: '', sub: p.out ? 'saltato al ' + p.outRound + '° round' : 'ultimo in piedi', v: p.out ? p.outRound : 999 }; });
         }
         var top = rows.filter(function (r) { return r.v === rows[0].v; });
         var champ = top.map(function (r) { return r.name; }).join(' e ');
@@ -390,24 +432,26 @@
         QZ.results($('#end-host'), {
             win: true,
             icon: CFG.mode === 'elim' ? 'shield' : 'trophy',
-            title: top.length > 1 ? 'Pari in vetta!' : 'Vince ' + champ + '!',
+            title: top.length > 1 ? 'Pari in vetta' : 'Vince ' + champ,
             subtitle: CFG.mode === 'elim'
-                ? (top.length > 1 ? champ + ' restano in piedi.' : 'L\'ultimo sopravvissuto: la bomba non l\'ha mai fregato.')
-                : (top.length > 1 ? champ + ' chiudono a pari punti.' : 'Nervi saldi e lingua veloce: nessuno ha passato la bomba meglio.'),
+                ? (top.length > 1 ? champ + ' restano in piedi.' : 'L\'ultimo in piedi. La bomba non l\'ha mai preso.')
+                : (top.length > 1 ? champ + ' chiudono a pari punti.' : 'Nervi saldi e lingua veloce. La bomba l\'ha sempre passata in tempo.'),
             big: G.passes, bigSuffix: G.passes === 1 ? ' passaggio' : ' passaggi',
             record: r,
+            // pagella: a punti conta quante volte il vincitore e' scampato allo scoppio,
+            // a eliminazione quanti avversari ha visto saltare
+            ratio: CFG.mode === 'points' ? rows[0].v / G.done : QZ.clamp(0.5 + (G.players.length - 2) * 0.1, 0.5, 1),
             stats: [
                 { label: 'Round giocati', value: G.done },
-                { label: 'Round più lungo', value: secs(Math.max.apply(null, lens)) },
+                { label: 'Miccia più lunga', value: secs(Math.max.apply(null, lens)) },
                 { label: 'Scoppio più rapido', value: secs(Math.min.apply(null, lens)) },
                 { label: 'Giocatori', value: G.players.length }
             ],
-            extraHTML: '<div class="mt-3">' + QZ.podiumHTML(rows) + '</div>' +
-                '<div class="row row--center mt-2"><button type="button" class="btn btn--ghost" id="end-setup">' + QZ.icon('users') + 'Cambia giocatori</button></div>',
-            share: 'Partita a Bomba su Quizzotti: ' + champ + ' ' + (top.length > 1 ? 'vincono' : 'vince') + ' dopo ' + G.done + ' round e ' + G.passes + ' passaggi. Chi tiene i nervi più saldi?',
-            onRetry: startGame
+            extraHTML: '<div class="mt-3">' + QZ.podiumHTML(rows) + '</div>',
+            share: 'Partita a Bomba su Quizzotti: ' + champ + ' ' + (top.length > 1 ? 'vincono' : 'vince') + ' dopo ' + G.done + ' round e ' + G.passes + ' passaggi. Chi ha i nervi più saldi?',
+            onRetry: startGame,
+            secondary: { label: 'Cambia giocatori', icon: 'users', onClick: function () { QZ.show('s-start'); } }
         });
-        $('#end-setup').addEventListener('click', function () { QZ.show('s-start'); });
     }
 
     /* ---------- Tastiera ---------- */

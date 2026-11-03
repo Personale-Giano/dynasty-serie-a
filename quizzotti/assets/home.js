@@ -64,12 +64,16 @@
     });
 
     // Gioco a sorpresa: si pesca una figurina
+    var drawing = false;
     QZ.$('#cta-random').addEventListener('click', function () {
+        // un tocco solo: col doppio tap si pescavano due figurine e due pagine
+        if (drawing) return;
+        drawing = true;
         var g = QZ.pick(QZ.GAMES);
         var card = QZ.$$('.game', grid)[QZ.GAMES.indexOf(g)];
         card.scrollIntoView({ behavior: QZ.reducedMotion() ? 'auto' : 'smooth', block: 'center' });
         setTimeout(function () {
-            QZ.fx.stamp(card, 'Si gioca a questo!', 'ink', { size: 24 });
+            QZ.fx.stamp(card, 'Si gioca a questo!', 'ink', { size: 24, say: 'Si gioca a ' + g.name + '!' });
             setTimeout(function () { window.location.href = g.file; }, 900);
         }, 450);
     });

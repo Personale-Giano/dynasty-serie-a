@@ -7,16 +7,18 @@
 <meta name="description" content="15 domande di calcio sempre più difficili, quattro aiuti e un milione in palio. Gioca gratis a Chi Vuol Essere Milionario su Quizzotti.">
 <meta name="theme-color" content="#f1e8d6">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
 <meta property="og:title" content="Chi Vuol Essere Milionario · Quizzotti">
 <meta property="og:description" content="15 domande di calcio, quattro aiuti, un milione in palio.">
 <meta property="og:image" content="logo2.png">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="logo1.webp" type="image/webp">
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Permanent+Marker&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=1faa7d11">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Permanent+Marker&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=6820c77e">
 <style>
   .cv-layout { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 980px) { .cv-layout { grid-template-columns: minmax(0, 1fr) 270px; align-items: start; } }
@@ -28,6 +30,7 @@
 
   .cv-question { padding: 24px 22px 26px; text-align: center; }
   .cv-question .eyebrow { margin-bottom: 14px; }
+  .cv-question .question { overflow-wrap: break-word; }
 
   .cv-lifelines { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
   .cv-life {
@@ -101,6 +104,7 @@
 
   <!-- ============ PARTITA ============ -->
   <section class="screen" id="s-game">
+    <h1 class="sr-only">Chi vuol essere milionario: la partita</h1>
     <div class="cv-layout">
       <div class="stack" style="--gap:18px">
         <div class="cv-top">
@@ -125,7 +129,7 @@
 
       <aside class="cv-side card" aria-label="Montepremi">
         <div class="cv-side__title">Il montepremi</div>
-        <ol class="cv-ladder" id="ladder"></ol>
+        <ol class="cv-ladder" id="ladder" tabindex="0" aria-label="Scala dei premi"></ol>
       </aside>
     </div>
   </section>
@@ -135,9 +139,9 @@
 
 </main>
 
-<script src="assets/qz.js?v=9c216f8a" defer></script>
-<script src="assets/db-cvem.js?v=2342a065" defer></script>
-<script src="assets/questions-data.js?v=6be0fe7b" defer></script>
-<script src="assets/games/cvem.js?v=e84df162" defer></script>
+<script src="assets/qz.js?v=bc54ed5a" defer></script>
+<script src="assets/db-cvem.js?v=b8098d5c" defer></script>
+<script src="assets/questions-data.js?v=c7a0a42f" defer></script>
+<script src="assets/games/cvem.js?v=6b5f6df4" defer></script>
 </body>
 </html>

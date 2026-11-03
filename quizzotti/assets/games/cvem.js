@@ -30,6 +30,7 @@
     /* ---------- Stato ---------- */
     var S = {};
     var timer = null;
+    var starting = false; // blocca il doppio tap sul fischio d'inizio
     var $ = QZ.$;
 
     /* ---------- Markup statico ---------- */
@@ -62,7 +63,7 @@
         { id: 'quit', label: 'Ritirati', ico: QZ.icon('flag'), fn: quit, cls: 'cv-life--quit' }
     ];
     $('#lifelines').innerHTML = LIFE.map(function (l) {
-        return '<button type="button" class="cv-life ' + (l.cls || '') + '" data-life="' + l.id + '"><span class="cv-life__ico">' + l.ico + '</span>' + l.label + '</button>';
+        return '<button type="button" class="cv-life ' + (l.cls || '') + '" data-life="' + l.id + '"><span class="cv-life__ico" aria-hidden="true">' + l.ico + '</span>' + l.label + '</button>';
     }).join('');
     LIFE.forEach(function (l) { $('[data-life="' + l.id + '"]').addEventListener('click', l.fn); });
 
@@ -96,6 +97,8 @@
 
     /* ---------- Flusso ---------- */
     function start() {
+        if (starting) return;
+        starting = true;
         S = { level: 1, active: false, used: {}, correct: 0, times: [], streak: 0, q: null };
         QZ.$$('.cv-life').forEach(function (b) { b.disabled = false; });
         QZ.$$('.cv-life .qz-mark').forEach(function (m) { m.remove(); });
@@ -103,7 +106,16 @@
         QZ.show('s-game');
         QZ.sound.start();
         QZ.sound.startMusic();
-        setTimeout(load, 450);
+        setTimeout(function () { starting = false; load(); }, 450);
+    }
+
+    /** Se il fuoco e' rimasto su un bottone spento (o e' finito nel vuoto), torna sulla prima risposta viva. */
+    function focusAnswers() {
+        var a = document.activeElement;
+        if (document.querySelector('.qz-modal')) return;
+        if (a && a !== document.body && !a.disabled && a.offsetParent !== null) return;
+        var alive = answerEls.filter(function (el) { return !el.disabled; })[0];
+        if (alive) alive.focus({ preventScroll: true });
     }
 
     function load() {
@@ -138,6 +150,7 @@
             onExpire: function () { if (S.active) { S.active = false; reveal(-1); } }
         });
         S.active = true;
+        focusAnswers();
         S.t0 = performance.now();
         setTimeout(function () { if (S.active) timer.start(); }, 350);
     }
@@ -161,7 +174,12 @@
         var correctEl = answerEls[S.q.correct];
         answerEls.forEach(function (el) { el.disabled = true; el.classList.remove('is-picked'); });
         correctEl.classList.add('is-correct');
-        QZ.fx.stamp(correctEl, ok ? QZ.pick(['Esatto!', 'Gol!', 'Che giocata']) : 'Era questa', ok ? 'ok' : 'ink', { size: 24 });
+        var rightTxt = LETTERS[S.q.correct] + ', ' + S.q.options[S.q.correct];
+        QZ.fx.stamp(correctEl, ok ? QZ.pick(['Esatto!', 'Gol!', 'Che giocata']) : 'Era questa', ok ? 'ok' : 'ink', {
+            size: 24,
+            say: ok ? 'Esatto! ' + rightTxt + '. Hai vinto ' + money(PRIZES[S.level]) + '.'
+                : (i >= 0 ? 'Sbagliato. ' : 'Tempo scaduto. ') + 'La risposta giusta era ' + rightTxt + '.'
+        });
         if (ok) {
             S.correct++;
             S.streak++;
@@ -180,7 +198,7 @@
                 load();
             }, 1500);
         } else {
-            if (i >= 0) { answerEls[i].classList.add('is-wrong'); QZ.fx.stamp(answerEls[i], 'Fuorigioco', 'bad', { size: 24 }); }
+            if (i >= 0) { answerEls[i].classList.add('is-wrong'); QZ.fx.stamp(answerEls[i], 'Fuorigioco', 'bad', { size: 24, say: false }); }
             else QZ.toast('Fischio finale: tempo scaduto.', { icon: 'clock', type: 'bad' });
             S.streak = 0;
             paintStreak();
@@ -195,6 +213,7 @@
         QZ.$$('#ladder li').forEach(function (li) {
             var lv = Number(li.dataset.lv);
             li.classList.toggle('is-now', lv === S.level);
+            if (lv === S.level) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
             li.classList.toggle('is-done', lv < S.level);
         });
         var now = $('#ladder li.is-now');
@@ -215,6 +234,11 @@
         if (!S.active || S.used[id]) return false;
         S.used[id] = true;
         var btn = $('[data-life="' + id + '"]');
+        // il bottone si spegne: il fuoco passa a una risposta, cosi' da tastiera non si perde
+        if (document.activeElement === btn) {
+            var alive = answerEls.filter(function (el) { return !el.disabled && !el.classList.contains('is-out'); })[0];
+            if (alive) alive.focus({ preventScroll: true });
+        }
         btn.disabled = true;
         QZ.fx.mark(btn, 'cross');
         QZ.sound.lifeline();
@@ -224,9 +248,16 @@
     function useFifty() {
         if (!spend('fifty')) return;
         var wrong = QZ.shuffle([0, 1, 2, 3].filter(function (i) { return i !== S.q.correct; })).slice(0, 2);
+        // il fuoco non deve restare su una risposta che sta per sparire
+        if (wrong.indexOf(answerEls.indexOf(document.activeElement)) >= 0) {
+            var keep = [0, 1, 2, 3].filter(function (i) { return wrong.indexOf(i) < 0; })[0];
+            answerEls[keep].focus({ preventScroll: true });
+        }
         wrong.forEach(function (i, k) {
             setTimeout(function () { answerEls[i].classList.add('is-out'); answerEls[i].disabled = true; QZ.sound.whoosh(); }, k * 250);
         });
+        var left = [0, 1, 2, 3].filter(function (i) { return wrong.indexOf(i) < 0; }).map(function (i) { return LETTERS[i]; });
+        QZ.say('50:50: restano la ' + left[0] + ' e la ' + left[1] + '.');
         S.fiftyOut = wrong;
     }
 
@@ -269,7 +300,7 @@
         var answerText = LETTERS[say] + ' · ' + S.q.options[say];
         var node = QZ.el('<div class="stack" style="--gap:14px;align-items:center;text-align:center">' +
             '<div class="medal" style="width:84px;animation:none">' + QZ.icon('phone') + '</div>' +
-            '<p class="muted" data-msg>Sto chiamando il tuo amico esperto…</p></div>');
+            '<p class="muted" data-msg aria-live="polite">Sto chiamando il tuo amico esperto…</p></div>');
         QZ.modal({
             title: 'Telefonata a casa',
             node: node,
@@ -278,7 +309,7 @@
                 QZ.sound.tone(440, 0.4, 'sine', 0.08, 0); QZ.sound.tone(440, 0.4, 'sine', 0.08, 0.6);
                 setTimeout(function () {
                     var m = node.querySelector('[data-msg]');
-                    m.innerHTML = '«' + QZ.esc(conf) + ': <b style="color:var(--accent)">' + QZ.esc(answerText) + '</b>»';
+                    m.innerHTML = '«' + QZ.esc(conf) + ': <b style="color:var(--accent-ink)">' + QZ.esc(answerText) + '</b>»';
                     m.classList.remove('muted');
                     QZ.fx.pop(m);
                 }, 1600);
@@ -291,6 +322,7 @@
         timer.add(15);
         QZ.fx.floatText(ring, '+15s');
         QZ.fx.pop(ring);
+        QZ.say('Quindici secondi in più: ne hai ' + Math.ceil(timer.remaining) + '.');
     }
 
     function quit() {
