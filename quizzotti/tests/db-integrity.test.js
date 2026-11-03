@@ -114,3 +114,20 @@ test('db-sfidaeredita.js: parola/definizione senza duplicati', () => {
     });
     noDuplicates(database.map((d) => d.word), 'parole sfidaeredita');
 });
+
+test('db-cruciverba.js: parole A-Z 3-13, definizioni brevi senza la risposta, categorie e difficolta valide', () => {
+    const { cruciverba } = load('db-cruciverba.js');
+    assert.ok(cruciverba.length >= 700, `attese almeno 700 voci, trovate ${cruciverba.length}`);
+    const categorie = ['Calciatori', 'Allenatori', 'Squadre', 'Nazionali', 'Stadi', 'Coppe e trofei',
+        'Soprannomi', 'Gergo e regole', 'Storia', 'Presidenti e dirigenti', 'Curiosità'];
+    const norm = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z]/g, '');
+    cruciverba.forEach((e) => {
+        assert.match(e.answer, /^[A-Z]{3,13}$/, `risposta non valida: ${e.answer}`);
+        assert.ok(typeof e.clue === 'string' && e.clue.trim().length > 0, `definizione vuota per ${e.answer}`);
+        assert.ok(e.clue.length <= 80, `definizione troppo lunga per ${e.answer} (${e.clue.length})`);
+        assert.ok(!norm(e.clue).includes(e.answer), `la definizione contiene la risposta: ${e.answer}`);
+        assert.ok(categorie.includes(e.cat), `categoria non valida per ${e.answer}: ${e.cat}`);
+        assert.ok([1, 2, 3].includes(e.diff), `diff non valida per ${e.answer}: ${e.diff}`);
+    });
+    noDuplicates(cruciverba.map((e) => e.answer), 'risposte cruciverba');
+});

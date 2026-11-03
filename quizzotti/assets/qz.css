@@ -94,6 +94,7 @@
 [data-game="bomba"] { --accent: #ff4b3a; --accent-2: #ffa094; --accent-rgb: 255, 75, 58; --accent-ink: #ff6b5c; --on-accent: #07090b; }
 [data-game="sfidaeredita"] { --accent: #3ddc84; --accent-2: #9cf0c0; --accent-rgb: 61, 220, 132; --accent-ink: #3ddc84; --on-accent: #07090b; }
 [data-game="giocatoributget"] { --accent: #c6f04d; --accent-2: #e0f8a0; --accent-rgb: 198, 240, 77; --accent-ink: #c6f04d; --on-accent: #07090b; }
+[data-game="cruciverba"] { --accent: #ff6ad5; --accent-2: #ffb3ea; --accent-rgb: 255, 106, 213; --accent-ink: #ff86de; --on-accent: #07090b; }
 
 /* ---------- Reset ---------- */
 *,
@@ -113,7 +114,6 @@ body {
   background-color: var(--bg);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
-  overflow-x: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -235,7 +235,7 @@ p { margin: 0; }
   .qz-launcher { align-items: center; }
   .qz-launcher__sheet { border-radius: var(--r-xl); border-bottom: 1px solid var(--line-2); transform: translateY(20px); opacity: 0; transition: transform 0.3s var(--ease-out), opacity 0.2s; }
   .qz-launcher.is-open .qz-launcher__sheet { transform: none; opacity: 1; }
-  .qz-launcher__grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .qz-launcher__grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
 
 .qz-tile {
@@ -671,7 +671,7 @@ p { margin: 0; }
 @keyframes qz-flicker { from { transform: scale(1); } to { transform: scale(1.18); } }
 
 /* ---------- La bacheca (profilo) ---------- */
-.album { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.album { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
 .album__slot { position: relative; aspect-ratio: 3 / 4; border-radius: var(--r); padding: 5px; display: grid; grid-template-rows: auto 1fr auto; text-align: center; border: 1px dashed var(--line-2); color: var(--muted); font-size: 10px; font-weight: 600; line-height: 1.1; }
 .album__slot b { font-family: var(--font-led); font-weight: 700; font-size: 13px; }
 .album__slot .ico { margin: auto; width: 22px; height: 22px; opacity: 0.3; }

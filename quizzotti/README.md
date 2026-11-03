@@ -1,6 +1,6 @@
 # Quizzotti v2
 
-10 minigiochi di calcio gratuiti, ispirati a format TV italiani (Chi Vuol Essere Milionario, Jeopardy, Avanti un Altro, Taboo, Intesa Vincente, Mr. White, L'Eredità…). HTML/CSS/JS statico, senza framework né bundler: si apre `index.html` e si gioca.
+11 minigiochi di calcio gratuiti, ispirati a format TV italiani (Chi Vuol Essere Milionario, Jeopardy, Avanti un Altro, Taboo, Intesa Vincente, Mr. White, L'Eredità…). HTML/CSS/JS statico, senza framework né bundler: si apre `index.html` e si gioca.
 
 La v2 è un rifacimento completo. L'identità visiva si chiama **"Riflettori"**: lo stadio di sera, con i fari, il prato e tutti i numeri sul tabellone a LED. Le regole di stile e di tono sono in [DESIGN.md](DESIGN.md): leggerlo prima di toccare una pagina.
 

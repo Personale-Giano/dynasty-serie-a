@@ -38,7 +38,8 @@
         'Avanti un Altro: sbagliare non è mai stato così difficile',
         'Derby delle Parole: chi la sa, tira in porta',
         'Sfida dei Budget: il presidente ha chiuso i cordoni della borsa',
-        'Jeopardy: la doppia posta è nascosta da qualche parte'
+        'Jeopardy: la doppia posta è nascosta da qualche parte',
+        'Cruciverba: doppia papera in finale di Champions, sei lettere'
     ];
     var items = news.map(function (n) { return '<span>' + QZ.esc(n) + '</span>'; }).join('');
     QZ.$('#ticker').innerHTML = items + items;

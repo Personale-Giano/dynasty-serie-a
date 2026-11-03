@@ -1,6 +1,6 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Motore condiviso
-   Un solo script per home e 10 giochi: header/menu/footer generati da qui
+   Un solo script per home e 11 giochi: header/menu/footer generati da qui
    (niente piu' HTML duplicato in ogni pagina), icone SVG inline (niente
    Font Awesome), suoni sintetizzati, profilo XP, timer, effetti e
    componenti UI. Ogni pagina dichiara il suo gioco con <body data-game="id">.
@@ -24,7 +24,8 @@
         { id: 'mrwhite', file: 'MrWhite.html', name: 'Mr. White', short: 'Mr. White', icon: 'spy', color: '#e8eef2', color2: '#ffffff', on: '#07090b', rgb: '232, 238, 242', players: '3+ giocatori', kind: 'party', desc: 'Tutti sanno chi è il calciatore segreto. Tutti tranne uno, che fa finta di saperlo.', tags: ['Bluff', 'Deduzione', 'Ruoli'] },
         { id: 'bomba', file: 'Bomba.html', name: 'Bomba', short: 'Bomba', icon: 'bomb', color: '#ff4b3a', color2: '#ffa094', on: '#07090b', rgb: '255, 75, 58', players: '2+ giocatori', kind: 'party', desc: 'Un tema e una bomba che passa di mano in mano. Quando scoppia, qualcuno ci resta.', tags: ['Turni', 'Tempo', 'Eliminazione'] },
         { id: 'sfidaeredita', file: 'sfidaEredita.html', name: 'Derby delle Parole', short: 'Derby', icon: 'ball', color: '#3ddc84', color2: '#9cf0c0', on: '#07090b', rgb: '61, 220, 132', players: '2 squadre', kind: 'party', desc: 'Una definizione, le lettere che spuntano piano piano. Chi la sa, tira in porta.', tags: ['Definizioni', 'Squadre', 'Voce'] },
-        { id: 'giocatoributget', file: 'GiocatoriBudget.html', name: 'Sfida dei Budget', short: 'Budget', icon: 'coins', color: '#c6f04d', color2: '#e0f8a0', on: '#07090b', rgb: '198, 240, 77', players: '1-6 giocatori', kind: 'party', desc: 'Fai mercato a occhio: i prezzi sono nascosti e il presidente non perdona.', tags: ['Mercato', 'Strategia', 'Budget'] }
+        { id: 'giocatoributget', file: 'GiocatoriBudget.html', name: 'Sfida dei Budget', short: 'Budget', icon: 'coins', color: '#c6f04d', color2: '#e0f8a0', on: '#07090b', rgb: '198, 240, 77', players: '1-6 giocatori', kind: 'party', desc: 'Fai mercato a occhio: i prezzi sono nascosti e il presidente non perdona.', tags: ['Mercato', 'Strategia', 'Budget'] },
+        { id: 'cruciverba', file: 'Cruciverba.html', name: 'Cruciverba', short: 'Cruciverba', icon: 'xword', color: '#ff6ad5', color2: '#ffb3ea', on: '#07090b', rgb: '255, 106, 213', players: 'Da solo', kind: 'quiz', desc: 'Il cruciverba del calcio: definizioni cattive, incroci e una griglia nuova a ogni partita.', tags: ['Parole', 'Enigmistica', 'Griglia nuova'] }
     ];
 
     QZ.game = function (id) {
@@ -111,6 +112,7 @@
         gauge: '<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
         list: '<path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>',
         smartphone: '<rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/>',
+        xword: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M15 3h6v6h-6z" fill="currentColor"/><path d="M3 15h6v6H3z" fill="currentColor"/>',
         search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
         dice: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 8h.01"/><path d="M16 8h.01"/><path d="M12 12h.01"/><path d="M8 16h.01"/><path d="M16 16h.01"/>',
         wifi: '<path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/>'
@@ -484,7 +486,7 @@
                 '<div class="grow"><div class="display" style="font-size:30px;font-style:italic;line-height:1">LIVELLO ' + pr.level + ' · ' + QZ.fmt(p.totalXP) + ' XP</div>' +
                 '<div class="small muted">Ancora ' + QZ.fmt(pr.toNext) + ' XP per salire · ' + total + (total === 1 ? ' partita' : ' partite') + '</div>' +
                 '<div class="progress mt-1"><div class="progress__fill" style="transform:scaleX(' + pr.pct / 100 + ')"></div></div></div></div>' +
-                '<div class="row row--between mt-2"><span class="label">La bacheca</span><span class="note" style="font-size:16px">' + (got === 10 ? 'TUTTI ACCESI' : got + '/10 ACCESI') + '</span></div>' +
+                '<div class="row row--between mt-2"><span class="label">La bacheca</span><span class="note" style="font-size:16px">' + (got === QZ.GAMES.length ? 'TUTTI ACCESI' : got + '/' + QZ.GAMES.length + ' ACCESI') + '</span></div>' +
                 '<div class="album">' + album + '</div>' +
                 (rows ? '<div class="profile-games">' + rows + '</div>' : '<p class="muted mt-2">La bacheca è ancora spenta: ogni gioco che provi accende il suo posto.</p>') +
                 '<p class="small faint mt-2">Tutto resta su questo telefono. Niente account, niente server.</p>';

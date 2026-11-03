@@ -41,7 +41,8 @@ const data = {
     wordsList: 'readonly',
     playerImages: 'readonly',
     tabooWords: 'readonly',
-    database: 'readonly'
+    database: 'readonly',
+    cruciverba: 'readonly'
 };
 const node = {
     module: 'writable',

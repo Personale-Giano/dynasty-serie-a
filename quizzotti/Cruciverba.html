@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cruciverba del calcio · Quizzotti</title>
+<meta name="description" content="Il cruciverba del pallone: definizioni cattive sul calcio, parole che si incrociano e una griglia nuova a ogni partita. Gioca gratis su Quizzotti.">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="Cruciverba del calcio · Quizzotti">
+<meta property="og:description" content="Definizioni cattive, incroci e una griglia nuova a ogni partita.">
+<meta property="og:image" content="logo2.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=296bcecb">
+<style>
+  /* ---------- copertina ---------- */
+  .xw-title { font-size: clamp(44px, 7vw, 78px); }
+  .xw-form { padding: 18px 18px 20px; }
+  .xw-form__title { font-size: 24px; padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .xw-setup { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 760px) { .xw-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .xw-setup .segmented { flex-wrap: nowrap; }
+  .xw-setup .segmented button { flex: 1 1 0; min-width: 0; min-height: 48px; padding: 0 6px; font-size: 16px; }
+
+  /* ---------- impaginazione della partita ---------- */
+  .xw-layout { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+  .xw-main, .xw-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+  .xw-layout { gap: 14px; }
+  @media (min-width: 980px) {
+    .xw-layout { grid-template-columns: minmax(0, 1fr) 360px; align-items: start; gap: 22px; }
+    /* aiuti e definizioni nella colonna di destra, che resta ferma mentre la pagina scorre */
+    .xw-side { position: sticky; top: calc(var(--header-h) + 16px); max-height: calc(100vh - var(--header-h) - 32px); max-height: calc(100dvh - var(--header-h) - 32px); }
+    .xw-side .xw-aids { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .xw-side .xw-aid { flex-direction: row; min-height: 48px; gap: 8px; font-size: 14px; }
+    .xw-side .kbd-hint { font-size: 13px; line-height: 2; }
+  }
+
+  /* il tabellone: tempo, parole, aiuti, definizione */
+  .xw-board__n { font-size: clamp(26px, 5vw, 36px); }
+  .xw-board__ref .xw-board__n { white-space: nowrap; }
+  @media (max-width: 439px) { .xw-board__ref { display: none; } .xw-board .board__cell { flex: 1; } }
+
+  /* la barra con la definizione corrente: resta in vista mentre si scrive */
+  .xw-bar {
+    position: sticky; top: calc(var(--header-h) + 8px); z-index: 30;
+    display: flex; align-items: stretch; background: var(--bg-2);
+    border: 1px solid var(--line-2); border-left: 4px solid var(--accent); border-radius: var(--r); overflow: hidden;
+  }
+  .xw-bar__nav { flex: none; width: 46px; display: grid; place-items: center; border: 0; background: var(--panel); color: var(--text-2); transition: background .12s, color .12s; }
+  .xw-bar__nav:first-child { border-right: 1px solid var(--line); }
+  .xw-bar__nav:last-child { border-left: 1px solid var(--line); }
+  .xw-bar__nav:hover { background: var(--panel-2); color: var(--text); }
+  .xw-bar__nav .ico { width: 22px; height: 22px; }
+  .xw-bar__main { flex: 1; min-width: 0; min-height: 64px; display: grid; align-content: center; gap: 3px; padding: 8px 14px; border: 0; background: transparent; text-align: left; }
+  .xw-bar__ref { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-ink); }
+  .xw-bar__clue { font-family: var(--font-display); font-weight: 700; font-size: 17px; line-height: 1.25; color: var(--text); text-wrap: balance; }
+  .xw-bar.is-solved .xw-bar__ref::after { content: " · gol"; color: var(--led-green); }
+  .xw-bar.is-solved { border-left-color: var(--led-green); }
+  .xw-bar :focus-visible { outline-offset: -4px; }
+  @media (min-width: 720px) { .xw-bar__clue { font-size: 20px; } }
+
+  /* ---------- la griglia ---------- */
+  .xw-wrap { position: relative; display: flex; justify-content: center; }
+  .xw-grid {
+    --cs: 30px; --gap: 3px; --pad: 10px;
+    position: relative; display: grid;
+    grid-template-columns: repeat(var(--cols), var(--cs)); grid-template-rows: repeat(var(--rows), var(--cs));
+    gap: var(--gap); padding: var(--pad);
+    background: radial-gradient(circle, #161c21 1px, transparent 1.6px) var(--pad) var(--pad) / calc(var(--cs) + var(--gap)) calc(var(--cs) + var(--gap)), #030405;
+    border: 1px solid var(--line-2); border-radius: var(--r-lg);
+    transition: border-color .15s;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  }
+  .xw-wrap.is-focus .xw-grid { border-color: rgba(var(--accent-rgb), .7); }
+  .xw-cell {
+    position: relative; display: grid; place-items: center; min-width: 0;
+    background: var(--panel-2); border: 1px solid var(--line-2); border-radius: max(4px, calc(var(--cs) * .16));
+    cursor: pointer; transition: background .12s, border-color .12s;
+  }
+  .xw-cell:hover { border-color: #4a5762; }
+  .xw-num {
+    position: absolute; top: 1px; left: max(2px, calc(var(--cs) * .08));
+    font-family: var(--font-body); font-weight: 700; font-size: max(8px, calc(var(--cs) * .27)); line-height: 1; color: var(--text-2);
+    pointer-events: none;
+  }
+  .xw-ch { font-family: var(--font-led); font-weight: 700; font-size: calc(var(--cs) * .62); line-height: 1; color: var(--text); transform: translateY(8%); pointer-events: none; }
+  .xw-cell.is-word { background: rgba(var(--accent-rgb), .13); border-color: rgba(var(--accent-rgb), .5); }
+  .xw-cell.is-cur { background: rgba(var(--accent-rgb), .36); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .xw-cell.is-cur .xw-num { color: var(--text); }
+  .xw-cell.is-solved { background: #0a2015; border-color: rgba(var(--ok-rgb), .4); }
+  .xw-cell.is-solved .xw-ch { color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .45); }
+  .xw-cell.is-solved.is-word { background: #0e2c1d; border-color: rgba(var(--ok-rgb), .8); }
+  .xw-cell.is-solved.is-cur { box-shadow: inset 0 0 0 1px var(--led-green); }
+  .xw-cell.is-rev .xw-ch { color: var(--led); text-shadow: var(--led-glow); }
+  .xw-cell.is-wrong { background: #2a0f0c; border-color: var(--led-red); }
+  .xw-cell.is-wrong .xw-ch { color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .6); }
+  .xw-cell.is-typed .xw-ch { animation: xw-type .18s var(--ease-out); }
+  .xw-cell.is-goal { animation: xw-goal .55s var(--ease-out) var(--d, 0ms) both; }
+  .xw-cell.is-given { animation: xw-given .4s linear both; }
+  @keyframes xw-type { from { transform: translateY(8%) scale(.6); opacity: .3; } }
+  @keyframes xw-goal { 35% { transform: scale(1.12); background: rgba(var(--ok-rgb), .55); } }
+  @keyframes xw-given { 0% { opacity: 0; } 30% { opacity: 1; } 45% { opacity: .4; } 100% { opacity: 1; } }
+  .xw-grid .qz-stamp { z-index: 6; }
+
+  /* il campo nascosto che riceve le lettere (e apre la tastiera del telefono) */
+  .xw-input {
+    position: absolute; left: 0; top: 0; z-index: 2; width: 1px; height: 1px; margin: 0; padding: 0; border: 0;
+    font-size: 16px; opacity: 0; color: transparent; background: transparent; caret-color: transparent; pointer-events: none;
+  }
+  .xw-input:focus { outline: none; }
+
+  /* gli aiuti */
+  .xw-aids { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .xw-aid {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 60px; padding: 8px 4px;
+    border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); color: var(--text-2);
+    font-weight: 700; font-size: 13px; line-height: 1.15; text-align: center; transition: background .15s, border-color .15s, color .15s;
+  }
+  .xw-aid:hover { background: var(--panel-2); border-color: var(--line-2); color: var(--text); }
+  .xw-aid:active { transform: translateY(1px); }
+  .xw-aid__ico { color: var(--accent-ink); display: grid; place-items: center; }
+  .xw-aid__ico .ico { width: 20px; height: 20px; }
+  .xw-aid--quit { color: var(--text-2); }
+  .xw-aid--quit .xw-aid__ico { color: var(--led-red); }
+  @media (max-width: 400px) { .xw-aid { font-size: 12px; } }
+
+  /* ---------- le definizioni ---------- */
+  .xw-clues { padding: 6px 0; }
+  .xw-clues__cols { display: grid; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) and (max-width: 979px) { .xw-clues__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .xw-clues h2 { display: flex; align-items: center; gap: 8px; padding: 12px 16px 6px; font-size: 12px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: var(--accent-ink); }
+  .xw-clues ol { list-style: none; margin: 0; padding: 0 6px 8px; }
+  .xw-clue {
+    display: flex; align-items: baseline; gap: 10px; width: 100%; min-height: 44px; padding: 9px 10px;
+    border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text);
+    font-size: 15px; line-height: 1.32; text-align: left; transition: background .12s;
+  }
+  .xw-clue:hover { background: var(--panel-2); }
+  .xw-clue__n { flex: none; min-width: 24px; font-family: var(--font-led); font-weight: 700; font-size: 18px; line-height: 1; color: var(--led); }
+  .xw-clue__len { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .xw-clue.is-active { background: rgba(var(--accent-rgb), .13); box-shadow: inset 3px 0 0 var(--accent); }
+  .xw-clue.is-solved .xw-clue__t { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(var(--ok-rgb), .7); }
+  .xw-clue.is-solved .xw-clue__n { color: var(--led-green); }
+  .xw-clue:focus-visible { outline-offset: -3px; }
+  @media (min-width: 980px) {
+    .xw-clues { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+  }
+
+  /* ---------- la soluzione nel resoconto ---------- */
+  .xw-sol { display: grid; gap: 14px; justify-items: center; }
+  .xw-sol__title { justify-self: start; font-size: 22px; }
+  .xw-sol__grid { --sc: min(20px, calc((100vw - 90px) / var(--cols))); display: grid; grid-template-columns: repeat(var(--cols), var(--sc)); grid-template-rows: repeat(var(--rows), var(--sc)); gap: 2px; padding: 8px; background: #030405; border: 1px solid var(--line-2); border-radius: var(--r); }
+  .xw-sol__grid span { display: grid; place-items: center; border-radius: 3px; background: var(--panel-2); font-family: var(--font-led); font-weight: 700; font-size: calc(var(--sc) * .66); line-height: 1; color: var(--led); }
+  .xw-sol__grid span.is-mine { background: #0a2015; color: var(--led-green); }
+  .xw-sol__list { justify-self: stretch; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 4px 14px; margin: 0; padding: 0; list-style: none; font-size: 14px; color: var(--text-2); }
+  .xw-sol__list b { font-family: var(--font-led); color: var(--text); font-weight: 700; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .xw-cell, .xw-cell .xw-ch { animation: none !important; transition: none; }
+  }
+</style>
+</head>
+<body data-game="cruciverba">
+<main id="app" class="qz-main" tabindex="-1">
+
+  <!-- ============ INIZIO ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Gioco 11 · Da solo</span>
+        <h1 class="intro__title xw-title">Il&nbsp;<em>cruciverba</em> del&nbsp;pallone</h1>
+        <p class="intro__lead">Definizioni cattive, incroci al millimetro e una griglia nuova a ogni partita. Campioni, bidoni, stadi e gergo da bar: se le sai, le scrivi. Se non le sai, la panchina ti dà una mano.</p>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
+          <button class="btn btn--lg" type="button" id="resume-btn" hidden></button>
+        </div>
+        <p class="small muted mt-2" id="resume-info"></p>
+        <p class="small muted mt-1" id="start-record"></p>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card xw-form mt-4">
+      <h2 class="xw-form__title">Che griglia vuoi?</h2>
+      <div class="xw-setup">
+        <div class="field"><span class="label" id="lbl-size">Grandezza</span><div id="set-size" aria-labelledby="lbl-size"></div></div>
+        <div class="field"><span class="label" id="lbl-diff">Definizioni</span><div id="set-diff" aria-labelledby="lbl-diff"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PARTITA ============ -->
+  <section class="screen" id="s-game">
+    <h1 class="sr-only">Il cruciverba del pallone: la partita</h1>
+    <div class="xw-layout">
+      <div class="xw-main">
+        <div class="board xw-board">
+          <div class="board__cell"><span class="board__label">Tempo</span><span class="led xw-board__n" id="xw-time">00:00</span></div>
+          <div class="board__cell"><span class="board__label">Parole</span><span class="led xw-board__n" id="xw-words">00/00</span></div>
+          <div class="board__cell"><span class="board__label">Aiuti</span><span class="led xw-board__n" id="xw-aids-n">0</span></div>
+          <div class="board__cell board__cell--grow xw-board__ref" aria-hidden="true"><span class="board__label">Definizione</span><span class="led xw-board__n" id="xw-led-ref"></span></div>
+        </div>
+
+        <div class="xw-bar" id="xw-bar">
+          <button type="button" class="xw-bar__nav" id="xw-prev" aria-label="Definizione precedente"></button>
+          <button type="button" class="xw-bar__main" id="xw-bar-main" aria-describedby="xw-bar-hint">
+            <span class="xw-bar__ref" id="xw-ref"></span>
+            <span class="xw-bar__clue" id="xw-clue"></span>
+          </button>
+          <button type="button" class="xw-bar__nav" id="xw-next" aria-label="Definizione successiva"></button>
+          <span class="sr-only" id="xw-bar-hint">Tocca per passare da orizzontale a verticale</span>
+        </div>
+
+        <div class="xw-wrap" id="xw-wrap">
+          <div class="xw-grid" id="xw-grid" aria-hidden="true"></div>
+          <input class="xw-input" id="xw-input" type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next" aria-describedby="xw-help">
+        </div>
+        <p class="sr-only" id="xw-help">Scrivi le lettere. Frecce per muoverti, Tab per la definizione successiva, spazio per cambiare verso, Esc per uscire dalla griglia. Le definizioni sono anche nell'elenco dopo la griglia.</p>
+
+      </div>
+
+      <div class="xw-side">
+        <div class="xw-aids" id="xw-aids" role="group" aria-label="Aiuti"></div>
+        <aside class="card xw-clues" id="xw-clues" aria-label="Definizioni">
+          <div class="xw-clues__cols">
+            <div><h2>Orizzontali</h2><ol id="xw-across"></ol></div>
+            <div><h2>Verticali</h2><ol id="xw-down"></ol></div>
+          </div>
+        </aside>
+        <p class="small center kbd-hint">Lettere per scrivere, <span class="kbd">←</span><span class="kbd">→</span><span class="kbd">↑</span><span class="kbd">↓</span> per muoverti, <span class="kbd">Tab</span> parola dopo, <span class="kbd">Spazio</span> cambia verso</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
+
+</main>
+
+<script src="assets/qz.js?v=cccf38d2" defer></script>
+<script src="assets/db-cruciverba.js?v=6c397a3d" defer></script>
+<script src="assets/games/cruciverba.js?v=ddb66ec3" defer></script>
+</body>
+</html>
