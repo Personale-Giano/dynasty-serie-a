@@ -1,1535 +1,203 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>Sfida dei Budget · Quizzotti</title>
-    <meta name="description" content="Costruisci la squadra dei tuoi sogni senza sforare il budget: i valori dei calciatori sono nascosti, dovrai indovinarli.">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Sfida dei Budget · Quizzotti">
-    <meta property="og:description" content="Costruisci la squadra dei tuoi sogni senza sforare il budget: i valori dei calciatori sono nascosti, dovrai indovinarli.">
-    <meta property="og:image" content="logo1.png">
-    <meta property="og:locale" content="it_IT">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Sfida dei Budget · Quizzotti">
-    <meta name="twitter:description" content="Costruisci la squadra dei tuoi sogni senza sforare il budget: i valori dei calciatori sono nascosti, dovrai indovinarli.">
-    <meta name="twitter:image" content="logo1.png">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="assets/theme.css?v=0d991ead">
-    <script src="assets/profile.js?v=fc453328"></script>
-  <style>
-    /* ===== STILI GLOBALI (identici a index) ===== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sfida dei Budget · Quizzotti</title>
+<meta name="description" content="Costruisci la squadra dei tuoi sogni avvicinandoti il più possibile al budget: i valori di mercato dei calciatori sono nascosti, dovrai indovinarli. Da 1 a 6 giocatori.">
+<meta name="theme-color" content="#060912">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Sfida dei Budget · Quizzotti">
+<meta property="og:description" content="Prezzi nascosti, budget fisso: chi costruisce la squadra che ci va più vicino?">
+<meta property="og:image" content="logo2.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=5dfbd63b">
+<style>
+  .intro { grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
+  .bg-setup { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 860px) { .bg-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+  .bg-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+  .bg-presets button { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font-weight: 800; font-size: 13px; }
+  .bg-presets button[aria-pressed="true"] { background: rgba(var(--accent-rgb), .16); color: var(--accent); border-color: rgba(var(--accent-rgb), .5); }
+  .stepper output small { font-size: 12px; color: var(--muted); }
 
-    :root {
-      --primary-black: #0a0a0a;
-      --secondary-black: #1a1a1a;
-      --dark-black: #050505;
-      --light-black: #222222;
-      --primary-gold: #d4af37;
-      --secondary-gold: #ffd700;
-      --light-gold: #f5e6a4;
-      --accent-gold: #c9a227;
-      --primary-green: #16e37a;
-      --secondary-green: #39ff8a;
-      --accent-green: #0f9d57;
-      --text-light: #f8f8f8;
-      --text-gray: #cccccc;
-      --shadow-heavy: 0 10px 30px rgba(0, 0, 0, 0.5);
-      --shadow-medium: 0 5px 15px rgba(0, 0, 0, 0.3);
-      --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
+  /* ---- passaggio del telefono ---- */
+  .bg-hand { max-width: 520px; margin: 4vh auto 0; text-align: center; display: grid; justify-items: center; gap: 16px; }
+  .bg-avatar { width: 112px; height: 112px; border-radius: 34%; display: grid; place-items: center; font-family: var(--font-display); font-size: 44px; font-weight: 900; color: #0b1020; background: var(--c); box-shadow: 0 24px 60px -18px var(--c); animation: qz-float 4s ease-in-out infinite; }
+  .bg-hand h2 { font-size: clamp(26px, 6vw, 40px); overflow-wrap: anywhere; }
+  .bg-hand h2 em { font-style: normal; color: var(--c); }
 
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+  /* ---- scelta ---- */
+  .bg-pick { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) { .bg-pick { grid-template-columns: minmax(0, 1fr) 340px; align-items: start; } .bg-side { position: sticky; top: calc(var(--header-h) + 16px); order: 2; } }
+  .bg-turn { display: flex; align-items: center; gap: 12px; }
+  .bg-turn .players__dot { width: 44px; height: 44px; font-size: 16px; }
+  .bg-turn__name { font-family: var(--font-display); font-size: 20px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 
-    body {
-      background: linear-gradient(135deg, var(--dark-black) 0%, var(--primary-black) 100%);
-      color: var(--text-light);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      overflow-x: hidden;
-    }
+  .bg-slots { display: grid; gap: 8px; margin-top: 14px; grid-template-columns: minmax(0, 1fr); }
+  .bg-slot { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 6px 6px 12px; border-radius: 14px; border: 1px dashed var(--line-2); color: var(--faint); font-size: 14px; font-weight: 700; }
+  .bg-slot.is-full { border-style: solid; border-color: rgba(var(--accent-rgb), .45); background: rgba(var(--accent-rgb), .08); color: var(--text); animation: qz-pop-in .35s var(--ease-spring); }
+  .bg-slot__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bg-slot__name small { display: block; font-size: 12px; color: var(--muted); font-weight: 600; }
+  .bg-slot .qz-iconbtn { height: 38px; min-width: 38px; padding: 0; }
 
-    /* ----- HEADER identico a index ----- */
-    header {
-      background: linear-gradient(to right, var(--primary-black), var(--light-black));
-      padding: 10px 12px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow-heavy);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      border-bottom: 2px solid var(--primary-gold);
-      width: 100%;
-      gap: 8px;
-    }
+  .bg-search { position: relative; }
+  .bg-search .ico { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--faint); pointer-events: none; }
+  .bg-search .input { padding-left: 46px; }
+  .bg-roles button { flex: 1 1 0; min-width: 0; padding: 0 6px; }
+  .bg-count { font-size: 13px; color: var(--muted); font-weight: 700; }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      flex: 1 1 auto;
-    }
+  .bg-list { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) { .bg-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .bg-player { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 8px 12px 8px 8px; border-radius: 14px; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--text); transition: border-color .2s, background .2s, transform .15s; }
+  .bg-player:hover:not(:disabled) { border-color: rgba(var(--accent-rgb), .55); background: rgba(var(--accent-rgb), .07); }
+  .bg-player:active:not(:disabled) { transform: scale(.98); }
+  .bg-player:disabled { cursor: default; opacity: .4; }
+  .bg-player[aria-pressed="true"] { border-color: var(--accent); background: rgba(var(--accent-rgb), .14); opacity: 1; }
+  .bg-player__info { flex: 1; min-width: 0; }
+  .bg-player__name { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bg-player__team { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bg-player__state { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); }
+  .bg-player__state .ico { width: 18px; height: 18px; }
+  .bg-player[aria-pressed="true"] .bg-player__state { background: var(--accent); color: var(--on-accent); }
+  .bg-role { flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-family: var(--font-display); font-size: 11px; font-weight: 700; color: var(--rc); background: color-mix(in srgb, var(--rc) 16%, transparent); border: 1px solid color-mix(in srgb, var(--rc) 40%, transparent); }
+  .bg-empty { padding: 28px 12px; text-align: center; color: var(--muted); grid-column: 1 / -1; }
 
-    .logo h1 {
-      font-size: 22px;
-      background: linear-gradient(to right, var(--secondary-gold), var(--light-gold));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      margin: 0;
-      line-height: 1.2;
-    }
+  .bg-dock { position: sticky; bottom: 0; z-index: 20; padding: 12px 0 calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, transparent, var(--bg) 35%); }
 
-    .logo-icon {
-      height: 70px;
-      width: auto;
-      filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
-      animation: pulse 2s infinite alternate;
-    }
+  /* ---- rivelazione ---- */
+  .bg-reveal { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); max-width: 760px; margin: 0 auto; }
+  .bg-rcard { --c: var(--accent); opacity: .45; transition: opacity .4s, transform .4s var(--ease-out), border-color .3s; }
+  .bg-rcard.is-on { opacity: 1; border-color: var(--c); transform: scale(1.01); }
+  .bg-rcard.is-done { opacity: 1; }
+  .bg-rhead { display: flex; align-items: center; gap: 10px; }
+  .bg-rhead .team__dot { --c: inherit; }
+  .bg-rtotal { margin-left: auto; font-family: var(--font-display); font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bg-rlist { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 4px; }
+  .bg-rlist li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .bg-rlist li:last-child { border-bottom: 0; }
+  .bg-rlist .grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bg-rval { font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--faint); white-space: nowrap; }
+  .bg-rval.is-shown { color: var(--accent); animation: qz-pop-in .4s var(--ease-spring); }
+  .bg-meter { position: relative; height: 14px; margin-top: 14px; border-radius: 999px; background: var(--surface-2); }
+  .bg-meter__fill { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .5s var(--ease-out), background .3s; }
+  .bg-meter__fill.is-over { background: linear-gradient(90deg, var(--warn), var(--bad)); }
+  .bg-meter__mark { position: absolute; top: -5px; bottom: -5px; width: 3px; border-radius: 2px; background: #fff; box-shadow: 0 0 10px rgba(255, 255, 255, .7); }
+  .bg-verdict { margin-top: 10px; font-weight: 800; font-size: 14px; min-height: 1.4em; }
 
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.1); }
-    }
-
-    nav ul {
-      display: none;
-      list-style: none;
-    }
-
-    .mobile-menu-toggle {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(to right, var(--light-black), var(--secondary-black));
-      color: var(--secondary-gold);
-      border: 2px solid var(--primary-gold);
-      border-radius: 12px;
-      padding: 12px 16px;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: var(--shadow-medium);
-      transition: all 0.3s ease;
-      min-width: 52px;
-      min-height: 52px;
-      border-radius: 14px;
-    }
-
-    .mobile-menu-toggle:active {
-      background: linear-gradient(to right, var(--secondary-black), var(--light-black));
-      transform: scale(0.96);
-    }
-
-    .game-selector-container {
-      position: relative;
-      width: 100%;
-      order: 3;
-      margin-top: 6px;
-    }
-
-    .game-selector {
-      background: linear-gradient(to right, var(--light-black), var(--secondary-black));
-      color: var(--secondary-gold);
-      border: 2px solid var(--primary-gold);
-      border-radius: 16px;
-      padding: 14px 18px;
-      font-size: 17px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      width: 100%;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      min-height: 58px;
-    }
-
-    .game-selector span {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .game-selector i {
-      transition: transform 0.3s ease;
-      font-size: 18px;
-    }
-
-    .game-selector.active i {
-      transform: rotate(180deg);
-    }
-
-    .game-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: linear-gradient(to bottom, var(--secondary-black), var(--primary-black));
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: var(--shadow-heavy);
-      z-index: 1001;
-      display: none;
-      margin-top: 8px;
-      border: 1px solid var(--primary-gold);
-      max-height: 60vh;
-      overflow-y: auto;
-    }
-
-    .game-dropdown.show {
-      display: block;
-      animation: slideDown 0.25s ease;
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .game-dropdown a {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 18px 20px;
-      color: var(--text-gray);
-      text-decoration: none;
-      transition: all 0.25s ease;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-      font-size: 17px;
-      min-height: 64px;
-    }
-
-    .game-dropdown a:last-child {
-      border-bottom: none;
-    }
-
-    .game-dropdown a:active {
-      background: linear-gradient(to right, rgba(212, 175, 55, 0.2), transparent);
-      color: var(--secondary-gold);
-      padding-left: 24px;
-    }
-
-    .game-dropdown i {
-      width: 28px;
-      text-align: center;
-      font-size: 22px;
-      width: auto;
-    }
-
-    /* ----- OVERLAY MENU MOBILE (identico a index) ----- */
-    .mobile-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1400;
-      pointer-events: none;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-
-    .mobile-overlay.show {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-
-    .mobile-overlay-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .mobile-overlay.show .mobile-overlay-backdrop {
-      opacity: 1;
-    }
-
-    .mobile-overlay-panel {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 80%;
-      max-width: 360px;
-      height: 100vh;
-      background: linear-gradient(180deg, #050505 0%, #0d0d0d 100%);
-      border-right: 2px solid var(--primary-gold);
-      box-shadow: 10px 0 30px rgba(0, 0, 0, 0.7);
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
-      padding: 28px 22px 34px;
-      overflow-y: auto;
-    }
-
-    .mobile-overlay.show .mobile-overlay-panel {
-      transform: translateX(0);
-    }
-
-    .mobile-overlay-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 28px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.25);
-    }
-
-    .mobile-overlay-title {
-      font-size: 26px;
-      color: var(--secondary-gold);
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .mobile-menu-close {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      border: 1px solid rgba(212, 175, 55, 0.45);
-      background: var(--secondary-black);
-      color: var(--secondary-gold);
-      font-size: 24px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mobile-menu-section {
-      margin-bottom: 32px;
-    }
-
-    .mobile-menu-label {
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-gray);
-      margin-bottom: 16px;
-      opacity: 0.9;
-    }
-
-    .mobile-menu-links {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .mobile-menu-link {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      text-decoration: none;
-      color: var(--text-light);
-      padding: 16px 18px;
-      border-radius: 16px;
-      border: 1px solid rgba(212, 175, 55, 0.15);
-      background: rgba(255, 255, 255, 0.02);
-      transition: all 0.2s ease;
-      font-size: 18px;
-      min-height: 64px;
-    }
-
-    .mobile-menu-link:active {
-      color: var(--secondary-gold);
-      border-color: rgba(212, 175, 55, 0.45);
-      background: rgba(212, 175, 55, 0.1);
-      transform: translateX(4px);
-    }
-
-    .mobile-menu-link i {
-      width: auto;
-      width: 26px;
-      text-align: center;
-      font-size: 22px;
-    }
-
-    body.mobile-menu-open {
-      overflow: hidden;
-    }
-
-    /* ----- CONTENUTO PRINCIPALE ----- */
-    .container {
-      max-width: 1400px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 16px 14px;
-    }
-
-    /* Footer */
-    footer {
-      text-align: center;
-      padding: 28px 16px;
-      margin-top: 50px;
-      border-top: 1px solid rgba(212, 175, 55, 0.2);
-      color: var(--text-gray);
-      background: linear-gradient(to top, var(--primary-black), transparent);
-      width: 100%;
-    }
-
-    .footer-links {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-top: 22px;
-      align-items: center;
-    }
-
-    .footer-links a {
-      color: var(--light-gold);
-      text-decoration: none;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      padding: 16px 24px;
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      background: rgba(212, 175, 55, 0.05);
-      border: 1px solid rgba(212, 175, 55, 0.15);
-      width: 100%;
-      max-width: 260px;
-      font-size: 18px;
-      min-height: 60px;
-    }
-
-    .footer-links a:active {
-      background-color: rgba(212, 175, 55, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .copyright {
-      margin-top: 28px;
-      font-size: 14px;
-      color: #888;
-    }
-
-    /* ----- MEDIA QUERIES (copiate da index) ----- */
-    @media (min-width: 480px) {
-      .container { padding: 20px 18px; }
-    }
-
-    @media (min-width: 600px) {
-      header {
-        padding: 12px 20px;
-        flex-wrap: nowrap;
-      }
-      .logo h1 { font-size: 26px; }
-      .game-selector-container {
-        width: auto;
-        min-width: 280px;
-        order: 0;
-        margin-top: 0;
-      }
-      .footer-links {
-        flex-direction: row;
-        gap: 20px;
-      }
-      .footer-links a {
-        width: auto;
-        max-width: none;
-        padding: 14px 28px;
-      }
-    }
-
-    @media (min-width: 768px) {
-      .about-body { padding: 28px 24px; }
-    }
-
-    @media (min-width: 992px) {
-      .mobile-menu-toggle,
-      .mobile-overlay {
-        display: none !important;
-      }
-      nav ul {
-        display: flex;
-        gap: 20px;
-      }
-      nav a {
-        color: var(--text-gray);
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 18px;
-        padding: 12px 18px;
-        border-radius: 12px;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      nav a:hover,
-      nav a.active {
-        color: var(--secondary-gold);
-        background-color: rgba(212, 175, 55, 0.1);
-        transform: translateY(-2px);
-      }
-    }
-
-    @media (max-width: 360px) {
-      .logo h1 { font-size: 20px; }
-      .logo-icon { font-size: 24px; }
-      .mobile-menu-toggle {
-        padding: 10px 14px;
-        font-size: 22px;
-        min-width: 48px;
-        min-height: 48px;
-      }
-      .game-selector {
-        padding: 12px 14px;
-        font-size: 16px;
-        min-height: 54px;
-      }
-    }
-
-    @media (hover: none) and (pointer: coarse) {
-      .game-card:hover {
-        transform: none;
-        box-shadow: var(--shadow-medium);
-        border-color: rgba(212, 175, 55, 0.1);
-      }
-      .game-card:active { transform: scale(0.98); }
-    }
-
-    @media (max-width: 991px) {
-      header .game-selector-container {
-        display: none;
-      }
-    }
-
-    /* ===== STILI SPECIFICI DEL GIOCO ===== */
-    .game-header {
-      text-align: center;
-      margin: 30px 0 20px;
-    }
-    .game-header h1 {
-      font-size: 2.5rem;
-      color: var(--secondary-gold);
-      text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
-      margin-bottom: 10px;
-    }
-    .game-header p {
-      color: var(--text-gray);
-      font-size: 1.1rem;
-    }
-
-    /* Setup iniziale */
-    .setup-panel {
-      background: var(--secondary-black);
-      border: 2px solid var(--primary-gold);
-      border-radius: 20px;
-      padding: 25px;
-      margin-bottom: 30px;
-      box-shadow: var(--shadow-heavy);
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    .setup-panel h2 {
-      color: var(--secondary-gold);
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .setup-row {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-    .setup-item {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .setup-item label {
-      color: var(--text-gray);
-      font-size: 0.9rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-    .setup-item input {
-      padding: 12px 15px;
-      border-radius: 12px;
-      border: 1px solid var(--primary-gold);
-      background: var(--light-black);
-      color: var(--text-light);
-      font-size: 1rem;
-    }
-    .setup-item input:focus {
-      outline: none;
-      border-color: var(--secondary-gold);
-      box-shadow: 0 0 10px rgba(212,175,55,0.5);
-    }
-    /* Nuovo stile per il pulsante random */
-    .randomize-btn {
-      background: var(--accent-gold);
-      color: var(--primary-black);
-      border: none;
-      padding: 12px 20px;
-      border-radius: 40px;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: var(--shadow-medium);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 15px;
-      width: 100%;
-    }
-    .randomize-btn:hover {
-      background: var(--secondary-gold);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-heavy);
-    }
-    #playerNamesContainer {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin: 15px 0;
-    }
-    .player-name-input {
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid var(--primary-gold);
-      background: var(--light-black);
-      color: var(--text-light);
-    }
-    .btn-primary {
-      background: var(--primary-gold);
-      color: var(--primary-black);
-      border: none;
-      padding: 14px 25px;
-      border-radius: 40px;
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: var(--shadow-medium);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-    .btn-primary:hover {
-      background: var(--secondary-gold);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-heavy);
-    }
-
-    /* Schermata di gioco */
-    #gameScreen {
-      display: none;
-    }
-    .turn-indicator {
-      background: linear-gradient(145deg, var(--secondary-black), var(--light-black));
-      border: 2px solid var(--primary-gold);
-      border-radius: 50px;
-      padding: 15px 25px;
-      margin-bottom: 25px;
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: 700;
-    }
-    .turn-indicator span {
-      color: var(--secondary-gold);
-    }
-    .player-stats {
-      display: flex;
-      justify-content: space-between;
-      background: rgba(0,0,0,0.3);
-      border-radius: 15px;
-      padding: 15px 20px;
-      margin-bottom: 20px;
-      border: 1px solid var(--primary-gold);
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-    .stat-block {
-      flex: 1;
-      min-width: 150px;
-      text-align: center;
-    }
-    .stat-label {
-      color: var(--text-gray);
-      font-size: 0.9rem;
-      text-transform: uppercase;
-    }
-    .stat-value {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--secondary-gold);
-    }
-    .stat-value.small {
-      font-size: 1.2rem;
-    }
-    #selectedPlayersList {
-      background: var(--secondary-black);
-      border-radius: 15px;
-      padding: 15px;
-      margin-bottom: 20px;
-      border: 1px solid var(--primary-gold);
-    }
-    #selectedPlayersList h3 {
-      color: var(--light-gold);
-      margin-bottom: 10px;
-      font-size: 1.2rem;
-    }
-    #selectedPlayersGrid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .selected-tag {
-      background: rgba(212,175,55,0.2);
-      border: 1px solid var(--primary-gold);
-      border-radius: 30px;
-      padding: 8px 15px;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .selected-tag i {
-      color: var(--secondary-gold);
-      cursor: pointer;
-    }
-    .selected-tag i:hover {
-      color: #f44336;
-    }
-
-    /* Barra di ricerca */
-    .search-box {
-      margin: 20px 0;
-      position: relative;
-    }
-    .search-box i {
-      position: absolute;
-      left: 15px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-gray);
-      font-size: 1.2rem;
-    }
-    .search-box input {
-      width: 100%;
-      padding: 15px 15px 15px 45px;
-      border-radius: 50px;
-      border: 2px solid var(--primary-gold);
-      background: var(--light-black);
-      color: var(--text-light);
-      font-size: 1rem;
-    }
-    .search-box input:focus {
-      outline: none;
-      border-color: var(--secondary-gold);
-      box-shadow: 0 0 10px rgba(212,175,55,0.5);
-    }
-
-    .players-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-
-    .player-card {
-      background: linear-gradient(145deg, var(--secondary-black), var(--light-black));
-      border: 2px solid rgba(212, 175, 55, 0.2);
-      border-radius: 18px;
-      padding: 16px;
-      transition: all 0.2s;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-    }
-    .player-card:hover:not(.disabled) {
-      transform: translateY(-4px);
-      border-width: auto;
-      box-shadow: var(--shadow-medium);
-    }
-    .player-card.selected {
-      border-color: var(--secondary-gold);
-      background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-      box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-    }
-    .player-card.disabled {
-      opacity: 0.5;
-      pointer-events: none;
-      filter: grayscale(0.6);
-    }
-    .player-name {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: var(--light-gold);
-      margin-bottom: 6px;
-    }
-    .player-role {
-      display: inline-block;
-      background: rgba(212, 175, 55, 0.15);
-      width: auto;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-    .player-team {
-      color: var(--text-gray);
-      font-size: 0.9rem;
-      margin-bottom: 10px;
-    }
-    /* Nascondiamo il valore di mercato */
-    .player-value {
-      display: none;
-    }
-    .checkmark {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      color: var(--secondary-gold);
-      font-size: 1.4rem;
-      display: none;
-    }
-    .player-card.selected .checkmark {
-      display: block;
-    }
-
-    .turn-controls {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      margin: 20px 0 30px;
-      flex-wrap: wrap;
-    }
-    #nextTurnBtn {
-      background: var(--accent-gold);
-      color: var(--primary-black);
-      border: none;
-      padding: 15px 40px;
-      border-radius: 50px;
-      font-weight: 700;
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: var(--shadow-medium);
-    }
-    #nextTurnBtn:hover {
-      background: var(--secondary-gold);
-      transform: scale(1.05);
-    }
-    #checkBudgetBtn {
-      background: var(--primary-gold);
-      color: var(--primary-black);
-      border: none;
-      padding: 15px 40px;
-      border-radius: 50px;
-      font-weight: 700;
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: var(--shadow-medium);
-    }
-    #checkBudgetBtn:hover {
-      background: var(--secondary-gold);
-      transform: scale(1.05);
-    }
-
-    /* Schermata risultati */
-    #resultScreen {
-      display: none;
-      background: var(--secondary-black);
-      border: 2px solid var(--primary-gold);
-      border-radius: 20px;
-      padding: 30px;
-      margin-top: 20px;
-    }
-    .results-table {
-      margin: 25px 0;
-    }
-    .result-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 15px;
-      border-bottom: 1px solid rgba(212,175,55,0.2);
-      font-size: 1.2rem;
-    }
-    .result-row.winner {
-      background: rgba(212,175,55,0.2);
-      border-radius: 10px;
-      font-weight: 700;
-      color: var(--secondary-gold);
-    }
-    .result-name {
-      flex: 2;
-    }
-    .result-spent {
-      flex: 1;
-      text-align: right;
-    }
-    .result-diff {
-      flex: 1;
-      text-align: right;
-      color: var(--text-gray);
-    }
-    .result-detail {
-      margin-left: 20px;
-      margin-bottom: 15px;
-      font-size: 0.9rem;
-      color: var(--text-gray);
-      background: rgba(0,0,0,0.2);
-      padding: 10px;
-      border-radius: 8px;
-    }
-    .result-detail ul {
-      list-style: none;
-      padding-left: 0;
-    }
-    .result-detail li {
-      padding: 4px 0;
-      border-bottom: 1px dashed rgba(212,175,55,0.1);
-    }
-    .result-detail li:last-child {
-      border-bottom: none;
-    }
-    #playAgainBtn {
-      margin-top: 20px;
-      width: 100%;
-    }
-  
-    /* ===== Ritocchi design system condiviso ===== */
-    * { transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease; }
-    @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
+  #end-host .stat__label { overflow-wrap: anywhere; }
+  .bg-detail { display: grid; gap: 8px; margin-top: 20px; text-align: left; }
+  .bg-detail details { border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); padding: 0 14px; }
+  .bg-detail summary { cursor: pointer; padding: 12px 0; font-weight: 800; }
+  .bg-detail .bg-rlist { margin: 0 0 10px; }
 </style>
 </head>
-<body>
-  <!-- HEADER identico a index.html -->
-  <a href="#main-content" class="qz-skip-link">Vai al contenuto principale</a>
-<header>
-    <a href="index.html" class="logo">
-      <picture>
-        <source srcset="logo1.webp" type="image/webp">
-        <img src="logo1.png" alt="Quizzotti Logo" class="logo-icon" width="70" height="70">
-      </picture>
-      <h1>Quizzotti</h1>
-    </a>
+<body data-game="giocatoributget">
+<main id="app" class="qz-main" tabindex="-1">
 
-    <nav>
-      <ul>
-        <li><a href="index.html" title="Home"><i class="fas fa-home"></i></a></li>
-        <li><a href="index.html#games" title="Giochi"><i class="fas fa-gamepad"></i> Giochi</a></li>
-        <li><a href="index.html#about" title="Info"><i class="fas fa-info-circle"></i></a></li>
-      </ul>
-    </nav>
-
-    <button class="qz-profile-badge" id="qz-profile-badge" type="button" aria-label="Il tuo profilo Quizzotti"><i class="fas fa-star" aria-hidden="true"></i><span>Lv. 1</span></button>
-
-    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Apri menu">
-      <i class="fas fa-bars"></i>
-    </button>
-
-    <!-- Dropdown giochi -->
-        <div class="game-selector-container">
-            <div class="game-selector" id="gameSelector">
-                <span><i class="fas fa-gamepad"></i> Seleziona Gioco</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="game-dropdown" id="gameDropdown">
-                <a href="AvantiUnAltro.html"><i class="fas fa-forward"></i> Avanti un Altro</a>
-                <a href="IntesaVincente.html"><i class="fas fa-users"></i> Intesa Vincente</a>
-                <a href="Jeopardy.html"><i class="fas fa-question-circle"></i> Jeopardy</a>
-                <a href="MrWhite.html"><i class="fas fa-user-secret"></i> Mr.White</a>
-                <a href="Taboo.html"><i class="fas fa-ban"></i> Taboo</a>
-                <a href="CVEM.html"><i class="fas fa-money-bill-wave"></i> Chi Vuol Essere Milionario</a>
-                <a href="Bomba.html"><i class="fas fa-bomb"></i> Bomba</a>
-                <a href="sfidaEredita.html"><i class="fas fa-futbol"></i> Derby delle Parole</a>
-                <a href="GiocatoriBudget.html"><i class="fas fa-coins"></i> Sfida dei Budget</a>
-                <a href="Citazioni.html"><i class="fas fa-quote-right"></i> Chi l'ha detto</a>
-            </div>
+  <!-- ============ INIZIO ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Mercato · 1-6 giocatori</span>
+        <h1 class="intro__title">Sfida dei <em>budget</em></h1>
+        <p class="intro__lead">Hai un budget e una rosa da costruire, ma i cartellini sono coperti. A turno scegliete i calciatori stimando quanto valgono: vince chi chiude il mercato più vicino alla cifra esatta.</p>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
-    </header>
-<span id="main-content" tabindex="-1"></span>
-
-    <!-- Overlay menu mobile -->
-    <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true">
-        <div class="mobile-overlay-backdrop" id="mobileOverlayBackdrop"></div>
-        <aside class="mobile-overlay-panel" role="dialog" aria-modal="true" aria-label="Menu mobile">
-            <div class="mobile-overlay-header">
-                <h3 class="mobile-overlay-title">Menu</h3>
-                <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Chiudi">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <div class="mobile-menu-section">
-                <p class="mobile-menu-label">Sezioni</p>
-                <div class="mobile-menu-links">
-                    <a href="index.html" class="mobile-menu-link"><i class="fas fa-home"></i> Home</a>
-                    <a href="index.html#games" class="mobile-menu-link"><i class="fas fa-gamepad"></i> Giochi</a>
-                    <a href="index.html#about" class="mobile-menu-link"><i class="fas fa-info-circle"></i> Info</a>
-                </div>
-            </div>
-
-            <div class="mobile-menu-section">
-                <p class="mobile-menu-label">Minigiochi</p>
-                <div class="mobile-menu-links">
-                    <a href="AvantiUnAltro.html" class="mobile-menu-link"><i class="fas fa-forward"></i> Avanti un Altro</a>
-                    <a href="IntesaVincente.html" class="mobile-menu-link"><i class="fas fa-users"></i> Intesa Vincente</a>
-                    <a href="Jeopardy.html" class="mobile-menu-link"><i class="fas fa-question-circle"></i> Jeopardy</a>
-                    <a href="MrWhite.html" class="mobile-menu-link"><i class="fas fa-user-secret"></i> Mr.White</a>
-                    <a href="Taboo.html" class="mobile-menu-link"><i class="fas fa-ban"></i> Taboo</a>
-                    <a href="CVEM.html" class="mobile-menu-link"><i class="fas fa-money-bill-wave"></i> Chi Vuol Essere Milionario</a>
-                    <a href="Bomba.html" class="mobile-menu-link"><i class="fas fa-bomb"></i> Bomba</a>
-                    <a href="sfidaEredita.html" class="mobile-menu-link"><i class="fas fa-futbol"></i> Derby delle Parole</a>
-                    <a href="GiocatoriBudget.html" class="mobile-menu-link"><i class="fas fa-coins"></i> Sfida dei Budget</a>
-                    <a href="Citazioni.html" class="mobile-menu-link"><i class="fas fa-quote-right"></i> Chi l'ha detto</a>
-                </div>
-            </div>
-        </aside>
-    </div>
-    
-  <!-- CONTENUTO PRINCIPALE DEL GIOCO -->
-  <div class="container">
-    <div class="game-header">
-      <h1>💰 Sfida dei Budget</h1>
-      <p>Ogni giocatore, a turno, sceglie i propri calciatori. Vince chi si avvicina di più al budget senza superarlo (ma puoi anche sforare)! I valori di mercato sono nascosti, devi indovinarli.</p>
-    </div>
-
-    <!-- Schermata di setup -->
-    <div id="setupScreen" class="setup-panel">
-      <h2>⚙️ Imposta la partita</h2>
-      <div class="setup-row">
-        <div class="setup-item">
-          <label>Numero di giocatori</label>
-          <input type="number" id="playersCount" min="2" max="6" value="2">
-        </div>
-        <div class="setup-item">
-          <label>Budget totale (milioni €)</label>
-          <input type="number" id="budgetTotal" min="50" max="1000" value="200" step="5">
-        </div>
-        <div class="setup-item">
-          <label>Giocatori da scegliere ciascuno</label>
-          <input type="number" id="playersPerUser" min="1" max="11" value="3">
-        </div>
+        <p class="small muted mt-2" id="start-record"></p>
       </div>
-      <!-- NUOVO PULSANTE RANDOM -->
-      <button id="randomizeSetupBtn" class="randomize-btn"><i class="fas fa-dice"></i> Randomizza valori</button>
-      <button id="setupNextBtn" class="btn-primary" style="width:100%;"><i class="fas fa-arrow-right"></i> Inserisci nomi</button>
-      
-      <div id="nameSetup" style="display:none; margin-top:20px;">
-        <h3>Inserisci i nomi</h3>
-        <div id="playerNamesContainer"></div>
-        <button id="startGameBtn" class="btn-primary" style="width:100%;"><i class="fas fa-play"></i> Inizia partita!</button>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
       </div>
     </div>
 
-    <!-- Schermata di gioco (turni) -->
-    <div id="gameScreen">
-      <div class="turn-indicator">
-        Turno di <span id="currentPlayerName">Giocatore 1</span>
-      </div>
-      
-      <div class="player-stats">
-        <div class="stat-block">
-          <div class="stat-label">Budget totale</div>
-          <div class="stat-value" id="totalBudget">200 M€</div>
+    <div class="card card--flat mt-4">
+      <div class="bg-setup">
+        <div id="set-players"></div>
+        <div class="stack" style="--gap:20px">
+          <div class="field">
+            <div class="row row--between"><span class="label" id="lbl-budget">Budget (milioni di euro)</span>
+              <div class="stepper" role="group" aria-labelledby="lbl-budget"><button type="button" id="budget-minus" aria-label="Diminuisci budget"></button><output id="budget-out" aria-live="polite"></output><button type="button" id="budget-plus" aria-label="Aumenta budget"></button></div></div>
+            <div class="bg-presets" id="budget-presets" role="group" aria-label="Budget rapidi"></div>
+          </div>
+          <div class="row row--between"><span class="label" id="lbl-picks">Calciatori a testa</span>
+            <div class="stepper" role="group" aria-labelledby="lbl-picks"><button type="button" id="picks-minus" aria-label="Meno calciatori"></button><output id="picks-out" aria-live="polite"></output><button type="button" id="picks-plus" aria-label="Più calciatori"></button></div></div>
+          <div class="field"><span class="label" id="lbl-rule">Se sfori il budget</span><div id="set-rule" aria-labelledby="lbl-rule"></div><p class="small faint" id="rule-help"></p></div>
+          <div class="row">
+            <button class="btn btn--sm" type="button" id="randomize"></button>
+            <button class="btn btn--primary grow" type="button" id="start-btn-2"></button>
+          </div>
         </div>
-        <div class="stat-block">
-          <div class="stat-label">Giocatori scelti</div>
-          <div class="stat-value" id="selectedCount">0/3</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PASSA IL TELEFONO ============ -->
+  <section class="screen" id="s-hand">
+    <div class="bg-hand" id="hand"></div>
+  </section>
+
+  <!-- ============ SCELTA ============ -->
+  <section class="screen" id="s-pick">
+    <div class="bg-pick">
+      <aside class="bg-side card card--tight" aria-label="La tua squadra">
+        <div class="bg-turn">
+          <div class="players__dot" id="p-dot"></div>
+          <div class="grow"><div class="small muted">Sta scegliendo</div><div class="bg-turn__name" id="p-name"></div></div>
+          <button class="qz-iconbtn" type="button" id="p-exit" aria-label="Esci dalla partita"></button>
         </div>
-      </div>
+        <div class="bg-chips" id="p-chips"></div>
+        <div class="bg-slots" id="p-slots" aria-live="polite"></div>
+      </aside>
 
-      <div id="selectedPlayersList">
-        <h3><i class="fas fa-users"></i> La tua squadra</h3>
-        <div id="selectedPlayersGrid"></div>
+      <div class="stack" style="--gap:12px">
+        <div class="bg-search">
+          <label class="sr-only" for="p-search">Cerca calciatore o squadra</label>
+          <input class="input" id="p-search" type="search" placeholder="Cerca nome o squadra…" autocomplete="off" spellcheck="false" enterkeyhint="search">
+        </div>
+        <div class="segmented bg-roles" id="p-roles" aria-label="Filtra per ruolo"></div>
+        <div class="row row--between"><span class="bg-count" id="p-count" aria-live="polite"></span><span class="small faint kbd-hint" style="gap:6px;align-items:center"><span class="kbd">/</span> cerca · <span class="kbd">Invio</span> prende il primo</span></div>
+        <div class="bg-list" id="p-list"></div>
+        <button class="btn btn--ghost btn--block" type="button" id="p-more" hidden></button>
+        <div class="bg-dock"><button class="btn btn--primary btn--lg btn--block" type="button" id="p-confirm"></button></div>
       </div>
-
-      <!-- Barra di ricerca -->
-      <div class="search-box">
-        <i class="fas fa-search"></i>
-        <input type="text" id="searchInput" placeholder="Cerca calciatore...">
-      </div>
-
-      <!-- PULSANTI SPOSTATI SOPRA LE CARD -->
-      <div class="turn-controls">
-        <button id="nextTurnBtn"><i class="fas fa-forward"></i> Prossimo giocatore</button>
-        <button id="checkBudgetBtn" class="btn-primary" style="display:none;"><i class="fas fa-trophy"></i> Controlla i budget</button>
-      </div>
-
-      <div id="playersGrid" class="players-grid"></div>
     </div>
+  </section>
 
-    <!-- Schermata risultati finali (con dettaglio dei calciatori scelti) -->
-    <div id="resultScreen">
-      <h2 style="text-align:center; color:var(--secondary-gold); margin-bottom:20px;">🏆 Classifica Finale</h2>
-      <div id="resultsList" class="results-table"></div>
-      <button id="playAgainBtn" class="btn-primary"><i class="fas fa-redo-alt"></i> Nuova partita</button>
+  <!-- ============ RIVELAZIONE ============ -->
+  <section class="screen" id="s-reveal">
+    <div class="bg-reveal">
+      <div class="center" data-stagger>
+        <span class="eyebrow">Si scoprono le carte</span>
+        <h2 class="result__title mt-1">La resa dei conti</h2>
+        <p class="muted" id="r-sub"></p>
+      </div>
+      <div class="stack" style="--gap:12px" id="r-cards"></div>
+      <div class="row row--center">
+        <button class="btn btn--ghost" type="button" id="r-skip"></button>
+        <button class="btn btn--primary btn--lg" type="button" id="r-next" hidden></button>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <!-- FOOTER (da index) -->
-  <footer>
-    <p style="font-size: 20px; color: var(--light-gold); margin-bottom: 10px;">Quizzotti</p>
-    <p style="max-width: 600px; margin: 0 auto 20px; color: var(--text-gray);">Divertiti con i nostri minigiochi a tema calcio, sempre gratuiti.</p>
-    <div class="footer-links">
-      <a href="index.html"><i class="fas fa-home"></i> Home</a>
-      <a href="index.html#games"><i class="fas fa-gamepad"></i> Giochi</a>
-      <a href="index.html#about"><i class="fas fa-info-circle"></i> Info</a>
-    </div>
-    <div class="copyright">Quizzotti &copy; 2025 - Tutti i diritti sono dei giocatori</div>
-  </footer>
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
 
-  <!-- SCRIPT GESTIONE HEADER (da index) -->
-  <script src="assets/db-giocatoributget.js?v=d9db06ff"></script>
+</main>
 
-    <script>
-    (function() {
-      const gameSelector = document.getElementById('gameSelector');
-      const gameDropdown = document.getElementById('gameDropdown');
-      const mobileToggle = document.getElementById('mobileMenuToggle');
-      const mobileOverlay = document.getElementById('mobileOverlay');
-      const backdrop = document.getElementById('mobileOverlayBackdrop');
-      const closeBtn = document.getElementById('mobileMenuClose');
-      const overlayLinks = mobileOverlay ? mobileOverlay.querySelectorAll('a') : [];
-
-      function closeMainDropdown() {
-        if (gameDropdown) gameDropdown.classList.remove('show');
-        if (gameSelector) gameSelector.classList.remove('active');
-      }
-
-      function toggleMainDropdown(e) {
-        if (e) e.stopPropagation();
-        if (gameDropdown && gameSelector) {
-          gameDropdown.classList.toggle('show');
-          gameSelector.classList.toggle('active');
-        }
-      }
-
-      function openMobileMenu() {
-        if (!mobileOverlay) return;
-        mobileOverlay.classList.add('show');
-        mobileOverlay.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('mobile-menu-open');
-      }
-
-      function closeMobileMenu() {
-        if (!mobileOverlay) return;
-        mobileOverlay.classList.remove('show');
-        mobileOverlay.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('mobile-menu-open');
-      }
-
-      if (gameSelector) {
-        gameSelector.addEventListener('click', toggleMainDropdown);
-      }
-
-      if (mobileToggle) {
-        mobileToggle.addEventListener('click', function(e) {
-          e.stopPropagation();
-          openMobileMenu();
-          closeMainDropdown();
-        });
-      }
-
-      if (backdrop) {
-        backdrop.addEventListener('click', closeMobileMenu);
-      }
-
-      if (closeBtn) {
-        closeBtn.addEventListener('click', closeMobileMenu);
-      }
-
-      overlayLinks.forEach(link => {
-        link.addEventListener('click', closeMobileMenu);
-      });
-
-      document.addEventListener('click', function(e) {
-        if (gameSelector && gameDropdown && !gameSelector.contains(e.target) && !gameDropdown.contains(e.target)) {
-          closeMainDropdown();
-        }
-      });
-
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          closeMobileMenu();
-          closeMainDropdown();
-        }
-      });
-    })();
-  </script>
-
-  <!-- SCRIPT DEL GIOCO (versione con sforamento consentito) -->
-  <script>
-    // DATABASE COMPLETO GIOCATORI - AGGIORNATO A FEBBRAIO 2026
-// Fonte: Transfermarkt, rose ufficiali campionati 2025/26, calciomercato gennaio 2026
-// Valori in milioni di euro
-
-// Database "playersDatabase" caricato da assets/db-giocatoributget.js
-      
-// Esporta il database per l'utilizzo
-console.log(`Database completo creato con ${playersDatabase.length} giocatori`);
-
-// Se necessario, puoi usare questa funzione per rimuovere eventuali duplicati
-const removeDuplicates = (arr) => {
-  const seen = new Set();
-  return arr.filter(item => {
-    const key = `${item.name}-${item.team}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-};
-
-const uniquePlayersDatabase = removeDuplicates(playersDatabase);
-console.log(`Database dopo rimozione duplicati: ${uniquePlayersDatabase.length} giocatori`);
-
-// Esporta per Node.js
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { playersDatabase: uniquePlayersDatabase };
-}
-
-    console.log(`Totale giocatori: ${playersDatabase.length}`);
-  
-    // Variabili di stato del gioco
-    let players = [];                    // lista completa mescolata
-    let takenPlayers = [];                // calciatori già scelti definitivamente
-    let gamePlayers = [];                 // array di oggetti { name, selections: [], spent }
-    let currentPlayerIndex = 0;
-    let playersPerUser = 3;
-    let budgetTotal = 200;
-    let totalPlayers = 2;
-
-    // Elementi DOM
-    const setupScreen = document.getElementById('setupScreen');
-    const gameScreen = document.getElementById('gameScreen');
-    const resultScreen = document.getElementById('resultScreen');
-    const playersCountInput = document.getElementById('playersCount');
-    const budgetTotalInput = document.getElementById('budgetTotal');
-    const playersPerUserInput = document.getElementById('playersPerUser');
-    const setupNextBtn = document.getElementById('setupNextBtn');
-    const nameSetupDiv = document.getElementById('nameSetup');
-    const playerNamesContainer = document.getElementById('playerNamesContainer');
-    const startGameBtn = document.getElementById('startGameBtn');
-    const currentPlayerNameSpan = document.getElementById('currentPlayerName');
-    const totalBudgetSpan = document.getElementById('totalBudget');
-    const selectedCountSpan = document.getElementById('selectedCount');
-    const selectedPlayersGrid = document.getElementById('selectedPlayersGrid');
-    const playersGridEl = document.getElementById('playersGrid');
-    const nextTurnBtn = document.getElementById('nextTurnBtn');
-    const checkBudgetBtn = document.getElementById('checkBudgetBtn');
-    const resultsList = document.getElementById('resultsList');
-    const playAgainBtn = document.getElementById('playAgainBtn');
-    const searchInput = document.getElementById('searchInput');
-    // NUOVO PULSANTE
-    const randomizeSetupBtn = document.getElementById('randomizeSetupBtn');
-
-    // Funzione per mescolare array
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-
-    // NUOVA FUNZIONE: randomizza i campi di setup
-    function randomizeSetup() {
-      
-      // Budget totale tra 50 e 1000, multiplo di 5
-      const randomBudget = Math.floor(Math.random() * ((500 - 50) / 5 + 1)) * 5 + 50;
-      budgetTotalInput.value = randomBudget;
-      
-      // Giocatori da scegliere tra 1 e 11
-      const randomPerUser = Math.floor(Math.random() * (6 - 1 + 1)) + 1;
-      playersPerUserInput.value = randomPerUser;
-    }
-
-    // Event listener per il nuovo pulsante
-    randomizeSetupBtn.addEventListener('click', randomizeSetup);
-
-    // Setup: primo step - mostra campi nomi
-    setupNextBtn.addEventListener('click', () => {
-      totalPlayers = parseInt(playersCountInput.value) || 2;
-      budgetTotal = parseInt(budgetTotalInput.value) || 200;
-      playersPerUser = parseInt(playersPerUserInput.value) || 3;
-
-      if (totalPlayers < 2 || totalPlayers > 6) {
-        alert('Numero di giocatori deve essere tra 2 e 6');
-        return;
-      }
-
-      // Genera input per i nomi
-      playerNamesContainer.innerHTML = '';
-      for (let i = 0; i < totalPlayers; i++) {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'player-name-input';
-        input.placeholder = `Nome Giocatore ${i+1}`;
-        input.value = `Giocatore ${i+1}`;
-        playerNamesContainer.appendChild(input);
-      }
-      nameSetupDiv.style.display = 'block';
-    });
-
-    // Inizio partita
-    startGameBtn.addEventListener('click', () => {
-      // Leggi i nomi
-      const nameInputs = document.querySelectorAll('.player-name-input');
-      gamePlayers = [];
-      for (let i = 0; i < totalPlayers; i++) {
-        gamePlayers.push({
-          name: nameInputs[i].value.trim() || `Giocatore ${i+1}`,
-          selections: [],
-          spent: 0
-        });
-      }
-
-      // Mescola e prepara lista calciatori
-      players = shuffleArray([...playersDatabase]);
-      takenPlayers = []; // reset calciatori già presi
-      
-      // Reset indice turno
-      currentPlayerIndex = 0;
-      
-      // Nascondi setup, mostra game screen
-      setupScreen.style.display = 'none';
-      gameScreen.style.display = 'block';
-      resultScreen.style.display = 'none';
-      
-      // Mostra budget totale fisso
-      totalBudgetSpan.textContent = budgetTotal + ' M€';
-      
-      // Assicurati che i pulsanti siano nello stato corretto
-      nextTurnBtn.style.display = 'inline-block';
-      checkBudgetBtn.style.display = 'none';
-      
-      // Renderizza il turno corrente
-      renderCurrentTurn();
-    });
-
-    // Render del turno corrente
-    function renderCurrentTurn() {
-      const player = gamePlayers[currentPlayerIndex];
-      currentPlayerNameSpan.textContent = player.name;
-      
-      selectedCountSpan.textContent = `${player.selections.length}/${playersPerUser}`;
-      
-      // Mostra giocatori selezionati
-      renderSelected(player);
-      
-      // Mostra griglia calciatori
-      renderPlayersGrid(player);
-    }
-
-    // Mostra i giocatori già selezionati con possibilità di rimuoverli (senza mostrare il valore)
-    function renderSelected(player) {
-      selectedPlayersGrid.innerHTML = '';
-      player.selections.forEach((p, index) => {
-        const tag = document.createElement('span');
-        tag.className = 'selected-tag';
-        tag.innerHTML = `${p.name} <i class="fas fa-times" data-index="${index}"></i>`;
-        tag.querySelector('i').addEventListener('click', (e) => {
-          e.stopPropagation();
-          removeSelection(index);
-        });
-        selectedPlayersGrid.appendChild(tag);
-      });
-    }
-
-    // Rimuove un giocatore dalla selezione corrente
-    function removeSelection(index) {
-      const player = gamePlayers[currentPlayerIndex];
-      player.selections.splice(index, 1);
-      renderCurrentTurn();
-    }
-
-    // Render griglia calciatori (con filtro e disponibilità) - ORA SENZA CONTROLLO BUDGET
-    function renderPlayersGrid(player) {
-      playersGridEl.innerHTML = '';
-      
-      // Calcola i giocatori visibili: non in takenPlayers oppure nella selezione corrente
-      const visiblePlayers = players.filter(p => !takenPlayers.includes(p) || player.selections.includes(p));
-      
-      // Applica filtro di ricerca
-      const term = searchInput.value.toLowerCase().trim();
-      let toShow = visiblePlayers;
-      if (term !== '') {
-        toShow = visiblePlayers.filter(p => 
-          p.name.toLowerCase().includes(term) || p.team.toLowerCase().includes(term)
-        );
-      }
-      
-      toShow.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'player-card';
-        
-        const isSelected = player.selections.includes(p);
-        const isTaken = takenPlayers.includes(p) && !isSelected; // preso da altri e non dal corrente
-        
-        if (isSelected) card.classList.add('selected');
-        
-        // Non controlliamo più il budget: si può aggiungere anche se si sfora
-        const canAdd = !isSelected && !isTaken && player.selections.length < playersPerUser;
-        
-        if (!canAdd && !isSelected) {
-          card.classList.add('disabled');
-        }
-        
-        card.innerHTML = `
-          <div class="player-name">${p.name}</div>
-          <span class="player-role">${p.role}</span>
-          <div class="player-team">${p.team}</div>
-          <div class="checkmark"><i class="fas fa-check-circle"></i></div>
-        `;
-        
-        if (canAdd || isSelected) {
-          card.addEventListener('click', () => togglePlayer(p));
-        }
-        
-        playersGridEl.appendChild(card);
-      });
-    }
-
-    // Aggiunge/rimuove un calciatore dalla selezione corrente - ORA SENZA CONTROLLO BUDGET
-    function togglePlayer(player) {
-      const playerObj = gamePlayers[currentPlayerIndex];
-      const index = playerObj.selections.indexOf(player);
-      
-      if (index > -1) {
-        // Rimuovi
-        playerObj.selections.splice(index, 1);
-      } else {
-        // Aggiungi (controlli solo su già preso e limite numero)
-        if (takenPlayers.includes(player)) {
-          alert('Questo calciatore è già stato scelto da un altro giocatore!');
-          return;
-        }
-        if (playerObj.selections.length >= playersPerUser) {
-          alert(`Hai già selezionato ${playersPerUser} giocatori!`);
-          return;
-        }
-        // Nessun controllo sul budget: si può sforare
-        playerObj.selections.push(player);
-      }
-      
-      renderCurrentTurn();
-    }
-
-    // Prossimo giocatore: salva le scelte e passa al turno successivo
-    nextTurnBtn.addEventListener('click', () => {
-      const player = gamePlayers[currentPlayerIndex];
-      
-      // Controlla che abbia selezionato il numero corretto
-      if (player.selections.length !== playersPerUser) {
-        alert(`Devi selezionare esattamente ${playersPerUser} giocatori!`);
-        return;
-      }
-      
-      // Calcola e salva il totale speso
-      player.spent = player.selections.reduce((sum, p) => sum + p.value, 0);
-      
-      // Aggiungi le sue scelte ai calciatori presi (non più disponibili)
-      takenPlayers.push(...player.selections);
-      
-      // Passa al prossimo giocatore
-      currentPlayerIndex++;
-      
-      if (currentPlayerIndex >= gamePlayers.length) {
-        // Fine di tutti i turni: nascondi "Prossimo giocatore" e mostra "Controlla i budget"
-        nextTurnBtn.style.display = 'none';
-        checkBudgetBtn.style.display = 'inline-block';
-      } else {
-        renderCurrentTurn();
-      }
-    });
-
-    // Controlla i budget e mostra classifica
-    checkBudgetBtn.addEventListener('click', () => {
-      showResults();
-    });
-
-    // Mostra classifica finale con dettaglio dei calciatori scelti
-    function showResults() {
-      gameScreen.style.display = 'none';
-      resultScreen.style.display = 'block';
-      
-      // Calcola differenze dal budget
-      const results = gamePlayers.map(p => {
-        const diff = Math.abs(budgetTotal - p.spent);
-        return { ...p, diff };
-      });
-      
-      // Ordina per chi si è avvicinato di più (differenza minore)
-      results.sort((a, b) => a.diff - b.diff);
-      
-      resultsList.innerHTML = '';
-      results.forEach((r, idx) => {
-        // Riga principale con nome, totale e differenza
-        const row = document.createElement('div');
-        row.className = `result-row ${idx === 0 ? 'winner' : ''}`;
-        row.innerHTML = `
-          <span class="result-name">${r.name}</span>
-          <span class="result-spent">${r.spent} M€</span>
-          <span class="result-diff">(€${r.diff} M€)</span>
-        `;
-        resultsList.appendChild(row);
-        
-        // Dettaglio dei calciatori scelti
-        const detailDiv = document.createElement('div');
-        detailDiv.className = 'result-detail';
-        let detailHtml = '<ul>';
-        r.selections.forEach(p => {
-          detailHtml += `<li><strong>${p.name}</strong> (${p.role}, ${p.team}) - ${p.value} M€</li>`;
-        });
-        detailHtml += '</ul>';
-        detailDiv.innerHTML = detailHtml;
-        resultsList.appendChild(detailDiv);
-      });
-    }
-
-    // Nuova partita
-    playAgainBtn.addEventListener('click', () => {
-      setupScreen.style.display = 'block';
-      gameScreen.style.display = 'none';
-      resultScreen.style.display = 'none';
-      nameSetupDiv.style.display = 'none';
-      searchInput.value = ''; // reset ricerca
-    });
-
-    // Filtro ricerca
-    searchInput.addEventListener('input', () => {
-      if (gamePlayers.length > 0 && currentPlayerIndex < gamePlayers.length) {
-        renderPlayersGrid(gamePlayers[currentPlayerIndex]);
-      }
-    });
-
-    // Inizializzazione (mostra solo setup)
-    setupScreen.style.display = 'block';
-    gameScreen.style.display = 'none';
-    resultScreen.style.display = 'none';
-  </script>
+<script src="assets/qz.js?v=27d37bac" defer></script>
+<script src="assets/db-giocatoributget.js?v=032f36e0" defer></script>
+<script src="assets/games/giocatoributget.js?v=42d864e8" defer></script>
 </body>
 </html>
-
-
-

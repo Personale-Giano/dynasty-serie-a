@@ -1,867 +1,208 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>Bomba · Quizzotti</title>
-    <meta name="description" content="Passatevi la bomba rispondendo a domande di calcio: chi la fa scoppiare in mano perde il round.">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Bomba · Quizzotti">
-    <meta property="og:description" content="Passatevi la bomba rispondendo a domande di calcio: chi la fa scoppiare in mano perde il round.">
-    <meta property="og:image" content="logo1.png">
-    <meta property="og:locale" content="it_IT">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Bomba · Quizzotti">
-    <meta name="twitter:description" content="Passatevi la bomba rispondendo a domande di calcio: chi la fa scoppiare in mano perde il round.">
-    <meta name="twitter:image" content="logo1.png">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="assets/theme.css?v=0d991ead">
-    <script src="assets/profile.js?v=fc453328"></script>
-  <style>
-    /* ========== STILI GLOBALI (da index) ========== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bomba · Quizzotti</title>
+<meta name="description" content="Passatevi il telefono nominando calciatori, squadre e stadi sul tema: la miccia è nascosta e chi tiene la bomba quando scoppia perde. Gioco di gruppo gratuito su Quizzotti.">
+<meta name="theme-color" content="#060912">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Bomba · Quizzotti">
+<meta property="og:description" content="Passatevi la bomba nominando qualcosa sul tema. Chi la tiene quando scoppia perde.">
+<meta property="og:image" content="logo2.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=5dfbd63b">
+<style>
+  .bb-wrap { max-width: 600px; margin: 0 auto; }
+  .bb-setup, .bb-opt { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+  .bb-opt { gap: 8px; }
+  .bb-opt .segmented button { padding: 0 8px; }
+  .bb-cats summary { cursor: pointer; font-weight: 800; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .bb-cats summary::-webkit-details-marker { display: none; }
+  .bb-cats summary .ico { transition: transform .25s; }
+  .bb-cats[open] summary .ico { transform: rotate(90deg); }
+  .bb-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .bb-chips button { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); font-weight: 800; font-size: 12px; transition: background .2s, color .2s, border-color .2s; }
+  .bb-chips button[aria-pressed="true"] { background: rgba(var(--accent-rgb), .16); color: var(--accent-2); border-color: rgba(var(--accent-rgb), .5); }
 
-    :root {
-      --primary-black: #0a0a0a;
-      --secondary-black: #1a1a1a;
-      --dark-black: #050505;
-      --light-black: #222222;
-      --primary-gold: #d4af37;
-      --secondary-gold: #ffd700;
-      --light-gold: #f5e6a4;
-      --accent-gold: #c9a227;
-      --primary-green: #16e37a;
-      --secondary-green: #39ff8a;
-      --accent-green: #0f9d57;
-      --text-light: #f8f8f8;
-      --text-gray: #cccccc;
-      --shadow-heavy: 0 10px 30px rgba(0, 0, 0, 0.5);
-      --shadow-medium: 0 5px 15px rgba(0, 0, 0, 0.3);
-      --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
+  /* Palco della bomba */
+  .bb-topic { text-align: center; padding: 18px 18px 20px; }
+  .bb-topic .eyebrow { justify-content: center; margin-bottom: 8px; }
+  .bb-topic .question { transition: filter .3s, opacity .3s; }
+  .bb-stage { --heat: 0; position: relative; display: grid; place-items: center; height: clamp(200px, 33vh, 300px); }
+  .bb-stage::before { content: ""; position: absolute; width: 78%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, rgba(255, 90, 60, calc(.12 + var(--heat) * .5)), transparent 65%); filter: blur(10px); }
+  .bb-bomb { position: relative; width: min(250px, 66vw); height: 100%; overflow: visible; }
+  .bb-bomb__body { transform-origin: 50% 60%; transform-box: fill-box; }
+  .bb-stage.is-tick .bb-bomb__body { animation: bb-tick .18s ease-out; }
+  @keyframes bb-tick { 40% { transform: scale(1.045); } }
+  .bb-stage.is-hot .bb-bomb { animation: bb-wobble .12s linear infinite; }
+  @keyframes bb-wobble { 25% { transform: translate(-1.5px, 1px) rotate(-1deg); } 75% { transform: translate(1.5px, -1px) rotate(1deg); } }
+  .bb-spark { animation: bb-spark .09s steps(2) infinite; }
+  @keyframes bb-spark { 50% { transform: scale(1.35) rotate(25deg); opacity: .8; } }
+  .bb-spark, .bb-spark * { transform-box: fill-box; transform-origin: center; }
+  .bb-paused .bb-spark { animation: none; opacity: .4; }
+  .bb-paused .bb-topic .question { filter: blur(8px); opacity: .5; }
+  .bb-pausebadge { position: absolute; inset: auto 0 12px; display: none; justify-content: center; }
+  .bb-paused .bb-pausebadge { display: flex; }
 
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+  .bb-boom { position: absolute; inset: 0; display: none; place-items: center; pointer-events: none; }
+  .bb-boom::before { content: ""; position: absolute; width: 60%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, #fff 0 12%, #ffd36b 22%, #ff7a2f 45%, rgba(255, 50, 30, .6) 62%, transparent 72%); animation: bb-blast .9s var(--ease-out) both; }
+  .bb-boom span { position: relative; font-family: var(--font-display); font-weight: 900; font-size: clamp(54px, 18vw, 96px); color: #fff; text-shadow: 0 0 30px #ff7a2f, 0 6px 0 #a3221a; animation: qz-pop-in .5s var(--ease-spring) .1s both; transform: rotate(-6deg); }
+  .bb-stage.is-boom .bb-bomb { display: none; }
+  .bb-stage.is-boom .bb-boom { display: grid; }
+  @keyframes bb-blast { 0% { transform: scale(.1); opacity: 1; } 60% { opacity: 1; } 100% { transform: scale(2.4); opacity: .22; } }
 
-    body {
-      background: linear-gradient(135deg, var(--dark-black) 0%, var(--primary-black) 100%);
-      color: var(--text-light);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      overflow-x: hidden;
-    }
+  .bb-holder { display: grid; justify-items: center; gap: 6px; text-align: center; }
+  .bb-holder__name { --c: var(--accent); font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 8vw, 40px); line-height: 1.05; color: var(--c); text-shadow: 0 0 24px color-mix(in srgb, var(--c) 45%, transparent); overflow-wrap: anywhere; }
+  .bb-holder__name.is-in { animation: bb-in .35s var(--ease-spring) both; }
+  @keyframes bb-in { from { opacity: 0; transform: translateX(40px) scale(.9); } }
+  .bb-pass { min-height: 84px; font-size: 21px; }
 
-    /* ----- HEADER (identico a index) ----- */
-    header {
-      background: linear-gradient(to right, var(--primary-black), var(--light-black));
-      padding: 10px 12px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow-heavy);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      border-bottom: 2px solid var(--primary-gold);
-      width: 100%;
-      gap: 8px;
-    }
+  .bb-board { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .bb-board .chip { --c: var(--muted); color: var(--text); }
+  .bb-board .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+  .bb-board .chip b { font-family: var(--font-display); font-weight: 700; }
+  .bb-board .chip.is-hold { border-color: var(--c); background: color-mix(in srgb, var(--c) 18%, transparent); }
+  .bb-board .chip.is-out { opacity: .35; text-decoration: line-through; }
 
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      flex: 1 1 auto;
-    }
-
-    .logo h1 {
-      font-size: 22px;
-      background: linear-gradient(to right, var(--secondary-gold), var(--light-gold));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      margin: 0;
-      line-height: 1.2;
-    }
-
-    .logo-icon {
-      height: 70px;
-      width: auto;
-      filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
-      animation: pulse 2s infinite alternate;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.1); }
-    }
-
-    /* Menu desktop nascosto su mobile */
-    nav ul {
-      display: none;
-      list-style: none;
-    }
-
-    /* Pulsante menu mobile */
-    .mobile-menu-toggle {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(to right, var(--light-black), var(--secondary-black));
-      color: var(--secondary-gold);
-      border: 2px solid var(--primary-gold);
-      border-radius: 12px;
-      padding: 12px 16px;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: var(--shadow-medium);
-      transition: all 0.3s ease;
-      min-width: 52px;
-      min-height: 52px;
-      border-radius: 14px;
-    }
-
-    .mobile-menu-toggle:active {
-      background: linear-gradient(to right, var(--secondary-black), var(--light-black));
-      transform: scale(0.96);
-    }
-
-    /* Selettore giochi a tendina - mobile a tutta larghezza */
-    .game-selector-container {
-      position: relative;
-      width: 100%;
-      order: 3;
-      margin-top: 6px;
-    }
-
-    .game-selector {
-      background: linear-gradient(to right, var(--light-black), var(--secondary-black));
-      color: var(--secondary-gold);
-      border: 2px solid var(--primary-gold);
-      border-radius: 16px;
-      padding: 14px 18px;
-      font-size: 17px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      width: 100%;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      min-height: 58px;
-    }
-
-    .game-selector span {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .game-selector i {
-      transition: transform 0.3s ease;
-      font-size: 18px;
-    }
-
-    .game-selector.active i {
-      transform: rotate(180deg);
-    }
-
-    .game-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: linear-gradient(to bottom, var(--secondary-black), var(--primary-black));
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: var(--shadow-heavy);
-      z-index: 1001;
-      display: none;
-      margin-top: 8px;
-      border: 1px solid var(--primary-gold);
-      max-height: 60vh;
-      overflow-y: auto;
-    }
-
-    .game-dropdown.show {
-      display: block;
-      animation: slideDown 0.25s ease;
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .game-dropdown a {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 18px 20px;
-      color: var(--text-gray);
-      text-decoration: none;
-      transition: all 0.25s ease;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-      font-size: 17px;
-      min-height: 64px;
-    }
-
-    .game-dropdown a:last-child {
-      border-bottom: none;
-    }
-
-    .game-dropdown a:active {
-      background: linear-gradient(to right, rgba(212, 175, 55, 0.2), transparent);
-      color: var(--secondary-gold);
-      padding-left: 24px;
-    }
-
-    .game-dropdown i {
-      width: 28px;
-      text-align: center;
-      font-size: 22px;
-      width: auto;
-    }
-
-    /* ----- OVERLAY MENU MOBILE (identico a index) ----- */
-    .mobile-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1400;
-      pointer-events: none;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-
-    .mobile-overlay.show {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-
-    .mobile-overlay-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .mobile-overlay.show .mobile-overlay-backdrop {
-      opacity: 1;
-    }
-
-    .mobile-overlay-panel {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 80%;
-      max-width: 360px;
-      height: 100vh;
-      background: linear-gradient(180deg, #050505 0%, #0d0d0d 100%);
-      border-right: 2px solid var(--primary-gold);
-      box-shadow: 10px 0 30px rgba(0, 0, 0, 0.7);
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
-      padding: 28px 22px 34px;
-      overflow-y: auto;
-    }
-
-    .mobile-overlay.show .mobile-overlay-panel {
-      transform: translateX(0);
-    }
-
-    .mobile-overlay-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 28px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.25);
-    }
-
-    .mobile-overlay-title {
-      font-size: 26px;
-      color: var(--secondary-gold);
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .mobile-menu-close {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      border: 1px solid rgba(212, 175, 55, 0.45);
-      background: var(--secondary-black);
-      color: var(--secondary-gold);
-      font-size: 24px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mobile-menu-section {
-      margin-bottom: 32px;
-    }
-
-    .mobile-menu-label {
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-gray);
-      margin-bottom: 16px;
-      opacity: 0.9;
-    }
-
-    .mobile-menu-links {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .mobile-menu-link {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      text-decoration: none;
-      color: var(--text-light);
-      padding: 16px 18px;
-      border-radius: 16px;
-      border: 1px solid rgba(212, 175, 55, 0.15);
-      background: rgba(255, 255, 255, 0.02);
-      transition: all 0.2s ease;
-      font-size: 18px;
-      min-height: 64px;
-    }
-
-    .mobile-menu-link:active {
-      color: var(--secondary-gold);
-      border-color: rgba(212, 175, 55, 0.45);
-      background: rgba(212, 175, 55, 0.1);
-      transform: translateX(4px);
-    }
-
-    .mobile-menu-link i {
-      width: auto;
-      width: 26px;
-      text-align: center;
-      font-size: 22px;
-    }
-
-    body.mobile-menu-open {
-      overflow: hidden;
-    }
-
-    /* ========== STILI SPECIFICI DEL GIOCO (da BOMBA originale) ========== */
-    #container { 
-      background: var(--secondary-black); 
-      padding: 30px; 
-      border-radius: 16px; 
-      box-shadow: var(--shadow-heavy); 
-      text-align: center; 
-      max-width: 380px;
-      width: 95%; 
-      position: relative; 
-      border: 2px solid var(--primary-gold);
-      margin: 20px auto;  /* centrato e con spazio dal header */
-    }
-
-    #topic { font-size: 1.2rem; margin: 20px 0; }
-    #bombContainer { margin: 20px auto; width: 100%; max-width: 250px; text-align: center; }
-    #bomb { width: 100%; max-width: 250px; height: auto; animation: pulse 1.2s infinite; }
-    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-
-    .btn { 
-      padding: 12px 24px; font-size: 1rem; margin: 10px 5px; border: none; border-radius: 8px; 
-      cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; font-weight: bold; 
-      background: var(--primary-gold); color: var(--primary-black); 
-    }
-    .btn:disabled { opacity: 0.4; cursor: default; }
-    .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-    #start { background: var(--primary-gold); color: var(--primary-black); }
-    
-    /* Pulsante Salta round */
-    #skipRound {
-      background: #333;
-      color: var(--text-light);
-      border: 1px solid var(--primary-gold);
-    }
-    #skipRound:hover:not(:disabled) {
-      background: #444;
-    }
-
-    #setup { margin-bottom: 20px; }
-    #playersInput input { width: 80%; padding: 8px; margin: 5px 0; border-radius: 4px; border: 1px solid var(--primary-gold); background: var(--light-black); color: var(--text-light); }
-    #scoreboard { margin-top: 20px; text-align: left; }
-    #scoreboard h3 { margin-bottom: 8px; }
-    #scoreboard ul { list-style: none; padding: 0; }
-    #scoreboard li { margin: 4px 0; }
-    #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 2002; }
-    #modalContent { background: var(--secondary-black); color: var(--text-light); padding: 30px; border-radius: 16px; text-align: center; width: 300px; border: 2px solid var(--primary-gold); box-shadow: var(--shadow-heavy); }
-    #modalContent h2 { margin-bottom: 20px; font-size: 1.8rem; }
-    #modalContent select { width: 100%; padding: 10px; font-size: 1rem; margin-bottom: 15px; border-radius: 6px; border: 1px solid var(--primary-gold); background: var(--light-black); color: var(--text-light); }
-
-    /* Responsività per il contenitore del gioco */
-    @media (max-width: 768px) {
-      #container { padding: 20px 15px; }
-    }
-    @media (max-width: 360px) {
-      #container { width: 98%; padding: 15px; }
-      #topic { font-size: 1rem; }
-      .btn { padding: 12px 16px; font-size: 0.95rem; width: 100%; margin: 5px 0; }
-      #playersInput input { width: 100%; }
-    }
-
-    /* Disabilita hover su touch */
-    @media (hover: none) and (pointer: coarse) {
-      .btn:hover:not(:disabled) { transform: none; box-shadow: none; }
-    }
-
-    /* Nascondi il selettore giochi nell'header su mobile (fino a 991px) - come index */
-    @media (max-width: 991px) {
-      header .game-selector-container {
-        display: none;
-      }
-    }
-
-    /* Tablet: 600px */
-    @media (min-width: 600px) {
-      header { flex-wrap: nowrap; }
-      .game-selector-container { width: auto; min-width: 280px; order: 0; margin-top: 0; }
-    }
-
-    /* Desktop: 992px */
-    @media (min-width: 992px) {
-      .mobile-menu-toggle,
-      .mobile-overlay {
-        display: none !important;
-      }
-      nav ul {
-        display: flex;
-        gap: 20px;
-      }
-      nav a {
-        color: var(--text-gray);
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 18px;
-        padding: 12px 18px;
-        border-radius: 12px;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      nav a:hover,
-      nav a.active {
-        color: var(--secondary-gold);
-        background-color: rgba(212, 175, 55, 0.1);
-        transform: translateY(-2px);
-      }
-    }
-  
-    /* ===== Ritocchi design system condiviso ===== */
-    * { transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease; }
-    @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
-
-        /* ===== FOOTER (allineato al resto della piattaforma) ===== */
-        footer {
-            text-align: center;
-            padding: 28px 16px;
-            margin-top: 50px;
-            border-top: 1px solid rgba(212, 175, 55, 0.2);
-            color: var(--text-gray);
-            background: linear-gradient(to top, var(--primary-black), transparent);
-            width: 100%;
-        }
-
-        .footer-links {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin-top: 22px;
-            align-items: center;
-        }
-
-        .footer-links a {
-            color: var(--light-gold);
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            padding: 16px 24px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            width: 100%;
-            max-width: 260px;
-            font-size: 18px;
-            min-height: 60px;
-        }
-
-        .footer-links a:active {
-            background-color: rgba(212, 175, 55, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .copyright {
-            margin-top: 28px;
-            font-size: 14px;
-            color: #888;
-        }
-
-        @media (min-width: 600px) {
-            .footer-links {
-                flex-direction: row;
-                gap: 20px;
-            }
-            .footer-links a {
-                width: auto;
-                max-width: none;
-                padding: 14px 28px;
-            }
-        }
-
+  .bb-loser { display: grid; justify-items: center; gap: 10px; text-align: center; }
+  .bb-fix { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .bb-standings { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); }
+  .bb-delta { font-family: var(--font-display); font-size: 13px; padding: 3px 8px; border-radius: 8px; color: var(--ok); background: rgba(var(--ok-rgb), .12); }
+  @media (min-width: 900px) { #s-start .intro { align-items: start; } #s-start .intro > .stack { position: sticky; top: calc(var(--header-h) + 32px); } }
 </style>
 </head>
-<body>
-  <!-- HEADER identico a index.html -->
-  <a href="#main-content" class="qz-skip-link">Vai al contenuto principale</a>
-<header>
-    <a href="index.html" class="logo">
-      <picture>
-        <source srcset="logo1.webp" type="image/webp">
-        <img src="logo1.png" alt="Quizzotti Logo" class="logo-icon" width="70" height="70">
-      </picture>
-      <h1>Quizzotti</h1>
-    </a>
+<body data-game="bomba">
+<main id="app" class="qz-main" tabindex="-1">
 
-    <nav>
-      <ul>
-        <li><a href="index.html" title="Home"><i class="fas fa-home"></i></a></li>
-        <li><a href="index.html#games" title="Giochi"><i class="fas fa-gamepad"></i> Giochi</a></li>
-        <li><a href="index.html#about" title="Info"><i class="fas fa-info-circle"></i></a></li>
-      </ul>
-    </nav>
-
-    <button class="qz-profile-badge" id="qz-profile-badge" type="button" aria-label="Il tuo profilo Quizzotti"><i class="fas fa-star" aria-hidden="true"></i><span>Lv. 1</span></button>
-
-    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Apri menu">
-      <i class="fas fa-bars"></i>
-    </button>
-
-    <!-- Dropdown giochi -->
-        <div class="game-selector-container">
-            <div class="game-selector" id="gameSelector">
-                <span><i class="fas fa-gamepad"></i> Seleziona Gioco</span>
-                <i class="fas fa-chevron-down"></i>
+  <!-- ============ INIZIO + IMPOSTAZIONI ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Party · 2-12 giocatori</span>
+        <h1 class="intro__title">Occhio alla <em>bomba</em></h1>
+        <p class="intro__lead">Esce un tema: chi ha la bomba in mano nomina qualcosa e la passa al vicino. La miccia è nascosta e il ticchettio accelera. Quando esplode, chi la tiene perde.</p>
+        <div class="card mt-3">
+          <div class="bb-setup">
+            <div id="players-host"></div>
+            <div class="bb-opt">
+              <span class="label" id="lbl-mode">Modalità</span>
+              <div id="opt-mode" aria-labelledby="lbl-mode"></div>
+              <p class="small muted" id="mode-desc"></p>
             </div>
-            <div class="game-dropdown" id="gameDropdown">
-                <a href="AvantiUnAltro.html"><i class="fas fa-forward"></i> Avanti un Altro</a>
-                <a href="IntesaVincente.html"><i class="fas fa-users"></i> Intesa Vincente</a>
-                <a href="Jeopardy.html"><i class="fas fa-question-circle"></i> Jeopardy</a>
-                <a href="MrWhite.html"><i class="fas fa-user-secret"></i> Mr.White</a>
-                <a href="Taboo.html"><i class="fas fa-ban"></i> Taboo</a>
-                <a href="CVEM.html"><i class="fas fa-money-bill-wave"></i> Chi Vuol Essere Milionario</a>
-                <a href="Bomba.html"><i class="fas fa-bomb"></i> Bomba</a>
-                <a href="sfidaEredita.html"><i class="fas fa-futbol"></i> Derby delle Parole</a>
-                <a href="GiocatoriBudget.html"><i class="fas fa-coins"></i> Sfida dei Budget</a>
-                <a href="Citazioni.html"><i class="fas fa-quote-right"></i> Chi l'ha detto</a>
+            <div class="bb-opt" id="rounds-wrap">
+              <span class="label" id="lbl-rounds">Round</span>
+              <div id="opt-rounds" aria-labelledby="lbl-rounds"></div>
             </div>
+            <div class="bb-opt">
+              <span class="label" id="lbl-fuse">Miccia</span>
+              <div id="opt-fuse" aria-labelledby="lbl-fuse"></div>
+            </div>
+            <details class="bb-cats card card--flat card--tight">
+              <summary><span id="cats-label">Temi</span><span id="cats-ico"></span></summary>
+              <div class="bb-chips" id="cats" role="group" aria-label="Categorie di temi"></div>
+            </details>
+          </div>
         </div>
-    </header>
-<span id="main-content" tabindex="-1"></span>
-
-    <!-- Overlay menu mobile -->
-    <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true">
-        <div class="mobile-overlay-backdrop" id="mobileOverlayBackdrop"></div>
-        <aside class="mobile-overlay-panel" role="dialog" aria-modal="true" aria-label="Menu mobile">
-            <div class="mobile-overlay-header">
-                <h3 class="mobile-overlay-title">Menu</h3>
-                <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Chiudi">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <div class="mobile-menu-section">
-                <p class="mobile-menu-label">Sezioni</p>
-                <div class="mobile-menu-links">
-                    <a href="index.html" class="mobile-menu-link"><i class="fas fa-home"></i> Home</a>
-                    <a href="index.html#games" class="mobile-menu-link"><i class="fas fa-gamepad"></i> Giochi</a>
-                    <a href="index.html#about" class="mobile-menu-link"><i class="fas fa-info-circle"></i> Info</a>
-                </div>
-            </div>
-
-            <div class="mobile-menu-section">
-                <p class="mobile-menu-label">Minigiochi</p>
-                <div class="mobile-menu-links">
-                    <a href="AvantiUnAltro.html" class="mobile-menu-link"><i class="fas fa-forward"></i> Avanti un Altro</a>
-                    <a href="IntesaVincente.html" class="mobile-menu-link"><i class="fas fa-users"></i> Intesa Vincente</a>
-                    <a href="Jeopardy.html" class="mobile-menu-link"><i class="fas fa-question-circle"></i> Jeopardy</a>
-                    <a href="MrWhite.html" class="mobile-menu-link"><i class="fas fa-user-secret"></i> Mr.White</a>
-                    <a href="Taboo.html" class="mobile-menu-link"><i class="fas fa-ban"></i> Taboo</a>
-                    <a href="CVEM.html" class="mobile-menu-link"><i class="fas fa-money-bill-wave"></i> Chi Vuol Essere Milionario</a>
-                    <a href="Bomba.html" class="mobile-menu-link"><i class="fas fa-bomb"></i> Bomba</a>
-                    <a href="sfidaEredita.html" class="mobile-menu-link"><i class="fas fa-futbol"></i> Derby delle Parole</a>
-                    <a href="GiocatoriBudget.html" class="mobile-menu-link"><i class="fas fa-coins"></i> Sfida dei Budget</a>
-                    <a href="Citazioni.html" class="mobile-menu-link"><i class="fas fa-quote-right"></i> Chi l'ha detto</a>
-                </div>
-            </div>
-        </aside>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
+        </div>
+        <p class="small muted mt-2" id="start-record"></p>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
+      </div>
     </div>
+  </section>
 
-  <!-- CONTENUTO PRINCIPALE DEL GIOCO -->
-  <div id="container">
-    <h1>Bomba</h1>
-    <div id="setup">
-      <label>Numero di giocatori:</label>
-      <input type="number" id="numPlayers" min="2" max="10" value="2">
-      <button class="btn" id="setPlayers">Conferma</button>
-      <div id="playersInput"></div>
+  <!-- ============ PRIMA DEL ROUND ============ -->
+  <section class="screen" id="s-ready">
+    <div class="bb-wrap stack" style="--gap:18px">
+      <div class="result" data-stagger>
+        <span class="eyebrow" id="rd-eyebrow"></span>
+        <h2 class="result__title" id="rd-title"></h2>
+        <p class="muted" id="rd-sub"></p>
+      </div>
+      <div class="bb-board" id="rd-board" aria-label="Giocatori"></div>
+      <button class="btn btn--primary btn--xl btn--block" type="button" id="rd-go"></button>
+      <p class="small faint center kbd-hint" style="justify-content:center;gap:6px">Tastiera: <span class="kbd">Spazio</span> passa · <span class="kbd">P</span> pausa · <span class="kbd">S</span> salta tema</p>
     </div>
-    <div id="topic">Tema: <strong><span id="topicText">-</span></strong></div>
-    <div id="bombContainer">
-      <img id="bomb" src="https://i.ibb.co/mVkL15Dt/png-clipart-bomb-bomb-removebg-preview.png" alt="Bomba">
+  </section>
+
+  <!-- ============ PARTITA ============ -->
+  <section class="screen" id="s-game">
+    <div class="bb-wrap stack" style="--gap:14px" id="game">
+      <div class="hud" style="margin:0;flex-wrap:nowrap">
+        <span class="hud__item" id="g-round"></span>
+        <span class="grow"></span>
+        <button class="btn btn--sm btn--icon" type="button" id="g-skip" aria-label="Salta tema" title="Salta tema (S)"></button>
+        <button class="btn btn--sm btn--icon" type="button" id="g-pause" aria-label="Pausa" title="Pausa (P)"></button>
+        <button class="btn btn--ghost btn--sm btn--icon" type="button" id="g-quit" aria-label="Termina la partita" title="Termina la partita"></button>
+      </div>
+      <div class="card card--glow bb-topic">
+        <span class="eyebrow" id="g-cat"></span>
+        <h2 class="question" id="g-topic" aria-live="polite"></h2>
+      </div>
+      <div class="bb-stage" id="stage">
+        <svg class="bb-bomb" id="bomb" viewBox="0 -14 220 236" aria-hidden="true">
+          <defs>
+            <radialGradient id="bb-g" cx="35%" cy="30%" r="75%">
+              <stop offset="0" stop-color="#5a6380"/>
+              <stop offset=".35" stop-color="#262c40"/>
+              <stop offset="1" stop-color="#07090f"/>
+            </radialGradient>
+            <radialGradient id="bb-s" cx="50%" cy="50%" r="50%">
+              <stop offset="0" stop-color="#fff"/>
+              <stop offset=".35" stop-color="#ffe08a"/>
+              <stop offset=".7" stop-color="#ff7a2f" stop-opacity=".7"/>
+              <stop offset="1" stop-color="#ff5a3c" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <g class="bb-bomb__body">
+            <circle cx="100" cy="138" r="72" fill="url(#bb-g)" stroke="#000" stroke-opacity=".5" stroke-width="2"/>
+            <ellipse cx="74" cy="108" rx="20" ry="11" fill="#fff" opacity=".22" transform="rotate(-35 74 108)"/>
+            <rect x="128" y="58" width="34" height="26" rx="5" fill="#3a4157" stroke="#000" stroke-opacity=".5" stroke-width="2" transform="rotate(42 145 71)"/>
+            <rect x="133" y="64" width="24" height="5" rx="2" fill="#fff" opacity=".18" transform="rotate(42 145 71)"/>
+          </g>
+          <path id="fuse" d="M154 60 C 168 44 190 52 192 32 C 194 14 172 12 178 -4" fill="none" stroke="#c9a46a" stroke-width="5" stroke-linecap="round"/>
+          <g id="spark"><g class="bb-spark">
+            <circle r="18" fill="url(#bb-s)"/>
+            <path d="M0 -14V14M-14 0H14M-9 -9 9 9M-9 9 9 -9" stroke="#ffe08a" stroke-width="2" stroke-linecap="round"/>
+          </g></g>
+        </svg>
+        <div class="bb-boom"><span>BOOM!</span></div>
+        <div class="bb-pausebadge"><span class="chip chip--accent" id="pause-chip"></span></div>
+      </div>
+      <div class="bb-holder" aria-live="polite">
+        <span class="label">La bomba è in mano a</span>
+        <div class="bb-holder__name" id="g-holder"></div>
+        <span class="small muted" id="g-next"></span>
+      </div>
+      <button class="btn btn--primary btn--xl btn--block bb-pass" type="button" id="g-pass"></button>
+      <div class="bb-board" id="g-board" aria-label="Classifica"></div>
     </div>
-    <div id="scoreboard"><h3>Punteggi:</h3><ul id="scoresList"></ul></div>
-    <button class="btn" id="start" disabled>Avvia Partita</button>
-    <button class="btn" id="skipRound" style="display:none;">Salta round</button>
-  </div>
+  </section>
 
-  <div id="modal">
-    <div id="modalContent"></div>
-  </div>
+  <!-- ============ ESPLOSIONE ============ -->
+  <section class="screen" id="s-boom">
+    <div class="bb-wrap stack" style="--gap:18px" id="boom-host"></div>
+  </section>
 
-  <footer>
-    <p style="font-size: 20px; color: var(--light-gold); margin-bottom: 10px;">Quizzotti</p>
-    <p style="max-width: 600px; margin: 0 auto 20px; color: var(--text-gray);">Divertiti con i nostri minigiochi a tema calcio, sempre gratuiti.</p>
-    <div class="footer-links">
-      <a href="index.html"><i class="fas fa-home"></i> Home</a>
-      <a href="index.html#games"><i class="fas fa-gamepad"></i> Giochi</a>
-      <a href="index.html#about"><i class="fas fa-info-circle"></i> Info</a>
-    </div>
-    <div class="copyright">Quizzotti &copy; 2025 - Tutti i diritti sono dei giocatori</div>
-  </footer>
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
 
-  <!-- SCRIPT GESTIONE HEADER (da index) -->
-  <script src="assets/sfx.js?v=c7a8a841"></script>
-  <script src="assets/db-bomba.js?v=1571285f"></script>
+</main>
 
-    <script>
-    (function() {
-      // Elementi DOM
-      const gameSelector = document.getElementById('gameSelector');
-      const gameDropdown = document.getElementById('gameDropdown');
-      const mobileToggle = document.getElementById('mobileMenuToggle');
-      const mobileOverlay = document.getElementById('mobileOverlay');
-      const backdrop = document.getElementById('mobileOverlayBackdrop');
-      const closeBtn = document.getElementById('mobileMenuClose');
-      const overlayLinks = mobileOverlay ? mobileOverlay.querySelectorAll('a') : [];
-
-      function closeMainDropdown() {
-        if (gameDropdown) gameDropdown.classList.remove('show');
-        if (gameSelector) gameSelector.classList.remove('active');
-      }
-
-      function toggleMainDropdown(e) {
-        if (e) e.stopPropagation();
-        if (gameDropdown && gameSelector) {
-          gameDropdown.classList.toggle('show');
-          gameSelector.classList.toggle('active');
-        }
-      }
-
-      function openMobileMenu() {
-        if (!mobileOverlay) return;
-        mobileOverlay.classList.add('show');
-        mobileOverlay.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('mobile-menu-open');
-      }
-
-      function closeMobileMenu() {
-        if (!mobileOverlay) return;
-        mobileOverlay.classList.remove('show');
-        mobileOverlay.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('mobile-menu-open');
-      }
-
-      if (gameSelector) {
-        gameSelector.addEventListener('click', toggleMainDropdown);
-      }
-
-      if (mobileToggle) {
-        mobileToggle.addEventListener('click', function(e) {
-          e.stopPropagation();
-          openMobileMenu();
-          closeMainDropdown();
-        });
-      }
-
-      if (backdrop) {
-        backdrop.addEventListener('click', closeMobileMenu);
-      }
-
-      if (closeBtn) {
-        closeBtn.addEventListener('click', closeMobileMenu);
-      }
-
-      overlayLinks.forEach(link => {
-        link.addEventListener('click', closeMobileMenu);
-      });
-
-      document.addEventListener('click', function(e) {
-        if (gameSelector && gameDropdown && !gameSelector.contains(e.target) && !gameDropdown.contains(e.target)) {
-          closeMainDropdown();
-        }
-      });
-
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          closeMobileMenu();
-          closeMainDropdown();
-        }
-      });
-    })();
-  </script>
-
-  <!-- SCRIPT DEL GIOCO (logica BOMBA) -->
-  <script>
-    // Database "topics" caricato da assets/db-bomba.js
-      
-    let players = [], scores = {}, current = 0, timerID, rotationInterval;
-    const tickSound = QZSound.makeAudioLike(QZSound.tick, true);
-    const boomSound = QZSound.makeAudioLike(QZSound.boom, false);
-    const modal = document.getElementById('modal');
-    const modalContent = document.getElementById('modalContent');
-    const skipBtn = document.getElementById('skipRound');
-
-    document.getElementById('setPlayers').addEventListener('click', () => {
-      const num = parseInt(document.getElementById('numPlayers').value, 10);
-      if (isNaN(num) || num < 2) return alert('Inserisci almeno 2 giocatori.');
-      const container = document.getElementById('playersInput');
-      container.innerHTML = '';
-      for (let i = 1; i <= num; i++) {
-        const inp = document.createElement('input');
-        inp.type = 'text'; inp.placeholder = `Nome giocatore ${i}`; inp.id = `p${i}`;
-        container.appendChild(inp);
-      }
-      document.getElementById('start').disabled = false;
-    });
-
-    function pickRandomTopic() {
-      return topics[Math.floor(Math.random() * topics.length)].topic;
-    }
-
-    function updateScoreboard() {
-      const list = document.getElementById('scoresList');
-      list.innerHTML = '';
-      players.forEach(p => {
-        const li = document.createElement('li');
-        li.textContent = `${p}: ${scores[p]} punti`;
-        list.appendChild(li);
-      });
-    }
-
-    function startGame() {
-      const num = parseInt(document.getElementById('numPlayers').value, 10);
-      players = [];
-      scores = {};
-      for (let i = 1; i <= num; i++) {
-        const name = document.getElementById(`p${i}`).value.trim() || `Giocatore ${i}`;
-        players.push(name);
-        scores[name] = 0;
-      }
-      document.getElementById('setup').style.display = 'none';
-      document.getElementById('start').disabled = true;
-      skipBtn.style.display = 'inline-block';
-      updateScoreboard();
-      newRound();
-    }
-
-    function newRound() {
-      current = 0;
-      document.getElementById('topicText').textContent = pickRandomTopic();
-      tickSound.currentTime = 0;
-      tickSound.play();
-
-      rotationInterval = setInterval(() => {
-        current = (current + 1) % players.length;
-        // Nessun aggiornamento visivo del giocatore corrente
-      }, 3000);
-
-      timerID = setTimeout(explode, (Math.random() * 60 + 30) * 1000); // da 40 a 120 sec
-    }
-
-    function explode() {
-      tickSound.pause();
-      boomSound.play();
-      clearInterval(rotationInterval);
-
-      modalContent.innerHTML = `<h2>Chi ha perso?</h2>`;
-      const select = document.createElement('select');
-      select.id = 'loserSelect';
-      players.forEach(p => {
-        const option = document.createElement('option');
-        option.value = p;
-        option.textContent = p;
-        select.appendChild(option);
-      });
-      modalContent.appendChild(select);
-
-      const confirmBtn = document.createElement('button');
-      confirmBtn.className = 'btn';
-      confirmBtn.textContent = 'Conferma';
-      confirmBtn.onclick = () => {
-        const loser = select.value;
-        players.forEach(p => { if (p !== loser) scores[p]++; });
-        updateScoreboard();
-        modal.style.display = 'none';
-        resetForNext();
-      };
-
-      modalContent.appendChild(confirmBtn);
-      modal.style.display = 'flex';
-    }
-
-    function resetForNext() {
-      clearTimeout(timerID);
-      tickSound.pause();
-      newRound();
-    }
-
-    function skipRound() {
-      // Evita di skippare se il modale è aperto
-      if (modal.style.display === 'flex') return;
-      clearTimeout(timerID);
-      clearInterval(rotationInterval);
-      tickSound.pause();
-      newRound();
-    }
-
-    skipBtn.addEventListener('click', skipRound);
-    document.getElementById('start').addEventListener('click', startGame);
-  </script>
+<script src="assets/qz.js?v=27d37bac" defer></script>
+<script src="assets/db-bomba.js?v=f01f340f" defer></script>
+<script src="assets/games/bomba.js?v=d8916df9" defer></script>
 </body>
 </html>
-
-
-

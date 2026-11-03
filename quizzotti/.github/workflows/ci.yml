@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Test, lint e verifica chrome condiviso
+    name: Test e lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,9 +24,6 @@ jobs:
 
       - name: Esegui i test automatici
         run: npm test
-
-      - name: Verifica coerenza header/menu/footer condivisi
-        run: npm run chrome:check
 
       - name: Lint JavaScript
         run: npm run lint

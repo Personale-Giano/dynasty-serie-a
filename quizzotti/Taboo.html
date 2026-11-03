@@ -1,1300 +1,183 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-    <title>Taboo - Quizzotti</title>
-    <meta name="description" content="Fai indovinare la parola calcistica senza usare i termini vietati. Il classico gioco di squadra in versione calcio.">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Taboo - Quizzotti">
-    <meta property="og:description" content="Fai indovinare la parola calcistica senza usare i termini vietati. Il classico gioco di squadra in versione calcio.">
-    <meta property="og:image" content="logo1.png">
-    <meta property="og:locale" content="it_IT">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Taboo - Quizzotti">
-    <meta name="twitter:description" content="Fai indovinare la parola calcistica senza usare i termini vietati. Il classico gioco di squadra in versione calcio.">
-    <meta name="twitter:image" content="logo1.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link rel="stylesheet" href="assets/theme.css?v=0d991ead">
-    <script src="assets/profile.js?v=fc453328"></script>
-    <style>
-        /* ========== STILI GLOBALI E HEADER (copiati da index.html) ========== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        :root {
-            --primary-black: #0a0a0a;
-            --secondary-black: #1a1a1a;
-            --dark-black: #050505;
-            --light-black: #222222;
-            --primary-gold: #d4af37;
-            --secondary-gold: #ffd700;
-            --light-gold: #f5e6a4;
-            --accent-gold: #c9a227;
-            --primary-green: #16e37a;
-            --secondary-green: #39ff8a;
-            --accent-green: #0f9d57;
-            --text-light: #f8f8f8;
-            --text-gray: #cccccc;
-            --shadow-heavy: 0 10px 30px rgba(0, 0, 0, 0.5);
-            --shadow-medium: 0 5px 15px rgba(0, 0, 0, 0.3);
-            --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.2);
-            
-            /* Varianti Taboo (mantenute) */
-            --board-bg: var(--dark-black);
-            --card-bg: var(--secondary-black);
-            --card-border: var(--primary-gold);
-            --main-word-color: var(--secondary-gold);
-            --taboo-word-color: #d32f2f;
-            --primary-button-bg: var(--primary-gold);
-            --secondary-button-bg: var(--accent-gold);
-            --success-button-bg: #2a9d8f;
-            --error-button-bg: #c62828;
-            --score-bg-a: var(--light-black);
-            --score-bg-b: var(--secondary-black);
-        }
-
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
-
-        body {
-            background: linear-gradient(135deg, var(--dark-black) 0%, var(--primary-black) 100%);
-            color: var(--text-light);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            overflow-x: hidden;
-        }
-
-        /* ----- HEADER (MOBILE FIRST) ----- */
-        header {
-            background: linear-gradient(to right, var(--primary-black), var(--light-black));
-            padding: 10px 12px;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: var(--shadow-heavy);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            border-bottom: 2px solid var(--primary-gold);
-            width: 100%;
-            gap: 8px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            flex: 1 1 auto;
-        }
-
-        .logo h1 {
-            font-size: 22px;
-            background: linear-gradient(to right, var(--secondary-gold), var(--light-gold));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            margin: 0;
-            line-height: 1.2;
-        }
-
-        .logo-icon {
-            height: 70px;
-            width: auto;
-            filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
-            animation: pulse 2s infinite alternate;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.1); }
-        }
-
-        /* Menu desktop nascosto su mobile */
-        nav ul {
-            display: none;
-            list-style: none;
-        }
-
-        /* Pulsante menu mobile */
-        .mobile-menu-toggle {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(to right, var(--light-black), var(--secondary-black));
-            color: var(--secondary-gold);
-            border: 2px solid var(--primary-gold);
-            border-radius: 12px;
-            padding: 12px 16px;
-            font-size: 24px;
-            cursor: pointer;
-            box-shadow: var(--shadow-medium);
-            transition: all 0.3s ease;
-            min-width: 52px;
-            min-height: 52px;
-            border-radius: 14px;
-        }
-
-        .mobile-menu-toggle:active {
-            background: linear-gradient(to right, var(--secondary-black), var(--light-black));
-            transform: scale(0.96);
-        }
-
-        /* Selettore giochi a tendina - mobile a tutta larghezza */
-        .game-selector-container {
-            position: relative;
-            width: 100%;
-            order: 3;
-            margin-top: 6px;
-        }
-
-        .game-selector {
-            background: linear-gradient(to right, var(--light-black), var(--secondary-black));
-            color: var(--secondary-gold);
-            border: 2px solid var(--primary-gold);
-            border-radius: 16px;
-            padding: 14px 18px;
-            font-size: 17px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            width: 100%;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            min-height: 58px;
-        }
-
-        .game-selector span {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .game-selector i {
-            transition: transform 0.3s ease;
-            font-size: 18px;
-        }
-
-        .game-selector.active i {
-            transform: rotate(180deg);
-        }
-
-        .game-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: linear-gradient(to bottom, var(--secondary-black), var(--primary-black));
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: var(--shadow-heavy);
-            z-index: 1001;
-            display: none;
-            margin-top: 8px;
-            border: 1px solid var(--primary-gold);
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
-        .game-dropdown.show {
-            display: block;
-            animation: slideDown 0.25s ease;
-        }
-
-        @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .game-dropdown a {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 18px 20px;
-            color: var(--text-gray);
-            text-decoration: none;
-            transition: all 0.25s ease;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-            font-size: 17px;
-            min-height: 64px;
-        }
-
-        .game-dropdown a:last-child {
-            border-bottom: none;
-        }
-
-        .game-dropdown a:active {
-            background: linear-gradient(to right, rgba(212, 175, 55, 0.2), transparent);
-            color: var(--secondary-gold);
-            padding-left: 24px;
-        }
-
-        .game-dropdown i {
-            width: 28px;
-            text-align: center;
-            font-size: 22px;
-            width: auto;
-        }
-
-        /* ----- OVERLAY MENU MOBILE ----- */
-        .mobile-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 1400;
-            pointer-events: none;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-
-        .mobile-overlay.show {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-        }
-
-        .mobile-overlay-backdrop {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .mobile-overlay.show .mobile-overlay-backdrop {
-            opacity: 1;
-        }
-
-        .mobile-overlay-panel {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 80%;
-            max-width: 360px;
-            height: 100vh;
-            background: linear-gradient(180deg, #050505 0%, #0d0d0d 100%);
-            border-right: 2px solid var(--primary-gold);
-            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.7);
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            padding: 28px 22px 34px;
-            overflow-y: auto;
-        }
-
-        .mobile-overlay.show .mobile-overlay-panel {
-            transform: translateX(0);
-        }
-
-        .mobile-overlay-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 28px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.25);
-        }
-
-        .mobile-overlay-title {
-            font-size: 26px;
-            color: var(--secondary-gold);
-            font-weight: 700;
-            margin: 0;
-        }
-
-        .mobile-menu-close {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            border: 1px solid rgba(212, 175, 55, 0.45);
-            background: var(--secondary-black);
-            color: var(--secondary-gold);
-            font-size: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .mobile-menu-section {
-            margin-bottom: 32px;
-        }
-
-        .mobile-menu-label {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-gray);
-            margin-bottom: 16px;
-            opacity: 0.9;
-        }
-
-        .mobile-menu-links {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .mobile-menu-link {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            text-decoration: none;
-            color: var(--text-light);
-            padding: 16px 18px;
-            border-radius: 16px;
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            background: rgba(255, 255, 255, 0.02);
-            transition: all 0.2s ease;
-            font-size: 18px;
-            min-height: 64px;
-        }
-
-        .mobile-menu-link:active {
-            color: var(--secondary-gold);
-            border-color: rgba(212, 175, 55, 0.45);
-            background: rgba(212, 175, 55, 0.1);
-            transform: translateX(4px);
-        }
-
-        .mobile-menu-link i {
-            width: auto;
-            width: 26px;
-            text-align: center;
-            font-size: 22px;
-        }
-
-        body.mobile-menu-open {
-            overflow: hidden;
-        }
-
-        /* Container principale (da index) */
-        .container {
-            max-width: 1400px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 16px 14px;
-        }
-
-        /* Media query per header (copiate da index) */
-        @media (min-width: 600px) {
-            header {
-                padding: 12px 20px;
-                flex-wrap: nowrap;
-            }
-
-            .logo h1 {
-                font-size: 26px;
-            }
-
-            .game-selector-container {
-                width: auto;
-                min-width: 280px;
-                order: 0;
-                margin-top: 0;
-            }
-        }
-
-        @media (min-width: 992px) {
-            .mobile-menu-toggle,
-            .mobile-overlay {
-                display: none !important;
-            }
-
-            nav ul {
-                display: flex;
-                gap: 20px;
-            }
-
-            nav a {
-                color: var(--text-gray);
-                text-decoration: none;
-                font-weight: 600;
-                font-size: 18px;
-                padding: 12px 18px;
-                border-radius: 12px;
-                transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-
-            nav a:hover,
-            nav a.active {
-                color: var(--secondary-gold);
-                background-color: rgba(212, 175, 55, 0.1);
-                transform: translateY(-2px);
-            }
-        }
-
-        /* Nascondi selettore giochi nell'header su mobile */
-        @media (max-width: 991px) {
-            header .game-selector-container {
-                display: none;
-            }
-        }
-
-        /* ========== STILI SPECIFICI DEL GIOCO TABOO ========== */
-        .game-box {
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 30px;
-            background: var(--secondary-black);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            border: 2px solid var(--primary-gold);
-            transition: all 0.3s ease;
-        }
-
-        .game-title {
-            text-align: center;
-            margin: 2rem 0 1rem;
-        }
-
-        .game-title h1 {
-            font-size: 3.5rem;
-            color: var(--main-word-color);
-            text-shadow: 3px 3px 0px rgba(0,0,0,0.1);
-            margin-bottom: 0.5rem;
-        }
-
-        .game-title p {
-            font-size: 1.1rem;
-            color: var(--text-color);
-        }
-
-        .scores-container {
-            display: flex;
-            gap: 3rem;
-            margin-bottom: 2.5rem;
-            animation: fadeIn 1s ease 0.5s forwards;
-            opacity: 0;
-        }
-
-        .team-score {
-            background: var(--card-bg);
-            padding: 1.2rem 2.5rem;
-            border-radius: 15px;
-            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            text-align: center;
-            border: 3px solid;
-            flex-grow: 1;
-        }
-
-        .team-score#teamA { border-color: var(--score-bg-a); }
-        .team-score#teamB { border-color: var(--score-bg-b); }
-
-        .team-score.active {
-            transform: translateY(-8px) scale(1.05);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
-            animation: pulse 1.5s infinite ease-in-out;
-        }
-
-        .team-score h2 {
-            font-size: 1.8rem;
-            margin-top: 0;
-            margin-bottom: 0.5rem;
-            color: var(--main-word-color);
-        }
-
-        .team-score p {
-            font-size: 1.6rem;
-            font-weight: bold;
-            color: var(--text-light);
-            margin: 0;
-        }
-
-        .game-board {
-            background: var(--card-bg);
-            padding: 3rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 700px;
-            margin: 0 auto;
-            position: relative;
-            overflow: hidden;
-            animation: zoomIn 0.8s ease 0.8s forwards;
-            opacity: 0;
-            border: 4px solid var(--card-border);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .timer-section {
-            width: 100%;
-            margin-bottom: 2rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .timer-bar {
-            height: 12px;
-            background: #e0e0e0;
-            border-radius: 6px;
-            overflow: hidden;
-            width: 80%;
-            max-width: 500px;
-            margin-bottom: 0.8rem;
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .timer-progress {
-            height: 100%;
-            background: linear-gradient(90deg, #74c69d, #40916c);
-            width: 100%;
-            transform-origin: left;
-            transition: width 1s linear;
-            border-radius: 6px;
-        }
-
-        .timer {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--main-word-color);
-            text-align: center;
-        }
-
-        .card-container {
-            perspective: 1500px;
-            width: 100%;
-            max-width: 650px;
-            height: 400px;
-            margin-bottom: 2rem;
-            position: relative; /* Fondamentale per il posizionamento assoluto delle carte */
-        }
-
-        .game-card {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            transform-style: preserve-3d;
-            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-            background: var(--card-bg);
-            border: 3px solid var(--card-border);
-            border-radius: 18px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            padding: 0;
-            text-align: center;
-        }
-
-        .game-card.flipped {
-            transform: rotateY(180deg);
-        }
-
-        .card-front, .card-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-            padding: 1.5rem;
-        }
-
-        .card-back {
-            transform: rotateY(180deg);
-        }
-
-        .main-word-card {
-            position: absolute;
-            height: 45%;
-            top: 0;
-            left: 0;
-            z-index: 2;
-        }
-
-        .taboo-word-card {
-            position: absolute;
-            height: 65%;
-            top: 40%;
-            left: 0;
-            z-index: 1;
-        }
-        
-        .main-word {
-            font-size: 3.8rem;
-            color: var(--main-word-color);
-            margin: 0;
-            line-height: 1;
-            word-break: break-word; 
-            text-align: center;
-            width: 100%;
-        }
-
-        .taboo-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            font-size: 1.2rem;
-            color: var(--taboo-word-color);
-            font-weight: bold;
-            text-align: center; 
-            line-height: 1.3;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-        }
-
-        .taboo-list li {
-            margin-bottom: 0.4rem;
-        }
-        
-        .placeholder-text {
-            font-size: 2.5rem;
-            color: #ccc;
-        }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap; 
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .controls button {
-            background: var(--primary-button-bg);
-            color: #fff;
-            border: none;
-            padding: 1rem 2rem;
-            font-size: 1.2rem;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-            min-width: 120px; 
-        }
-
-        .controls button:hover:not(:disabled) {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-        }
-
-        .controls button:active:not(:disabled) {
-            transform: translateY(0);
-            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
-        }
-
-        .controls button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            background: #ccc;
-        }
-
-        #startBtn { background: linear-gradient(135deg, var(--primary-button-bg), #2c5670); }
-        #correctBtn { background: linear-gradient(135deg, var(--success-button-bg), #21766c); }
-        #wrongBtn { background: linear-gradient(135deg, var(--error-button-bg), #cb4f3f); }
-        #nextBtn { background: linear-gradient(135deg, var(--secondary-button-bg), #d8813f); }
-
-        /* Animations */
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes zoomIn {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        @keyframes pulse {
-            0% { transform: translateY(-8px) scale(1.05); }
-            50% { transform: translateY(-12px) scale(1.08); }
-            100% { transform: translateY(-8px) scale(1.05); }
-        }
-
-        /* Responsive per il gioco - MODIFICHE PER MOBILE */
-        @media (max-width: 768px) {
-            .game-title h1 { font-size: 2.8rem; }
-            .scores-container {
-                flex-direction: column; 
-                gap: 1.5rem;
-                width: 100%; 
-            }
-            .team-score { padding: 1rem 1.5rem; }
-            .team-score h2 { font-size: 1.5rem; }
-            .team-score p { font-size: 1.3rem; }
-            .game-board { padding: 2rem; }
-            .timer { font-size: 1.2rem; }
-            
-            /* Aumento altezza contenitore carte e ridimensionamento per dare più spazio alle parole proibite */
-            .card-container { 
-                height: 300px; 
-            }
-            .main-word-card {
-                height: 35%;
-                top: 0;
-            }
-            .taboo-word-card {
-                height: 65%;
-                top: 35%;
-            }
-            .main-word { font-size: 2.5rem; }
-            .taboo-list { font-size: 1rem; }
-            
-            .controls { gap: 1rem; }
-            .controls button { padding: 0.8rem 1.5rem; font-size: 1rem; }
-        }
-
-        @media (max-width: 480px) {
-            .game-title h1 { font-size: 2rem; }
-            .scores-container { width: 100%; }
-            .team-score { padding: 0.8rem 1rem; }
-            .team-score h2 { font-size: 1.2rem; }
-            .team-score p { font-size: 1.1rem; }
-            .game-board { padding: 1.5rem; }
-            .timer { font-size: 1rem; }
-            
-            .card-container { 
-                height: 260px; 
-            }
-            .main-word-card {
-                height: 35%;
-                top: 0;
-            }
-            .taboo-word-card {
-                height: 65%;
-                top: 35%;
-            }
-            .main-word { font-size: 2rem; }
-            .taboo-list { font-size: 0.9rem; }
-            
-            .placeholder-text { font-size: 1.8rem; }
-            .controls button { padding: 0.6rem 1rem; font-size: 0.9rem; }
-        }
-    
-    /* ===== Ritocchi design system condiviso ===== */
-    * { transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease; }
-    @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
-
-        /* ===== FOOTER (allineato al resto della piattaforma) ===== */
-        footer {
-            text-align: center;
-            padding: 28px 16px;
-            margin-top: 50px;
-            border-top: 1px solid rgba(212, 175, 55, 0.2);
-            color: var(--text-gray);
-            background: linear-gradient(to top, var(--primary-black), transparent);
-            width: 100%;
-        }
-
-        .footer-links {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin-top: 22px;
-            align-items: center;
-        }
-
-        .footer-links a {
-            color: var(--light-gold);
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            padding: 16px 24px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            width: 100%;
-            max-width: 260px;
-            font-size: 18px;
-            min-height: 60px;
-        }
-
-        .footer-links a:active {
-            background-color: rgba(212, 175, 55, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .copyright {
-            margin-top: 28px;
-            font-size: 14px;
-            color: #888;
-        }
-
-        @media (min-width: 600px) {
-            .footer-links {
-                flex-direction: row;
-                gap: 20px;
-            }
-            .footer-links a {
-                width: auto;
-                max-width: none;
-                padding: 14px 28px;
-            }
-        }
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Taboo · Quizzotti</title>
+<meta name="description" content="Taboo a tema calcio: fai indovinare calciatori, squadre, stadi e trofei ai compagni senza dire le parole vietate. Oltre 2.000 carte, gratis su Quizzotti.">
+<meta name="theme-color" content="#060912">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Taboo · Quizzotti">
+<meta property="og:description" content="Fai indovinare la parola senza dire quelle vietate: oltre 2.000 carte a tema calcio.">
+<meta property="og:image" content="logo2.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=5dfbd63b">
+<style>
+  .switch input { flex: none; }
+  .tb-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 28px; }
+  @media (min-width: 900px) { .tb-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+  .tb-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .tb-groups { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tb-group { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); color: var(--muted); font-weight: 800; font-size: 13px; transition: background .2s, color .2s, border-color .2s, transform .15s; }
+  .tb-group small { font-weight: 700; color: var(--faint); }
+  .tb-group:active { transform: scale(.95); }
+  .tb-group[aria-pressed="true"] { background: rgba(var(--accent-rgb), .18); border-color: rgba(var(--accent-rgb), .7); color: var(--text); }
+  .tb-group[aria-pressed="true"] small { color: var(--accent-2); }
+
+  /* passaggio del telefono */
+  .tb-hand { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; justify-items: center; text-align: center; padding-top: 8px; }
+  .tb-hand__badge { width: 96px; height: 96px; border-radius: 32%; display: grid; place-items: center; color: #0b1020; background: var(--c); box-shadow: 0 24px 60px -18px var(--c); animation: qz-pop-in .6s var(--ease-spring) both, qz-float 5s ease-in-out .6s infinite; }
+  .tb-hand__badge .ico { width: 46px; height: 46px; }
+  .tb-hand__name { font-size: clamp(30px, 8vw, 54px); font-weight: 900; color: var(--c); overflow-wrap: anywhere; }
+  .tb-hand .teams { width: 100%; }
+  .tb-hand .card { width: 100%; text-align: left; }
+
+  /* partita */
+  .tb-play { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 620px; margin: 0 auto; }
+  .tb-hud { display: flex; align-items: center; gap: 12px; }
+  .tb-hud .timer-ring { --size: 68px; }
+  .tb-hud__team { display: grid; min-width: 0; flex: 1; }
+  .tb-hud__team b { font-family: var(--font-display); font-size: 18px; color: var(--c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tb-hud__pts { font-family: var(--font-display); font-size: 28px; font-variant-numeric: tabular-nums; text-align: right; line-height: 1; }
+  .tb-hud__pts small { display: block; font-family: var(--font-body); font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
+  .tb-stage { overflow: hidden; margin: -12px; padding: 12px; }
+  .tb-card { text-align: center; padding: 26px 18px 18px; border-radius: var(--r-xl); min-height: 330px; display: flex; flex-direction: column; }
+  .tb-card .bigword { font-size: clamp(30px, 9vw, 58px); min-height: 1.1em; display: grid; place-items: center; flex: 1; }
+  .tb-card__label { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 18px 0 10px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--bad); }
+  .tb-card__label::before, .tb-card__label::after { content: ""; flex: 1; height: 1px; background: rgba(var(--bad-rgb), .35); }
+  .tb-taboo { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; }
+  .tb-taboo li { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 12px; border-radius: 12px; background: rgba(var(--bad-rgb), .1); border: 1px solid rgba(var(--bad-rgb), .25); font-weight: 800; font-size: 17px; overflow-wrap: anywhere; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 50ms + .12s); }
+  .tb-taboo .ico { color: var(--bad); width: 16px; height: 16px; }
+  .tb-card__cat { margin-top: 12px; font-size: 12px; color: var(--faint); font-weight: 700; }
+  .tb-card.is-in { animation: tb-in .38s var(--ease-spring) both; }
+  .tb-card.is-go-ok { animation: tb-go-ok .22s ease-in both; }
+  .tb-card.is-go-bad { animation: tb-go-bad .22s ease-in both; }
+  .tb-card.is-go-skip { animation: tb-go-skip .22s ease-in both; }
+  @keyframes tb-in { from { opacity: 0; transform: translateY(26px) scale(.94) rotate(-1.5deg); } }
+  @keyframes tb-go-ok { to { opacity: 0; transform: translateX(40%) rotate(7deg); } }
+  @keyframes tb-go-skip { to { opacity: 0; transform: translateX(-40%) rotate(-7deg); } }
+  @keyframes tb-go-bad { to { opacity: 0; transform: translateY(18%) scale(.9); } }
+  .tb-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 8px; }
+  .tb-actions .btn { padding: 0 8px; min-height: 64px; flex-direction: column; gap: 2px; font-size: 14px; }
+  .tb-actions .btn small { font-size: 11px; font-weight: 700; opacity: .8; }
+
+  /* riepilogo turno */
+  .tb-sum { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .tb-sum__row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; font-weight: 800; transition: background .2s, border-color .2s; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
+  .tb-sum__row span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .tb-sum__row[data-res="ok"] { border-color: rgba(var(--ok-rgb), .4); background: rgba(var(--ok-rgb), .08); }
+  .tb-sum__row[data-res="bad"] { border-color: rgba(var(--bad-rgb), .4); background: rgba(var(--bad-rgb), .08); }
+  .tb-sum__row small { display: block; font-size: 11px; color: var(--faint); font-weight: 700; }
 </style>
 </head>
-<body>
-    <!-- Header identico a index.html -->
-    <a href="#main-content" class="qz-skip-link">Vai al contenuto principale</a>
-<header>
-    <a href="index.html" class="logo">
-      <picture>
-        <source srcset="logo1.webp" type="image/webp">
-        <img src="logo1.png" alt="Quizzotti Logo" class="logo-icon" width="70" height="70">
-      </picture>
-      <h1>Quizzotti</h1>
-    </a>
+<body data-game="taboo">
+<main id="app" class="qz-main" tabindex="-1">
 
-    <nav>
-      <ul>
-        <li><a href="index.html" title="Home"><i class="fas fa-home"></i></a></li>
-        <li><a href="index.html#games" title="Giochi"><i class="fas fa-gamepad"></i> Giochi</a></li>
-        <li><a href="index.html#about" title="Info"><i class="fas fa-info-circle"></i></a></li>
-      </ul>
-    </nav>
-
-    <button class="qz-profile-badge" id="qz-profile-badge" type="button" aria-label="Il tuo profilo Quizzotti"><i class="fas fa-star" aria-hidden="true"></i><span>Lv. 1</span></button>
-
-    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Apri menu">
-      <i class="fas fa-bars"></i>
-    </button>
-
-    <!-- Dropdown giochi -->
-        <div class="game-selector-container">
-            <div class="game-selector" id="gameSelector">
-                <span><i class="fas fa-gamepad"></i> Seleziona Gioco</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="game-dropdown" id="gameDropdown">
-                <a href="AvantiUnAltro.html"><i class="fas fa-forward"></i> Avanti un Altro</a>
-                <a href="IntesaVincente.html"><i class="fas fa-users"></i> Intesa Vincente</a>
-                <a href="Jeopardy.html"><i class="fas fa-question-circle"></i> Jeopardy</a>
-                <a href="MrWhite.html"><i class="fas fa-user-secret"></i> Mr.White</a>
-                <a href="Taboo.html"><i class="fas fa-ban"></i> Taboo</a>
-                <a href="CVEM.html"><i class="fas fa-money-bill-wave"></i> Chi Vuol Essere Milionario</a>
-                <a href="Bomba.html"><i class="fas fa-bomb"></i> Bomba</a>
-                <a href="sfidaEredita.html"><i class="fas fa-futbol"></i> Derby delle Parole</a>
-                <a href="GiocatoriBudget.html"><i class="fas fa-coins"></i> Sfida dei Budget</a>
-                <a href="Citazioni.html"><i class="fas fa-quote-right"></i> Chi l'ha detto</a>
-            </div>
+  <!-- ============ INIZIO ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Party · 2-6 squadre</span>
+        <h1 class="intro__title">Dillo senza <em>dirlo</em></h1>
+        <p class="intro__lead">Fai indovinare calciatori, squadre, stadi e trofei ai tuoi compagni, senza mai pronunciare le parole vietate. Oltre 2.000 carte a tema calcio.</p>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
-    </header>
-<span id="main-content" tabindex="-1"></span>
-
-    <!-- Overlay menu mobile -->
-    <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true">
-        <div class="mobile-overlay-backdrop" id="mobileOverlayBackdrop"></div>
-        <aside class="mobile-overlay-panel" role="dialog" aria-modal="true" aria-label="Menu mobile">
-            <div class="mobile-overlay-header">
-                <h3 class="mobile-overlay-title">Menu</h3>
-                <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Chiudi">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <div class="mobile-menu-section">
-                <p class="mobile-menu-label">Sezioni</p>
-                <div class="mobile-menu-links">
-                    <a href="index.html" class="mobile-menu-link"><i class="fas fa-home"></i> Home</a>
-                    <a href="index.html#games" class="mobile-menu-link"><i class="fas fa-gamepad"></i> Giochi</a>
-                    <a href="index.html#about" class="mobile-menu-link"><i class="fas fa-info-circle"></i> Info</a>
-                </div>
-            </div>
-
-            <div class="mobile-menu-section">
-                <p class="mobile-menu-label">Minigiochi</p>
-                <div class="mobile-menu-links">
-                    <a href="AvantiUnAltro.html" class="mobile-menu-link"><i class="fas fa-forward"></i> Avanti un Altro</a>
-                    <a href="IntesaVincente.html" class="mobile-menu-link"><i class="fas fa-users"></i> Intesa Vincente</a>
-                    <a href="Jeopardy.html" class="mobile-menu-link"><i class="fas fa-question-circle"></i> Jeopardy</a>
-                    <a href="MrWhite.html" class="mobile-menu-link"><i class="fas fa-user-secret"></i> Mr.White</a>
-                    <a href="Taboo.html" class="mobile-menu-link"><i class="fas fa-ban"></i> Taboo</a>
-                    <a href="CVEM.html" class="mobile-menu-link"><i class="fas fa-money-bill-wave"></i> Chi Vuol Essere Milionario</a>
-                    <a href="Bomba.html" class="mobile-menu-link"><i class="fas fa-bomb"></i> Bomba</a>
-                    <a href="sfidaEredita.html" class="mobile-menu-link"><i class="fas fa-futbol"></i> Derby delle Parole</a>
-                    <a href="GiocatoriBudget.html" class="mobile-menu-link"><i class="fas fa-coins"></i> Sfida dei Budget</a>
-                    <a href="Citazioni.html" class="mobile-menu-link"><i class="fas fa-quote-right"></i> Chi l'ha detto</a>
-                </div>
-            </div>
-        </aside>
-    </div>
-
-    <!-- Contenuto principale del gioco -->
-    <div class="container">
-        <div class="game-box">
-            <div class="game-title">
-                <h1>Taboo</h1>
-                <p>Indovina la parola senza dire i termini proibiti!</p>
-            </div>
-
-            <div class="scores-container">
-                <div id="teamA" class="team-score active">
-                    <h2>Squadra A</h2>
-                    <p>Punteggio: <span id="scoreA">0</span></p>
-                </div>
-                <div id="teamB" class="team-score">
-                    <h2>Squadra B</h2>
-                    <p>Punteggio: <span id="scoreB">0</span></p>
-                </div>
-            </div>
-
-            <div class="game-board">
-                <div class="timer-section">
-                    <div class="timer-bar"><div id="progress" class="timer-progress"></div></div>
-                    <div class="timer">Tempo: <span id="time">60</span>s</div>
-                </div>
-
-                <div class="card-container">
-                    <div id="mainWordCard" class="game-card main-word-card">
-                        <div class="card-front">
-                            <p class="placeholder-text">Click Start</p>
-                        </div>
-                        <div class="card-back">
-                            <h2 class="main-word" id="mainWord"></h2>
-                        </div>
-                    </div>
-
-                    <div id="tabooWordsCard" class="game-card taboo-word-card">
-                        <div class="card-front">
-                            <p class="placeholder-text">Parole proibite</p>
-                        </div>
-                        <div class="card-back">
-                            <h3>Parole proibite:</h3>
-                            <ul class="taboo-list" id="tabooWords"></ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="controls">
-                    <button id="startBtn">Start Turno</button>
-                    <button id="correctBtn" disabled>Indovinata</button>
-                    <button id="wrongBtn" disabled>Errore</button>
-                    <button id="nextBtn" disabled>Prossima</button>
-                </div>
-            </div>
+        <p class="small muted mt-2" id="start-record"></p>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
         </div>
+      </div>
     </div>
 
-    <footer>
-    <p style="font-size: 20px; color: var(--light-gold); margin-bottom: 10px;">Quizzotti</p>
-    <p style="max-width: 600px; margin: 0 auto 20px; color: var(--text-gray);">Divertiti con i nostri minigiochi a tema calcio, sempre gratuiti.</p>
-    <div class="footer-links">
-      <a href="index.html"><i class="fas fa-home"></i> Home</a>
-      <a href="index.html#games"><i class="fas fa-gamepad"></i> Giochi</a>
-      <a href="index.html#about"><i class="fas fa-info-circle"></i> Info</a>
+    <div class="tb-setup">
+      <div class="card" id="teams-host"></div>
+      <div class="card tb-opts">
+        <div class="field"><span class="label" id="lbl-time">Tempo per turno</span><div id="opt-time" aria-labelledby="lbl-time"></div></div>
+        <div class="field"><span class="label" id="lbl-rounds">Giri (ogni squadra gioca un turno per giro)</span><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
+        <div class="field"><span class="label" id="lbl-pen">Parola vietata detta</span><div id="opt-pen" aria-labelledby="lbl-pen"></div></div>
+        <div class="field"><span class="label" id="lbl-skip">Passi per turno</span><div id="opt-skip" aria-labelledby="lbl-skip"></div></div>
+        <div class="field">
+          <div class="row row--between"><span class="label" id="lbl-groups">Argomenti</span><button class="btn btn--ghost btn--sm" type="button" id="groups-all">Tutti</button></div>
+          <div class="tb-groups" id="groups" role="group" aria-labelledby="lbl-groups"></div>
+          <p class="small faint" id="groups-hint"></p>
+        </div>
+      </div>
     </div>
-    <div class="copyright">Quizzotti &copy; 2025 - Tutti i diritti sono dei giocatori</div>
-  </footer>
+  </section>
 
-    <!-- Script per l'header (copiato da index) -->
-    <script src="assets/db-taboo.js?v=f66481aa"></script>
+  <!-- ============ PASSA IL TELEFONO ============ -->
+  <section class="screen" id="s-turn">
+    <div class="tb-hand qz-main--narrow" style="margin:0 auto" data-stagger>
+      <div class="tb-hand__badge" id="hand-badge"></div>
+      <div>
+        <span class="eyebrow" id="hand-round"></span>
+        <h2 class="tb-hand__name mt-1" id="hand-name"></h2>
+      </div>
+      <div class="card card--tight">
+        <ul class="rules" id="hand-rules"></ul>
+      </div>
+      <button class="btn btn--primary btn--xl btn--block" type="button" id="go-btn" data-autofocus></button>
+      <div class="teams" id="hand-scores" aria-label="Classifica"></div>
+    </div>
+  </section>
 
-    <script>
-        (function() {
-            // Elementi DOM
-            const gameSelector = document.getElementById('gameSelector');
-            const gameDropdown = document.getElementById('gameDropdown');
-            const mobileToggle = document.getElementById('mobileMenuToggle');
-            const mobileOverlay = document.getElementById('mobileOverlay');
-            const backdrop = document.getElementById('mobileOverlayBackdrop');
-            const closeBtn = document.getElementById('mobileMenuClose');
-            const overlayLinks = mobileOverlay ? mobileOverlay.querySelectorAll('a') : [];
+  <!-- ============ PARTITA ============ -->
+  <section class="screen" id="s-game">
+    <div class="tb-play">
+      <div class="tb-hud">
+        <div id="timer-host"></div>
+        <div class="tb-hud__team"><span class="small muted">Spiega</span><b id="hud-team"></b></div>
+        <div class="tb-hud__pts"><span id="hud-pts" aria-live="polite">0</span><small>punti turno</small></div>
+        <button class="btn btn--ghost btn--icon btn--sm" type="button" id="pause-btn" aria-label="Pausa"></button>
+      </div>
+      <div class="tb-stage">
+        <div class="card card--glow tb-card" id="card">
+          <div class="bigword" id="word" aria-live="assertive"></div>
+          <div class="tb-card__label">Vietate</div>
+          <ul class="tb-taboo" id="taboo" aria-label="Parole vietate"></ul>
+          <div class="tb-card__cat" id="word-cat"></div>
+        </div>
+      </div>
+      <div class="tb-actions">
+        <button class="btn btn--bad" type="button" id="bad-btn"></button>
+        <button class="btn" type="button" id="skip-btn"></button>
+        <button class="btn btn--ok" type="button" id="ok-btn"></button>
+      </div>
+      <p class="small faint center kbd-hint" style="justify-content:center;gap:6px;flex-wrap:wrap">Tastiera: <span class="kbd">→</span> indovinata · <span class="kbd">←</span> vietata · <span class="kbd">↓</span> passo · <span class="kbd">Esc</span> pausa</p>
+    </div>
+  </section>
 
-            // Funzioni dropdown
-            function closeMainDropdown() {
-                if (gameDropdown) gameDropdown.classList.remove('show');
-                if (gameSelector) gameSelector.classList.remove('active');
-            }
+  <!-- ============ RIEPILOGO TURNO ============ -->
+  <section class="screen" id="s-sum">
+    <div class="qz-main--narrow stack" style="--gap:18px;margin:0 auto">
+      <div class="center" data-stagger>
+        <span class="eyebrow" id="sum-eyebrow"></span>
+        <h2 class="result__title mt-1" id="sum-title" style="color:var(--c);overflow-wrap:anywhere"></h2>
+        <div class="result__big" id="sum-pts" aria-live="polite">0</div>
+        <p class="muted" id="sum-total"></p>
+        <p class="small faint mt-1">Tocca una parola per correggerla se avete premuto il tasto sbagliato.</p>
+      </div>
+      <div class="tb-sum" id="sum-list"></div>
+      <button class="btn btn--primary btn--xl btn--block" type="button" id="sum-next"></button>
+    </div>
+  </section>
 
-            function toggleMainDropdown(e) {
-                if (e) e.stopPropagation();
-                if (gameDropdown && gameSelector) {
-                    gameDropdown.classList.toggle('show');
-                    gameSelector.classList.toggle('active');
-                }
-            }
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
 
-            // Funzioni overlay mobile
-            function openMobileMenu() {
-                if (!mobileOverlay) return;
-                mobileOverlay.classList.add('show');
-                mobileOverlay.setAttribute('aria-hidden', 'false');
-                document.body.classList.add('mobile-menu-open');
-            }
+</main>
 
-            function closeMobileMenu() {
-                if (!mobileOverlay) return;
-                mobileOverlay.classList.remove('show');
-                mobileOverlay.setAttribute('aria-hidden', 'true');
-                document.body.classList.remove('mobile-menu-open');
-            }
-
-            // Event listeners
-            if (gameSelector) {
-                gameSelector.addEventListener('click', toggleMainDropdown);
-            }
-
-            if (mobileToggle) {
-                mobileToggle.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    openMobileMenu();
-                    closeMainDropdown(); // chiudi il dropdown se aperto
-                });
-            }
-
-            if (backdrop) {
-                backdrop.addEventListener('click', closeMobileMenu);
-            }
-
-            if (closeBtn) {
-                closeBtn.addEventListener('click', closeMobileMenu);
-            }
-
-            overlayLinks.forEach(link => {
-                link.addEventListener('click', closeMobileMenu);
-            });
-
-            // Chiudi dropdown cliccando fuori
-            document.addEventListener('click', function(e) {
-                if (gameSelector && gameDropdown && !gameSelector.contains(e.target) && !gameDropdown.contains(e.target)) {
-                    closeMainDropdown();
-                }
-            });
-
-            // Chiudi con tasto Esc
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    closeMobileMenu();
-                    closeMainDropdown();
-                }
-            });
-        })();
-    </script>
-
-    <!-- Script del gioco Taboo (originale, leggermente adattato) -->
-    <script>
-        // Setup AudioContext for sounds
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const audioCtx = new AudioCtx();
-
-        function playTone(freq, duration, type = 'sine', volume = 0.1) {
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-            
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            osc.frequency.value = freq;
-            osc.type = type;
-            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
-        }
-
-        function tickSound() { playTone(1000, 0.03); }
-        function correctSound() { playTone(523, 0.2, 'triangle', 0.15); }
-        function wrongSound() { playTone(150, 0.2, 'sawtooth', 0.15); }
-        function startSound() { 
-            playTone(330, 0.1, 'sine', 0.1); 
-            setTimeout(() => playTone(440, 0.1, 'sine', 0.1), 100); 
-        } 
-        function endSound() { 
-            playTone(200, 0.3, 'square', 0.2); 
-            setTimeout(() => playTone(100, 0.3, 'square', 0.2), 150); 
-        }
-
-        // Database "tabooWords" caricato da assets/db-taboo.js
-      
-        let currentIndex = -1;
-        let timerInterval;
-        const initialTime = 60;
-        let timeLeft = initialTime;
-        let currentTeam = 'A';
-        let scoreA = 0, scoreB = 0;
-        let usedWords = new Set();
-
-        const mainWordEl = document.getElementById('mainWord');
-        const tabooWordsEl = document.getElementById('tabooWords');
-        const timeEl = document.getElementById('time');
-        const progressEl = document.getElementById('progress');
-        const startBtn = document.getElementById('startBtn');
-        const correctBtn = document.getElementById('correctBtn');
-        const wrongBtn = document.getElementById('wrongBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const teamAEl = document.getElementById('teamA');
-        const teamBEl = document.getElementById('teamB');
-        const scoreAEl = document.getElementById('scoreA');
-        const scoreBEl = document.getElementById('scoreB');
-        const mainWordCard = document.getElementById('mainWordCard');
-        const tabooWordsCard = document.getElementById('tabooWordsCard');
-        const mainWordCardFrontPlaceholder = document.querySelector('#mainWordCard .card-front .placeholder-text');
-        const tabooWordsCardFrontPlaceholder = document.querySelector('#tabooWordsCard .card-front .placeholder-text');
-
-        function updateScores() {
-            scoreAEl.textContent = scoreA;
-            scoreBEl.textContent = scoreB;
-            teamAEl.classList.toggle('active', currentTeam === 'A');
-            teamBEl.classList.toggle('active', currentTeam === 'B');
-        }
-
-        function flipCardsToBack() {
-            mainWordCard.classList.add('flipped');
-            tabooWordsCard.classList.add('flipped');
-        }
-
-        function flipCardsToFront() {
-            mainWordCard.classList.remove('flipped');
-            tabooWordsCard.classList.remove('flipped');
-        }
-
-        function getNewWordIndex() {
-            if (usedWords.size === tabooWords.length) {
-                alert("Hai usato tutte le parole! Riniziamo il mazzo.");
-                usedWords.clear();
-            }
-            let newIndex;
-            do {
-                newIndex = Math.floor(Math.random() * tabooWords.length);
-            } while (usedWords.has(newIndex));
-            usedWords.add(newIndex);
-            return newIndex;
-        }
-
-        function displayWord() {
-            flipCardsToFront();
-            
-            setTimeout(() => {
-                currentIndex = getNewWordIndex();
-                const item = tabooWords[currentIndex];
-
-                mainWordEl.textContent = item.word;
-                tabooWordsEl.innerHTML = item.taboo.map(t => `<li>${t}</li>`).join('');
-
-                mainWordCardFrontPlaceholder.textContent = '';
-                tabooWordsCardFrontPlaceholder.textContent = '';
-
-                setTimeout(() => {
-                    flipCardsToBack();
-                }, 50);
-            }, 300);
-        }
-
-        function startTimer() {
-            startSound();
-            timeLeft = initialTime;
-            updateProgress();
-            timeEl.textContent = timeLeft;
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                if (timeLeft <= 10 && timeLeft > 0) tickSound();
-                timeEl.textContent = timeLeft;
-                updateProgress();
-                if (timeLeft <= 0) {
-                    endTurn();
-                }
-            }, 1000);
-        }
-
-        function updateProgress() {
-            progressEl.style.width = (timeLeft / initialTime * 100) + '%';
-            if (timeLeft <= 10) {
-                progressEl.style.background = 'linear-gradient(90deg, #e63946, #b13742)';
-            } else {
-                progressEl.style.background = 'linear-gradient(90deg, #74c69d, #40916c)';
-            }
-        }
-
-        function endTurn() {
-            clearInterval(timerInterval);
-            endSound();
-            setTimeout(() => {
-                alert(`Turno Squadra ${currentTeam} finito!`);
-                currentTeam = currentTeam === 'A' ? 'B' : 'A';
-                updateScores();
-                correctBtn.disabled = wrongBtn.disabled = nextBtn.disabled = true;
-                startBtn.style.display = 'block';
-                startBtn.disabled = false;
-                
-                flipCardsToFront();
-                setTimeout(() => {
-                    mainWordEl.textContent = '';
-                    tabooWordsEl.innerHTML = '';
-                    mainWordCardFrontPlaceholder.textContent = 'Click Start';
-                    tabooWordsCardFrontPlaceholder.textContent = 'Parole proibite';
-                }, 600);
-                
-                progressEl.style.width = '100%';
-                timeEl.textContent = initialTime;
-            }, 200);
-        }
-
-        // Event Listeners
-        startBtn.addEventListener('click', () => {
-            startBtn.style.display = 'none';
-            correctBtn.disabled = false;
-            wrongBtn.disabled = false;
-            nextBtn.disabled = false;
-            displayWord();
-            startTimer();
-        });
-
-        correctBtn.addEventListener('click', () => {
-            correctSound();
-            currentTeam === 'A' ? scoreA++ : scoreB++;
-            updateScores();
-            displayWord();
-        });
-
-        wrongBtn.addEventListener('click', () => {
-            wrongSound();
-            displayWord();
-        });
-
-        nextBtn.addEventListener('click', () => {
-            displayWord();
-        });
-
-        // Initial setup
-        window.addEventListener('DOMContentLoaded', () => {
-            flipCardsToFront();
-            mainWordCardFrontPlaceholder.textContent = 'Click Start';
-            tabooWordsCardFrontPlaceholder.textContent = 'Parole proibite';
-            updateScores();
-        });
-    </script>
+<script src="assets/qz.js?v=27d37bac" defer></script>
+<script src="assets/db-taboo.js?v=0fd96ecb" defer></script>
+<script src="assets/games/taboo.js?v=e5927a05" defer></script>
 </body>
 </html>
-
-
-

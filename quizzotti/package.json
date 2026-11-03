@@ -1,17 +1,15 @@
 {
   "name": "quizzotti",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Quizzotti - piattaforma di minigiochi calcio (HTML/CSS/JS statico, nessun bundler)",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
     "test": "node --test",
-    "chrome:check": "node scripts/sync-chrome.js",
-    "chrome:fix": "node scripts/sync-chrome.js --fix",
     "cache-bust": "node scripts/cache-bust.js",
-    "lint": "eslint assets/*.js scripts/*.js tests/*.js",
+    "lint": "eslint assets/*.js assets/games/*.js scripts/*.js tests/*.js",
     "lint:css": "stylelint assets/*.css",
-    "check": "npm run test && npm run chrome:check && npm run lint && npm run lint:css"
+    "check": "npm run test && npm run lint && npm run lint:css"
   },
   "devDependencies": {
     "eslint": "^9.39.5",

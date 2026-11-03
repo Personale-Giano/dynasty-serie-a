@@ -1,1405 +1,169 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-  <title>Jeopardy · Quizzotti</title>
-    <meta name="description" content="Sfida i tuoi amici in un quiz a squadre con 9 categorie a tema calcio: Serie A, Champions League, Mondiali, calciomercato e altro.">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Jeopardy · Quizzotti">
-    <meta property="og:description" content="Sfida i tuoi amici in un quiz a squadre con 9 categorie a tema calcio: Serie A, Champions League, Mondiali, calciomercato e altro.">
-    <meta property="og:image" content="logo1.png">
-    <meta property="og:locale" content="it_IT">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Jeopardy · Quizzotti">
-    <meta name="twitter:description" content="Sfida i tuoi amici in un quiz a squadre con 9 categorie a tema calcio: Serie A, Champions League, Mondiali, calciomercato e altro.">
-    <meta name="twitter:image" content="logo1.png">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="assets/theme.css?v=0d991ead">
-    <script src="assets/profile.js?v=fc453328"></script>
-  <style>
-
-* {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    :root {
-      --primary-black: #0a0a0a;
-      --secondary-black: #1a1a1a;
-      --dark-black: #050505;
-      --light-black: #222222;
-      --primary-gold: #d4af37;
-      --secondary-gold: #ffd700;
-      --light-gold: #f5e6a4;
-      --accent-gold: #c9a227;
-      --primary-green: #16e37a;
-      --secondary-green: #39ff8a;
-      --accent-green: #0f9d57;
-      --text-light: #f8f8f8;
-      --text-gray: #cccccc;
-      --shadow-heavy: 0 10px 30px rgba(0, 0, 0, 0.5);
-      --shadow-medium: 0 5px 15px rgba(0, 0, 0, 0.3);
-      --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    /* ===== Ritocchi design system condiviso ===== */
-    * { transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease; }
-    button, .btn, a { -webkit-tap-highlight-color: transparent; }
-    @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
-
-    body {
-      background: linear-gradient(135deg, var(--dark-black) 0%, var(--primary-black) 100%);
-      color: var(--text-light);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      overflow-x: hidden;
-    }
-
-    /* ----- HEADER (identico a index) ----- */
-    header {
-      background: linear-gradient(to right, var(--primary-black), var(--light-black));
-      padding: 10px 12px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow-heavy);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      border-bottom: 2px solid var(--primary-gold);
-      width: 100%;
-      gap: 8px;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      flex: 1 1 auto;
-    }
-
-    .logo h1 {
-      font-size: 22px;
-      background: linear-gradient(to right, var(--secondary-gold), var(--light-gold));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      margin: 0;
-      line-height: 1.2;
-    }
-
-    .logo-icon {
-      height: 70px;
-      width: auto;
-      filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
-      animation: pulse 2s infinite alternate;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.1); }
-    }
-
-    /* Menu desktop nascosto su mobile */
-    nav ul {
-      display: none;
-      list-style: none;
-    }
-
-    /* Pulsante menu mobile */
-    .mobile-menu-toggle {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(to right, var(--light-black), var(--secondary-black));
-      color: var(--secondary-gold);
-      border: 2px solid var(--primary-gold);
-      border-radius: 12px;
-      padding: 12px 16px;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: var(--shadow-medium);
-      transition: all 0.3s ease;
-      min-width: 52px;
-      min-height: 52px;
-      border-radius: 14px;
-    }
-
-    .mobile-menu-toggle:active {
-      background: linear-gradient(to right, var(--secondary-black), var(--light-black));
-      transform: scale(0.96);
-    }
-
-    /* Selettore giochi a tendina - mobile a tutta larghezza */
-    .game-selector-container {
-      position: relative;
-      width: 100%;
-      order: 3;
-      margin-top: 6px;
-    }
-
-    .game-selector {
-      background: linear-gradient(to right, var(--light-black), var(--secondary-black));
-      color: var(--secondary-gold);
-      border: 2px solid var(--primary-gold);
-      border-radius: 16px;
-      padding: 14px 18px;
-      font-size: 17px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      width: 100%;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      min-height: 58px;
-    }
-
-    .game-selector span {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .game-selector i {
-      transition: transform 0.3s ease;
-      font-size: 18px;
-    }
-
-    .game-selector.active i {
-      transform: rotate(180deg);
-    }
-
-    .game-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: linear-gradient(to bottom, var(--secondary-black), var(--primary-black));
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: var(--shadow-heavy);
-      z-index: 1001;
-      display: none;
-      margin-top: 8px;
-      border: 1px solid var(--primary-gold);
-      max-height: 60vh;
-      overflow-y: auto;
-    }
-
-    .game-dropdown.show {
-      display: block;
-      animation: slideDown 0.25s ease;
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .game-dropdown a {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 18px 20px;
-      color: var(--text-gray);
-      text-decoration: none;
-      transition: all 0.25s ease;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-      font-size: 17px;
-      min-height: 64px;
-    }
-
-    .game-dropdown a:last-child {
-      border-bottom: none;
-    }
-
-    .game-dropdown a:active {
-      background: linear-gradient(to right, rgba(212, 175, 55, 0.2), transparent);
-      color: var(--secondary-gold);
-      padding-left: 24px;
-    }
-
-    .game-dropdown i {
-      width: 28px;
-      text-align: center;
-      font-size: 22px;
-      width: auto;
-    }
-
-    /* ----- OVERLAY MENU MOBILE (identico a index) ----- */
-    .mobile-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1400;
-      pointer-events: none;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-
-    .mobile-overlay.show {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-
-    .mobile-overlay-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .mobile-overlay.show .mobile-overlay-backdrop {
-      opacity: 1;
-    }
-
-    .mobile-overlay-panel {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 80%;
-      max-width: 360px;
-      height: 100vh;
-      background: linear-gradient(180deg, #050505 0%, #0d0d0d 100%);
-      border-right: 2px solid var(--primary-gold);
-      box-shadow: 10px 0 30px rgba(0, 0, 0, 0.7);
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
-      padding: 28px 22px 34px;
-      overflow-y: auto;
-    }
-
-    .mobile-overlay.show .mobile-overlay-panel {
-      transform: translateX(0);
-    }
-
-    .mobile-overlay-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 28px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.25);
-    }
-
-    .mobile-overlay-title {
-      font-size: 26px;
-      color: var(--secondary-gold);
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .mobile-menu-close {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      border: 1px solid rgba(212, 175, 55, 0.45);
-      background: var(--secondary-black);
-      color: var(--secondary-gold);
-      font-size: 24px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mobile-menu-section {
-      margin-bottom: 32px;
-    }
-
-    .mobile-menu-label {
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-gray);
-      margin-bottom: 16px;
-      opacity: 0.9;
-    }
-
-    .mobile-menu-links {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .mobile-menu-link {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      text-decoration: none;
-      color: var(--text-light);
-      padding: 16px 18px;
-      border-radius: 16px;
-      border: 1px solid rgba(212, 175, 55, 0.15);
-      background: rgba(255, 255, 255, 0.02);
-      transition: all 0.2s ease;
-      font-size: 18px;
-      min-height: 64px;
-    }
-
-    .mobile-menu-link:active {
-      color: var(--secondary-gold);
-      border-color: rgba(212, 175, 55, 0.45);
-      background: rgba(212, 175, 55, 0.1);
-      transform: translateX(4px);
-    }
-
-    .mobile-menu-link i {
-      width: auto;
-      width: 26px;
-      text-align: center;
-      font-size: 22px;
-    }
-
-    body.mobile-menu-open {
-      overflow: hidden;
-    }
-
-    /* Nascondi il selettore giochi nell'header su mobile (fino a 991px) - come index */
-    @media (max-width: 991px) {
-      header .game-selector-container {
-        display: none;
-      }
-    }
-
-    /* Tablet: 600px */
-    @media (min-width: 600px) {
-      header { flex-wrap: nowrap; }
-      .game-selector-container { width: auto; min-width: 280px; order: 0; margin-top: 0; }
-    }
-
-    /* Desktop: 992px */
-    @media (min-width: 992px) {
-      .mobile-menu-toggle,
-      .mobile-overlay {
-        display: none !important;
-      }
-      nav ul {
-        display: flex;
-        gap: 20px;
-      }
-      nav a {
-        color: var(--text-gray);
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 18px;
-        padding: 12px 18px;
-        border-radius: 12px;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      nav a:hover,
-      nav a.active {
-        color: var(--secondary-gold);
-        background-color: rgba(212, 175, 55, 0.1);
-        transform: translateY(-2px);
-      }
-    }
-
-    /* Disabilita hover su touch */
-    @media (hover: none) and (pointer: coarse) {
-      .btn:hover:not(:disabled) { transform: none; box-shadow: none; }
-    }
-
-    /* ========== STILI SPECIFICI DEL GIOCO (Jeopardy) ========== */
-    main {
-      padding: 20px;
-      max-width: 1200px;
-      margin: 0 auto;
-      width: 100%;
-      box-sizing: border-box;
-      flex: 1;
-    }
-
-    .board {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
-      margin-top: 20px;
-    }
-
-    .cell {
-      background-color: rgba(0, 64, 128, 0.8);
-      padding: 20px;
-      text-align: center;
-      font-size: 18px;
-      cursor: pointer;
-      border: 2px solid var(--primary-gold);
-      border-radius: 5px;
-      transition: all 0.3s;
-      height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .cell:hover {
-      background-color: rgba(0, 89, 179, 0.8);
-      transform: scale(1.05);
-    }
-
-    .category {
-      background-color: var(--primary-gold) !important;
-      color: var(--primary-black) !important;
-      font-weight: bold;
-      text-transform: uppercase;
-      border: 2px solid var(--primary-gold);
-    }
-
-    @media (max-width: 768px) {
-      .board {
-        grid-template-columns: 1fr; /* In mobile inizialmente solo categorie, poi valori */
-      }
-      /* Pulsante indietro nella schermata valori */
-      .back-button {
-        background: var(--light-black);
-        color: var(--secondary-gold);
-        border: 2px solid var(--primary-gold);
-        border-radius: 12px;
-        padding: 12px 20px;
-        font-size: 18px;
-        font-weight: bold;
-        margin: 10px 0;
-        cursor: pointer;
-        width: 100%;
-        text-align: center;
-      }
-      .value-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 10px;
-        width: 100%;
-      }
-      .value-button {
-        background: rgba(0, 64, 128, 0.9);
-        border: 2px solid var(--primary-gold);
-        border-radius: 12px;
-        padding: 20px;
-        font-size: 24px;
-        font-weight: bold;
-        color: white;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-align: center;
-      }
-      .value-button:active {
-        transform: scale(0.98);
-        background: rgba(0, 89, 179, 1);
-      }
-      .value-button.disabled, .value-button:disabled {
-        background: #333;
-        border-color: #666;
-        color: #888;
-        pointer-events: none;
-        opacity: 0.5;
-      }
-      .category-header {
-        font-size: 26px;
-        font-weight: bold;
-        color: var(--secondary-gold);
-        text-align: center;
-        margin: 15px 0;
-        text-transform: uppercase;
-      }
-    }
-
-    #question-box {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.95);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      text-align: center;
-      z-index: 2000;
-    }
-
-    #question-box span {
-      font-size: 24px;
-      background: var(--secondary-black);
-      padding: 30px;
-      border-radius: 10px;
-      margin-bottom: 30px;
-      max-width: 80%;
-      white-space: pre-line;
-      border: 2px solid var(--primary-gold);
-      box-shadow: var(--shadow-heavy);
-    }
-
-    #question-box button {
-      padding: 12px 25px;
-      font-size: 18px;
-      margin: 8px;
-      cursor: pointer;
-      border: none;
-      border-radius: 5px;
-      transition: all 0.3s;
-      font-weight: bold;
-      min-width: 200px;
-    }
-
-    #question-box button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-    }
-
-    #show-answer {
-      background-width: auto;
-      color: var(--primary-black);
-    }
-
-    #correct-button {
-      background-color: #00a651;
-      color: white;
-    }
-
-    #wrong-button {
-      background-color: #d0021b;
-      color: white;
-    }
-
-    #close-button {
-      background-color: var(--light-black);
-      color: white;
-    }
-
-    #teams {
-      margin-top: 30px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: center;
-    }
-
-    .team {
-      padding: 15px 25px;
-      background-color: var(--secondary-black);
-      border-radius: 8px;
-      min-width: 180px;
-      text-align: center;
-      position: relative;
-      border: 2px solid var(--primary-gold);
-      transition: all 0.3s;
-    }
-
-    .team.active {
-      box-shadow: 0 0 15px var(--secondary-gold);
-      border-color: var(--secondary-gold);
-      transform: scale(1.05);
-    }
-
-    .team-score {
-      height: 70px;
-      font-weight: bold;
-      margin-top: 10px;
-      color: var(--secondary-gold);
-    }
-
-    .team-name {
-      font-weight: bold;
-      margin-bottom: 5px;
-      font-size: 18px;
-      text-transform: uppercase;
-    }
-
-    .team-controls {
-      margin-top: 15px;
-      display: flex;
-      justify-content: center;
-      gap: 5px;
-    }
-
-    .team-controls button {
-      padding: 5px 10px;
-      margin: 0;
-      font-size: 12px;
-      background-color: var(--light-black);
-      color: white;
-      border: none;
-      border-radius: 3px;
-    }
-
-    .team-controls button:hover {
-      background-color: var(--secondary-black);
-    }
-
-    #setup-container {
-      background-color: var(--secondary-black);
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      border: 2px solid var(--primary-gold);
-      box-shadow: var(--shadow-medium);
-    }
-
-    #team-count {
-      padding: 10px;
-      width: 60px;
-      text-align: center;
-      font-size: 16px;
-      border: 1px solid var(--primary-gold);
-      border-radius: 5px;
-      background-color: var(--light-black);
-      color: var(--text-light);
-    }
-
-    #setup-teams {
-      padding: 10px 20px;
-      background-width: auto;
-      color: var(--primary-black);
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-left: 10px;
-      transition: all 0.3s;
-    }
-
-    #setup-teams:hover {
-      background-color: var(--secondary-gold);
-      transform: scale(1.05);
-    }
-
-    #select-categories-btn {
-      padding: 10px 20px;
-      background-color: #800080;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      margin-left: 10px;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    #select-categories-btn:hover {
-      background-color: #6a006a;
-      transform: scale(1.05);
-    }
-
-    .used-cell {
-      background-color: rgba(51, 51, 51, 0.7) !important;
-      color: #666 !important;
-      cursor: not-allowed !important;
-    }
-
-    #team-names-container {
-      display: none;
-      margin-top: 15px;
-    }
-
-    .team-input {
-      margin-bottom: 10px;
-    }
-
-    .team-input input {
-      padding: 8px;
-      border: 1px solid var(--primary-gold);
-      border-radius: 5px;
-      background-color: var(--light-black);
-      color: white;
-      margin-left: 5px;
-    }
-
-    #confirm-teams {
-      padding: 10px 20px;
-      background-color: #0056b3;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-
-    #confirm-teams:hover {
-      background-color: #004494;
-    }
-
-    #new-round-btn {
-      padding: 15px 30px;
-      background-width: auto;
-      color: var(--primary-black);
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      font-size: 18px;
-      margin: 20px auto;
-      display: block;
-      cursor: pointer;
-    }
-
-    #new-round-btn:hover {
-      background-color: var(--secondary-gold);
-    }
-
-    h1 {
-      text-align: center;
-      color: var(--secondary-gold);
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-      margin-bottom: 30px;
-    }
-
-    label {
-      font-weight: bold;
-      margin-right: 10px;
-    }
-  
-        /* ===== FOOTER (allineato al resto della piattaforma) ===== */
-        footer {
-            text-align: center;
-            padding: 28px 16px;
-            margin-top: 50px;
-            border-top: 1px solid rgba(212, 175, 55, 0.2);
-            color: var(--text-gray);
-            background: linear-gradient(to top, var(--primary-black), transparent);
-            width: 100%;
-        }
-
-        .footer-links {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin-top: 22px;
-            align-items: center;
-        }
-
-        .footer-links a {
-            color: var(--light-gold);
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            padding: 16px 24px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            width: 100%;
-            max-width: 260px;
-            font-size: 18px;
-            min-height: 60px;
-        }
-
-        .footer-links a:active {
-            background-color: rgba(212, 175, 55, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .copyright {
-            margin-top: 28px;
-            font-size: 14px;
-            color: #888;
-        }
-
-        @media (min-width: 600px) {
-            .footer-links {
-                flex-direction: row;
-                gap: 20px;
-            }
-            .footer-links a {
-                width: auto;
-                max-width: none;
-                padding: 14px 28px;
-            }
-        }
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jeopardy · Quizzotti</title>
+<meta name="description" content="Il tabellone a categorie di calcio: Serie A, Champions League, Mondiali, calciomercato e leggende. Sfida i tuoi amici a squadre su Quizzotti.">
+<meta name="theme-color" content="#060912">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Jeopardy · Quizzotti">
+<meta property="og:description" content="Scegli categoria e valore, rispondi e scala la classifica: il quiz a squadre a tema calcio.">
+<meta property="og:image" content="logo2.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=5dfbd63b">
+<style>
+  .jp-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 28px; }
+  @media (min-width: 900px) { .jp-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+  .switch input { flex: none; }
+  .jp-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .jp-cats { display: flex; flex-wrap: wrap; gap: 8px; }
+  .jp-cat { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface); color: var(--muted); font-weight: 800; font-size: 13px; transition: background .2s, color .2s, border-color .2s, transform .15s; }
+  .jp-cat:active { transform: scale(.95); }
+  .jp-cat[aria-pressed="true"] { background: rgba(var(--accent-rgb), .18); border-color: rgba(var(--accent-rgb), .7); color: var(--text); }
+
+  .jp-scores { margin-bottom: 16px; }
+  .jp-scores .team { cursor: default; }
+  .jp-turn { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
+  .jp-turn__who { font-family: var(--font-display); font-size: clamp(18px, 4.6vw, 24px); }
+  .jp-turn__who b { color: var(--c, var(--accent)); }
+
+  @media (max-width: 479px) { .jp-tools .btn { width: 40px; padding: 0; } .jp-tools .btn span { display: none; } }
+  .jp-board { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .jp-col { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 10px; border-radius: var(--r); background: var(--surface); border: 1px solid var(--line); animation: qz-rise .5s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 60ms); }
+  .jp-col__head { grid-column: 1 / -1; font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent-2); padding: 2px 4px 4px; }
+  .jp-cell {
+    --c: var(--accent); position: relative; min-height: 54px; padding: 0 2px; border-radius: 12px;
+    border: 1px solid rgba(var(--accent-rgb), .4); background: linear-gradient(180deg, rgba(var(--accent-rgb), .28), rgba(var(--accent-rgb), .08));
+    color: #fff; font-family: var(--font-display); font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, .35); transition: transform .15s var(--ease-spring), background .25s, border-color .25s;
+  }
+  .jp-cell:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--accent-2); background: linear-gradient(180deg, rgba(var(--accent-rgb), .45), rgba(var(--accent-rgb), .15)); }
+  .jp-cell:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
+  .jp-cell:disabled { cursor: default; color: transparent; background: transparent; border-style: dashed; border-color: var(--line-2); box-shadow: none; }
+  .jp-cell:disabled::after { content: ""; position: absolute; inset: 0; margin: auto; width: 12px; height: 12px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); }
+  .jp-cell.is-miss:disabled::after { width: 14px; height: 2px; border-radius: 2px; background: var(--faint); box-shadow: none; }
+  @media (min-width: 760px) {
+    .jp-board { grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr)); }
+    .jp-col { grid-template-columns: minmax(0, 1fr); padding: 8px; }
+    .jp-col__head { min-height: 62px; display: grid; place-items: center; text-align: center; font-size: 12px; line-height: 1.25; }
+    .jp-cell { min-height: 74px; font-size: 24px; }
+  }
+
+  .jp-q { padding: 26px 20px; text-align: center; }
+  .jp-q .eyebrow { justify-content: center; }
+  .jp-q__value { font-family: var(--font-display); font-size: clamp(34px, 9vw, 56px); font-weight: 900; color: var(--accent); line-height: 1; margin: 8px 0 18px; font-variant-numeric: tabular-nums; }
+  .jp-q__value.is-double { color: var(--gold); text-shadow: 0 0 30px rgba(245, 197, 66, .5); }
+  .jp-q .question { margin: 0 auto; max-width: 30ch; }
+  .jp-q .timer-ring { margin: 20px auto 0; }
+  .jp-ans { margin-top: 22px; padding: 16px; border-radius: var(--r); background: rgba(var(--ok-rgb), .1); border: 1px solid rgba(var(--ok-rgb), .35); animation: qz-pop-in .5s var(--ease-spring) both; }
+  .jp-ans__label { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ok); }
+  .jp-ans__text { font-family: var(--font-display); font-size: clamp(20px, 5vw, 30px); font-weight: 800; margin-top: 4px; overflow-wrap: anywhere; }
+  .jp-steal { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px; }
+  .jp-steal .btn { --b-bd: var(--c); }
+  .jp-steal .team__dot { width: 10px; height: 10px; }
+
+  .jp-adjust { display: grid; gap: 8px; }
+  .jp-adjust__row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
+  .jp-adjust__row output { min-width: 64px; text-align: center; font-family: var(--font-display); font-variant-numeric: tabular-nums; }
 </style>
 </head>
-<body>
-  <!-- HEADER identico a index.html -->
-  <a href="#main-content" class="qz-skip-link">Vai al contenuto principale</a>
-<header>
-    <a href="index.html" class="logo">
-      <picture>
-        <source srcset="logo1.webp" type="image/webp">
-        <img src="logo1.png" alt="Quizzotti Logo" class="logo-icon" width="70" height="70">
-      </picture>
-      <h1>Quizzotti</h1>
-    </a>
+<body data-game="jeopardy">
+<main id="app" class="qz-main" tabindex="-1">
 
-    <nav>
-      <ul>
-        <li><a href="index.html" title="Home"><i class="fas fa-home"></i></a></li>
-        <li><a href="index.html#games" title="Giochi"><i class="fas fa-gamepad"></i> Giochi</a></li>
-        <li><a href="index.html#about" title="Info"><i class="fas fa-info-circle"></i></a></li>
-      </ul>
-    </nav>
-
-    <button class="qz-profile-badge" id="qz-profile-badge" type="button" aria-label="Il tuo profilo Quizzotti"><i class="fas fa-star" aria-hidden="true"></i><span>Lv. 1</span></button>
-
-    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Apri menu">
-      <i class="fas fa-bars"></i>
-    </button>
-
-    <!-- Dropdown giochi -->
-        <div class="game-selector-container">
-            <div class="game-selector" id="gameSelector">
-                <span><i class="fas fa-gamepad"></i> Seleziona Gioco</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="game-dropdown" id="gameDropdown">
-                <a href="AvantiUnAltro.html"><i class="fas fa-forward"></i> Avanti un Altro</a>
-                <a href="IntesaVincente.html"><i class="fas fa-users"></i> Intesa Vincente</a>
-                <a href="Jeopardy.html"><i class="fas fa-question-circle"></i> Jeopardy</a>
-                <a href="MrWhite.html"><i class="fas fa-user-secret"></i> Mr.White</a>
-                <a href="Taboo.html"><i class="fas fa-ban"></i> Taboo</a>
-                <a href="CVEM.html"><i class="fas fa-money-bill-wave"></i> Chi Vuol Essere Milionario</a>
-                <a href="Bomba.html"><i class="fas fa-bomb"></i> Bomba</a>
-                <a href="sfidaEredita.html"><i class="fas fa-futbol"></i> Derby delle Parole</a>
-                <a href="GiocatoriBudget.html"><i class="fas fa-coins"></i> Sfida dei Budget</a>
-                <a href="Citazioni.html"><i class="fas fa-quote-right"></i> Chi l'ha detto</a>
-            </div>
+  <!-- ============ INIZIO ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Party · 1-6 squadre</span>
+        <h1 class="intro__title">Il tabellone del <em>calcio</em></h1>
+        <p class="intro__lead">Scegliete categoria e valore, rispondete e scalate la classifica. Più alta la posta, più difficile la domanda: chi sbaglia paga.</p>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
-    </header>
-<span id="main-content" tabindex="-1"></span>
-
-    <!-- Overlay menu mobile -->
-    <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true">
-        <div class="mobile-overlay-backdrop" id="mobileOverlayBackdrop"></div>
-        <aside class="mobile-overlay-panel" role="dialog" aria-modal="true" aria-label="Menu mobile">
-            <div class="mobile-overlay-header">
-                <h3 class="mobile-overlay-title">Menu</h3>
-                <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Chiudi">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <div class="mobile-menu-section">
-                <p class="mobile-menu-label">Sezioni</p>
-                <div class="mobile-menu-links">
-                    <a href="index.html" class="mobile-menu-link"><i class="fas fa-home"></i> Home</a>
-                    <a href="index.html#games" class="mobile-menu-link"><i class="fas fa-gamepad"></i> Giochi</a>
-                    <a href="index.html#about" class="mobile-menu-link"><i class="fas fa-info-circle"></i> Info</a>
-                </div>
-            </div>
-
-            <div class="mobile-menu-section">
-                <p class="mobile-menu-label">Minigiochi</p>
-                <div class="mobile-menu-links">
-                    <a href="AvantiUnAltro.html" class="mobile-menu-link"><i class="fas fa-forward"></i> Avanti un Altro</a>
-                    <a href="IntesaVincente.html" class="mobile-menu-link"><i class="fas fa-users"></i> Intesa Vincente</a>
-                    <a href="Jeopardy.html" class="mobile-menu-link"><i class="fas fa-question-circle"></i> Jeopardy</a>
-                    <a href="MrWhite.html" class="mobile-menu-link"><i class="fas fa-user-secret"></i> Mr.White</a>
-                    <a href="Taboo.html" class="mobile-menu-link"><i class="fas fa-ban"></i> Taboo</a>
-                    <a href="CVEM.html" class="mobile-menu-link"><i class="fas fa-money-bill-wave"></i> Chi Vuol Essere Milionario</a>
-                    <a href="Bomba.html" class="mobile-menu-link"><i class="fas fa-bomb"></i> Bomba</a>
-                    <a href="sfidaEredita.html" class="mobile-menu-link"><i class="fas fa-futbol"></i> Derby delle Parole</a>
-                    <a href="GiocatoriBudget.html" class="mobile-menu-link"><i class="fas fa-coins"></i> Sfida dei Budget</a>
-                    <a href="Citazioni.html" class="mobile-menu-link"><i class="fas fa-quote-right"></i> Chi l'ha detto</a>
-                </div>
-            </div>
-        </aside>
-    </div>
-
-  <!-- Main content: gioco Jeopardy -->
-  <main>
-    <h1>QUIZ A SQUADRE - JEOPARDY</h1>
-
-    <div id="setup-container">
-      <label for="team-count">Numero di Squadre:</label>
-      <input type="number" id="team-count" min="1" max="6" value="2">
-      <button id="setup-teams" onclick="showTeamInputs()">CREA SQUADRE</button>
-      <button id="select-categories-btn" onclick="selectRandomCategories()">SELEZIONA CATEGORIE CASUALI</button>
-
-      <div id="team-names-container">
-        <div id="team-inputs"></div>
-        <button id="confirm-teams" onclick="setupTeams()">CONFERMA SQUADRE</button>
+        <p class="small muted mt-2" id="start-record"></p>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
       </div>
     </div>
 
-    <div id="teams"></div>
-
-    <div class="board" id="board"></div>
-    <button id="new-round-btn" onclick="resetBoard()" style="display:none">NUOVO ROUND</button>
-  </main>
-
-  <div id="question-box">
-    <span id="question-text"></span>
-    <button id="show-answer" onclick="showAnswer()">MOSTRA RISPOSTA</button>
-    <div id="answer-buttons" style="display:none">
-      <button id="correct-button" onclick="handleAnswer(true)">RISPOSTA ESATTA (+{value})</button>
-      <button id="wrong-button" onclick="handleAnswer(false)">RISPOSTA SBAGLIATA (-{value})</button>
+    <div class="jp-setup">
+      <div class="card" id="teams-host"></div>
+      <div class="card jp-opts">
+        <div class="field">
+          <div class="row row--between"><span class="label" id="cats-label">Categorie</span><button class="btn btn--ghost btn--sm" type="button" id="cats-random"></button></div>
+          <div class="jp-cats" id="cats" role="group" aria-labelledby="cats-label"></div>
+          <p class="small faint" id="cats-hint"></p>
+        </div>
+        <div class="field"><span class="label" id="lbl-rounds">Round</span><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
+        <div class="field"><span class="label" id="lbl-time">Tempo per rispondere</span><div id="opt-time" aria-labelledby="lbl-time"></div></div>
+        <div class="field"><span class="label" id="lbl-penalty">Risposta sbagliata</span><div id="opt-penalty" aria-labelledby="lbl-penalty"></div></div>
+        <label class="switch"><input type="checkbox" id="opt-steal" checked> Rubata: se una squadra sbaglia, le altre possono rubare i punti</label>
+        <label class="switch"><input type="checkbox" id="opt-double" checked> Doppia posta: una casella a sorpresa per round vale doppio</label>
+      </div>
     </div>
-    <button id="close-button" onclick="closeQuestion()" style="display:none">ESCI</button>
+  </section>
+
+  <!-- ============ TABELLONE + DOMANDA (punteggi condivisi) ============ -->
+  <div id="scorebar" hidden>
+    <div class="teams jp-scores" id="scores" aria-live="polite"></div>
   </div>
 
-    <footer>
-    <p style="font-size: 20px; color: var(--light-gold); margin-bottom: 10px;">Quizzotti</p>
-    <p style="max-width: 600px; margin: 0 auto 20px; color: var(--text-gray);">Divertiti con i nostri minigiochi a tema calcio, sempre gratuiti.</p>
-    <div class="footer-links">
-      <a href="index.html"><i class="fas fa-home"></i> Home</a>
-      <a href="index.html#games"><i class="fas fa-gamepad"></i> Giochi</a>
-      <a href="index.html#about"><i class="fas fa-info-circle"></i> Info</a>
+  <section class="screen" id="s-board">
+    <div class="jp-turn">
+      <div class="jp-turn__who" id="turn-who" aria-live="polite"></div>
+      <div class="row jp-tools" style="--gap:8px">
+        <span class="chip chip--accent" id="round-chip"></span>
+        <button class="btn btn--ghost btn--sm" type="button" id="adjust-btn"></button>
+        <button class="btn btn--ghost btn--sm" type="button" id="end-btn"></button>
+      </div>
     </div>
-    <div class="copyright">Quizzotti &copy; 2025 - Tutti i diritti sono dei giocatori</div>
-  </footer>
-
-  <!-- SCRIPT GESTIONE HEADER (da index) -->
-  <script src="assets/db-jeopardy.js?v=667f9d38"></script>
-
-    <script>
-    (function() {
-      // Elementi DOM
-      const gameSelector = document.getElementById('gameSelector');
-      const gameDropdown = document.getElementById('gameDropdown');
-      const mobileToggle = document.getElementById('mobileMenuToggle');
-      const mobileOverlay = document.getElementById('mobileOverlay');
-      const backdrop = document.getElementById('mobileOverlayBackdrop');
-      const closeBtn = document.getElementById('mobileMenuClose');
-      const overlayLinks = mobileOverlay ? mobileOverlay.querySelectorAll('a') : [];
-
-      function closeMainDropdown() {
-        if (gameDropdown) gameDropdown.classList.remove('show');
-        if (gameSelector) gameSelector.classList.remove('active');
-      }
-
-      function toggleMainDropdown(e) {
-        if (e) e.stopPropagation();
-        if (gameDropdown && gameSelector) {
-          gameDropdown.classList.toggle('show');
-          gameSelector.classList.toggle('active');
-        }
-      }
-
-      function openMobileMenu() {
-        if (!mobileOverlay) return;
-        mobileOverlay.classList.add('show');
-        mobileOverlay.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('mobile-menu-open');
-      }
-
-      function closeMobileMenu() {
-        if (!mobileOverlay) return;
-        mobileOverlay.classList.remove('show');
-        mobileOverlay.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('mobile-menu-open');
-      }
-
-      if (gameSelector) {
-        gameSelector.addEventListener('click', toggleMainDropdown);
-      }
-
-      if (mobileToggle) {
-        mobileToggle.addEventListener('click', function(e) {
-          e.stopPropagation();
-          openMobileMenu();
-          closeMainDropdown();
-        });
-      }
-
-      if (backdrop) {
-        backdrop.addEventListener('click', closeMobileMenu);
-      }
-
-      if (closeBtn) {
-        closeBtn.addEventListener('click', closeMobileMenu);
-      }
-
-      overlayLinks.forEach(link => {
-        link.addEventListener('click', closeMobileMenu);
-      });
-
-      document.addEventListener('click', function(e) {
-        if (gameSelector && gameDropdown && !gameSelector.contains(e.target) && !gameDropdown.contains(e.target)) {
-          closeMainDropdown();
-        }
-      });
-
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          closeMobileMenu();
-          closeMainDropdown();
-        }
-      });
-    })();
-  </script>
-
-  <!-- SCRIPT DEL GIOCO (logica Jeopardy) MODIFICATO PER MOBILE -->
-  <script>
-    // JEOPARDY DATA - invariato
-    // Database "jeopardyData" caricato da assets/db-jeopardy.js
-      
-    const allCategories = jeopardyData.map(cat => cat.category);
-    let selectedCategories = [];
-    let usedQuestions = {};
-    let activeTeam = 0;
-    let currentValue = 0;
-    let teams = [];
-    // Nuove variabili per mobile
-    let mobileMode = window.innerWidth <= 768;
-    let currentCategory = null; // categoria selezionata in mobile
-    let usedCells = {}; // traccia le celle già cliccate (categoria -> valore)
-
-    // Rileva cambio orientamento (semplice, ricarica la UI)
-    window.addEventListener('resize', function() {
-      let newMobileMode = window.innerWidth <= 768;
-      if (newMobileMode !== mobileMode) {
-        mobileMode = newMobileMode;
-        if (teams.length > 0) {
-          resetBoard(); // rigenera board con nuova modalità
-        }
-      }
-    });
-
-    function selectRandomCategories() {
-      selectedCategories = [];
-      const shuffled = [...allCategories].sort(() => 0.5 - Math.random());
-      selectedCategories = shuffled.slice(0, 5);
-      if (document.querySelectorAll('.board .cell').length > 0) {
-        resetBoard();
-      }
-    }
-
-    function initializeBoard() {
-      if (mobileMode) {
-        initializeBoardMobile();
-      } else {
-        initializeBoardDesktop();
-      }
-    }
-
-    function initializeBoardDesktop() {
-      const board = document.getElementById('board');
-      board.innerHTML = '';
-      if (selectedCategories.length === 0) selectRandomCategories();
-      
-      for (let cat of selectedCategories) {
-        const catCell = document.createElement('div');
-        catCell.className = 'cell category';
-        catCell.textContent = cat;
-        board.appendChild(catCell);
-      }
-
-      for (let value of [100,200,300,400,500]) {
-        for (let i = 0; i < selectedCategories.length; i++) {
-          const cell = document.createElement('div');
-          cell.className = 'cell';
-          cell.textContent = value;
-          cell.setAttribute('data-category', selectedCategories[i]);
-          cell.setAttribute('data-value', value);
-          cell.addEventListener('click', handleCellClick);
-          board.appendChild(cell);
-        }
-      }
-
-      resetUsedQuestions();
-      initUsedCells();
-    }
-
-    function initializeBoardMobile() {
-      const board = document.getElementById('board');
-      board.innerHTML = '';
-      if (selectedCategories.length === 0) selectRandomCategories();
-
-      // Mostra solo le categorie (cliccabili)
-      for (let cat of selectedCategories) {
-        const catCell = document.createElement('div');
-        catCell.className = 'cell category';
-        catCell.textContent = cat;
-        catCell.addEventListener('click', () => handleCategoryClick(cat));
-        board.appendChild(catCell);
-      }
-
-      resetUsedQuestions();
-      initUsedCells();
-    }
-
-    function initUsedCells() {
-      usedCells = {};
-      for (let cat of selectedCategories) {
-        usedCells[cat] = { 100: false, 200: false, 300: false, 400: false, 500: false };
-      }
-    }
-
-    function handleCategoryClick(category) {
-      currentCategory = category;
-      showCategoryValues(category);
-    }
-
-    function showCategoryValues(category) {
-      const board = document.getElementById('board');
-      board.innerHTML = '';
-
-      // Intestazione categoria e pulsante indietro
-      const headerDiv = document.createElement('div');
-      headerDiv.className = 'category-header';
-      headerDiv.textContent = category;
-      board.appendChild(headerDiv);
-
-      const backBtn = document.createElement('div');
-      backBtn.className = 'back-button';
-      backBtn.innerHTML = '<i class="fas fa-arrow-left"></i> Altre categorie';
-      backBtn.addEventListener('click', () => {
-        currentCategory = null;
-        initializeBoardMobile();
-      });
-      board.appendChild(backBtn);
-
-      // Griglia valori
-      const valuesGrid = document.createElement('div');
-      valuesGrid.className = 'value-grid';
-
-      [100,200,300,400,500].forEach(value => {
-        const btn = document.createElement('div');
-        btn.className = 'value-button';
-        btn.textContent = value;
-
-        // Se la cella è già stata usata, disabilita
-        if (usedCells[category] && usedCells[category][value]) {
-          btn.classList.add('disabled');
-          btn.style.pointerEvents = 'none';
-        } else {
-          btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleValueClick(category, value);
-          });
-        }
-        valuesGrid.appendChild(btn);
-      });
-
-      board.appendChild(valuesGrid);
-    }
-
-    function handleValueClick(category, value) {
-      const questionData = getRandomQuestion(category, value);
-      if (!questionData) {
-        alert("Nessuna domanda disponibile per questa categoria e valore!");
-        return;
-      }
-
-      // Segna la cella come usata
-      usedCells[category][value] = true;
-
-      currentValue = value;
-      displayQuestion(questionData.question, questionData.answer, value);
-
-      // In mobile, dopo aver aperto la domanda, la UI dei valori rimane in attesa
-      // Verrà ricreata alla chiusura (closeQuestion)
-    }
-
-    function handleCellClick(event) {
-      if (event.target.classList.contains('used-cell')) return;
-      const category = event.target.getAttribute('data-category');
-      const value = parseInt(event.target.getAttribute('data-value'));
-
-      const questionData = getRandomQuestion(category, value);
-      if (!questionData) {
-        alert("Nessuna domanda disponibile!");
-        return;
-      }
-
-      event.target.classList.add('used-cell');
-      // Segna anche in usedCells per mobile (ma in desktop usiamo la classe)
-      usedCells[category][value] = true;
-
-      currentValue = value;
-      displayQuestion(questionData.question, questionData.answer, value);
-    }
-
-    function getRandomQuestion(category, value) {
-      const categoryData = jeopardyData.find(item => item.category === category);
-      if (!categoryData) return null;
-
-      const questionsForValue = categoryData.questions.filter(q => q.value === value);
-      if (!questionsForValue.length) return null;
-
-      const used = usedQuestions[category]?.[value] || [];
-      let available = questionsForValue.filter(q => !used.includes(q.question));
-
-      if (available.length === 0) {
-        available = questionsForValue;
-        usedQuestions[category][value] = [];
-      }
-
-      const randomIndex = Math.floor(Math.random() * available.length);
-      const selected = available[randomIndex];
-
-      if (!usedQuestions[category]) usedQuestions[category] = {};
-      if (!usedQuestions[category][value]) usedQuestions[category][value] = [];
-      usedQuestions[category][value].push(selected.question);
-
-      return selected;
-    }
-
-    function resetUsedQuestions() {
-      usedQuestions = {};
-      for (let cat of selectedCategories) {
-        usedQuestions[cat] = { 100: [], 200: [], 300: [], 400: [], 500: [] };
-      }
-    }
-
-    function displayQuestion(question, answer, value) {
-      const questionBox = document.getElementById('question-box');
-      const questionText = document.getElementById('question-text');
-      const correctButton = document.getElementById('correct-button');
-      const wrongButton = document.getElementById('wrong-button');
-
-      questionText.textContent = question;
-      questionText.setAttribute('data-answer', answer);
-
-      correctButton.textContent = `RISPOSTA ESATTA (+${value})`;
-      wrongButton.textContent = `RISPOSTA SBAGLIATA (-${value})`;
-
-      questionBox.style.display = 'flex';
-      document.getElementById('show-answer').style.display = 'block';
-      document.getElementById('answer-buttons').style.display = 'none';
-      document.getElementById('close-button').style.display = 'none';
-    }
-
-    function showAnswer() {
-      const questionText = document.getElementById('question-text');
-      const answer = questionText.getAttribute('data-answer');
-      questionText.textContent = `${questionText.textContent}\n\nRisposta: ${answer}`;
-      document.getElementById('show-answer').style.display = 'none';
-      document.getElementById('answer-buttons').style.display = 'block';
-    }
-
-    function handleAnswer(isCorrect) {
-      document.getElementById('answer-buttons').style.display = 'none';
-      document.getElementById('close-button').style.display = 'block';
-
-      if (teams.length > 0) {
-        const team = teams[activeTeam];
-        team.score += isCorrect ? currentValue : -currentValue;
-        updateTeamsDisplay();
-      }
-    }
-
-    function closeQuestion() {
-      document.getElementById('question-box').style.display = 'none';
-      rotateActiveTeam();
-
-      // In mobile, dopo la chiusura, torniamo alla schermata dei valori della categoria corrente
-      if (mobileMode && currentCategory) {
-        showCategoryValues(currentCategory);
-      } else if (!mobileMode) {
-        // Desktop: controlla se tutte le celle sono usate
-        const unused = document.querySelectorAll('.cell:not(.used-cell):not(.category)');
-        if (unused.length === 0) {
-          document.getElementById('new-round-btn').style.display = 'block';
-        }
-      }
-
-      // Controllo generale per il pulsante nuovo round (anche mobile)
-      if (allCellsUsed()) {
-        document.getElementById('new-round-btn').style.display = 'block';
-      }
-    }
-
-    function allCellsUsed() {
-      for (let cat of selectedCategories) {
-        for (let v of [100,200,300,400,500]) {
-          if (!usedCells[cat]?.[v]) return false;
-        }
-      }
-      return true;
-    }
-
-    function rotateActiveTeam() {
-      if (teams.length <= 1) return;
-      document.getElementById(`team-${activeTeam}`)?.classList.remove('active');
-      activeTeam = (activeTeam + 1) % teams.length;
-      document.getElementById(`team-${activeTeam}`)?.classList.add('active');
-    }
-
-    function showTeamInputs() {
-      const teamCount = parseInt(document.getElementById('team-count').value);
-      const container = document.getElementById('team-inputs');
-      if (teamCount < 1 || teamCount > 6) {
-        alert('Inserisci un numero di squadre tra 1 e 6');
-        return;
-      }
-      container.innerHTML = '';
-      for (let i = 0; i < teamCount; i++) {
-        const div = document.createElement('div');
-        div.className = 'team-input';
-        div.innerHTML = `<label for="team-name-${i}">Squadra ${i+1}:</label>
-          <input type="text" id="team-name-${i}" value="Squadra ${i+1}">`;
-        container.appendChild(div);
-      }
-      document.getElementById('team-names-container').style.display = 'block';
-    }
-
-    function setupTeams() {
-      const teamCount = parseInt(document.getElementById('team-count').value);
-      teams = [];
-      for (let i = 0; i < teamCount; i++) {
-        const input = document.getElementById(`team-name-${i}`);
-        const name = input ? input.value.trim() : `Squadra ${i+1}`;
-        teams.push({ id: i, name: name || `Squadra ${i+1}`, score: 0 });
-      }
-      activeTeam = 0;
-      updateTeamsDisplay();
-      document.getElementById('setup-container').style.display = 'none';
-      initializeBoard();
-    }
-
-    function updateTeamsDisplay() {
-      const container = document.getElementById('teams');
-      container.innerHTML = '';
-      for (let i = 0; i < teams.length; i++) {
-        const team = teams[i];
-        const el = document.createElement('div');
-        el.className = `team ${i === activeTeam ? 'active' : ''}`;
-        el.id = `team-${i}`;
-        el.innerHTML = `
-          <div class="team-name">${team.name}</div>
-          <div class="team-score">${team.score}</div>
-          <div class="team-controls">
-            <button onclick="adjustScore(${i}, 100)">+100</button>
-            <button onclick="adjustScore(${i}, -100)">-100</button>
-          </div>
-        `;
-        container.appendChild(el);
-      }
-    }
-
-    function adjustScore(teamId, amount) {
-      if (teamId >= 0 && teamId < teams.length) {
-        teams[teamId].score += amount;
-        updateTeamsDisplay();
-      }
-    }
-
-    function resetBoard() {
-      resetUsedQuestions();
-      initUsedCells();
-      initializeBoard();
-      document.getElementById('new-round-btn').style.display = 'none';
-      // In mobile, resetta anche currentCategory
-      currentCategory = null;
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('new-round-btn').style.display = 'none';
-    });
-  </script>
+    <div class="jp-board" id="board"></div>
+  </section>
+
+  <section class="screen" id="s-q">
+    <div class="qz-main--narrow stack" style="--gap:16px;margin:0 auto">
+      <div class="card card--glow jp-q">
+        <span class="eyebrow" id="q-cat"></span>
+        <div class="jp-q__value" id="q-value"></div>
+        <h2 class="question" id="q-text" aria-live="polite"></h2>
+        <div id="q-timer"></div>
+        <div class="jp-ans" id="q-ans" hidden aria-live="polite">
+          <div class="jp-ans__label">Risposta</div>
+          <div class="jp-ans__text" id="q-ans-text"></div>
+        </div>
+      </div>
+      <div id="act-reveal">
+        <button class="btn btn--primary btn--xl btn--block" type="button" id="reveal-btn"></button>
+      </div>
+      <div id="act-judge" class="grid-2" hidden>
+        <button class="btn btn--ok btn--lg" type="button" id="ok-btn"></button>
+        <button class="btn btn--bad btn--lg" type="button" id="ko-btn"></button>
+      </div>
+      <div id="act-steal" class="stack" style="--gap:10px" hidden>
+        <p class="label center">Qualcuno ruba la risposta?</p>
+        <div class="jp-steal" id="steal-list"></div>
+      </div>
+      <p class="small faint center kbd-hint" style="justify-content:center;gap:6px;flex-wrap:wrap">Tastiera: <span class="kbd">Spazio</span> risposta · <span class="kbd">G</span> giusta · <span class="kbd">S</span> sbagliata</p>
+    </div>
+  </section>
+
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
+
+</main>
+
+<script src="assets/qz.js?v=27d37bac" defer></script>
+<script src="assets/db-jeopardy.js?v=bd0e704b" defer></script>
+<script src="assets/games/jeopardy.js?v=1d401475" defer></script>
 </body>
 </html>
-
-
-

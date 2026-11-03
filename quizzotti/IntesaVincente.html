@@ -1,1106 +1,169 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-  <title>Intesa Vincente - Quizzotti</title>
-    <meta name="description" content="Gioco a squadre: spiega le parole calcistiche ai tuoi compagni e fai più punti possibili prima che scada il tempo.">
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="Intesa Vincente - Quizzotti">
-    <meta property="og:description" content="Gioco a squadre: spiega le parole calcistiche ai tuoi compagni e fai più punti possibili prima che scada il tempo.">
-    <meta property="og:image" content="logo1.png">
-    <meta property="og:locale" content="it_IT">
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Intesa Vincente - Quizzotti">
-    <meta name="twitter:description" content="Gioco a squadre: spiega le parole calcistiche ai tuoi compagni e fai più punti possibili prima che scada il tempo.">
-    <meta name="twitter:image" content="logo1.png">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="assets/theme.css?v=0d991ead">
-    <script src="assets/profile.js?v=fc453328"></script>
-  <style>
-    /* ========== STILI GLOBALI E HEADER (copiati da index.html) ========== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    :root {
-      --primary-black: #0a0a0a;
-      --secondary-black: #1a1a1a;
-      --dark-black: #050505;
-      --light-black: #222222;
-      --primary-gold: #d4af37;
-      --secondary-gold: #ffd700;
-      --light-gold: #f5e6a4;
-      --accent-gold: #c9a227;
-      --primary-green: #16e37a;
-      --secondary-green: #39ff8a;
-      --accent-green: #0f9d57;
-      --text-light: #f8f8f8;
-      --text-gray: #cccccc;
-      --shadow-heavy: 0 10px 30px rgba(0, 0, 0, 0.5);
-      --shadow-medium: 0 5px 15px rgba(0, 0, 0, 0.3);
-      --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
-
-    body {
-      background: linear-gradient(135deg, var(--dark-black) 0%, var(--primary-black) 100%);
-      color: var(--text-light);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      overflow-x: hidden;
-    }
-
-    /* ----- HEADER (MOBILE FIRST) ----- */
-    header {
-      background: linear-gradient(to right, var(--primary-black), var(--light-black));
-      padding: 10px 12px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: var(--shadow-heavy);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      border-bottom: 2px solid var(--primary-gold);
-      width: 100%;
-      gap: 8px;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      text-decoration: none;
-      flex: 1 1 auto;
-    }
-
-    .logo h1 {
-      font-size: 22px;
-      background: linear-gradient(to right, var(--secondary-gold), var(--light-gold));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      font-weight: 800;
-      letter-spacing: 0.5px;
-      margin: 0;
-      line-height: 1.2;
-    }
-
-    .logo-icon {
-      height: 70px;
-      width: auto;
-      filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
-      animation: pulse 2s infinite alternate;
-    }
-
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.1); }
-    }
-
-    /* Menu desktop nascosto su mobile */
-    nav ul {
-      display: none;
-      list-style: none;
-    }
-
-    /* Pulsante menu mobile */
-    .mobile-menu-toggle {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(to right, var(--light-black), var(--secondary-black));
-      color: var(--secondary-gold);
-      border: 2px solid var(--primary-gold);
-      border-radius: 12px;
-      padding: 12px 16px;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: var(--shadow-medium);
-      transition: all 0.3s ease;
-      min-width: 52px;
-      min-height: 52px;
-      border-radius: 14px;
-    }
-
-    .mobile-menu-toggle:active {
-      background: linear-gradient(to right, var(--secondary-black), var(--light-black));
-      transform: scale(0.96);
-    }
-
-    /* Selettore giochi a tendina - mobile a tutta larghezza */
-    .game-selector-container {
-      position: relative;
-      width: 100%;
-      order: 3;
-      margin-top: 6px;
-    }
-
-    .game-selector {
-      background: linear-gradient(to right, var(--light-black), var(--secondary-black));
-      color: var(--secondary-gold);
-      border: 2px solid var(--primary-gold);
-      border-radius: 16px;
-      padding: 14px 18px;
-      font-size: 17px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      width: 100%;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      min-height: 58px;
-    }
-
-    .game-selector span {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .game-selector i {
-      transition: transform 0.3s ease;
-      font-size: 18px;
-    }
-
-    .game-selector.active i {
-      transform: rotate(180deg);
-    }
-
-    .game-dropdown {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: linear-gradient(to bottom, var(--secondary-black), var(--primary-black));
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: var(--shadow-heavy);
-      z-index: 1001;
-      display: none;
-      margin-top: 8px;
-      border: 1px solid var(--primary-gold);
-      max-height: 60vh;
-      overflow-y: auto;
-    }
-
-    .game-dropdown.show {
-      display: block;
-      animation: slideDown 0.25s ease;
-    }
-
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .game-dropdown a {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 18px 20px;
-      color: var(--text-gray);
-      text-decoration: none;
-      transition: all 0.25s ease;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.1);
-      font-size: 17px;
-      min-height: 64px;
-    }
-
-    .game-dropdown a:last-child {
-      border-bottom: none;
-    }
-
-    .game-dropdown a:active {
-      background: linear-gradient(to right, rgba(212, 175, 55, 0.2), transparent);
-      color: var(--secondary-gold);
-      padding-left: 24px;
-    }
-
-    .game-dropdown i {
-      width: 28px;
-      text-align: center;
-      font-size: 22px;
-      width: auto;
-    }
-
-    /* ----- OVERLAY MENU MOBILE ----- */
-    .mobile-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1400;
-      pointer-events: none;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s ease;
-    }
-
-    .mobile-overlay.show {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-
-    .mobile-overlay-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(4px);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .mobile-overlay.show .mobile-overlay-backdrop {
-      opacity: 1;
-    }
-
-    .mobile-overlay-panel {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 80%;
-      max-width: 360px;
-      height: 100vh;
-      background: linear-gradient(180deg, #050505 0%, #0d0d0d 100%);
-      border-right: 2px solid var(--primary-gold);
-      box-shadow: 10px 0 30px rgba(0, 0, 0, 0.7);
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
-      padding: 28px 22px 34px;
-      overflow-y: auto;
-    }
-
-    .mobile-overlay.show .mobile-overlay-panel {
-      transform: translateX(0);
-    }
-
-    .mobile-overlay-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 28px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid rgba(212, 175, 55, 0.25);
-    }
-
-    .mobile-overlay-title {
-      font-size: 26px;
-      color: var(--secondary-gold);
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .mobile-menu-close {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      border: 1px solid rgba(212, 175, 55, 0.45);
-      background: var(--secondary-black);
-      color: var(--secondary-gold);
-      font-size: 24px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .mobile-menu-section {
-      margin-bottom: 32px;
-    }
-
-    .mobile-menu-label {
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-gray);
-      margin-bottom: 16px;
-      opacity: 0.9;
-    }
-
-    .mobile-menu-links {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .mobile-menu-link {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      text-decoration: none;
-      color: var(--text-light);
-      padding: 16px 18px;
-      border-radius: 16px;
-      border: 1px solid rgba(212, 175, 55, 0.15);
-      background: rgba(255, 255, 255, 0.02);
-      transition: all 0.2s ease;
-      font-size: 18px;
-      min-height: 64px;
-    }
-
-    .mobile-menu-link:active {
-      color: var(--secondary-gold);
-      border-color: rgba(212, 175, 55, 0.45);
-      background: rgba(212, 175, 55, 0.1);
-      transform: translateX(4px);
-    }
-
-    .mobile-menu-link i {
-      width: auto;
-      width: 26px;
-      text-align: center;
-      font-size: 22px;
-    }
-
-    body.mobile-menu-open {
-      overflow: hidden;
-    }
-
-    /* Container principale (da index) */
-    .container {
-      max-width: 1400px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 16px 14px;
-    }
-
-    /* Media query per header (copiate da index) */
-    @media (min-width: 600px) {
-      header {
-        padding: 12px 20px;
-        flex-wrap: nowrap;
-      }
-
-      .logo h1 {
-        font-size: 26px;
-      }
-
-      .game-selector-container {
-        width: auto;
-        min-width: 280px;
-        order: 0;
-        margin-top: 0;
-      }
-    }
-
-    @media (min-width: 992px) {
-      .mobile-menu-toggle,
-      .mobile-overlay {
-        display: none !important;
-      }
-
-      nav ul {
-        display: flex;
-        gap: 20px;
-      }
-
-      nav a {
-        color: var(--text-gray);
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 18px;
-        padding: 12px 18px;
-        border-radius: 12px;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      nav a:hover,
-      nav a.active {
-        color: var(--secondary-gold);
-        background-color: rgba(212, 175, 55, 0.1);
-        transform: translateY(-2px);
-      }
-    }
-
-    /* Nascondi selettore giochi nell'header su mobile */
-    @media (max-width: 991px) {
-      header .game-selector-container {
-        display: none;
-      }
-    }
-
-    /* ========== STILI SPECIFICI DEL GIOCO INTESA VINCENTE ========== */
-    h1 {
-      font-size: 3.5rem;
-      margin-bottom: 20px;
-      color: var(--secondary-gold);
-      text-transform: uppercase;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-      letter-spacing: 2px;
-      text-align: center;
-    }
-
-    .scoreboard {
-      display: flex;
-      gap: 40px;
-      margin-bottom: 30px;
-      width: 100%;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .score {
-      background-color: var(--secondary-black);
-      padding: 20px 30px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-      border: 2px solid var(--primary-gold);
-      text-align: center;
-      min-width: 180px;
-    }
-
-    .score span:first-child {
-      display: block;
-      font-size: 1.2rem;
-      margin-bottom: 10px;
-      font-weight: 700;
-      color: var(--secondary-gold);
-      text-transform: uppercase;
-    }
-
-    .score span:last-child {
-      font-size: 3rem;
-      font-weight: 700;
-      color: var(--text-light);
-    }
-
-    #game-container {
-      background-color: var(--secondary-black);
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.7);
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
-      text-align: center;
-      border: 2px solid var(--primary-gold);
-    }
-
-    #turnInfo {
-      font-size: 1.3rem;
-      margin-bottom: 20px;
-      color: var(--secondary-gold);
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    #timer {
-      font-size: 2.5rem;
-      margin-bottom: 20px;
-      color: var(--text-light);
-      position: relative;
-    }
-
-    #timer::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 0;
-      width: 100%;
-      height: 4px;
-      background-color: rgba(255, 255, 255, 0.2);
-      border-radius: 2px;
-    }
-
-    #timer-progress {
-      position: absolute;
-      bottom: -8px;
-      left: 0;
-      height: 4px;
-      background-width: auto;
-      border-radius: 2px;
-      width: 100%;
-      transform-origin: left;
-    }
-
-    #word {
-      font-size: 3.5rem;
-      margin: 20px 0;
-      height: 70px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--secondary-gold);
-      text-transform: uppercase;
-      animation: fadeInWord 0.5s ease;
-    }
-
-    @keyframes fadeInWord {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    #controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 20px;
-    }
-
-    #controls button {
-      background-width: auto;
-      border: none;
-      color: var(--primary-black);
-      font-weight: 700;
-      padding: 12px 24px;
-      border-radius: 6px;
-      box-shadow: 0 4px 0px var(--accent-gold);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 1.1rem;
-      display: none;
-      text-transform: uppercase;
-      flex: 1;
-      min-width: 130px;
-    }
-
-    #controls button.active {
-      display: block;
-    }
-
-    #controls button:disabled {
-      background-color: rgba(255, 179, 0, 0.5);
-      cursor: not-allowed;
-      box-shadow: 0 4px 0px rgba(255, 204, 51, 0.5);
-    }
-
-    #controls button:not(:disabled):hover {
-      background-color: var(--secondary-gold);
-      transform: translateY(-2px);
-    }
-
-    #controls button:active {
-      transform: translateY(0);
-      box-shadow: none;
-    }
-
-    #controls button i {
-      margin-right: 8px;
-    }
-
-    #correctBtn.active {
-      background-color: #4CAF50;
-    }
-
-    #wrongBtn.active {
-      background-color: #F44336;
-    }
-
-    #message {
-      margin-top: 25px;
-      font-size: 1.1rem;
-      min-height: 1.2em;
-      color: var(--secondary-gold);
-      font-weight: 700;
-      text-transform: uppercase;
-      animation: popIn 0.4s ease;
-    }
-
-    @keyframes popIn {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    .confetti {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      background-color: var(--secondary-gold);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 100;
-    }
-
-    /* Responsive per il gioco */
-    @media (max-width: 600px) {
-      h1 { font-size: 2.5rem; }
-      .score { min-width: 140px; padding: 15px 20px; }
-      .score span:last-child { font-size: 2.2rem; }
-      #word { font-size: 2.5rem; height: 60px; }
-      #timer { font-size: 2rem; }
-      #controls button { font-size: 1rem; padding: 10px 16px; }
-    }
-  
-    /* ===== Ritocchi design system condiviso ===== */
-    * { transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease; }
-    @media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
-
-        /* ===== FOOTER (allineato al resto della piattaforma) ===== */
-        footer {
-            text-align: center;
-            padding: 28px 16px;
-            margin-top: 50px;
-            border-top: 1px solid rgba(212, 175, 55, 0.2);
-            color: var(--text-gray);
-            background: linear-gradient(to top, var(--primary-black), transparent);
-            width: 100%;
-        }
-
-        .footer-links {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            margin-top: 22px;
-            align-items: center;
-        }
-
-        .footer-links a {
-            color: var(--light-gold);
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            padding: 16px 24px;
-            border-radius: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            background: rgba(212, 175, 55, 0.05);
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            width: 100%;
-            max-width: 260px;
-            font-size: 18px;
-            min-height: 60px;
-        }
-
-        .footer-links a:active {
-            background-color: rgba(212, 175, 55, 0.15);
-            transform: translateY(-2px);
-        }
-
-        .copyright {
-            margin-top: 28px;
-            font-size: 14px;
-            color: #888;
-        }
-
-        @media (min-width: 600px) {
-            .footer-links {
-                flex-direction: row;
-                gap: 20px;
-            }
-            .footer-links a {
-                width: auto;
-                max-width: none;
-                padding: 14px 28px;
-            }
-        }
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Intesa Vincente · Quizzotti</title>
+<meta name="description" content="Intesa Vincente a tema calcio: i suggeritori danno una parola a testa, chi indovina prenota e risponde prima che scada il tempo. Gioca gratis a squadre su Quizzotti.">
+<meta name="theme-color" content="#060912">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Intesa Vincente · Quizzotti">
+<meta property="og:description" content="Una parola a testa, prenota e indovina: il gioco a squadre a tema calcio.">
+<meta property="og:image" content="logo2.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=5dfbd63b">
+<style>
+  .iv-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 28px; }
+  @media (min-width: 900px) { .iv-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+  .iv-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+
+  /* passaggio del telefono */
+  .iv-hand { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; justify-items: center; text-align: center; padding-top: 8px; }
+  .iv-hand__badge { width: 96px; height: 96px; border-radius: 32%; display: grid; place-items: center; color: #0b1020; background: var(--c); box-shadow: 0 24px 60px -18px var(--c); animation: qz-pop-in .6s var(--ease-spring) both, qz-float 5s ease-in-out .6s infinite; }
+  .iv-hand__badge .ico { width: 46px; height: 46px; }
+  .iv-hand__name { font-size: clamp(30px, 8vw, 54px); font-weight: 900; color: var(--c); overflow-wrap: anywhere; }
+  .iv-hand .teams { width: 100%; }
+  .iv-hand .card { width: 100%; text-align: left; }
+
+  /* partita */
+  .iv-play { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 620px; margin: 0 auto; }
+  .iv-hud { display: flex; align-items: center; gap: 12px; }
+  .iv-hud .timer-ring { --size: 68px; }
+  .iv-hud__team { display: grid; min-width: 0; flex: 1; }
+  .iv-hud__team b { font-family: var(--font-display); font-size: 18px; color: var(--c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .iv-hud__pts { font-family: var(--font-display); font-size: 28px; font-variant-numeric: tabular-nums; text-align: right; line-height: 1; }
+  .iv-hud__pts small { display: block; font-family: var(--font-body); font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
+  .iv-stage { overflow: hidden; margin: -12px; padding: 12px; }
+  .iv-card { min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 26px 18px; text-align: center; border-radius: var(--r-xl); transition: background .3s; }
+  .iv-card .bigword { font-size: clamp(32px, 10vw, 66px); }
+  .iv-card.is-buzz { background: linear-gradient(180deg, rgba(var(--accent-rgb), .22), rgba(var(--accent-rgb), .06)); }
+  .iv-state { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 6px 12px; border-radius: 999px; }
+  .iv-card.is-buzz .iv-state { color: var(--accent); animation: qz-pulse-accent 1s ease-in-out infinite; }
+  .iv-card .timer-bar { width: min(260px, 100%); }
+  .iv-card.is-in { animation: iv-in .36s var(--ease-spring) both; }
+  .iv-card.is-go { animation: iv-go .2s ease-in both; }
+  @keyframes iv-in { from { opacity: 0; transform: translateY(24px) scale(.94); } }
+  @keyframes iv-go { to { opacity: 0; transform: translateY(-16px) scale(.96); } }
+  .iv-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr); gap: 10px; }
+  .iv-actions .btn { min-height: 72px; padding: 0 10px; }
+  .iv-actions .btn small { font-size: 11px; font-weight: 700; opacity: .8; }
+  .iv-actions--judge { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .iv-skip { flex-direction: column; gap: 2px; font-size: 14px; }
+
+  /* riepilogo turno */
+  .iv-sum { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .iv-sum__row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; font-weight: 800; transition: background .2s, border-color .2s; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 40ms); }
+  .iv-sum__row span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .iv-sum__row[data-res="ok"] { border-color: rgba(var(--ok-rgb), .4); background: rgba(var(--ok-rgb), .08); }
+  .iv-sum__row[data-res="bad"] { border-color: rgba(var(--bad-rgb), .4); background: rgba(var(--bad-rgb), .08); }
+  .iv-sum__row small { display: block; font-size: 11px; color: var(--faint); font-weight: 700; }
 </style>
 </head>
-<body>
-  <!-- Header identico a index.html -->
-  <a href="#main-content" class="qz-skip-link">Vai al contenuto principale</a>
-<header>
-    <a href="index.html" class="logo">
-      <picture>
-        <source srcset="logo1.webp" type="image/webp">
-        <img src="logo1.png" alt="Quizzotti Logo" class="logo-icon" width="70" height="70">
-      </picture>
-      <h1>Quizzotti</h1>
-    </a>
+<body data-game="intesavincente">
+<main id="app" class="qz-main" tabindex="-1">
 
-    <nav>
-      <ul>
-        <li><a href="index.html" title="Home"><i class="fas fa-home"></i></a></li>
-        <li><a href="index.html#games" title="Giochi"><i class="fas fa-gamepad"></i> Giochi</a></li>
-        <li><a href="index.html#about" title="Info"><i class="fas fa-info-circle"></i></a></li>
-      </ul>
-    </nav>
-
-    <button class="qz-profile-badge" id="qz-profile-badge" type="button" aria-label="Il tuo profilo Quizzotti"><i class="fas fa-star" aria-hidden="true"></i><span>Lv. 1</span></button>
-
-    <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Apri menu">
-      <i class="fas fa-bars"></i>
-    </button>
-
-    <!-- Dropdown giochi -->
-        <div class="game-selector-container">
-            <div class="game-selector" id="gameSelector">
-                <span><i class="fas fa-gamepad"></i> Seleziona Gioco</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            <div class="game-dropdown" id="gameDropdown">
-                <a href="AvantiUnAltro.html"><i class="fas fa-forward"></i> Avanti un Altro</a>
-                <a href="IntesaVincente.html"><i class="fas fa-users"></i> Intesa Vincente</a>
-                <a href="Jeopardy.html"><i class="fas fa-question-circle"></i> Jeopardy</a>
-                <a href="MrWhite.html"><i class="fas fa-user-secret"></i> Mr.White</a>
-                <a href="Taboo.html"><i class="fas fa-ban"></i> Taboo</a>
-                <a href="CVEM.html"><i class="fas fa-money-bill-wave"></i> Chi Vuol Essere Milionario</a>
-                <a href="Bomba.html"><i class="fas fa-bomb"></i> Bomba</a>
-                <a href="sfidaEredita.html"><i class="fas fa-futbol"></i> Derby delle Parole</a>
-                <a href="GiocatoriBudget.html"><i class="fas fa-coins"></i> Sfida dei Budget</a>
-                <a href="Citazioni.html"><i class="fas fa-quote-right"></i> Chi l'ha detto</a>
-            </div>
+  <!-- ============ INIZIO ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Party · 2-6 squadre</span>
+        <h1 class="intro__title">Questione di <em>intesa</em></h1>
+        <p class="intro__lead">Due suggeritori, una parola a testa. Chi indovina prenota, ferma il tempo e risponde. Più parole indovinate prima del gong, più punti per la squadra.</p>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
-    </header>
-<span id="main-content" tabindex="-1"></span>
-
-    <!-- Overlay menu mobile -->
-    <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true">
-        <div class="mobile-overlay-backdrop" id="mobileOverlayBackdrop"></div>
-        <aside class="mobile-overlay-panel" role="dialog" aria-modal="true" aria-label="Menu mobile">
-            <div class="mobile-overlay-header">
-                <h3 class="mobile-overlay-title">Menu</h3>
-                <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Chiudi">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <div class="mobile-menu-section">
-                <p class="mobile-menu-label">Sezioni</p>
-                <div class="mobile-menu-links">
-                    <a href="index.html" class="mobile-menu-link"><i class="fas fa-home"></i> Home</a>
-                    <a href="index.html#games" class="mobile-menu-link"><i class="fas fa-gamepad"></i> Giochi</a>
-                    <a href="index.html#about" class="mobile-menu-link"><i class="fas fa-info-circle"></i> Info</a>
-                </div>
-            </div>
-
-            <div class="mobile-menu-section">
-                <p class="mobile-menu-label">Minigiochi</p>
-                <div class="mobile-menu-links">
-                    <a href="AvantiUnAltro.html" class="mobile-menu-link"><i class="fas fa-forward"></i> Avanti un Altro</a>
-                    <a href="IntesaVincente.html" class="mobile-menu-link"><i class="fas fa-users"></i> Intesa Vincente</a>
-                    <a href="Jeopardy.html" class="mobile-menu-link"><i class="fas fa-question-circle"></i> Jeopardy</a>
-                    <a href="MrWhite.html" class="mobile-menu-link"><i class="fas fa-user-secret"></i> Mr.White</a>
-                    <a href="Taboo.html" class="mobile-menu-link"><i class="fas fa-ban"></i> Taboo</a>
-                    <a href="CVEM.html" class="mobile-menu-link"><i class="fas fa-money-bill-wave"></i> Chi Vuol Essere Milionario</a>
-                    <a href="Bomba.html" class="mobile-menu-link"><i class="fas fa-bomb"></i> Bomba</a>
-                    <a href="sfidaEredita.html" class="mobile-menu-link"><i class="fas fa-futbol"></i> Derby delle Parole</a>
-                    <a href="GiocatoriBudget.html" class="mobile-menu-link"><i class="fas fa-coins"></i> Sfida dei Budget</a>
-                    <a href="Citazioni.html" class="mobile-menu-link"><i class="fas fa-quote-right"></i> Chi l'ha detto</a>
-                </div>
-            </div>
-        </aside>
-    </div>
-
-  <!-- Contenuto principale del gioco avvolto in .container -->
-  <div class="container">
-    <h1>Intesa Vincente</h1>
-    <div class="scoreboard">
-      <div class="score">
-        <span>Squadra 1</span>
-        <span id="score1">0</span>
+        <p class="small muted mt-2" id="start-record"></p>
       </div>
-      <div class="score">
-        <span>Squadra 2</span>
-        <span id="score2">0</span>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
       </div>
     </div>
-    <div id="game-container">
-      <div id="turnInfo">Premi "Inizia" per Squadra 1</div>
-      <div id="timer">60s<div id="timer-progress"></div></div>
-      <div id="word">---</div>
-      <div id="controls">
-        <button id="startBtn" class="active"><i class="fas fa-play"></i> Inizia</button>
-        <button id="buzzBtn"><i class="fas fa-bell"></i> Prenota</button>
-        <button id="skipBtn"><i class="fas fa-forward"></i> Salta (<span id="skips">2</span>)</button>
-        <button id="correctBtn"><i class="fas fa-check"></i> Giusta</button>
-        <button id="wrongBtn"><i class="fas fa-times"></i> Sbagliata</button>
+
+    <div class="iv-setup">
+      <div class="card" id="teams-host"></div>
+      <div class="card iv-opts">
+        <div class="field"><span class="label" id="lbl-time">Tempo per turno</span><div id="opt-time" aria-labelledby="lbl-time"></div></div>
+        <div class="field"><span class="label" id="lbl-rounds">Giri (ogni squadra gioca un turno per giro)</span><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
+        <div class="field"><span class="label" id="lbl-skips">Passi per turno</span><div id="opt-skips" aria-labelledby="lbl-skips"></div></div>
+        <div class="field"><span class="label" id="lbl-answer">Tempo per rispondere dopo la prenotazione</span><div id="opt-answer" aria-labelledby="lbl-answer"></div></div>
       </div>
-      <div id="message"></div>
     </div>
-  </div>
+  </section>
 
-  <footer>
-    <p style="font-size: 20px; color: var(--light-gold); margin-bottom: 10px;">Quizzotti</p>
-    <p style="max-width: 600px; margin: 0 auto 20px; color: var(--text-gray);">Divertiti con i nostri minigiochi a tema calcio, sempre gratuiti.</p>
-    <div class="footer-links">
-      <a href="index.html"><i class="fas fa-home"></i> Home</a>
-      <a href="index.html#games"><i class="fas fa-gamepad"></i> Giochi</a>
-      <a href="index.html#about"><i class="fas fa-info-circle"></i> Info</a>
+  <!-- ============ PASSA IL TELEFONO ============ -->
+  <section class="screen" id="s-turn">
+    <div class="iv-hand qz-main--narrow" style="margin:0 auto" data-stagger>
+      <div class="iv-hand__badge" id="hand-badge"></div>
+      <div>
+        <span class="eyebrow" id="hand-round"></span>
+        <h2 class="iv-hand__name mt-1" id="hand-name"></h2>
+      </div>
+      <div class="card card--tight">
+        <ul class="rules" id="hand-rules"></ul>
+      </div>
+      <button class="btn btn--primary btn--xl btn--block" type="button" id="go-btn" data-autofocus></button>
+      <div class="teams" id="hand-scores" aria-label="Classifica"></div>
     </div>
-    <div class="copyright">Quizzotti &copy; 2025 - Tutti i diritti sono dei giocatori</div>
-  </footer>
+  </section>
 
-  <!-- Script per l'header (copiato da index) -->
-  <script src="assets/sfx.js?v=c7a8a841"></script>
-  <script src="assets/db-intesavincente.js?v=b589bbd8"></script>
+  <!-- ============ PARTITA ============ -->
+  <section class="screen" id="s-game">
+    <div class="iv-play">
+      <div class="iv-hud">
+        <div id="timer-host"></div>
+        <div class="iv-hud__team"><span class="small muted">In campo</span><b id="hud-team"></b></div>
+        <div class="iv-hud__pts"><span id="hud-pts" aria-live="polite">0</span><small>punti turno</small></div>
+        <button class="btn btn--ghost btn--icon btn--sm" type="button" id="pause-btn" aria-label="Pausa"></button>
+      </div>
+      <div class="iv-stage">
+        <div class="card card--glow iv-card" id="card">
+          <span class="iv-state" id="state"></span>
+          <div class="bigword" id="word" aria-live="assertive"></div>
+          <div class="timer-bar" id="answer-bar" hidden><div class="timer-bar__fill"></div></div>
+        </div>
+      </div>
+      <div class="iv-actions" id="act-play">
+        <button class="btn iv-skip" type="button" id="skip-btn"></button>
+        <button class="btn btn--primary btn--xl" type="button" id="buzz-btn"></button>
+      </div>
+      <div class="iv-actions iv-actions--judge" id="act-judge" hidden>
+        <button class="btn btn--bad btn--lg" type="button" id="ko-btn"></button>
+        <button class="btn btn--ok btn--lg" type="button" id="ok-btn"></button>
+      </div>
+      <p class="small faint center kbd-hint" style="justify-content:center;gap:6px;flex-wrap:wrap">Tastiera: <span class="kbd">Spazio</span> prenota · <span class="kbd">→</span> giusta · <span class="kbd">←</span> sbagliata · <span class="kbd">↓</span> passo · <span class="kbd">Esc</span> pausa</p>
+    </div>
+  </section>
 
-    <script>
-    (function() {
-      // Elementi DOM
-      const gameSelector = document.getElementById('gameSelector');
-      const gameDropdown = document.getElementById('gameDropdown');
-      const mobileToggle = document.getElementById('mobileMenuToggle');
-      const mobileOverlay = document.getElementById('mobileOverlay');
-      const backdrop = document.getElementById('mobileOverlayBackdrop');
-      const closeBtn = document.getElementById('mobileMenuClose');
-      const overlayLinks = mobileOverlay ? mobileOverlay.querySelectorAll('a') : [];
+  <!-- ============ RIEPILOGO TURNO ============ -->
+  <section class="screen" id="s-sum">
+    <div class="qz-main--narrow stack" style="--gap:18px;margin:0 auto">
+      <div class="center" data-stagger>
+        <span class="eyebrow" id="sum-eyebrow"></span>
+        <h2 class="result__title mt-1" id="sum-title" style="color:var(--c);overflow-wrap:anywhere"></h2>
+        <div class="result__big" id="sum-pts" aria-live="polite">0</div>
+        <p class="muted" id="sum-total"></p>
+        <p class="small faint mt-1">Tocca una parola per correggerla se avete premuto il tasto sbagliato.</p>
+      </div>
+      <div class="iv-sum" id="sum-list"></div>
+      <button class="btn btn--primary btn--xl btn--block" type="button" id="sum-next"></button>
+    </div>
+  </section>
 
-      // Funzioni dropdown
-      function closeMainDropdown() {
-        if (gameDropdown) gameDropdown.classList.remove('show');
-        if (gameSelector) gameSelector.classList.remove('active');
-      }
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
 
-      function toggleMainDropdown(e) {
-        if (e) e.stopPropagation();
-        if (gameDropdown && gameSelector) {
-          gameDropdown.classList.toggle('show');
-          gameSelector.classList.toggle('active');
-        }
-      }
+</main>
 
-      // Funzioni overlay mobile
-      function openMobileMenu() {
-        if (!mobileOverlay) return;
-        mobileOverlay.classList.add('show');
-        mobileOverlay.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('mobile-menu-open');
-      }
-
-      function closeMobileMenu() {
-        if (!mobileOverlay) return;
-        mobileOverlay.classList.remove('show');
-        mobileOverlay.setAttribute('aria-hidden', 'true');
-        document.body.classList.remove('mobile-menu-open');
-      }
-
-      // Event listeners
-      if (gameSelector) {
-        gameSelector.addEventListener('click', toggleMainDropdown);
-      }
-
-      if (mobileToggle) {
-        mobileToggle.addEventListener('click', function(e) {
-          e.stopPropagation();
-          openMobileMenu();
-          closeMainDropdown(); // chiudi il dropdown se aperto
-        });
-      }
-
-      if (backdrop) {
-        backdrop.addEventListener('click', closeMobileMenu);
-      }
-
-      if (closeBtn) {
-        closeBtn.addEventListener('click', closeMobileMenu);
-      }
-
-      overlayLinks.forEach(link => {
-        link.addEventListener('click', closeMobileMenu);
-      });
-
-      // Chiudi dropdown cliccando fuori
-      document.addEventListener('click', function(e) {
-        if (gameSelector && gameDropdown && !gameSelector.contains(e.target) && !gameDropdown.contains(e.target)) {
-          closeMainDropdown();
-        }
-      });
-
-      // Chiudi con tasto Esc
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          closeMobileMenu();
-          closeMainDropdown();
-        }
-      });
-    })();
-  </script>
-
-  <!-- Script del gioco Intesa Vincente (originale, leggermente adattato) -->
-  <script>
-   // Database "words" caricato da assets/db-intesavincente.js
-
-    let score1 = 0, score2 = 0, currentTeam = 1, timeLeft = 60, skipsLeft = 2, timerInterval;
-    const score1El = document.getElementById('score1');
-    const score2El = document.getElementById('score2');
-    const turnInfo = document.getElementById('turnInfo');
-    const timerEl = document.getElementById('timer');
-    const progressEl = document.getElementById('timer-progress');
-    const wordEl = document.getElementById('word');
-    const startBtn = document.getElementById('startBtn');
-    const buzzBtn = document.getElementById('buzzBtn');
-    const skipBtn = document.getElementById('skipBtn');
-    const correctBtn = document.getElementById('correctBtn');
-    const wrongBtn = document.getElementById('wrongBtn');
-    const skipsEl = document.getElementById('skips');
-    const messageEl = document.getElementById('message');
-
-    // Audio Elements
-    const startSound = QZSound.makeAudioLike(QZSound.start, false);
-    const buzzSound = QZSound.makeAudioLike(QZSound.wrong, false);
-    const correctSound = QZSound.makeAudioLike(QZSound.win, false);
-    const wrongSound = QZSound.makeAudioLike(QZSound.lose, false);
-    const endSound = QZSound.makeAudioLike(QZSound.levelUp, false);
-
-    function playSound(sound) {
-      sound.currentTime = 0;
-      sound.play();
-    }
-
-    function show(...buttons) {
-      [startBtn, buzzBtn, skipBtn, correctBtn, wrongBtn].forEach(btn => btn.classList.remove('active'));
-      buttons.forEach(b => b.classList.add('active'));
-    }
-
-    function nextWord() {
-      const idx = Math.floor(Math.random() * words.length);
-      wordEl.textContent = words[idx];
-      wordEl.style.animation = 'none';
-      setTimeout(() => wordEl.style.animation = '', 10);
-    }
-
-    function updateProgress() {
-      const pct = timeLeft / 60;
-      progressEl.style.transform = `scaleX(${pct})`;
-      timerEl.childNodes[0].nodeValue = `${timeLeft}s`;
-    }
-
-    function createConfetti() {
-      const confettiCount = 50;
-      for (let i = 0; i < confettiCount; i++) {
-        const confetti = document.createElement('div');
-        confetti.classList.add('confetti');
-        confetti.style.left = Math.random() * 100 + 'vw';
-        confetti.style.top = Math.random() * -20 + 'px';
-        confetti.style.backgroundColor = `hsl(${Math.random() * 30 + 30}, 100%, 50%)`;
-        confetti.style.width = Math.random() * 8 + 5 + 'px';
-        confetti.style.height = confetti.style.width;
-        confetti.style.opacity = Math.random() + 0.5;
-        document.body.appendChild(confetti);
-
-        const animation = confetti.animate([
-          { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
-          { transform: `translateY(${window.innerHeight + 20}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
-        ], {
-          duration: Math.random() * 2000 + 3000,
-          easing: 'cubic-bezier(0.1, 0.8, 0.2, 1)'
-        });
-
-        animation.onfinish = () => confetti.remove();
-      }
-    }
-
-    function startRound() {
-      skipsLeft = 2;
-      skipsEl.textContent = skipsLeft;
-      timeLeft = 60;
-      updateProgress();
-      nextWord();
-      show(buzzBtn, skipBtn);
-      turnInfo.textContent = `Turno Squadra ${currentTeam}`;
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        updateProgress();
-        if (timeLeft <= 0) endRound();
-      }, 1000);
-    }
-
-    function pauseTimer() {
-      clearInterval(timerInterval);
-    }
-
-    function resumeTimer() {
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        updateProgress();
-        if (timeLeft <= 0) endRound();
-      }, 1000);
-    }
-
-    function endRound() {
-      clearInterval(timerInterval);
-      show(startBtn);
-      messageEl.textContent = `Fine turno! Squadra ${currentTeam} ha ${currentTeam === 1 ? score1 : score2} punti.`;
-      currentTeam = currentTeam === 1 ? 2 : 1;
-      turnInfo.textContent = `Premi "Inizia" per Squadra ${currentTeam}`;
-      wordEl.textContent = '---';
-      playSound(endSound);
-    }
-
-    startBtn.addEventListener('click', () => {
-      startBtn.disabled = false;
-      show(startBtn);
-      startRound();
-      playSound(startSound);
-    });
-
-    buzzBtn.addEventListener('click', () => {
-      pauseTimer();
-      show(correctBtn, wrongBtn);
-      messageEl.textContent = 'Rispondi ora';
-      playSound(buzzSound);
-    });
-
-    skipBtn.addEventListener('click', () => {
-      if (skipsLeft > 0) {
-        skipsLeft--;
-        skipsEl.textContent = skipsLeft;
-        nextWord();
-      }
-      if (skipsLeft === 0) skipBtn.disabled = true;
-    });
-
-    correctBtn.addEventListener('click', () => {
-      if (currentTeam === 1) {
-        score1++;
-        score1El.textContent = score1;
-      } else {
-        score2++;
-        score2El.textContent = score2;
-      }
-      messageEl.textContent = 'Corretto!';
-      createConfetti();
-      nextWord();
-      resumeTimer();
-      show(buzzBtn, skipBtn);
-      playSound(correctSound);
-    });
-
-    wrongBtn.addEventListener('click', () => {
-      messageEl.textContent = 'Sbagliato!';
-      nextWord();
-      resumeTimer();
-      show(buzzBtn, skipBtn);
-      playSound(wrongSound);
-    });
-  </script>
+<script src="assets/qz.js?v=27d37bac" defer></script>
+<script src="assets/db-intesavincente.js?v=2a2223c8" defer></script>
+<script src="assets/games/intesavincente.js?v=186bae0a" defer></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

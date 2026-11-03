@@ -1,118 +1,75 @@
-# Quizzotti
+# Quizzotti v2
 
-Piattaforma di 10 minigiochi gratuiti a tema calcio, ispirati a format TV italiani (Chi Vuol Essere Milionario, Jeopardy, Avanti un Altro, Taboo, Mr.White, L'Eredità...). HTML/CSS/JS statico, senza framework né bundler: ogni pagina resta un file autonomo apribile direttamente nel browser.
+10 minigiochi di calcio gratuiti, ispirati a format TV italiani (Chi Vuol Essere Milionario, Jeopardy, Avanti un Altro, Taboo, Intesa Vincente, Mr. White, L'Eredità…). HTML/CSS/JS statico, senza framework né bundler: si apre `index.html` e si gioca.
+
+La v2 è un rifacimento completo: nuovo design "Notte di Coppa" (fari dello stadio, oro del logo, un colore d'accento per ogni gioco), animazioni ovunque, un solo motore condiviso al posto del codice duplicato in ogni pagina.
 
 ## Avvio rapido
 
-Non serve alcun build: apri `index.html` in un browser, oppure servi la cartella con un qualsiasi server statico (es. `npx serve`).
+Non serve build: apri `index.html`, oppure servi la cartella con un server statico (dalla radice del repo: `node server.js`, poi http://localhost:8099/quizzotti/).
 
 ```bash
-npm install     # solo per test/lint, non serve per giocare
-npm test        # esegue la suite di test automatici
-npm run check   # test + verifica chrome + lint JS/CSS, tutto insieme
+npm install     # solo per test e lint
+npm test        # test automatici (node:test)
+npm run check   # test + lint JS + lint CSS
 ```
 
-## Struttura del progetto
+## Struttura
 
 ```
-index.html, CVEM.html, Jeopardy.html, ...   10 pagine di gioco + home, ciascuna autonoma
+index.html                 home (griglia giochi generata dal registro)
+CVEM.html, Jeopardy.html…  una pagina per gioco, con <body data-game="id">
 assets/
-  theme.css            design system condiviso (colori, card, bottoni, timer, animazioni)
-  theme.js              utility JS condivise (counter animato, QZ.Timer, QZ.Streak, QZ.shareResult...)
-  sfx.js                 effetti sonori sintetizzati via Web Audio API (nessun file audio esterno)
-  profile.js             profilo/livello condiviso tra i giochi (localStorage)
-  quiz-engine.js          motore di estrazione domande (filtri, anti-duplicati, modalità)
-  questions-data.js       database condiviso di trivia calcio (usato da CVEM)
-  db-<gioco>.js           database dedicato di ciascun minigioco (schema diverso per gioco)
-partials/
-  chrome-game.html        sorgente unica di header/menu mobile/footer per le 10 pagine di gioco
-  chrome-home.html        variante per index.html (link relativi, voce "Home" attiva)
+  qz.css                   design system unico (token, componenti, animazioni)
+  qz.js                    motore condiviso: registro giochi, header/launcher/footer,
+                           icone SVG, suoni, profilo XP, timer, effetti, modali
+  home.js                  logica della home
+  games/<id>.js            logica di ciascun gioco
+  db-<gioco>.js            database dei contenuti (invariati rispetto alla v1)
+  questions-data.js        trivia condiviso (usato da CVEM) + quiz-engine.js
 scripts/
-  sync-chrome.js          verifica/ripropaga il chrome condiviso su tutte le pagine
-  cache-bust.js           aggiunge un hash di versione agli asset condivisi
-  set-domain.js           imposta il dominio reale in sitemap.xml/robots.txt
-tests/                    test automatici (node:test, nessuna dipendenza da installare)
-.github/workflows/ci.yml  pipeline CI: test + verifica chrome + lint ad ogni push
+  cache-bust.js            aggiunge ?v=hash agli asset (da lanciare prima di pubblicare)
+  set-domain.js            imposta il dominio reale in sitemap.xml/robots.txt
+tests/                     integrità dei database + coerenza pagine/registro
 ```
 
-## Il chrome condiviso (header/menu/footer)
+## Come funziona una pagina di gioco
 
-Storicamente header, menu mobile e footer erano copiati a mano in ognuno degli 11 file HTML: col tempo sono divergiuti (link rotti su alcune pagine, footer mancante su altre). Ora la fonte di verità sono i due file in `partials/`.
-
-**Per modificare header, menu mobile o footer:**
-
-1. Modifica `partials/chrome-game.html` (o `chrome-home.html` per la sola index.html).
-2. Esegui `node scripts/sync-chrome.js --fix` per ripropagare la modifica su tutte le pagine.
-3. Esegui `node scripts/sync-chrome.js` (senza `--fix`) per verificare che tutto sia allineato — questo comando gira anche in CI ad ogni push, quindi una pagina modificata a mano senza rieseguire il fix fa fallire la build.
-
-## Aggiungere un undicesimo minigioco
-
-1. Parti da uno dei file di gioco esistenti (per avere già il chrome corretto), oppure crea un nuovo file HTML e incolla i blocchi da `partials/chrome-game.html`.
-2. Crea `assets/db-<nomegioco>.js` con i dati del gioco (vedi schemi sotto) ed esporta con `module.exports`.
-3. Aggiungi `<script src="assets/db-<nomegioco>.js"></script>` e, se serve audio o punteggio condiviso, `assets/sfx.js` e `assets/profile.js`.
-4. Aggiungi il link al gioco nel dropdown/overlay di `partials/chrome-game.html` (e `chrome-home.html`) e nella griglia giochi di `index.html`, poi `node scripts/sync-chrome.js --fix`.
-5. Esegui `node scripts/cache-bust.js` per applicare il fingerprint agli asset nuovi/modificati.
-6. Aggiungi un test in `tests/db-integrity.test.js` per il nuovo database.
-
-## Schema dei database (`assets/db-*.js`)
-
-Ogni gioco ha una modalità diversa, quindi uno schema dati diverso — non esiste un formato unico:
-
-| File | Variabile esportata | Schema voce |
-|---|---|---|
-| `db-cvem.js` | `questions` | `{ level: 1-15, question, options: {A,B,C,D}, correctAnswer }` |
-| `db-avantiunaltro.js` | `fullDatabase` | `{ q, a, b, correct: 'A'\|'B' }` |
-| `db-bomba.js` | `topics` | array di stringhe (argomenti) |
-| `db-citazioni.js` | `quotes` | `{ quote, correct, options: [] }` |
-| `db-giocatoributget.js` | `playersDatabase` | `{ name, role: 'ATT'\|'CEN'\|'DIF'\|'POR', team, value }` |
-| `db-intesavincente.js` | `words` | array di stringhe |
-| `db-jeopardy.js` | `jeopardyData` | `[{ category, questions: [{ value, question, answer }] }]` |
-| `db-mrwhite.js` | `wordsList`, `playerImages` | array di nomi calciatori + mappa nome→URL immagine (opzionale) |
-| `db-taboo.js` | `tabooWords` | `{ word, taboo: [] }` |
-| `db-sfidaeredita.js` | `database` | `{ word, def }` |
-| `questions-data.js` | (default export) `QUIZ_DB` | `{ id, domanda, opzioni: [], risposta, difficolta, categoria, tag: [], anno }`, interrogabile con `assets/quiz-engine.js` |
-
-Tutti i database sono generati/curati con assistenza automatica: le cifre di calciomercato e alcuni record storici andrebbero riverificati contro una fonte autorevole prima di considerarli definitivi al 100%.
-
-## Profilo condiviso (`assets/profile.js`)
-
-Salva in `localStorage` (solo sul dispositivo del giocatore, nessun server) un livello ed esperienza (XP) condivisi tra tutti i giochi. Per collegare un gioco, a fine partita:
-
-```js
-QZProfile.recordResult('nome-gioco', {
-  xp: 42,                       // XP guadagnati in questa partita
-  label: 'Hai indovinato 8/10'  // riepilogo breve mostrato nel profilo
-});
+```html
+<body data-game="cvem">
+  <main id="app" class="qz-main">
+    <section class="screen is-active" id="s-start">…</section>
+    <section class="screen" id="s-game">…</section>
+    <section class="screen" id="s-end">…</section>
+  </main>
+  <script src="assets/qz.js" defer></script>
+  <script src="assets/db-cvem.js" defer></script>
+  <script src="assets/games/cvem.js" defer></script>
+</body>
 ```
 
-Il badge nell'header (aggiunto automaticamente a tutte le pagine tramite il chrome condiviso) mostra il livello corrente ed apre un pannello di riepilogo al click. Attualmente collegato a **CVEM** come implementazione di riferimento; gli altri 9 giochi possono essere collegati allo stesso modo con la chiamata sopra.
+- **Header, menu giochi, footer e sfondo** li genera `qz.js`: non vanno scritti nelle pagine. Per aggiungere o rinominare un gioco basta modificare `QZ.GAMES` in `assets/qz.js` (home, launcher e profilo si aggiornano da soli).
+- **Colore del gioco**: `data-game` sul `<body>` attiva il suo accento (`--accent`) definito in `qz.css`; bottoni, timer e risposte lo ereditano.
+- **API principali** (`window.QZ`): `show(screenId)`, `Timer`, `ringHTML()/ring()`, `sound.*`, `fx.*` (coriandoli, scintille, testo volante, shake…), `toast`, `modal`, `confirm`, `countdown`, `share`, `wake` (schermo sempre acceso), `playerList`, `segmented`, `results`, `podiumHTML`, `Deck` (estrazioni senza ripetizioni tra una partita e l'altra), `profile.record(id, {xp, label, score})`.
 
-## Audio senza dipendenze esterne (`assets/sfx.js`)
+## Aggiungere un gioco
 
-Tutti gli effetti sonori (corretto/errato, tick, esplosione, fanfare...) sono sintetizzati al volo con la Web Audio API: nessun file `.mp3` da scaricare, nessuna dipendenza da CDN di terze parti che potrebbe rompersi o sparire. `QZSound.makeAudioLike(fn, loop)` restituisce un oggetto con l'interfaccia di un elemento `<audio>` (`play()`/`pause()`/`currentTime`/`volume`), così il codice di gioco esistente non richiede modifiche per usarlo.
+1. Aggiungi la voce in `QZ.GAMES` (`assets/qz.js`) e il colore in `qz.css` (`[data-game="id"]`).
+2. Crea `NomeGioco.html` partendo da `CVEM.html` e `assets/games/<id>.js` partendo da `assets/games/cvem.js`.
+3. Crea `assets/db-<id>.js` con i dati ed esportali con `module.exports`, poi aggiungi un test in `tests/db-integrity.test.js`.
+4. `npm test`: il test delle pagine verifica che registro, `data-game`, script e asset siano coerenti.
 
-## SEO
-
-Ogni pagina ha meta tag Open Graph/Twitter Card per le anteprime social. `sitemap.xml` e `robots.txt` contengono un placeholder (`SOSTITUISCI-CON-IL-TUO-DOMINIO.it`) da sostituire col dominio reale prima di andare in produzione:
+## Prima di pubblicare
 
 ```bash
-node scripts/set-domain.js https://iltuodominio.it
+node scripts/cache-bust.js                       # versione degli asset nei link
+node scripts/set-domain.js https://iltuodominio.it   # sitemap e robots
 ```
 
-## Test e qualità
+## Privacy
 
-```bash
-npm test          # 25 test (node:test, nessuna dipendenza da installare)
-npm run lint       # ESLint su assets/, scripts/, tests/
-npm run lint:css   # Stylelint su assets/theme.css
-npm run chrome:check   # verifica che header/menu/footer siano allineati ovunque
-npm run check      # tutto quanto sopra insieme (gira anche in CI)
-```
+Profilo, livello, record e nomi dei giocatori restano in `localStorage` sul dispositivo. Nessun tracciamento, nessun server.
 
-La CI (`.github/workflows/ci.yml`) esegue automaticamente `test`, `chrome:check`, `lint` e `lint:css` ad ogni push e pull request.
+## Note sui contenuti
 
-## Limiti noti / prossimi passi
-
-- Il profilo condiviso e il pulsante "condividi risultato" sono collegati solo a CVEM come riferimento: estenderli agli altri 9 giochi richiede una riga di codice per gioco (vedi sopra).
-- Le immagini dei calciatori in `db-mrwhite.js` (`playerImages`) sono per lo più assenti: il gioco funziona comunque (fallback silenzioso), ma completarle migliorerebbe l'esperienza.
-- Nessuna vera analytics: per rispetto della privacy non è stato aggiunto alcun tracciamento di terze parti. Se serve capire quali giochi vengono giocati di più, va scelto e configurato esplicitamente un provider (es. Plausible, che non usa cookie).
+I database sono generati/curati con assistenza automatica: cifre di calciomercato e alcuni record andrebbero riverificati su una fonte autorevole.
