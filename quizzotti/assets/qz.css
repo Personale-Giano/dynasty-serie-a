@@ -206,6 +206,13 @@ p { margin: 0; }
 .qz-level [data-xp] { font-size: 14px; color: #a07a2e; }
 .qz-level.is-bump { animation: qz-bump 0.5s var(--ease-spring); }
 
+@media (max-width: 399px) {
+  .qz-brand__name { font-size: 17px !important; }
+  .qz-brand { gap: 8px; }
+  .qz-header__bar { gap: 6px !important; }
+  .qz-iconbtn, .qz-level { padding: 0 10px; }
+}
+
 @keyframes qz-bump { 40% { transform: scale(1.1); } }
 
 @media (max-width: 479px) {

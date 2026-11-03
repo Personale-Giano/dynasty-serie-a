@@ -59,14 +59,15 @@
     $('#rules').innerHTML = [
         ['Schede numerate:', 'il N° 1 è uguale per tutti. Una volta chiusa, la scheda resta in bacheca.'],
         ['Tocca una casella', 'e scrivi. Toccala di nuovo per passare da orizzontale a verticale.'],
-        ['Parola giusta, gol:', 'si accende di verde e non si tocca più.'],
-        ['Tre aiuti dalla panchina:', 'controlla, svela una lettera, svela la parola. Ognuno pesa sul voto.']
+        ['Niente suggerimenti in corsa:', 'scrivi tutto, correggi quanto vuoi. Nessuna parola si accende prima del tempo.'],
+        ['Verifica finale:', 'quando sei pronto, un solo tasto corregge tutta la griglia. Lettere sbagliate in rosso, giuste in verde.'],
+        ['Due aiuti dalla panchina:', 'svela una lettera o una parola intera. Ognuno pesa sul voto.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
 
     var AIDS = [
-        { id: 'check', label: 'Controlla', ico: 'check', fn: aidCheck },
+        { id: 'verify', label: 'Verifica', ico: 'check', fn: verify, cls: 'xw-aid--verify' },
         { id: 'letter', label: 'Svela lettera', ico: 'eye', fn: aidLetter },
         { id: 'word', label: 'Svela parola', ico: 'bulb', fn: aidWord },
         { id: 'quit', label: 'Mi arrendo', ico: 'flag', fn: surrender, cls: 'xw-aid--quit' }
@@ -135,7 +136,7 @@
                 cls = 'is-play';
                 status = 'In corso';
                 action = 'Riprendi';
-                var solved = play.solved.filter(Boolean).length;
+                var solved = wordsFilled(p, play.fill);
                 detail = '<span class="xw-card__led"><span class="led">' + solved + '/' + p.words.length + '</span><span class="led">' + fmtTime(play.elapsed) + '</span></span>';
             } else {
                 cls = 'is-new';
@@ -143,7 +144,7 @@
                 action = 'Gioca';
             }
             var label = 'Cruciverba numero ' + p.n + ', ' + p.title + ', ' + p.words.length + ' parole. ' + status +
-                (d ? (d.quit ? '' : ', voto ' + votoOf(d.ratio)) + ', tempo ' + timeWords(d.time) : play ? ', ' + play.solved.filter(Boolean).length + ' parole su ' + p.words.length : '') + '. ' + action;
+                (d ? (d.quit ? '' : ', voto ' + votoOf(d.ratio)) + ', tempo ' + timeWords(d.time) : play ? ', ' + wordsFilled(p, play.fill) + ' parole scritte su ' + p.words.length : '') + '. ' + action;
             return '<li style="--i:' + i + '"><button type="button" class="xw-card ' + cls + '" data-n="' + p.n + '" aria-label="' + QZ.esc(label) + '">' +
                 '<span class="xw-card__top"><span class="xw-card__n">N° ' + p.n + '</span><span class="xw-card__status">' + status + '</span></span>' +
                 '<span class="xw-card__title">' + QZ.esc(p.title) + '</span>' +
@@ -151,6 +152,17 @@
                 detail +
                 '<span class="xw-card__go">' + action + QZ.icon('arrow') + '</span></button></li>';
         }).join('');
+    }
+
+    /** Parole con tutte le caselle scritte (giuste o no: si sa solo alla verifica). */
+    function wordsFilled(p, fill) {
+        return p.words.filter(function (w) {
+            for (var i = 0; i < w.answer.length; i++) {
+                var ci = (w.r + (w.dir === 'd' ? i : 0)) * p.w + w.c + (w.dir === 'a' ? i : 0);
+                if (!fill[ci]) return false;
+            }
+            return true;
+        }).length;
     }
 
     function backToList() {
@@ -280,7 +292,7 @@
         var m = S.map[ci];
         el.querySelector('.xw-ch').textContent = S.fill[ci] || '';
         var solved = (m.a != null && S.solved[m.a]) || (m.d != null && S.solved[m.d]);
-        el.classList.toggle('is-solved', !!solved);
+        el.classList.toggle('is-solved', !!solved && !!(S.review || S.verified));
         el.classList.toggle('is-rev', !!S.rev[ci]);
     }
 
@@ -488,22 +500,16 @@
         cellEls[ci].classList.remove('is-wrong');
         paintCell(ci);
         QZ.fx.replay(cellEls[ci], 'is-typed');
-        var solvedNow = checkWordsAt(ci);
-        if (S.done) return;
-        if (solvedNow.indexOf(wi) >= 0) {
-            var nx = firstUnsolved(wi + 1, 1);
-            if (nx >= 0) select(firstFreeCell(nx), S.p.words[nx].dir);
-        } else {
-            var nxt = nextInWord(wi, ci, 1);
-            if (nxt < 0) {
-                var w = S.p.words[wi];
-                var empty = w.cells.filter(function (x) { return !S.fill[x] && !isLocked(x); })[0];
-                nxt = empty != null ? empty : ci;
-            }
-            select(nxt, S.dir, true);
-            paintClues();
-            save();
+        var nxt = nextInWord(wi, ci, 1);
+        if (nxt < 0) {
+            var w = S.p.words[wi];
+            var empty = w.cells.filter(function (x) { return !S.fill[x] && !isLocked(x); })[0];
+            nxt = empty != null ? empty : ci;
         }
+        select(nxt, S.dir, true);
+        paintClues();
+        paintBoard();
+        save();
         checkFull();
     }
 
@@ -521,6 +527,7 @@
         }
         paintCell(ci);
         paintClues();
+        paintBoard();
         save();
     }
 
@@ -532,52 +539,6 @@
         save();
     }
 
-    /** Controlla le parole che passano da una casella: quelle complete e giuste diventano gol. */
-    function checkWordsAt(ci) {
-        var m = S.map[ci], done = [];
-        ['a', 'd'].forEach(function (d) {
-            var wi = m[d];
-            if (wi == null || S.solved[wi]) return;
-            var w = S.p.words[wi];
-            var ok = w.cells.every(function (x, i) { return S.fill[x] === w.answer[i]; });
-            if (ok) {
-                var helped = w.cells.every(function (x) { return S.rev[x]; });
-                solve(wi, helped ? 2 : 1);
-                done.push(wi);
-            }
-        });
-        return done;
-    }
-
-    function solve(wi, how) {
-        var w = S.p.words[wi];
-        S.solved[wi] = how;
-        w.cells.forEach(function (x, i) {
-            paintCell(x);
-            var el = cellEls[x];
-            el.style.setProperty('--d', (i * 40) + 'ms');
-            QZ.fx.replay(el, 'is-goal');
-        });
-        paintClues();
-        paintBoard();
-        if (wi === curWord()) $('#xw-bar').classList.add('is-solved');
-        var left = S.solved.filter(function (x) { return !x; }).length;
-        if (how === 1) {
-            QZ.sound.correct();
-            QZ.vibrate(30);
-            var mid = cellEls[w.cells[Math.floor(w.cells.length / 2)]];
-            var x = (mid.offsetLeft + mid.offsetWidth / 2) / gridEl.offsetWidth * 100;
-            var y = (mid.offsetTop + mid.offsetHeight / 2) / gridEl.offsetHeight * 100;
-            QZ.fx.stamp(gridEl, left ? QZ.pick(['Gol!', 'Gol!', 'Rete!', 'Dentro!']) : 'Gol!', 'ok', {
-                size: 20, rot: -4, x: QZ.clamp(x, 18, 82), y: QZ.clamp(y, 8, 92), ms: 1100, quiet: true,
-                say: 'Gol! ' + w.n + ' ' + dirName(w.dir) + ': ' + w.answer + '. ' + (left ? 'Ne mancano ' + left + '.' : '')
-            });
-            QZ.fx.pop($('#xw-words'));
-        }
-        save();
-        if (!left) finish('win');
-    }
-
     var fullWarned = '';
     function checkFull() {
         if (S.done) return;
@@ -586,8 +547,9 @@
         var sig = S.fill.join('');
         if (sig === fullWarned) return;
         fullWarned = sig;
-        QZ.toast('Griglia piena, ma qualcosa non torna. Prova «Controlla».', { icon: 'info', ms: 3200 });
-        QZ.say('Griglia piena, ma qualche lettera è sbagliata.');
+        QZ.toast('Griglia piena. Quando sei convinto, premi «Verifica».', { icon: 'check', ms: 3400 });
+        QZ.say('Griglia piena. Quando sei pronto, premi Verifica.');
+        QZ.fx.pop($('[data-aid="verify"]'));
     }
 
     /* ---------- Input da tastiera e da telefono ---------- */
@@ -603,7 +565,7 @@
             select(firstFreeCell(wi + (e.shiftKey ? -1 : 1)), S.p.words[wi + (e.shiftKey ? -1 : 1)].dir);
             return;
         }
-        if (k === 'Escape') { e.preventDefault(); (S.review ? $('#xw-back-2') : $('[data-aid="check"]')).focus(); return; }
+        if (k === 'Escape') { e.preventDefault(); (S.review ? $('#xw-back-2') : $('[data-aid="verify"]')).focus(); return; }
         if (/^[a-zA-Z]$/.test(k)) { e.preventDefault(); type(k.toUpperCase()); return; }
         var map = {
             Backspace: back, Delete: clearCell,
@@ -656,35 +618,47 @@
     /* =====================================================================
        AIUTI
        ===================================================================== */
-    function aidCheck() {
+    /* ---------- La verifica finale: una volta sola, corregge tutto ---------- */
+    function verify() {
         if (!S || S.done) return;
-        var wrong = [], filled = 0;
-        Object.keys(S.map).forEach(function (k) {
-            var ci = Number(k);
-            if (!S.fill[ci] || isLocked(ci)) return;
-            filled++;
-            if (S.fill[ci] !== S.map[ci].ch) wrong.push(ci);
-        });
-        if (!filled) { QZ.toast('Prima scrivi qualcosa: non c\'è niente da controllare.', { icon: 'info' }); return; }
-        S.aids.check++;
-        paintBoard();
-        QZ.sound.lifeline();
-        if (!wrong.length) {
-            QZ.toast('Tutto regolare: nessuna lettera sbagliata.', { icon: 'check', type: 'ok' });
-            QZ.say('Controllo: nessuna lettera sbagliata.');
-        } else {
-            wrong.forEach(function (ci) {
-                var el = cellEls[ci];
-                el.classList.add('is-wrong');
-                setTimeout(function () { el.classList.remove('is-wrong'); }, 2000);
+        var cells = Object.keys(S.map).map(Number);
+        var empty = cells.filter(function (ci) { return !S.fill[ci]; }).length;
+        var msg = empty
+            ? (empty === 1 ? 'C\'è ancora una casella vuota' : 'Ci sono ancora ' + empty + ' caselle vuote') + '. Se verifichi ora conta come sbagliata e la scheda si chiude.'
+            : 'Si corregge tutta la griglia e la scheda si chiude: dopo non si torna indietro.';
+        QZ.confirm(msg, { title: 'Verifica finale?', okLabel: 'Verifica', cancelLabel: 'Ci penso ancora' }).then(function (ok) {
+            if (!ok || !S || S.done) return;
+            S.done = true;
+            S.verified = true;
+            stopClock();
+            try { inputEl.blur(); } catch { /* niente */ }
+            // parola giusta se tutte le lettere tornano; tua se non l'ha svelata intera la panchina
+            S.p.words.forEach(function (w, wi) {
+                var ok2 = w.cells.every(function (x) { return S.fill[x] === S.map[x].ch; });
+                if (S.solved[wi] === 2) return;
+                S.solved[wi] = ok2 ? 1 : 0;
             });
-            QZ.sound.wrong();
-            QZ.fx.shake(gridEl);
-            var t = wrong.length === 1 ? 'Una lettera in fuorigioco.' : wrong.length + ' lettere in fuorigioco.';
-            QZ.toast(t + ' Le vedi in rosso.', { icon: 'flag', type: 'bad' });
-            QZ.say('Controllo: ' + t);
-        }
-        save();
+            var wrong = cells.filter(function (ci) { return S.fill[ci] !== S.map[ci].ch; });
+            QZ.$$('.xw-cell.is-word, .xw-cell.is-cur', gridEl).forEach(function (el) { el.classList.remove('is-word', 'is-cur'); });
+            cells.forEach(function (ci, k) {
+                setTimeout(function () {
+                    var bad = S.fill[ci] !== S.map[ci].ch;
+                    paintCell(ci);
+                    cellEls[ci].classList.toggle('is-wrong', bad);
+                    cellEls[ci].classList.toggle('is-right', !bad);
+                }, QZ.reducedMotion() ? 0 : Math.min(k * 14, 900));
+            });
+            paintClues();
+            setTimeout(function () {
+                if (wrong.length) { QZ.sound.wrong(); QZ.fx.shake(gridEl); } else QZ.sound.correct();
+                var good = S.solved.filter(function (x) { return x === 1; }).length;
+                QZ.fx.stamp(gridEl, wrong.length ? good + '/' + S.p.words.length : 'Perfetta!', wrong.length ? 'ink' : 'ok', {
+                    size: 26, x: 50, y: 50, ms: 1500,
+                    say: wrong.length ? 'Verifica: ' + good + ' parole giuste su ' + S.p.words.length + ', ' + wrong.length + (wrong.length === 1 ? ' lettera sbagliata.' : ' lettere sbagliate.') : 'Verifica: griglia perfetta.'
+                });
+                setTimeout(function () { finish(wrong.length ? 'checked' : 'win'); }, 1500);
+            }, QZ.reducedMotion() ? 50 : 1000);
+        });
     }
 
     function aidLetter() {
@@ -700,11 +674,9 @@
         reveal(ci);
         QZ.sound.reveal();
         QZ.say('Lettera svelata: ' + S.map[ci].ch + '.');
-        var solved = checkWordsAt(ci);
         paintBoard();
-        if (S.done) return;
-        if (solved.indexOf(wi) >= 0) { var nx = firstUnsolved(wi + 1, 1); if (nx >= 0) select(firstFreeCell(nx), S.p.words[nx].dir); }
-        else { var nxt = nextInWord(wi, ci, 1); select(nxt >= 0 ? nxt : ci, S.dir, true); }
+        var nxt = nextInWord(wi, ci, 1);
+        select(nxt >= 0 ? nxt : ci, S.dir, true);
         paintClues();
         save();
     }
@@ -719,13 +691,8 @@
         S.solved[wi] = 2;
         w.cells.forEach(paintCell);
         QZ.say('Parola svelata: ' + w.n + ' ' + dirName(w.dir) + ', ' + w.answer + '.');
-        // le parole incrociate possono essersi completate
-        w.cells.forEach(function (ci) { if (!S.done) checkWordsAt(ci); });
         paintBoard();
         paintClues();
-        if (S.done) return;
-        var left = S.solved.filter(function (x) { return !x; }).length;
-        if (!left) { finish('win'); return; }
         var nx = firstUnsolved(wi + 1, 1);
         if (nx >= 0) select(firstFreeCell(nx), S.p.words[nx].dir);
         save();
@@ -762,9 +729,9 @@
        TABELLONE, CRONOMETRO, SALVATAGGIO
        ===================================================================== */
     function paintBoard() {
-        var n = S.solved.filter(Boolean).length, tot = S.p.words.length;
+        var n = S.verified ? S.solved.filter(function (x) { return x === 1; }).length : wordsFilled(S.p, S.fill), tot = S.p.words.length;
         $('#xw-words').textContent = String(n).padStart(2, '0') + '/' + String(tot).padStart(2, '0');
-        $('#xw-words').setAttribute('aria-label', n + ' parole risolte su ' + tot);
+        $('#xw-words').setAttribute('aria-label', n + (S.verified ? ' parole giuste su ' : ' parole scritte su ') + tot);
         var a = aidsCount();
         $('#xw-aids-n').textContent = a;
         $('#xw-aids-n').classList.toggle('led--red', a > 0);
@@ -812,9 +779,12 @@
         var target = S.total * 7;                      // ~7 secondi a casella: il passo di chi se la cava bene
         var speed = QZ.clamp(target / Math.max(S.elapsed, 1), 0, 1);
         var ratio;
+        var clean = QZ.clamp(1 - (revCells / S.total) * 1.6, 0, 1);
         if (type === 'win') {
-            var clean = QZ.clamp(1 - (revCells / S.total) * 1.6 - S.aids.check * 0.04, 0, 1);
             ratio = clean * (0.72 + 0.28 * speed);
+        } else if (type === 'checked') {
+            // conta quante parole hai azzeccato da solo, poi aiuti e tempo
+            ratio = (mine / tot) * clean * (0.8 + 0.2 * speed);
         } else {
             ratio = (mine / tot) * 0.55;
         }
@@ -823,11 +793,11 @@
         var st = getStore();
         var first = !st.done[S.n];
         delete st.play[S.n];
-        if (first) st.done[S.n] = { time: Math.floor(S.elapsed), ratio: Math.round(ratio * 1000) / 1000, aids: S.aids, mine: mine, tot: tot, quit: type !== 'win', date: Date.now() };
+        if (first) st.done[S.n] = { time: Math.floor(S.elapsed), ratio: Math.round(ratio * 1000) / 1000, aids: S.aids, mine: mine, tot: tot, quit: type === 'quit', date: Date.now() };
         putStore(st);
         var r = null;
         if (first) {
-            var xp = mine * 5 + (type === 'win' ? 40 : 0) + (type === 'win' && !aids ? 25 : 0);
+                var xp = mine * 5 + (type === 'win' ? 40 : 0) + (type === 'win' && !aids ? 25 : 0);
             r = QZ.profile.record('cruciverba', { xp: xp, label: 'N° ' + S.n + ' · ' + mine + '/' + tot + ' parole · ' + fmtTime(S.elapsed), score: Math.round(ratio * 100) });
         }
         var doneN = SCHEDE.filter(function (x) { return st.done[x.n]; }).length;
@@ -837,31 +807,35 @@
         if (type === 'win' && !aids) { title = 'Griglia pulita'; sub = 'Tutte e ' + tot + ' le parole senza chiedere niente alla panchina. In tribuna stampa si tolgono il cappello.'; }
         else if (type === 'win' && mine >= tot / 2) { title = 'Griglia chiusa'; sub = 'Qualche dritta dalla panchina, ma le parole decisive le hai trovate tu: ' + mine + ' su ' + tot + '.'; }
         else if (type === 'win') { title = 'Chiusa col VAR'; sub = 'La griglia è piena, ma più della metà l\'ha scritta la panchina. Nella prossima scheda prova da solo.'; }
+        else if (type === 'checked' && mine >= tot * 0.8) { title = 'Quasi perfetta'; sub = mine + ' parole giuste su ' + tot + '. Le lettere sbagliate le trovi in rosso qui sotto, con quello che avevi scritto.'; }
+        else if (type === 'checked' && mine >= tot / 2) { title = 'Promosso con riserva'; sub = mine + ' parole giuste su ' + tot + '. Qualche errore di misura: la soluzione è qui sotto.'; }
+        else if (type === 'checked') { title = 'Serata storta'; sub = 'Solo ' + mine + (mine === 1 ? ' parola giusta' : ' parole giuste') + ' su ' + tot + '. Ripassa la soluzione qui sotto e torna in campo.'; }
         else if (mine) { title = 'Bandiera bianca'; sub = 'Ti fermi a ' + mine + (mine === 1 ? ' parola' : ' parole') + ' su ' + tot + '. La soluzione è qui sotto: ripassala per le prossime schede.'; }
         else { title = 'Non pervenuto'; sub = 'Nessuna parola trovata da solo. La soluzione è qui sotto: studiala e torna in campo.'; }
 
         setTimeout(function () {
             QZ.show('s-end');
             QZ.results($('#end-host'), {
-                win: type === 'win',
+                win: type === 'win' || (type === 'checked' && mine >= tot / 2),
                 icon: type === 'win' ? 'trophy' : 'flag',
                 title: title, subtitle: sub,
                 record: r, ratio: ratio,
                 stats: [
                     { label: 'Tempo', value: fmtTime(S.elapsed) },
-                    { label: 'Parole tue', value: mine + '/' + tot },
+                    { label: 'Parole giuste', value: mine + '/' + tot },
                     { label: 'Aiuti', value: aids },
                     { label: 'Completati', value: doneN + '/' + SCHEDE.length }
                 ],
                 extraHTML: solutionHTML(),
-                share: type === 'win'
+                share: type === 'win' && !aids ? 'Griglia perfetta al Cruciverba N° ' + S.n + ' di Quizzotti, in ' + fmtTime(S.elapsed) + ' e senza aiuti. Ci provi?'
+                    : type === 'win'
                     ? 'Ho chiuso il Cruciverba N° ' + S.n + ' di Quizzotti in ' + fmtTime(S.elapsed) + (aids ? ' con ' + aids + (aids === 1 ? ' aiuto' : ' aiuti') : ' senza aiuti') + '. Ci provi?'
-                    : 'Al Cruciverba N° ' + S.n + ' di Quizzotti ho trovato ' + mine + ' parole su ' + tot + '. Fai di meglio?',
+                    : 'Al Cruciverba N° ' + S.n + ' di Quizzotti ho azzeccato ' + mine + ' parole su ' + tot + '. Fai di meglio?',
                 retryLabel: 'Torna alle schede',
                 onRetry: backToList,
                 secondary: nx ? { label: 'Prossimo cruciverba: N° ' + nx.n, icon: 'arrow', onClick: function () { open(nx.n); } } : null
             });
-            QZ.say((type === 'win' ? 'Griglia completata in ' : 'Partita finita dopo ') + timeWords(S.elapsed) + '. Schede completate: ' + doneN + ' su ' + SCHEDE.length + '.');
+            QZ.say((type === 'win' ? 'Griglia completata in ' : type === 'checked' ? 'Verifica fatta dopo ' : 'Partita finita dopo ') + timeWords(S.elapsed) + '. Schede completate: ' + doneN + ' su ' + SCHEDE.length + '.');
         }, type === 'win' ? 1100 : 0);
     }
 
@@ -873,10 +847,15 @@
         Object.keys(S.map).map(Number).forEach(function (ci) {
             var m = S.map[ci], r = Math.floor(ci / p.w), c = ci % p.w;
             var mineCell = (m.a != null && S.solved[m.a] === 1) || (m.d != null && S.solved[m.d] === 1);
-            html += '<span class="' + (mineCell ? 'is-mine' : '') + '" style="grid-row:' + (r + 1) + ';grid-column:' + (c + 1) + '">' + m.ch + '</span>';
+            var badCell = S.verified && S.fill[ci] !== m.ch;
+            html += '<span class="' + (badCell ? 'is-bad' : mineCell ? 'is-mine' : '') + '" style="grid-row:' + (r + 1) + ';grid-column:' + (c + 1) + '">' + m.ch + '</span>';
         });
         html += '</div><ul class="xw-sol__list">' + p.words.map(function (w, wi) {
-            return '<li><b>' + w.n + (w.dir === 'a' ? ' oriz.' : ' vert.') + '</b> ' + QZ.esc(w.answer) + (S.solved[wi] === 1 ? '' : ' <span class="faint">(non tua)</span>') + '</li>';
+            var typed = w.cells.map(function (x) { return S.fill[x] || '·'; }).join('');
+            var note = S.solved[wi] === 1 ? ' <span class="ok">✓</span>'
+                : S.solved[wi] === 2 ? ' <span class="faint">(svelata)</span>'
+                    : S.verified && typed !== w.answer ? ' <span class="bad">✗ tu: ' + QZ.esc(typed) + '</span>' : ' <span class="faint">(non tua)</span>';
+            return '<li><b>' + w.n + (w.dir === 'a' ? ' oriz.' : ' vert.') + '</b> ' + QZ.esc(w.answer) + note + '</li>';
         }).join('') + '</ul></div>';
         return html;
     }

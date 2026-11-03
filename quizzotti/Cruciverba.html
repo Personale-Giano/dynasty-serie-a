@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=296bcecb">
+<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
 <style>
   /* ---------- copertina ---------- */
   .xw-title { font-size: clamp(44px, 7vw, 78px); }
@@ -133,6 +133,9 @@
   .xw-cell.is-rev .xw-ch { color: var(--led); text-shadow: var(--led-glow); }
   .xw-cell.is-wrong { background: #2a0f0c; border-color: var(--led-red); }
   .xw-cell.is-wrong .xw-ch { color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .6); }
+  /* dopo la verifica finale */
+  .xw-cell.is-right { background: #0a2015; border-color: rgba(var(--ok-rgb), .45); }
+  .xw-cell.is-right .xw-ch { color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .45); }
   .xw-cell.is-typed .xw-ch { animation: xw-type .18s var(--ease-out); }
   .xw-cell.is-goal { animation: xw-goal .55s var(--ease-out) var(--d, 0ms) both; }
   .xw-cell.is-given { animation: xw-given .4s linear both; }
@@ -149,7 +152,7 @@
   .xw-input:focus { outline: none; }
 
   /* gli aiuti */
-  .xw-aids { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .xw-aids { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
   .xw-aid {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 60px; padding: 8px 4px;
     border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); color: var(--text-2);
@@ -159,6 +162,9 @@
   .xw-aid:active { transform: translateY(1px); }
   .xw-aid__ico { color: var(--accent-ink); display: grid; place-items: center; }
   .xw-aid__ico .ico { width: 20px; height: 20px; }
+  .xw-aid--verify { grid-column: 1 / -1; background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 800; }
+  .xw-aid--verify .xw-aid__ico { color: var(--on-accent); }
+  .xw-aid--verify:hover:not(:disabled) { filter: brightness(1.08); background: var(--accent); color: var(--on-accent); }
   .xw-aid--quit { color: var(--text-2); }
   .xw-aid--quit .xw-aid__ico { color: var(--led-red); }
   @media (max-width: 400px) { .xw-aid { font-size: 12px; } }
@@ -191,6 +197,7 @@
   .xw-sol__grid { --sc: min(20px, calc((100vw - 90px) / var(--cols))); display: grid; grid-template-columns: repeat(var(--cols), var(--sc)); grid-template-rows: repeat(var(--rows), var(--sc)); gap: 2px; padding: 8px; background: #030405; border: 1px solid var(--line-2); border-radius: var(--r); }
   .xw-sol__grid span { display: grid; place-items: center; border-radius: 3px; background: var(--panel-2); font-family: var(--font-led); font-weight: 700; font-size: calc(var(--sc) * .66); line-height: 1; color: var(--led); }
   .xw-sol__grid span.is-mine { background: #0a2015; color: var(--led-green); }
+  .xw-sol__grid span.is-bad { background: #2a0f0c; color: var(--led-red); }
   .xw-sol__list { justify-self: stretch; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 4px 14px; margin: 0; padding: 0; list-style: none; font-size: 14px; color: var(--text-2); }
   .xw-sol__list b { font-family: var(--font-led); color: var(--text); font-weight: 700; }
 
@@ -287,6 +294,6 @@
 
 <script src="assets/qz.js?v=cccf38d2" defer></script>
 <script src="assets/cruciverba-schede.js?v=a0677716" defer></script>
-<script src="assets/games/cruciverba.js?v=4ba8fd6e" defer></script>
+<script src="assets/games/cruciverba.js?v=025ad146" defer></script>
 </body>
 </html>
