@@ -15,16 +15,16 @@
        Registro giochi: unica fonte di verita' per home, launcher e profilo
        ------------------------------------------------------------------- */
     QZ.GAMES = [
-        { id: 'cvem', file: 'CVEM.html', name: 'Chi Vuol Essere Milionario', short: 'Milionario', icon: 'crown', color: '#e3a21a', color2: '#1d1913', on: '#1d1913', rgb: '227, 162, 26', players: 'Da solo', kind: 'quiz', desc: 'Quindici domande, quattro aiuti, un milione di euro finti. Il sudore invece è vero.', tags: ['Quiz', 'Aiuti', '15 livelli'] },
-        { id: 'jeopardy', file: 'Jeopardy.html', name: 'Jeopardy', short: 'Jeopardy', icon: 'grid', color: '#1f3c88', color2: '#f3c21b', on: '#fbf6ec', rgb: '31, 60, 136', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone a categorie per la serata con gli amici. Chi sbaglia, paga in punti.', tags: ['Squadre', 'Categorie', 'Punti'] },
-        { id: 'avantiunaltro', file: 'AvantiUnAltro.html', name: 'Avanti un Altro', short: 'Avanti un Altro', icon: 'fastforward', color: '#e8641b', color2: '#1d1913', on: '#1d1913', rgb: '232, 100, 27', players: 'Da solo', kind: 'quiz', desc: 'Qui vince chi sbaglia: scegli sempre la risposta sbagliata. Facile a dirsi.', tags: ['Quiz', 'Al contrario', 'Velocità'] },
-        { id: 'citazioni', file: 'Citazioni.html', name: "Chi l'ha detto", short: "Chi l'ha detto", icon: 'quote', color: '#6b3fa0', color2: '#f3c21b', on: '#fbf6ec', rgb: '107, 63, 160', players: 'Da solo', kind: 'quiz', desc: '«Zero tituli», «Why always me?»… Le frasi le conosci. Ma chi le ha dette?', tags: ['Frasi celebri', 'Quiz'] },
-        { id: 'taboo', file: 'Taboo.html', name: 'Taboo', short: 'Taboo', icon: 'ban', color: '#cf2a1e', color2: '#1d1913', on: '#fbf6ec', rgb: '207, 42, 30', players: '2-6 squadre', kind: 'party', desc: 'Fai indovinare «Catenaccio» senza dire difesa, Italia e chiuso. Auguri.', tags: ['Squadre', 'Parole', 'Timer'] },
-        { id: 'intesavincente', file: 'IntesaVincente.html', name: 'Intesa Vincente', short: 'Intesa Vincente', icon: 'users', color: '#1672ad', color2: '#fbf6ec', on: '#fbf6ec', rgb: '22, 114, 173', players: '2-6 squadre', kind: 'party', desc: 'Uno spiega, gli altri prenotano e rispondono. Il cronometro non fa sconti.', tags: ['Squadre', 'Parole', 'Timer'] },
-        { id: 'mrwhite', file: 'MrWhite.html', name: 'Mr. White', short: 'Mr. White', icon: 'spy', color: '#1d1913', color2: '#fbf6ec', on: '#fbf6ec', rgb: '29, 25, 19', players: '3+ giocatori', kind: 'party', desc: 'Tutti sanno chi è il calciatore segreto. Tutti tranne uno, che fa finta di saperlo.', tags: ['Bluff', 'Deduzione', 'Ruoli'] },
-        { id: 'bomba', file: 'Bomba.html', name: 'Bomba', short: 'Bomba', icon: 'bomb', color: '#cc3418', color2: '#f3c21b', on: '#fbf6ec', rgb: '204, 52, 24', players: '2+ giocatori', kind: 'party', desc: 'Un tema e una bomba che passa di mano in mano. Quando scoppia, qualcuno ci resta.', tags: ['Turni', 'Tempo', 'Eliminazione'] },
-        { id: 'sfidaeredita', file: 'sfidaEredita.html', name: 'Derby delle Parole', short: 'Derby', icon: 'ball', color: '#0e7a43', color2: '#fbf6ec', on: '#fbf6ec', rgb: '14, 122, 67', players: '2 squadre', kind: 'party', desc: 'Una definizione, le lettere che spuntano piano piano. Chi la sa, tira in porta.', tags: ['Definizioni', 'Squadre', 'Voce'] },
-        { id: 'giocatoributget', file: 'GiocatoriBudget.html', name: 'Sfida dei Budget', short: 'Budget', icon: 'coins', color: '#8e1b3f', color2: '#fbf6ec', on: '#fbf6ec', rgb: '142, 27, 63', players: '1-6 giocatori', kind: 'party', desc: 'Fai mercato a occhio: i prezzi sono nascosti e il presidente non perdona.', tags: ['Mercato', 'Strategia', 'Budget'] }
+        { id: 'cvem', file: 'CVEM.html', name: 'Chi Vuol Essere Milionario', short: 'Milionario', icon: 'crown', color: '#ffb627', color2: '#ffd36e', on: '#07090b', rgb: '255, 182, 39', players: 'Da solo', kind: 'quiz', desc: 'Quindici domande, quattro aiuti, un milione di euro finti. Il sudore invece è vero.', tags: ['Quiz', 'Aiuti', '15 livelli'] },
+        { id: 'jeopardy', file: 'Jeopardy.html', name: 'Jeopardy', short: 'Jeopardy', icon: 'grid', color: '#4d8dff', color2: '#9cc0ff', on: '#07090b', rgb: '77, 141, 255', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone a categorie per la serata con gli amici. Chi sbaglia, paga in punti.', tags: ['Squadre', 'Categorie', 'Punti'] },
+        { id: 'avantiunaltro', file: 'AvantiUnAltro.html', name: 'Avanti un Altro', short: 'Avanti un Altro', icon: 'fastforward', color: '#ff7a2f', color2: '#ffb07f', on: '#07090b', rgb: '255, 122, 47', players: 'Da solo', kind: 'quiz', desc: 'Qui vince chi sbaglia: scegli sempre la risposta sbagliata. Facile a dirsi.', tags: ['Quiz', 'Al contrario', 'Velocità'] },
+        { id: 'citazioni', file: 'Citazioni.html', name: "Chi l'ha detto", short: "Chi l'ha detto", icon: 'quote', color: '#b48cff', color2: '#d8c4ff', on: '#07090b', rgb: '180, 140, 255', players: 'Da solo', kind: 'quiz', desc: '«Zero tituli», «Why always me?»… Le frasi le conosci. Ma chi le ha dette?', tags: ['Frasi celebri', 'Quiz'] },
+        { id: 'taboo', file: 'Taboo.html', name: 'Taboo', short: 'Taboo', icon: 'ban', color: '#ff4b5c', color2: '#ff98a2', on: '#07090b', rgb: '255, 75, 92', players: '2-6 squadre', kind: 'party', desc: 'Fai indovinare «Catenaccio» senza dire difesa, Italia e chiuso. Auguri.', tags: ['Squadre', 'Parole', 'Timer'] },
+        { id: 'intesavincente', file: 'IntesaVincente.html', name: 'Intesa Vincente', short: 'Intesa Vincente', icon: 'users', color: '#2fd0ff', color2: '#8fe6ff', on: '#07090b', rgb: '47, 208, 255', players: '2-6 squadre', kind: 'party', desc: 'Uno spiega, gli altri prenotano e rispondono. Il cronometro non fa sconti.', tags: ['Squadre', 'Parole', 'Timer'] },
+        { id: 'mrwhite', file: 'MrWhite.html', name: 'Mr. White', short: 'Mr. White', icon: 'spy', color: '#e8eef2', color2: '#ffffff', on: '#07090b', rgb: '232, 238, 242', players: '3+ giocatori', kind: 'party', desc: 'Tutti sanno chi è il calciatore segreto. Tutti tranne uno, che fa finta di saperlo.', tags: ['Bluff', 'Deduzione', 'Ruoli'] },
+        { id: 'bomba', file: 'Bomba.html', name: 'Bomba', short: 'Bomba', icon: 'bomb', color: '#ff4b3a', color2: '#ffa094', on: '#07090b', rgb: '255, 75, 58', players: '2+ giocatori', kind: 'party', desc: 'Un tema e una bomba che passa di mano in mano. Quando scoppia, qualcuno ci resta.', tags: ['Turni', 'Tempo', 'Eliminazione'] },
+        { id: 'sfidaeredita', file: 'sfidaEredita.html', name: 'Derby delle Parole', short: 'Derby', icon: 'ball', color: '#3ddc84', color2: '#9cf0c0', on: '#07090b', rgb: '61, 220, 132', players: '2 squadre', kind: 'party', desc: 'Una definizione, le lettere che spuntano piano piano. Chi la sa, tira in porta.', tags: ['Definizioni', 'Squadre', 'Voce'] },
+        { id: 'giocatoributget', file: 'GiocatoriBudget.html', name: 'Sfida dei Budget', short: 'Budget', icon: 'coins', color: '#c6f04d', color2: '#e0f8a0', on: '#07090b', rgb: '198, 240, 77', players: '1-6 giocatori', kind: 'party', desc: 'Fai mercato a occhio: i prezzi sono nascosti e il presidente non perdona.', tags: ['Mercato', 'Strategia', 'Budget'] }
     ];
 
     QZ.game = function (id) {
@@ -33,8 +33,8 @@
     };
 
     /* Colori per squadre/giocatori (party game) */
-    // tinte da tipografia, tutte abbastanza scure da reggere un numero color panna
-    QZ.TEAM_COLORS = ['#cf2a1e', '#1f3c88', '#0e7a43', '#946400', '#6b3fa0', '#b4500e', '#1672ad', '#8e1b3f', '#2b7a78', '#6f6555'];
+    // colori delle maglie: tutti reggono un numero bianco sopra
+    QZ.TEAM_COLORS = ['#d9342b', '#2f6fe0', '#1f9d55', '#b8800a', '#8a55e0', '#d9611c', '#1a8fbf', '#b02a5c', '#2a8f86', '#6f7a83'];
     /** Colore del testo da stampare su una tinta: inchiostro sulle tinte chiare (oro, arancio), panna sulle scure. */
     QZ.onColor = function (hex) {
         var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(String(hex || ''));
@@ -465,11 +465,11 @@
             var p = get(), pr = progress(p);
             var total = Object.keys(p.gamesPlayed).reduce(function (s, k) { return s + p.gamesPlayed[k]; }, 0);
             var got = QZ.GAMES.filter(function (g) { return p.gamesPlayed[g.id]; }).length;
-            // ogni gioco giocato almeno una volta e' una figurina attaccata nell'album
+            // ogni gioco giocato almeno una volta accende il suo posto in bacheca
             var album = QZ.GAMES.map(function (g, i) {
                 var has = !!p.gamesPlayed[g.id];
                 return '<div class="album__slot' + (has ? ' is-got' : '') + '" style="--c:' + g.color + (has ? ';color:' + g.on : '') + '" title="' + QZ.esc(g.name) + '">' +
-                    '<b>N° ' + String(i + 1).padStart(2, '0') + '</b>' + QZ.icon(g.icon) + '<span>' + QZ.esc(has ? g.short : 'manca') + '</span></div>';
+                    '<b>N° ' + String(i + 1).padStart(2, '0') + '</b>' + QZ.icon(g.icon) + '<span>' + QZ.esc(has ? g.short : 'spento') + '</span></div>';
             }).join('');
             var rows = QZ.GAMES.filter(function (g) { return p.gamesPlayed[g.id]; }).map(function (g) {
                 var best = p.bestScores[g.id];
@@ -484,17 +484,17 @@
                 '<div class="grow"><div class="display" style="font-size:30px;font-style:italic;line-height:1">LIVELLO ' + pr.level + ' · ' + QZ.fmt(p.totalXP) + ' XP</div>' +
                 '<div class="small muted">Ancora ' + QZ.fmt(pr.toNext) + ' XP per salire · ' + total + (total === 1 ? ' partita' : ' partite') + '</div>' +
                 '<div class="progress mt-1"><div class="progress__fill" style="transform:scaleX(' + pr.pct / 100 + ')"></div></div></div></div>' +
-                '<div class="row row--between mt-2"><span class="label">L\'album</span><span class="note" style="font-size:16px">' + (got === 10 ? 'completo!' : got + ' su 10, ne mancano ' + (10 - got)) + '</span></div>' +
+                '<div class="row row--between mt-2"><span class="label">La bacheca</span><span class="note" style="font-size:16px">' + (got === 10 ? 'TUTTI ACCESI' : got + '/10 ACCESI') + '</span></div>' +
                 '<div class="album">' + album + '</div>' +
-                (rows ? '<div class="profile-games">' + rows + '</div>' : '<p class="muted mt-2">L\'album è ancora vuoto: ogni gioco che provi attacca una figurina.</p>') +
+                (rows ? '<div class="profile-games">' + rows + '</div>' : '<p class="muted mt-2">La bacheca è ancora spenta: ogni gioco che provi accende il suo posto.</p>') +
                 '<p class="small faint mt-2">Tutto resta su questo telefono. Niente account, niente server.</p>';
             QZ.modal({
-                title: 'Il tuo album',
+                title: 'Il tuo profilo',
                 html: body,
                 actions: [
                     { label: 'Azzera tutto', ghost: true, onClick: function () {
-                        return QZ.confirm('Staccare tutte le figurine e azzerare livello e record? Non si torna indietro.', { okLabel: 'Azzera', danger: true }).then(function (ok) {
-                            if (ok) { reset(); QZ.toast('Album svuotato. Si riparte da capo.', { icon: 'refresh' }); }
+                        return QZ.confirm('Spegnere la bacheca e azzerare livello e record? Non si torna indietro.', { okLabel: 'Azzera', danger: true }).then(function (ok) {
+                            if (ok) { reset(); QZ.toast('Profilo azzerato. Si riparte da capo.', { icon: 'refresh' }); }
                         });
                     } },
                     { label: 'Chiudi', primary: true }
@@ -660,7 +660,7 @@
         if (QZ.reducedMotion()) return;
         opts = opts || {};
         var count = opts.count || 160;
-        var colors = opts.colors || ['#cf2a1e', '#0e7a43', '#f3c21b', '#1f3c88', '#fbf6ec', '#e8641b'];
+        var colors = opts.colors || ['#ffb627', '#ffffff', '#3ddc84', '#ff4b3a', '#4d8dff', '#ffd36e'];
         var cv = doc.createElement('canvas');
         cv.className = 'qz-confetti';
         cv.setAttribute('aria-hidden', 'true');
@@ -1186,11 +1186,13 @@
         var today = new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
         body.insertAdjacentHTML('afterbegin',
             '<a href="#app" class="skip-link">Vai al contenuto</a>' +
-            '<div class="qz-bg" aria-hidden="true"></div>' +
+            '<div class="qz-bg" aria-hidden="true"><div class="qz-bg__light qz-bg__light--l"></div><div class="qz-bg__light qz-bg__light--r"></div>' +
+            '<div class="qz-bg__tower qz-bg__tower--l">' + '<i></i>'.repeat(8) + '</div><div class="qz-bg__tower qz-bg__tower--r">' + '<i></i>'.repeat(8) + '</div>' +
+            '<div class="qz-bg__pitch"></div></div>' +
             '<header class="qz-header"><div class="qz-header__bar">' +
             '<a class="qz-brand" href="index.html" aria-label="Quizzotti, torna alla prima pagina">' +
             '<img src="logo1.webp" alt="" width="44" height="44" decoding="async">' +
-            '<span class="qz-brand__text"><span class="qz-brand__name">Quizzotti</span>' +
+            '<span class="qz-brand__text"><span class="qz-brand__name">Quiz<b>zotti</b></span>' +
             '<span class="qz-brand__tag">' + (g ? 'N° ' + String(QZ.GAMES.indexOf(g) + 1).padStart(2, '0') + ' · ' + QZ.esc(g.name) : QZ.esc(today) + ' · edizione n° ' + (played + 1)) + '</span></span>' +
             '</a>' +
             '<div class="qz-header__spacer"></div>' +
@@ -1218,7 +1220,7 @@
 
         var footer = QZ.el(
             '<footer class="qz-footer"><div class="qz-footer__inner">' +
-            '<span class="qz-footer__sign">Fatto a mano, senza sponsor sulla maglia.</span>' +
+            '<span class="qz-footer__sign">Si gioca sotto i riflettori. Niente app, niente account.</span>' +
             '<nav class="qz-footer__links" aria-label="Collegamenti">' +
             '<a href="index.html">Prima pagina</a><a href="index.html#giochi">Tutti i giochi</a>' +
             '<a href="../carriera-serie-a/">Presidente · Serie A</a>' +

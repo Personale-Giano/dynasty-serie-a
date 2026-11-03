@@ -126,7 +126,9 @@
         var order = QZ.shuffle([0, 1, 2, 3]);
         S.q = { text: q.text, cat: q.cat, options: order.map(function (i) { return q.options[i]; }), correct: order.indexOf(q.correct) };
 
-        $('#q-label').textContent = 'Domanda ' + lv + ' di 15' + (SAFE.indexOf(lv) >= 0 ? ' · soglia sicura' : '');
+        $('#q-label').textContent = String(lv).padStart(2, '0') + '/15';
+        $('#q-label').setAttribute('aria-label', 'Domanda ' + lv + ' di 15');
+        $('#q-safe').textContent = SAFE.indexOf(lv) >= 0 ? 'Soglia sicura' : '';
         $('#q-prize').textContent = money(PRIZES[lv]);
         QZ.fx.pop($('#q-prize'));
         $('#q-cat').innerHTML = QZ.icon('ball') + QZ.esc(q.cat || (lv <= 5 ? 'Riscaldamento' : lv <= 10 ? 'Primo tempo' : 'Finale'));
@@ -176,7 +178,7 @@
         correctEl.classList.add('is-correct');
         var rightTxt = LETTERS[S.q.correct] + ', ' + S.q.options[S.q.correct];
         QZ.fx.stamp(correctEl, ok ? QZ.pick(['Esatto!', 'Gol!', 'Che giocata']) : 'Era questa', ok ? 'ok' : 'ink', {
-            size: 24,
+            size: 22, x: 74,
             say: ok ? 'Esatto! ' + rightTxt + '. Hai vinto ' + money(PRIZES[S.level]) + '.'
                 : (i >= 0 ? 'Sbagliato. ' : 'Tempo scaduto. ') + 'La risposta giusta era ' + rightTxt + '.'
         });
@@ -198,7 +200,7 @@
                 load();
             }, 1500);
         } else {
-            if (i >= 0) { answerEls[i].classList.add('is-wrong'); QZ.fx.stamp(answerEls[i], 'Fuorigioco', 'bad', { size: 24, say: false }); }
+            if (i >= 0) { answerEls[i].classList.add('is-wrong'); QZ.fx.stamp(answerEls[i], 'Fuorigioco', 'bad', { size: 22, x: 74, say: false }); }
             else QZ.toast('Fischio finale: tempo scaduto.', { icon: 'clock', type: 'bad' });
             S.streak = 0;
             paintStreak();

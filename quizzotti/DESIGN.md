@@ -1,56 +1,55 @@
-# Quizzotti — "L'Almanacco"
+# Quizzotti — "Riflettori"
 
 La direzione visiva di Quizzotti. Da leggere prima di toccare una pagina.
 
 ## L'idea
 
-Quizzotti non è un'app: è **l'almanacco del calcio che trovavi in edicola**, l'album Panini con le figurine storte, la schedina del Totocalcio compilata a penna, la pagella del lunedì sulla rosea. Carta, inchiostro, pennarello, timbri. Fatto a mano, un po' imperfetto, caldo.
+**Lo stadio di sera, con i fari accesi.** Quizzotti si gioca sotto i riflettori: nero pieno, le torri dei fari agli angoli, il prato in fondo, e tutti i numeri che contano (tempo, punti, premi, classifiche) sul **tabellone luminoso a LED** come negli stadi italiani. È sportivo, fisico, riconoscibile.
 
-Quello che **non** siamo: dark mode con bagliori al neon, vetro smerigliato, gradienti viola, testo sfumato, icone che fluttuano, "eyebrow" maiuscoletti ovunque. Se un elemento sembra uscito da un template SaaS, va tolto.
+Quello che **non** siamo: vetro smerigliato, sfumature viola, bagliori ovunque, card morbide e arrotondate da template SaaS. Le uniche cose che "brillano" sono quelle che brillano davvero in uno stadio: i fari e i LED del tabellone.
 
 ## Materiali
 
 | Cosa | Come |
 |---|---|
-| Fondo | carta di giornale calda (`--paper`) con grana e retino a puntini |
-| Superfici | figurine color panna (`--card`) con **bordo d'inchiostro 2px** e **ombra piena spostata** (`--shadow-print`), niente sfocature |
-| Angoli | piccoli (4–8px): è stampa, non un telefono |
-| Colore | tinte piatte da tipografia: rosso schedina, verde prato, blu, giallo figurina. Ogni gioco ha i colori di una "maglia" (`--accent` + `--accent-2` per le strisce) |
-| Testo | inchiostro caldo (`--ink`), mai nero puro |
+| Fondo | nero quasi pieno (`--bg`) con i coni di luce dei fari dall'alto e il prato a strisce in basso |
+| Superfici | pannelli scuri (`--panel`, `--panel-2`) con bordo sottile 1px (`--line`), angoli piccoli (3–6px), **niente ombre sfocate** |
+| Tabellone | sfondo nero puro, cornice grigio scuro spessa (`.board`), numeri e scritte in **DotGothic16** color LED (`--led` ambra, `--led-red`, `--led-green`) con un filo di alone: è l'unico posto dove l'alone è permesso |
+| Colore del gioco | `--accent`, una tinta viva per gioco, usata per il filo a sinistra della domanda, la scelta attiva, il bottone principale (con sopra `--on-accent`, scuro) |
+| Testo | `--text` (quasi bianco), `--text-2` secondario, `--muted` solo per etichette piccole |
 
 ## Caratteri
 
-- **Barlow Condensed** (corsivo, 700–900, maiuscolo) per titoli, numeri, bottoni: il titolista della rosea.
-- **Barlow** per il testo.
-- **Permanent Marker** solo per gli scarabocchi: note a margine, timbri, voti, frecce. Poco, e mai per testi lunghi.
+- **Archivo** (700–900) per titoli, domande, bottoni. Maiuscolo solo per etichette piccole con spaziatura larga.
+- **Archivo** (400–600) per il testo.
+- **DotGothic16** solo per ciò che sta su un tabellone: tempo, punteggi, premi, posizioni, lettere delle risposte, livello, esiti ("GOL!", "FUORI").
 
-## Firme visive (usarle, non abusarne)
+## Firme visive
 
-- **Figurina** (`.card`, `.sticker`): bordo, ombra piena, a volte ruotata di 1–2° (`--tilt`), numerino "N° 07" in alto.
-- **Sciarpa** (`.scarf`): fascia a strisce diagonali nei colori del gioco, come divisore o testata.
-- **Timbro** (`QZ.fx.stamp`): "ESATTO!", "FUORIGIOCO", "GOL!" che cadono sulla carta con un tonfo.
-- **Segno a pennarello** (`QZ.fx.mark`): la X o il cerchio disegnati a mano sulla risposta scelta, come sulla schedina.
-- **Ultim'ora** (`.ticker`): striscia rossa scorrevole tipo 90° minuto.
-- **Pagella** (`QZ.results` con `ratio`): a fine partita un voto da 4 a 10 con un giudizio da giornalista.
+- **Il tabellone** (`.board` con `.board__cell`, `.led`): tempo, domanda, punti in cifre a LED. Ogni gioco ce l'ha in alto.
+- **Il filo di luce**: la domanda/carta attiva ha un filo `--accent` a sinistra (`.card--glow`).
+- **Le scritte del tabellone** (`QZ.fx.stamp`): l'esito appare come una scritta a LED che si accende ("GOL!", "PALO", "FUORIGIOCO"), verde, rossa o ambra.
+- **I fari** (`.qz-bg`): due torri agli angoli in alto con i coni di luce; il prato a strisce in fondo alla pagina.
+- **La pagella** (`QZ.results` con `ratio`): a fine partita il voto da 4 a 10 sul tabellone, con il giudizio del cronista.
 
 ## Movimento
 
-Fisico e breve (150–350 ms): le figurine si **attaccano** (leggero rimbalzo e assestamento), i timbri **picchiano**, il pennarello **disegna**, i fogli **scorrono**. Niente animazioni infinite decorative (eccezione: il ticker). Tutto si spegne con `prefers-reduced-motion`.
+Secco e da stadio: le scritte LED si **accendono** (sfarfallio a scatti), i pannelli **entrano** di lato, i numeri **scorrono** come un contatore. Niente fluttuazioni infinite (eccezioni: la striscia del tabellone pubblicitario e il battito del tempo che sta per scadere). Tutto si spegne con `prefers-reduced-motion`.
 
 ## Voce
 
-Italiano da bar dello sport: diretto, ironico, affettuoso. Frasi corte. Gergo calcistico al posto del gergo da app.
+Italiano da stadio: diretto, ironico, affettuoso. Frasi corte. Gergo calcistico al posto del gergo da app.
 
 - "Fischio d'inizio" invece di "Inizia", "Rigioca" invece di "Riprova", "Torna in panchina" invece di "Indietro".
-- Errore: "Fuorigioco!", "Palo!", "Niente da fare". Giusto: "Gol!", "Che giocata", "Esatto".
+- Errore: "Fuorigioco", "Palo", "Niente da fare". Giusto: "Gol!", "Che giocata", "Esatto".
 - Mai: "Ops!", "Fantastico!!", emoji a pioggia, punti esclamativi doppi.
 
 ## Regole pratiche per le pagine
 
-- Usa i componenti e i token di `assets/qz.css`; il CSS di pagina va nel `<style>` della pagina e usa solo variabili (`--ink`, `--card`, `--accent`…), mai colori bianchi semitrasparenti da dark mode.
-- Ombre: solo `var(--shadow-print)` / `var(--shadow-print-sm)` o nessuna. Niente `box-shadow` sfocati colorati, niente `filter: drop-shadow` luminosi, niente `backdrop-filter`.
+- Usa componenti e token di `assets/qz.css`; il CSS di pagina va nel `<style>` della pagina e usa solo variabili (`--bg`, `--panel`, `--line`, `--text`, `--led`, `--accent`…).
+- Bordi: `1px solid var(--line)` (o `--line-2` per i bordi in evidenza). Il tabellone usa la cornice `.board`. Niente bordi chiari spessi, niente ombre colorate sfocate, niente `backdrop-filter`.
+- I vecchi token della carta (`--ink`, `--card`, `--paper`, `--shadow-print*`, `--font-hand`) esistono ancora solo come alias di compatibilità: nel codice nuovo non usarli.
 - Testo grande e leggibile a un metro di distanza nei giochi di gruppo (telefono sul tavolo).
-- Contrasto AA minimo su carta: il testo secondario è `--ink-2`, mai più chiaro di `--ink-3` per testo utile.
-- Il colore della maglia come **testo** su carta o figurina è `var(--accent-ink)` (la tinta piena `--accent` è per i fondi, con sopra `--on-accent`). Le tinte delle squadre (`QZ.TEAM_COLORS`) reggono tutte un testo color panna.
-- Timbri, segni a pennarello e colori sono decorativi (`aria-hidden`): l'esito va anche **detto**, con `opts.say` di `QZ.fx.stamp` o con `QZ.say()`. La parola da far indovinare si annuncia solo a chi tiene il telefono mentre gioca (Taboo, Intesa); la bustina di Mr. White mai in automatico, solo "bustina aperta". Il cronometro non si annuncia a ogni secondo (al massimo a 10 secondi e allo scadere).
-- Ogni schermata ha un solo `h1` (se non ce l'ha, `QZ.show` ne aggiunge uno nascosto col nome del gioco; nel resoconto è il titolo). Comandi di gioco alti almeno 44px.
+- Contrasto AA: testo utile mai più scuro di `--text-2` su `--panel`. Il colore del gioco come testo è `var(--accent-ink)`.
+- Timbri, segni e colori sono decorativi (`aria-hidden`): l'esito va anche **detto**, con `opts.say` di `QZ.fx.stamp` o con `QZ.say()`. Il cronometro non si annuncia a ogni secondo.
+- Ogni schermata ha un solo `h1`. Comandi di gioco alti almeno 44px.
