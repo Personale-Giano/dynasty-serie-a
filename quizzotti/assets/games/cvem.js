@@ -33,13 +33,13 @@
     var $ = QZ.$;
 
     /* ---------- Markup statico ---------- */
-    $('#start-btn').innerHTML = QZ.icon('play', 'ico-fill') + 'Inizia la scalata';
+    $('#start-btn').innerHTML = 'Fischio d\'inizio' + QZ.icon('arrow');
     $('#medal').innerHTML = QZ.icon('crown');
     $('#rules').innerHTML = [
-        ['15 domande', 'di difficoltà crescente, da €100 a €1.000.000.'],
-        ['Soglie sicure', 'a €1.000 e €32.000: se sbagli dopo, quelle restano tue.'],
-        ['4 aiuti', '50:50, pubblico, telefonata e tempo extra. Uno ciascuno.'],
-        ['Ritirati', 'quando vuoi e porta a casa il premio raggiunto.']
+        ['Quindici domande,', 'da €100 al milione. Più sali, più si fanno cattive.'],
+        ['Due soglie sicure', 'a €1.000 e €32.000: se sbagli dopo, quei soldi non te li toglie nessuno.'],
+        ['Quattro aiuti:', '50:50, pubblico, telefonata a casa e 15 secondi in più. Uno a testa.'],
+        ['Puoi ritirarti', 'quando vuoi e incassare quello che hai vinto. Il coraggio è facoltativo.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
@@ -51,7 +51,7 @@
 
     $('#ladder').innerHTML = PRIZES.slice(1).map(function (p, i) {
         var lv = i + 1;
-        return '<li data-lv="' + lv + '" class="' + (SAFE.indexOf(lv) >= 0 ? 'is-safe' : '') + '"><span>' + lv + '</span><span>' + money(p) + '</span></li>';
+        return '<li data-lv="' + lv + '" class="' + (SAFE.indexOf(lv) >= 0 ? 'is-safe' : '') + '"><span>' + lv + '</span><i></i><span>' + money(p) + '</span></li>';
     }).join('');
 
     var LIFE = [
@@ -98,6 +98,7 @@
     function start() {
         S = { level: 1, active: false, used: {}, correct: 0, times: [], streak: 0, q: null };
         QZ.$$('.cv-life').forEach(function (b) { b.disabled = false; });
+        QZ.$$('.cv-life .qz-mark').forEach(function (m) { m.remove(); });
         paintStreak();
         QZ.show('s-game');
         QZ.sound.start();
@@ -123,6 +124,7 @@
 
         answerEls.forEach(function (el, i) {
             el.className = 'answer';
+            QZ.$$('.qz-mark, .qz-stamp', el).forEach(function (m) { m.remove(); });
             el.disabled = false;
             el.querySelector('.answer__text').textContent = S.q.options[i];
             QZ.fx.replay(el);
@@ -147,6 +149,7 @@
         S.times.push((performance.now() - S.t0) / 1000);
         answerEls.forEach(function (el) { el.disabled = true; });
         answerEls[i].classList.add('is-picked');
+        QZ.fx.mark(answerEls[i].querySelector('.answer__key'), 'cross', 'var(--ink)');
         QZ.sound.pop();
         // suspense: piu' alta la posta, piu' lunga l'attesa
         var wait = S.level <= 5 ? 700 : S.level <= 10 ? 1300 : 2000;
@@ -158,6 +161,7 @@
         var correctEl = answerEls[S.q.correct];
         answerEls.forEach(function (el) { el.disabled = true; el.classList.remove('is-picked'); });
         correctEl.classList.add('is-correct');
+        QZ.fx.stamp(correctEl, ok ? QZ.pick(['Esatto!', 'Gol!', 'Che giocata']) : 'Era questa', ok ? 'ok' : 'ink', { size: 24 });
         if (ok) {
             S.correct++;
             S.streak++;
@@ -167,7 +171,7 @@
             QZ.fx.sparks(correctEl);
             QZ.fx.floatText(correctEl, money(PRIZES[S.level]));
             if (SAFE.indexOf(S.level) >= 0) {
-                setTimeout(function () { QZ.fx.confetti({ count: 90 }); QZ.toast('Soglia sicura raggiunta: ' + money(PRIZES[S.level]) + ' sono tuoi!', { icon: 'shield', type: 'ok' }); }, 300);
+                setTimeout(function () { QZ.fx.confetti({ count: 90 }); QZ.toast(money(PRIZES[S.level]) + ' in cassaforte. Nessuno te li toglie più.', { icon: 'shield', type: 'ok' }); }, 300);
             }
             setTimeout(function () {
                 if (S.level >= 15) { finish('win'); return; }
@@ -176,8 +180,8 @@
                 load();
             }, 1500);
         } else {
-            if (i >= 0) answerEls[i].classList.add('is-wrong');
-            else QZ.toast('Tempo scaduto!', { icon: 'clock', type: 'bad' });
+            if (i >= 0) { answerEls[i].classList.add('is-wrong'); QZ.fx.stamp(answerEls[i], 'Fuorigioco', 'bad', { size: 24 }); }
+            else QZ.toast('Fischio finale: tempo scaduto.', { icon: 'clock', type: 'bad' });
             S.streak = 0;
             paintStreak();
             QZ.sound.wrong();
@@ -210,7 +214,9 @@
     function spend(id) {
         if (!S.active || S.used[id]) return false;
         S.used[id] = true;
-        $('[data-life="' + id + '"]').disabled = true;
+        var btn = $('[data-life="' + id + '"]');
+        btn.disabled = true;
+        QZ.fx.mark(btn, 'cross');
         QZ.sound.lifeline();
         return true;
     }
@@ -292,7 +298,7 @@
         timer.pause();
         S.active = false;
         var won = PRIZES[S.level - 1];
-        QZ.confirm('Ti ritiri e porti a casa ' + money(won) + '?', { title: 'Ritirarsi?', okLabel: 'Prendo i soldi', cancelLabel: 'Continuo' }).then(function (ok) {
+        QZ.confirm(won ? 'Ti fermi qui e porti a casa ' + money(won) + '. Sicuro?' : 'Ti ritiri senza aver vinto niente. Proprio sicuro?', { title: 'Incassi?', okLabel: 'Incasso', cancelLabel: 'Rischio' }).then(function (ok) {
             if (ok) { QZ.sound.coin(); finish('quit'); }
             else { S.active = true; timer.start(); }
         });
@@ -311,9 +317,9 @@
         var r = QZ.profile.record('cvem', { xp: xp, label: money(prize) + ' · livello ' + reached + '/15', score: reached });
 
         var titles = {
-            win: ['Sei milionario!', 'Quindici su quindici. Sei il capitano dei quiz.'],
-            lose: [prize ? 'Ti fermi qui' : 'Game over', prize ? 'Risposta sbagliata, ma la soglia sicura ti salva.' : 'Risposta sbagliata alla domanda ' + S.level + '. Si riparte da zero.'],
-            quit: ['Scelta saggia', 'Ti sei ritirato alla domanda ' + S.level + ' con il premio in tasca.']
+            win: ['Milionario!', 'Quindici su quindici. Da stasera al bar paghi tu.'],
+            lose: [prize ? 'Salvato dalla soglia' : 'Fuori al primo turno', prize ? 'Sbagli alla domanda ' + S.level + ', ma la soglia sicura ti para il colpo.' : 'Sbagli alla domanda ' + S.level + ' e torni a casa a mani vuote. Capita anche ai migliori.'],
+            quit: ['Incassa e saluta', 'Ti fermi alla domanda ' + S.level + '. Il coraggio è facoltativo, i soldi no.']
         };
         QZ.show('s-end');
         QZ.results($('#end-host'), {
@@ -323,6 +329,7 @@
             subtitle: titles[type][1],
             big: prize, bigPrefix: '€',
             record: r,
+            ratio: reached / 15,
             stats: [
                 { label: 'Livello', value: reached + '/15' },
                 { label: 'Risposte giuste', value: S.correct },

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Chi Vuol Essere Milionario · Quizzotti</title>
 <meta name="description" content="15 domande di calcio sempre più difficili, quattro aiuti e un milione in palio. Gioca gratis a Chi Vuol Essere Milionario su Quizzotti.">
-<meta name="theme-color" content="#060912">
+<meta name="theme-color" content="#f1e8d6">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Chi Vuol Essere Milionario · Quizzotti">
 <meta property="og:description" content="15 domande di calcio, quattro aiuti, un milione in palio.">
@@ -15,53 +15,64 @@
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=5dfbd63b">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Permanent+Marker&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=1faa7d11">
 <style>
-  .cv-layout { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
-  @media (min-width: 980px) { .cv-layout { grid-template-columns: minmax(0, 1fr) 260px; align-items: start; } }
+  .cv-layout { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) { .cv-layout { grid-template-columns: minmax(0, 1fr) 270px; align-items: start; } }
 
   .cv-top { display: flex; align-items: center; gap: 16px; }
   .cv-prize { display: grid; }
-  .cv-prize__label { font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
-  .cv-prize__value { font-family: var(--font-display); font-size: clamp(24px, 4vw, 34px); font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .cv-prize__label { font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 17px; text-transform: uppercase; color: var(--ink-2); }
+  .cv-prize__value { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: clamp(40px, 6vw, 58px); line-height: .9; font-variant-numeric: tabular-nums; text-shadow: 3px 3px 0 var(--accent); }
 
-  .cv-question { padding: 26px 24px; text-align: center; }
-  .cv-question .eyebrow { justify-content: center; margin-bottom: 12px; }
+  .cv-question { padding: 24px 22px 26px; text-align: center; }
+  .cv-question .eyebrow { margin-bottom: 14px; }
 
-  .cv-lifelines { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-  @media (max-width: 420px) { .cv-life { font-size: 11px; padding: 10px 2px 8px; } .cv-life .cv-life__ico { width: 34px; height: 34px; font-size: 11px; } .cv-question { padding: 20px 16px; } }
-  .cv-life { display: grid; justify-items: center; gap: 6px; padding: 12px 6px 10px; border-radius: 16px; border: 1px solid var(--line-2); background: var(--surface); color: var(--text); font-weight: 800; font-size: 12px; transition: transform .2s var(--ease-spring), background .2s, border-color .2s, opacity .3s; }
-  .cv-life:hover:not(:disabled) { transform: translateY(-3px); border-color: rgba(var(--accent-rgb), .6); background: rgba(var(--accent-rgb), .1); }
-  .cv-life .cv-life__ico { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: rgba(var(--accent-rgb), .14); color: var(--accent); font-family: var(--font-display); font-size: 13px; }
-  .cv-life:disabled { opacity: .3; cursor: not-allowed; }
-  .cv-life:disabled .cv-life__ico { background: var(--surface-2); color: var(--faint); }
-  .cv-life--quit .cv-life__ico { background: rgba(var(--ok-rgb), .14); color: var(--ok); }
+  .cv-lifelines { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  .cv-life {
+    position: relative; display: grid; justify-items: center; gap: 6px; padding: 12px 4px 10px; border-radius: var(--r);
+    border: var(--bw) solid var(--ink); background: var(--card); box-shadow: var(--shadow-print-sm);
+    font-family: var(--font-display); font-style: italic; font-weight: 800; font-size: 16px; text-transform: uppercase;
+    transition: transform .08s, box-shadow .08s, background .15s;
+  }
+  .cv-life:hover:not(:disabled) { background: #fff3c4; }
+  .cv-life:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
+  .cv-life__ico { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--ink); border: var(--bw) solid var(--ink); font-size: 15px; font-weight: 900; }
+  .cv-life:disabled { cursor: not-allowed; box-shadow: none; background: transparent; color: var(--ink-3); }
+  .cv-life:disabled .cv-life__ico { background: var(--paper-2); color: var(--ink-3); }
+  .cv-life--quit .cv-life__ico { background: var(--green); color: var(--card); }
+  @media (max-width: 420px) { .cv-life { font-size: 13px; padding: 10px 2px 8px; } .cv-life__ico { width: 36px; height: 36px; font-size: 13px; } .cv-question { padding: 20px 14px; } }
 
-  .cv-ladder { list-style: none; margin: 0; padding: 8px; display: flex; flex-direction: column-reverse; gap: 3px; }
-  .cv-ladder li { display: flex; align-items: center; gap: 10px; padding: 7px 12px; border-radius: 10px; font-weight: 700; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; transition: background .4s, color .4s, transform .4s var(--ease-spring); }
-  .cv-ladder li span:first-child { width: 22px; font-size: 12px; color: var(--faint); }
-  .cv-ladder li span:last-child { margin-left: auto; }
-  .cv-ladder li.is-safe { color: var(--text); }
-  .cv-ladder li.is-safe span:last-child { color: var(--accent); }
-  .cv-ladder li.is-done { color: var(--faint); }
-  .cv-ladder li.is-done span:last-child::before { content: "✓ "; color: var(--ok); }
-  .cv-ladder li.is-now { background: linear-gradient(90deg, var(--accent), var(--accent-2)); color: var(--on-accent); transform: scale(1.04); box-shadow: 0 8px 24px -8px rgba(var(--accent-rgb), .8); }
-  .cv-ladder li.is-now span { color: inherit !important; }
+  /* il cartellone dei premi */
+  .cv-side { padding: 14px 12px; }
+  .cv-side__title { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 22px; text-transform: uppercase; text-align: center; padding-bottom: 8px; margin-bottom: 6px; border-bottom: 3px double var(--ink); }
+  .cv-ladder { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column-reverse; }
+  .cv-ladder li { position: relative; display: flex; align-items: baseline; gap: 6px; padding: 3px 8px; font-family: var(--font-display); font-style: italic; font-weight: 700; font-size: 19px; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+  .cv-ladder li span:first-child { width: 22px; color: var(--ink-3); }
+  .cv-ladder li i { flex: 1; border-bottom: 2px dotted rgba(var(--ink-rgb), .3); transform: translateY(-4px); }
+  .cv-ladder li.is-safe { color: var(--ink); font-weight: 900; }
+  .cv-ladder li.is-safe span:last-child::after { content: " ★"; color: var(--red); }
+  .cv-ladder li.is-done { color: var(--ink-3); text-decoration: line-through; text-decoration-thickness: 2px; }
+  .cv-ladder li.is-now { color: var(--ink); font-weight: 900; z-index: 0; }
+  .cv-ladder li.is-now::before { content: ""; position: absolute; inset: 1px -4px; z-index: -1; background: var(--accent); transform: skewX(-12deg) rotate(-1deg); border: 1.5px solid var(--ink); }
+  .cv-ladder li.is-now i { border-color: rgba(var(--ink-rgb), .5); }
 
   @media (max-width: 979px) {
-    .cv-side { order: -1; }
-    .cv-ladder { flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 6px; }
+    .cv-side { order: -1; padding: 8px; }
+    .cv-side__title { display: none; }
+    .cv-ladder { flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: 4px; padding: 4px 6px; }
     .cv-ladder::-webkit-scrollbar { display: none; }
-    .cv-ladder li { flex: none; scroll-snap-align: center; padding: 8px 12px; font-size: 13px; }
-    .cv-ladder li.is-now { transform: none; }
+    .cv-ladder li { flex: none; scroll-snap-align: center; font-size: 17px; }
+    .cv-ladder li i { display: none; }
   }
 
-  .cv-audience { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: end; height: 190px; margin-top: 12px; }
-  .cv-audience__col { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; height: 100%; text-align: center; font-weight: 800; }
+  .cv-audience { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: end; height: 200px; margin-top: 12px; padding-bottom: 4px; border-bottom: var(--bw) solid var(--ink); }
+  .cv-audience__col { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; height: 100%; text-align: center; }
+  .cv-audience__col span:first-child { font-family: var(--font-hand); font-size: 20px; }
   .cv-audience__track { flex: 1; display: flex; align-items: flex-end; }
-  .cv-audience__bar { width: 100%; height: 0; border-radius: 10px 10px 4px 4px; background: linear-gradient(180deg, var(--accent-2), var(--accent)); transition: height 1s var(--ease-out); }
-  .cv-audience__col span:last-child { font-family: var(--font-display); color: var(--accent); }
+  .cv-audience__bar { width: 100%; height: 0; border: var(--bw) solid var(--ink); border-bottom: 0; background: repeating-linear-gradient(-45deg, var(--accent) 0 6px, #f6d27a 6px 12px); transition: height .9s var(--ease-out); }
+  .cv-audience__col span:last-child { font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: 24px; }
 </style>
 </head>
 <body data-game="cvem">
@@ -71,9 +82,9 @@
   <section class="screen is-active" id="s-start">
     <div class="intro">
       <div data-stagger>
-        <span class="eyebrow">Quiz · Solo</span>
+        <span class="eyebrow">N° 01 · Da solo</span>
         <h1 class="intro__title">Chi vuol essere <em>milionario?</em></h1>
-        <p class="intro__lead">Quindici domande di calcio, dalla più facile alla più difficile. Rispondi, usa gli aiuti al momento giusto e porta a casa il milione.</p>
+        <p class="intro__lead">Quindici domande, dalla più facile alla più cattiva. Quattro aiuti, due soglie per salvarti e un milione di euro finti in palio. Il sudore, quello, è vero.</p>
         <div class="row mt-3">
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
@@ -109,10 +120,11 @@
         <div class="answers answers--2col" id="answers"></div>
 
         <div class="cv-lifelines" id="lifelines"></div>
-        <p class="small faint center kbd-hint" style="justify-content:center;gap:6px">Tastiera: <span class="kbd">A</span><span class="kbd">B</span><span class="kbd">C</span><span class="kbd">D</span> per rispondere</p>
+        <p class="small center kbd-hint">Da tastiera: <span class="kbd">A</span><span class="kbd">B</span><span class="kbd">C</span><span class="kbd">D</span> per rispondere</p>
       </div>
 
-      <aside class="cv-side card card--tight" aria-label="Montepremi">
+      <aside class="cv-side card" aria-label="Montepremi">
+        <div class="cv-side__title">Il montepremi</div>
         <ol class="cv-ladder" id="ladder"></ol>
       </aside>
     </div>
@@ -123,9 +135,9 @@
 
 </main>
 
-<script src="assets/qz.js?v=27d37bac" defer></script>
+<script src="assets/qz.js?v=9c216f8a" defer></script>
 <script src="assets/db-cvem.js?v=2342a065" defer></script>
 <script src="assets/questions-data.js?v=6be0fe7b" defer></script>
-<script src="assets/games/cvem.js?v=79be30ae" defer></script>
+<script src="assets/games/cvem.js?v=e84df162" defer></script>
 </body>
 </html>

@@ -1,36 +1,47 @@
 /* ==========================================================================
-   QUIZZOTTI v2 — Home: griglia giochi generata dal registro QZ.GAMES,
-   filtri, card con luce che segue il puntatore e inclinazione 3D.
+   QUIZZOTTI — Prima pagina: l'album dei giochi generato dal registro
+   QZ.GAMES, i filtri, la striscia dell'ultim'ora e il gioco a sorpresa.
    ========================================================================== */
 (function () {
     'use strict';
 
     var grid = QZ.$('#games');
     var profile = QZ.profile.get();
+    // inclinazioni fisse ma irregolari: le figurine non sono mai attaccate dritte
+    var TILTS = [-1.4, 0.9, -0.6, 1.3, -1.1, 0.5, 1.6, -0.8, 0.7, -1.5];
 
-    QZ.$('#hero-eyebrow-ico').innerHTML = QZ.icon('ball');
-    QZ.$('#cta-games').innerHTML = QZ.icon('play', 'ico-fill') + 'Gioca ora';
-    QZ.$('#cta-random').innerHTML = QZ.icon('shuffle') + 'Gioco a sorpresa';
+    QZ.$('#cta-games').innerHTML = 'Fischio d\'inizio' + QZ.icon('arrow');
+    QZ.$('#cta-random').innerHTML = QZ.icon('dice') + 'Gioco a sorpresa';
     QZ.$$('[data-icon]').forEach(function (el) { el.innerHTML = QZ.icon(el.dataset.icon); });
     QZ.$('#fact-level').textContent = QZ.profile.level();
 
     grid.innerHTML = QZ.GAMES.map(function (g, i) {
         var plays = profile.gamesPlayed[g.id] || 0;
-        var best = profile.bestScores[g.id];
-        return '<a class="game" href="' + g.file + '" data-kind="' + g.kind + '" style="--i:' + i + ';--c:' + g.color + ';--c-2:' + g.color2 + ';--c-rgb:' + g.rgb + '">' +
-            '<div class="game__top"><div class="game__icon">' + QZ.icon(g.icon) + '</div>' +
-            '<span class="chip">' + QZ.icon(g.kind === 'quiz' ? 'user' : 'users') + QZ.esc(g.players) + '</span></div>' +
-            '<div><h3 class="game__title">' + QZ.esc(g.name) + '</h3>' +
-            '<p class="game__desc mt-1">' + QZ.esc(g.desc) + '</p></div>' +
-            '<div class="game__foot"><div>' +
-            '<div class="game__tags">' + g.tags.map(function (t) { return '<span class="chip">' + QZ.esc(t) + '</span>'; }).join('') + '</div>' +
-            (plays ? '<div class="game__best mt-1">' + plays + (plays === 1 ? ' partita' : ' partite') + (best && best.label ? ' · ' + QZ.esc(best.label) : '') + '</div>' : '') +
-            '</div><span class="game__play" aria-hidden="true">' + QZ.icon('arrow') + '</span></div></a>';
+        return '<a class="game" href="' + g.file + '" data-kind="' + g.kind + '" style="--i:' + i + ';--tilt:' + TILTS[i] + 'deg;--c:' + g.color + ';--c-2:' + g.color2 + '">' +
+            '<div class="game__band"><span class="game__num">N° ' + String(i + 1).padStart(2, '0') + '</span>' +
+            '<span class="game__icon" style="color:' + g.on + '">' + QZ.icon(g.icon) + '</span></div>' +
+            (plays ? '<span class="note game__best">giocato ' + (plays === 1 ? 'una volta' : plays + ' volte') + '</span>' : '') +
+            '<div class="game__body">' +
+            '<h3 class="game__title">' + QZ.esc(g.name) + '</h3>' +
+            '<p class="game__desc">' + QZ.esc(g.desc) + '</p>' +
+            '<div class="game__foot"><span class="game__players">' + QZ.icon(g.kind === 'quiz' ? 'user' : 'users') + QZ.esc(g.players) + '</span>' +
+            '<span class="game__play">Gioca' + QZ.icon('arrow') + '</span></div>' +
+            '</div></a>';
     }).join('');
 
-    // Marquee: nomi dei giochi ripetuti due volte per lo scorrimento infinito
-    var items = QZ.GAMES.map(function (g) { return '<span>' + QZ.icon(g.icon) + QZ.esc(g.name) + '</span>'; }).join('');
-    QZ.$('#marquee').innerHTML = items + items;
+    // Ultim'ora: due copie in fila per lo scorrimento senza stacchi
+    var news = [
+        'Taboo: vietato dire «difesa» quando spieghi il catenaccio',
+        'Mr. White è tra voi, e sorride',
+        'Al Milionario la prima soglia sicura è a mille euro',
+        'Bomba: la miccia è più corta di quanto sembra',
+        'Avanti un Altro: sbagliare non è mai stato così difficile',
+        'Derby delle Parole: chi la sa, tira in porta',
+        'Sfida dei Budget: il presidente ha chiuso i cordoni della borsa',
+        'Jeopardy: la doppia posta è nascosta da qualche parte'
+    ];
+    var items = news.map(function (n) { return '<span>' + QZ.esc(n) + '</span>'; }).join('');
+    QZ.$('#ticker').innerHTML = items + items;
 
     // Filtri
     var filters = QZ.$$('#filters button');
@@ -42,48 +53,29 @@
                 var show = f === 'all' || card.dataset.kind === f;
                 card.classList.toggle('is-hidden', !show);
                 if (show) {
-                    // riavvia l'animazione d'ingresso a cascata sulle card rimaste
+                    // le figurine rimaste si riattaccano una dopo l'altra
                     card.style.setProperty('--i', i++);
                     card.style.animation = 'none';
-                    void card.offsetWidth;
+                    card.getBoundingClientRect();
                     card.style.animation = '';
                 }
             });
         });
     });
 
-    // Gioco a sorpresa
+    // Gioco a sorpresa: si pesca una figurina
     QZ.$('#cta-random').addEventListener('click', function () {
         var g = QZ.pick(QZ.GAMES);
-        QZ.sound.whoosh();
-        QZ.toast('Si gioca a ' + g.name + '!', { icon: g.icon });
-        setTimeout(function () { window.location.href = g.file; }, 650);
+        var card = QZ.$$('.game', grid)[QZ.GAMES.indexOf(g)];
+        card.scrollIntoView({ behavior: QZ.reducedMotion() ? 'auto' : 'smooth', block: 'center' });
+        setTimeout(function () {
+            QZ.fx.stamp(card, 'Si gioca a questo!', 'ink', { size: 24 });
+            setTimeout(function () { window.location.href = g.file; }, 900);
+        }, 450);
     });
 
-    // Luce che segue il puntatore + leggera inclinazione 3D (solo mouse)
-    var fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches && !QZ.reducedMotion();
-    if (fine) {
-        grid.addEventListener('pointermove', function (e) {
-            var card = e.target.closest('.game');
-            if (!card) return;
-            var r = card.getBoundingClientRect();
-            var x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-            card.style.setProperty('--mx', (x * 100) + '%');
-            card.style.setProperty('--my', (y * 100) + '%');
-            card.style.setProperty('--rx', ((0.5 - y) * 6) + 'deg');
-            card.style.setProperty('--ry', ((x - 0.5) * 8) + 'deg');
-        });
-        grid.addEventListener('pointerout', function (e) {
-            var card = e.target.closest('.game');
-            if (card && !card.contains(e.relatedTarget)) {
-                card.style.setProperty('--rx', '0deg');
-                card.style.setProperty('--ry', '0deg');
-            }
-        });
-    }
-
-    // Contatori del hero
+    // Contatori del tabellino
     QZ.$$('[data-count]').forEach(function (el) {
-        QZ.fx.count(el, 0, Number(el.dataset.count), 1400, { suffix: el.dataset.suffix || '' });
+        QZ.fx.count(el, 0, Number(el.dataset.count), 1200, { suffix: el.dataset.suffix || '' });
     });
 })();

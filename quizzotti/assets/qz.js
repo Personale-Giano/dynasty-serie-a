@@ -15,16 +15,16 @@
        Registro giochi: unica fonte di verita' per home, launcher e profilo
        ------------------------------------------------------------------- */
     QZ.GAMES = [
-        { id: 'cvem', file: 'CVEM.html', name: 'Chi Vuol Essere Milionario', short: 'Milionario', icon: 'crown', color: '#f5c542', color2: '#ffe08a', rgb: '245, 197, 66', players: 'Solo', kind: 'quiz', desc: '15 domande sempre più difficili, quattro aiuti e un milione in palio.', tags: ['Quiz', 'Aiuti', '15 livelli'] },
-        { id: 'jeopardy', file: 'Jeopardy.html', name: 'Jeopardy', short: 'Jeopardy', icon: 'grid', color: '#4f8cff', color2: '#9cc0ff', rgb: '79, 140, 255', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone a categorie: scegli il valore, rispondi e scala la classifica.', tags: ['Squadre', 'Categorie', 'Punti'] },
-        { id: 'avantiunaltro', file: 'AvantiUnAltro.html', name: 'Avanti un Altro', short: 'Avanti un Altro', icon: 'fastforward', color: '#ff8a3d', color2: '#ffbd8a', rgb: '255, 138, 61', players: 'Solo', kind: 'quiz', desc: 'Il quiz al contrario: per avanzare devi scegliere la risposta sbagliata.', tags: ['Quiz', 'Al contrario', 'Velocità'] },
-        { id: 'citazioni', file: 'Citazioni.html', name: "Chi l'ha detto", short: "Chi l'ha detto", icon: 'quote', color: '#a78bfa', color2: '#d4c6ff', rgb: '167, 139, 250', players: 'Solo', kind: 'quiz', desc: 'Le frasi più celebri del calcio: indovina chi le ha pronunciate.', tags: ['Frasi celebri', 'Quiz'] },
-        { id: 'taboo', file: 'Taboo.html', name: 'Taboo', short: 'Taboo', icon: 'ban', color: '#ff4d8d', color2: '#ff9fc2', rgb: '255, 77, 141', players: '2-6 squadre', kind: 'party', desc: 'Fai indovinare la parola ai compagni senza dire quelle vietate.', tags: ['Squadre', 'Parole', 'Timer'] },
-        { id: 'intesavincente', file: 'IntesaVincente.html', name: 'Intesa Vincente', short: 'Intesa Vincente', icon: 'users', color: '#22d3ee', color2: '#8eeefb', rgb: '34, 211, 238', players: '2-6 squadre', kind: 'party', desc: 'Spiega le parole ai compagni, prenota e indovina prima che scada il tempo.', tags: ['Squadre', 'Parole', 'Timer'] },
-        { id: 'mrwhite', file: 'MrWhite.html', name: 'Mr. White', short: 'Mr. White', icon: 'spy', color: '#dbe4f0', color2: '#ffffff', rgb: '219, 228, 240', players: '3+ giocatori', kind: 'party', desc: 'Tutti conoscono il calciatore segreto, tranne uno. Smascheralo.', tags: ['Bluff', 'Deduzione', 'Ruoli'] },
-        { id: 'bomba', file: 'Bomba.html', name: 'Bomba', short: 'Bomba', icon: 'bomb', color: '#ff5a3c', color2: '#ffa48f', rgb: '255, 90, 60', players: '2+ giocatori', kind: 'party', desc: 'Passatevi la bomba nominando qualcosa sul tema. Chi la tiene quando scoppia perde.', tags: ['Turni', 'Tempo', 'Eliminazione'] },
-        { id: 'sfidaeredita', file: 'sfidaEredita.html', name: 'Derby delle Parole', short: 'Derby', icon: 'ball', color: '#2ee59d', color2: '#9cf5cf', rgb: '46, 229, 157', players: '2 squadre', kind: 'party', desc: 'Indovina la parola misteriosa dalla definizione, lettera dopo lettera.', tags: ['Definizioni', 'Squadre', 'Voce'] },
-        { id: 'giocatoributget', file: 'GiocatoriBudget.html', name: 'Sfida dei Budget', short: 'Budget', icon: 'coins', color: '#a3e635', color2: '#d3f78f', rgb: '163, 230, 53', players: '1-6 giocatori', kind: 'party', desc: 'Costruisci la squadra senza sforare il budget: i prezzi sono nascosti.', tags: ['Mercato', 'Strategia', 'Budget'] }
+        { id: 'cvem', file: 'CVEM.html', name: 'Chi Vuol Essere Milionario', short: 'Milionario', icon: 'crown', color: '#e3a21a', color2: '#1d1913', on: '#1d1913', rgb: '227, 162, 26', players: 'Da solo', kind: 'quiz', desc: 'Quindici domande, quattro aiuti, un milione di euro finti. Il sudore invece è vero.', tags: ['Quiz', 'Aiuti', '15 livelli'] },
+        { id: 'jeopardy', file: 'Jeopardy.html', name: 'Jeopardy', short: 'Jeopardy', icon: 'grid', color: '#1f3c88', color2: '#f3c21b', on: '#fbf6ec', rgb: '31, 60, 136', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone a categorie per la serata con gli amici. Chi sbaglia, paga in punti.', tags: ['Squadre', 'Categorie', 'Punti'] },
+        { id: 'avantiunaltro', file: 'AvantiUnAltro.html', name: 'Avanti un Altro', short: 'Avanti un Altro', icon: 'fastforward', color: '#e8641b', color2: '#1d1913', on: '#1d1913', rgb: '232, 100, 27', players: 'Da solo', kind: 'quiz', desc: 'Qui vince chi sbaglia: scegli sempre la risposta sbagliata. Facile a dirsi.', tags: ['Quiz', 'Al contrario', 'Velocità'] },
+        { id: 'citazioni', file: 'Citazioni.html', name: "Chi l'ha detto", short: "Chi l'ha detto", icon: 'quote', color: '#6b3fa0', color2: '#f3c21b', on: '#fbf6ec', rgb: '107, 63, 160', players: 'Da solo', kind: 'quiz', desc: '«Zero tituli», «Why always me?»… Le frasi le conosci. Ma chi le ha dette?', tags: ['Frasi celebri', 'Quiz'] },
+        { id: 'taboo', file: 'Taboo.html', name: 'Taboo', short: 'Taboo', icon: 'ban', color: '#cf2a1e', color2: '#1d1913', on: '#fbf6ec', rgb: '207, 42, 30', players: '2-6 squadre', kind: 'party', desc: 'Fai indovinare «Catenaccio» senza dire difesa, Italia e chiuso. Auguri.', tags: ['Squadre', 'Parole', 'Timer'] },
+        { id: 'intesavincente', file: 'IntesaVincente.html', name: 'Intesa Vincente', short: 'Intesa Vincente', icon: 'users', color: '#1672ad', color2: '#fbf6ec', on: '#fbf6ec', rgb: '22, 114, 173', players: '2-6 squadre', kind: 'party', desc: 'Uno spiega, gli altri prenotano e rispondono. Il cronometro non fa sconti.', tags: ['Squadre', 'Parole', 'Timer'] },
+        { id: 'mrwhite', file: 'MrWhite.html', name: 'Mr. White', short: 'Mr. White', icon: 'spy', color: '#1d1913', color2: '#fbf6ec', on: '#fbf6ec', rgb: '29, 25, 19', players: '3+ giocatori', kind: 'party', desc: 'Tutti sanno chi è il calciatore segreto. Tutti tranne uno, che fa finta di saperlo.', tags: ['Bluff', 'Deduzione', 'Ruoli'] },
+        { id: 'bomba', file: 'Bomba.html', name: 'Bomba', short: 'Bomba', icon: 'bomb', color: '#e23b1b', color2: '#f3c21b', on: '#fbf6ec', rgb: '226, 59, 27', players: '2+ giocatori', kind: 'party', desc: 'Un tema e una bomba che passa di mano in mano. Quando scoppia, qualcuno ci resta.', tags: ['Turni', 'Tempo', 'Eliminazione'] },
+        { id: 'sfidaeredita', file: 'sfidaEredita.html', name: 'Derby delle Parole', short: 'Derby', icon: 'ball', color: '#0e7a43', color2: '#fbf6ec', on: '#fbf6ec', rgb: '14, 122, 67', players: '2 squadre', kind: 'party', desc: 'Una definizione, le lettere che spuntano piano piano. Chi la sa, tira in porta.', tags: ['Definizioni', 'Squadre', 'Voce'] },
+        { id: 'giocatoributget', file: 'GiocatoriBudget.html', name: 'Sfida dei Budget', short: 'Budget', icon: 'coins', color: '#8e1b3f', color2: '#fbf6ec', on: '#fbf6ec', rgb: '142, 27, 63', players: '1-6 giocatori', kind: 'party', desc: 'Fai mercato a occhio: i prezzi sono nascosti e il presidente non perdona.', tags: ['Mercato', 'Strategia', 'Budget'] }
     ];
 
     QZ.game = function (id) {
@@ -33,7 +33,8 @@
     };
 
     /* Colori per squadre/giocatori (party game) */
-    QZ.TEAM_COLORS = ['#f5c542', '#4f8cff', '#ff4d8d', '#2ee59d', '#a78bfa', '#ff8a3d', '#22d3ee', '#a3e635', '#ff5a3c', '#dbe4f0'];
+    // tinte da tipografia, tutte abbastanza scure da reggere un numero color panna
+    QZ.TEAM_COLORS = ['#cf2a1e', '#1f3c88', '#0e7a43', '#e3a21a', '#6b3fa0', '#e8641b', '#1672ad', '#8e1b3f', '#2b7a78', '#6f6555'];
 
     /* ---------------------------------------------------------------------
        Icone SVG (24x24, tratto) — QZ.icon('nome', 'classe-extra')
@@ -317,6 +318,7 @@
             lose: function () { arp([392, 349.23, 311.13, 261.63], 0.16, 0.34, 'sawtooth', 0.11); },
             boom: function () { noise(1.1, 0.7, 260); tone(70, 0.9, 'sine', 0.5, 0, 30); noise(0.5, 0.25, 2200, 0.05, 'bandpass'); },
             whistle: function () { tone(2400, 0.18, 'sine', 0.12, 0, 2600); tone(2500, 0.5, 'sine', 0.12, 0.22, 2300); },
+            thud: function () { tone(120, 0.12, 'sine', 0.22, 0, 60); noise(0.07, 0.16, 900); },
             reveal: function () { arp([440, 554.37, 659.25, 880], 0.05, 0.3, 'sine', 0.12); },
             tone: tone,
             noise: noise
@@ -415,28 +417,37 @@
         function open() {
             var p = get(), pr = progress(p);
             var total = Object.keys(p.gamesPlayed).reduce(function (s, k) { return s + p.gamesPlayed[k]; }, 0);
+            var got = QZ.GAMES.filter(function (g) { return p.gamesPlayed[g.id]; }).length;
+            // ogni gioco giocato almeno una volta e' una figurina attaccata nell'album
+            var album = QZ.GAMES.map(function (g, i) {
+                var has = !!p.gamesPlayed[g.id];
+                return '<div class="album__slot' + (has ? ' is-got' : '') + '" style="--c:' + g.color + (has ? ';color:' + g.on : '') + '" title="' + QZ.esc(g.name) + '">' +
+                    '<b>N° ' + String(i + 1).padStart(2, '0') + '</b>' + QZ.icon(g.icon) + '<span>' + QZ.esc(has ? g.short : 'manca') + '</span></div>';
+            }).join('');
             var rows = QZ.GAMES.filter(function (g) { return p.gamesPlayed[g.id]; }).map(function (g) {
                 var best = p.bestScores[g.id];
                 return '<div class="profile-game">' +
-                    '<div class="profile-game__icon" style="background:rgba(' + g.rgb + ',.16);color:' + g.color + '">' + QZ.icon(g.icon) + '</div>' +
+                    '<div class="profile-game__icon" style="background:' + g.color + ';color:' + g.on + '">' + QZ.icon(g.icon) + '</div>' +
                     '<div class="grow"><div style="font-weight:800">' + QZ.esc(g.name) + '</div>' +
-                    '<div class="small muted">' + p.gamesPlayed[g.id] + ' partite' + (best && best.label ? ' · ' + QZ.esc(best.label) : '') + '</div></div></div>';
+                    '<div class="small muted">' + p.gamesPlayed[g.id] + (p.gamesPlayed[g.id] === 1 ? ' partita' : ' partite') + (best && best.label ? ' · ' + QZ.esc(best.label) : '') + '</div></div></div>';
             }).join('');
             var body =
-                '<div class="row row--nowrap" style="--gap:18px;margin:6px 0 16px">' +
-                '<div class="qz-level__ring" style="--p:' + pr.pct + ';width:76px;height:76px;font-size:22px;flex:none"><span style="width:62px;height:62px">' + pr.level + '</span></div>' +
-                '<div class="grow"><div class="display" style="font-size:22px">' + QZ.fmt(p.totalXP) + ' XP</div>' +
-                '<div class="small muted">' + pr.toNext + ' XP al livello ' + (pr.level + 1) + ' · ' + total + ' partite</div>' +
+                '<div class="row row--nowrap" style="--gap:16px;margin:4px 0 6px">' +
+                '<div class="pagella__voto" style="width:78px;height:78px;font-size:34px">' + pr.level + '</div>' +
+                '<div class="grow"><div class="display" style="font-size:30px;font-style:italic;line-height:1">LIVELLO ' + pr.level + ' · ' + QZ.fmt(p.totalXP) + ' XP</div>' +
+                '<div class="small muted">Ancora ' + QZ.fmt(pr.toNext) + ' XP per salire · ' + total + (total === 1 ? ' partita' : ' partite') + '</div>' +
                 '<div class="progress mt-1"><div class="progress__fill" style="transform:scaleX(' + pr.pct / 100 + ')"></div></div></div></div>' +
-                (rows ? '<div class="profile-games">' + rows + '</div>' : '<p class="muted">Gioca la tua prima partita per iniziare a salire di livello.</p>') +
-                '<p class="small faint mt-2">Salvato solo su questo dispositivo, nessun dato lascia il browser.</p>';
+                '<div class="row row--between mt-2"><span class="label">L\'album</span><span class="note" style="font-size:16px">' + (got === 10 ? 'completo!' : got + ' su 10, ne mancano ' + (10 - got)) + '</span></div>' +
+                '<div class="album">' + album + '</div>' +
+                (rows ? '<div class="profile-games">' + rows + '</div>' : '<p class="muted mt-2">L\'album è ancora vuoto: ogni gioco che provi attacca una figurina.</p>') +
+                '<p class="small faint mt-2">Tutto resta su questo telefono. Niente account, niente server.</p>';
             QZ.modal({
-                title: 'Il tuo profilo',
+                title: 'Il tuo album',
                 html: body,
                 actions: [
-                    { label: 'Azzera', ghost: true, onClick: function () {
-                        return QZ.confirm('Azzerare livello, XP e record salvati su questo dispositivo?', { okLabel: 'Azzera', danger: true }).then(function (ok) {
-                            if (ok) { reset(); QZ.toast('Profilo azzerato', { icon: 'refresh' }); }
+                    { label: 'Azzera tutto', ghost: true, onClick: function () {
+                        return QZ.confirm('Staccare tutte le figurine e azzerare livello e record? Non si torna indietro.', { okLabel: 'Azzera', danger: true }).then(function (ok) {
+                            if (ok) { reset(); QZ.toast('Album svuotato. Si riparte da capo.', { icon: 'refresh' }); }
                         });
                     } },
                     { label: 'Chiudi', primary: true }
@@ -579,7 +590,7 @@
         if (QZ.reducedMotion()) return;
         opts = opts || {};
         var count = opts.count || 160;
-        var colors = opts.colors || ['#f5c542', '#ffe08a', '#2ee59d', '#4f8cff', '#ff4d8d', '#ffffff'];
+        var colors = opts.colors || ['#cf2a1e', '#0e7a43', '#f3c21b', '#1f3c88', '#fbf6ec', '#e8641b'];
         var cv = doc.createElement('canvas');
         cv.className = 'qz-confetti';
         doc.body.appendChild(cv);
@@ -680,6 +691,50 @@
         f.style.background = 'radial-gradient(circle at 50% 50%, ' + (color || 'rgba(var(--accent-rgb),.5)') + ', transparent 70%)';
         doc.body.appendChild(f);
         f.addEventListener('animationend', f.remove.bind(f));
+    };
+
+    /**
+     * Timbro sulla carta: QZ.fx.stamp(el, 'Gol!', 'ok' | 'bad' | 'ink', {rot, size, ms}).
+     * Si appoggia dentro l'elemento (che diventa position:relative se serve).
+     */
+    QZ.fx.stamp = function (el, text, kind, opts) {
+        if (!el) return null;
+        opts = opts || {};
+        if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+        QZ.$$('.qz-stamp', el).forEach(function (x) { x.remove(); });
+        var s = doc.createElement('span');
+        s.className = 'qz-stamp qz-stamp--' + (kind || 'bad');
+        s.textContent = text;
+        s.setAttribute('aria-hidden', 'true');
+        s.style.setProperty('--rot', (opts.rot != null ? opts.rot : (Math.random() * 14 - 18)) + 'deg');
+        if (opts.size) s.style.setProperty('--stamp-size', opts.size + 'px');
+        el.appendChild(s);
+        QZ.sound.thud();
+        if (opts.ms) setTimeout(function () { s.remove(); }, opts.ms);
+        return s;
+    };
+
+    /**
+     * Segno a pennarello disegnato sopra un elemento: 'circle' (cerchiato),
+     * 'cross' (la X della schedina) o 'tick'. Colore opzionale (default rosso).
+     */
+    QZ.fx.mark = function (el, kind, color) {
+        if (!el) return null;
+        if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+        QZ.$$('.qz-mark', el).forEach(function (x) { x.remove(); });
+        var j = function (n) { return (n + Math.random() * 6 - 3).toFixed(1); };
+        var d = kind === 'cross'
+            ? 'M' + j(14) + ' ' + j(12) + ' L' + j(86) + ' ' + j(88) + ' M' + j(84) + ' ' + j(14) + ' L' + j(16) + ' ' + j(86)
+            : kind === 'tick'
+                ? 'M18 52 L42 78 L86 18'
+                : 'M50 6 C80 4 97 26 95 52 C93 80 70 96 46 94 C20 92 3 72 6 46 C9 22 28 8 56 9';
+        var svg = QZ.el('<svg class="qz-mark" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" vector-effect="non-scaling-stroke"/></svg>');
+        if (color) svg.style.setProperty('--mark', color);
+        el.appendChild(svg);
+        // lunghezza del tratto in pixel reali (il viewBox e' stirato sull'elemento)
+        var r = el.getBoundingClientRect();
+        svg.querySelector('path').style.setProperty('--len', Math.ceil((r.width + r.height) * 2.4));
+        return svg;
     };
 
     QZ.fx.shake = function (el) {
@@ -939,8 +994,24 @@
      * Schermata risultati standard.
      * QZ.results(host, { win, icon, title, subtitle, big, bigFrom, bigPrefix, bigSuffix,
      *   stats:[{label,value}], extraHTML, record:{newRecord,xp}, share:'testo',
-     *   onRetry, retryLabel })
+     *   ratio (0-1: aggiunge il voto in pagella), onRetry, retryLabel,
+     *   secondary:{label, icon, onClick} })
      */
+    /**
+     * Il voto in pagella, da 4 a 10 a mezzi punti, con il giudizio del cronista.
+     * ratio: quanto e' andata bene la partita, da 0 a 1.
+     */
+    QZ.pagella = function (ratio) {
+        var r = QZ.clamp(Number(ratio) || 0, 0, 1);
+        var v = Math.round((4 + r * 6) * 2) / 2;
+        var bank = v >= 9.5 ? ['Prestazione da Pallone d\'Oro. Si alza tutto lo stadio.', 'Partita perfetta. Il mister non ha niente da dire, e infatti tace.', 'Imbattibile. A fine gara gli chiedono la maglia.']
+            : v >= 8 ? ['Trascinatore. Qualche sbavatura, ma la partita la decide lui.', 'Testa alta e piedi buoni. Applausi.', 'Sempre nel vivo del gioco. Da convocare.']
+                : v >= 6.5 ? ['Fa il suo, senza strafare. Il pubblico apprezza.', 'Partita ordinata, qualche errore di troppo nel finale.', 'Sufficienza piena. Può dare di più, e lo sa.']
+                    : v >= 5.5 ? ['Si vede a sprazzi. Troppo poco per lasciare il segno.', 'Ci prova, ma sbaglia l\'ultimo passaggio. Rimandato.', 'Né carne né pesce. Serve una settimana di allenamento.']
+                        : ['Non pervenuto. Sostituito all\'intervallo.', 'Giornata storta: la palla non gira, e lui nemmeno.', 'Si salva solo per l\'impegno. Da rivedere.'];
+        return { voto: v, txt: bank[Math.floor(Math.random() * bank.length)], label: (v % 1 ? Math.floor(v) + '½' : String(v)) };
+    };
+
     QZ.results = function (host, o) {
         var g = QZ.game(doc.body.dataset.game) || {};
         host.innerHTML =
@@ -949,9 +1020,14 @@
             '<h2 class="result__title"></h2>' +
             '<p class="muted result__sub" style="max-width:52ch"></p>' +
             (o.big != null ? '<div class="result__big">0</div>' : '') +
+            (o.ratio != null ? (function () {
+                var pg = QZ.pagella(o.ratio);
+                return '<div class="pagella"><div class="pagella__voto" aria-label="Voto ' + pg.voto + '">' + pg.label + '</div>' +
+                    '<div><div class="pagella__label">Il voto in pagella</div><p class="pagella__text">' + QZ.esc(pg.txt) + '</p></div></div>';
+            })() : '') +
             (o.record && (o.record.newRecord || o.record.xp) ?
                 '<div class="row row--center result__best">' +
-                (o.record.newRecord ? '<span class="chip chip--accent">' + QZ.icon('sparkles') + 'Nuovo record!</span>' : '') +
+                (o.record.newRecord ? '<span class="note" style="font-size:22px">nuovo record!</span>' : '') +
                 (o.record.xp ? '<span class="chip">' + QZ.icon('star') + '+' + o.record.xp + ' XP</span>' : '') + '</div>' : '') +
             '</div>' +
             (o.stats && o.stats.length ? '<div class="stats mt-3">' + o.stats.map(function (s) {
@@ -959,9 +1035,10 @@
             }).join('') + '</div>' : '') +
             (o.extraHTML || '') +
             '<div class="row row--center mt-3">' +
-            '<button type="button" class="btn btn--primary btn--lg" data-retry>' + QZ.icon('refresh') + (QZ.esc(o.retryLabel || 'Gioca ancora')) + '</button>' +
+            '<button type="button" class="btn btn--primary btn--lg" data-retry>' + QZ.icon('refresh') + (QZ.esc(o.retryLabel || 'Rigioca')) + '</button>' +
+            (o.secondary ? '<button type="button" class="btn btn--lg" data-secondary>' + (o.secondary.icon ? QZ.icon(o.secondary.icon) : '') + QZ.esc(o.secondary.label) + '</button>' : '') +
             (o.share ? '<button type="button" class="btn btn--lg" data-share>' + QZ.icon('share') + 'Condividi</button>' : '') +
-            '<a class="btn btn--ghost btn--lg" href="index.html#giochi">' + QZ.icon('grid') + 'Altri giochi</a>' +
+            '<a class="btn btn--ghost btn--lg" href="index.html#giochi">' + QZ.icon('grid') + 'Cambia gioco</a>' +
             '</div>';
         host.querySelector('.result__title').textContent = o.title || '';
         host.querySelector('.result__sub').textContent = o.subtitle || '';
@@ -969,6 +1046,8 @@
             QZ.fx.count(host.querySelector('.result__big'), o.bigFrom || 0, o.big, 1300, { prefix: o.bigPrefix, suffix: o.bigSuffix, decimals: o.bigDecimals });
         }
         host.querySelector('[data-retry]').addEventListener('click', function () { if (o.onRetry) o.onRetry(); });
+        var sec = host.querySelector('[data-secondary]');
+        if (sec) sec.addEventListener('click', function () { if (o.secondary.onClick) o.secondary.onClick(); });
         var sh = host.querySelector('[data-share]');
         if (sh) sh.addEventListener('click', function () { QZ.share(o.share, 'Quizzotti · ' + (g.name || '')); });
         if (o.win !== false) {
@@ -988,47 +1067,50 @@
         var g = QZ.game(gameId);
         var isHome = body.dataset.page === 'home';
 
+        var gp = QZ.profile.get().gamesPlayed;
+        var played = Object.keys(gp).reduce(function (n, k) { return n + gp[k]; }, 0);
+        var today = new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
         body.insertAdjacentHTML('afterbegin',
             '<a href="#app" class="skip-link">Vai al contenuto</a>' +
-            '<div class="qz-bg" aria-hidden="true"><div class="qz-bg__beam qz-bg__beam--l"></div><div class="qz-bg__beam qz-bg__beam--r"></div><div class="qz-bg__pitch"></div><div class="qz-bg__grain"></div></div>' +
-            '<header class="qz-header">' +
-            '<a class="qz-brand" href="index.html" aria-label="Quizzotti, torna alla home">' +
-            '<img src="logo1.webp" alt="" width="40" height="40" decoding="async">' +
-            '<span class="qz-brand__name">Quizzotti</span>' +
-            (g ? '<span class="qz-brand__game">' + QZ.icon(g.icon) + QZ.esc(g.name) + '</span>' : '') +
+            '<div class="qz-bg" aria-hidden="true"></div>' +
+            '<header class="qz-header"><div class="qz-header__bar">' +
+            '<a class="qz-brand" href="index.html" aria-label="Quizzotti, torna alla prima pagina">' +
+            '<img src="logo1.webp" alt="" width="44" height="44" decoding="async">' +
+            '<span class="qz-brand__text"><span class="qz-brand__name">Quizzotti</span>' +
+            '<span class="qz-brand__tag">' + (g ? 'N° ' + String(QZ.GAMES.indexOf(g) + 1).padStart(2, '0') + ' · ' + QZ.esc(g.name) : QZ.esc(today) + ' · edizione n° ' + (played + 1)) + '</span></span>' +
             '</a>' +
             '<div class="qz-header__spacer"></div>' +
             '<button class="qz-iconbtn" type="button" data-sound aria-label="Audio"></button>' +
             '<button class="qz-iconbtn" type="button" data-launcher aria-haspopup="dialog">' + QZ.icon('grid') + '<span class="qz-iconbtn__label">Giochi</span></button>' +
             '<button class="qz-level" id="qz-level" type="button"><span class="qz-level__ring"><span data-lv>1</span></span><span data-xp>0 XP</span></button>' +
-            '</header>');
+            '</div></header>');
 
         var launcher = QZ.el(
             '<div class="qz-launcher" role="dialog" aria-modal="true" aria-label="Tutti i giochi">' +
             '<div class="qz-launcher__scrim"></div>' +
             '<div class="qz-launcher__sheet">' +
-            '<div class="qz-launcher__head"><h2>Scegli un gioco</h2><button class="qz-iconbtn" type="button" data-close aria-label="Chiudi">' + QZ.icon('x') + '</button></div>' +
+            '<div class="qz-launcher__head"><h2>A cosa giochiamo?</h2><button class="qz-iconbtn" type="button" data-close aria-label="Chiudi">' + QZ.icon('x') + '</button></div>' +
             '<div class="qz-launcher__grid">' +
             QZ.GAMES.map(function (x, i) {
-                return '<a class="qz-tile" href="' + x.file + '" style="--i:' + i + ';--c:' + x.color + ';--c-rgb:' + x.rgb + '"' + (x.id === gameId ? ' aria-current="page"' : '') + '>' +
-                    '<span class="qz-tile__icon">' + QZ.icon(x.icon) + '</span>' +
+                return '<a class="qz-tile" href="' + x.file + '" style="--i:' + i + ';--c:' + x.color + ';--c-2:' + x.color2 + ';--tilt:' + (i % 2 ? 1 : -1) + 'deg"' + (x.id === gameId ? ' aria-current="page"' : '') + '>' +
+                    '<span class="qz-tile__icon" style="color:' + x.on + '">' + QZ.icon(x.icon) + '</span>' +
                     '<span class="qz-tile__name">' + QZ.esc(x.name) + '</span>' +
                     '<span class="qz-tile__meta">' + QZ.esc(x.players) + '</span></a>';
             }).join('') +
             '</div>' +
-            (isHome ? '' : '<a class="btn btn--ghost btn--block mt-2" href="index.html">' + QZ.icon('home') + 'Torna alla home</a>') +
+            (isHome ? '' : '<a class="btn btn--ghost btn--block mt-2" href="index.html">' + QZ.icon('home') + 'Torna alla prima pagina</a>') +
             '</div></div>');
         body.appendChild(launcher);
 
         var footer = QZ.el(
-            '<footer class="qz-footer">' +
-            '<div class="qz-footer__links">' +
-            '<a href="index.html">Home</a><a href="index.html#giochi">Tutti i giochi</a>' +
+            '<footer class="qz-footer"><div class="qz-footer__inner">' +
+            '<span class="qz-footer__sign">Fatto a mano, senza sponsor sulla maglia.</span>' +
+            '<nav class="qz-footer__links" aria-label="Collegamenti">' +
+            '<a href="index.html">Prima pagina</a><a href="index.html#giochi">Tutti i giochi</a>' +
             '<a href="../carriera-serie-a/">Presidente · Serie A</a>' +
-            '<a href="../">Hub</a>' +
-            '</div>' +
-            '<div>Quizzotti © ' + new Date().getFullYear() + ' · Minigiochi di calcio gratuiti, senza registrazione</div>' +
-            '</footer>');
+            '</nav>' +
+            '<span>Quizzotti © ' + new Date().getFullYear() + '</span>' +
+            '</div></footer>');
         body.appendChild(footer);
 
         // Audio

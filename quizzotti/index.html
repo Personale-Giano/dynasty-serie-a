@@ -4,57 +4,63 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Quizzotti · Il capitano dei quiz di calcio</title>
-<meta name="description" content="10 minigiochi di calcio gratuiti: Milionario, Jeopardy, Taboo, Mr. White, Bomba e altri. Da soli o in compagnia, senza registrazione.">
-<meta name="theme-color" content="#060912">
+<meta name="description" content="10 giochi di calcio gratis: Milionario, Jeopardy, Taboo, Mr. White, Bomba e altri. Da soli o con gli amici, su un telefono solo. Niente app, niente iscrizioni.">
+<meta name="theme-color" content="#f1e8d6">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Quizzotti · Il capitano dei quiz di calcio">
-<meta property="og:description" content="10 minigiochi di calcio gratuiti, da soli o in compagnia. Senza registrazione.">
+<meta property="og:description" content="10 giochi di calcio gratis, da soli o con gli amici. Niente app, niente iscrizioni: solo pallone.">
 <meta property="og:image" content="logo2.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="logo1.webp" type="image/webp">
 <link rel="apple-touch-icon" href="logo1.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700;800;900&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=5dfbd63b">
-<link rel="preload" as="image" href="logo2.webp" type="image/webp">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Permanent+Marker&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=1faa7d11">
 </head>
 <body data-page="home">
 <main id="app" class="qz-main" tabindex="-1">
 
   <section class="home-hero">
     <div data-stagger>
-      <span class="eyebrow"><span id="hero-eyebrow-ico"></span>10 minigiochi · zero registrazione</span>
-      <h1 class="home-hero__title">Il <span class="gold">capitano</span><br>dei quiz di calcio.</h1>
-      <p class="home-hero__lead">Sfida te stesso al Milionario, organizza una serata a Taboo o smaschera Mr.&nbsp;White. Basta un telefono, anche da passare di mano in mano.</p>
+      <span class="note home-hero__kicker">Niente app, niente iscrizioni: solo pallone.</span>
+      <h1 class="home-hero__title">Il <span class="scribble">capitano</span> dei quiz di calcio</h1>
+      <p class="home-hero__lead">Dieci giochi da fare da soli in pausa pranzo o tutti insieme sul divano, passandosi il telefono. Domande vere, parole vietate, una bomba che scotta e un Mr.&nbsp;White che bluffa.</p>
       <div class="home-hero__cta">
         <a class="btn btn--primary btn--xl" href="#giochi" id="cta-games"></a>
         <button class="btn btn--lg" type="button" id="cta-random"></button>
       </div>
-      <div class="home-hero__facts">
+      <div class="tabellino" aria-label="Quizzotti in numeri">
         <div><b class="num" data-count="10">10</b><span>giochi</span></div>
         <div><b class="num" data-count="6600" data-suffix="+">6.600+</b><span>domande e parole</span></div>
         <div><b class="num" id="fact-level">1</b><span>il tuo livello</span></div>
       </div>
     </div>
+
     <div class="home-logo">
-      <div class="home-logo__orbit"></div>
-      <picture>
-        <source srcset="logo2.webp" type="image/webp">
-        <img src="logo2.png" alt="Quizzotti, il capitano dei quiz" width="480" height="480">
-      </picture>
+      <div class="home-logo__card">
+        <span class="home-logo__num" aria-hidden="true">10</span>
+        <div class="home-logo__pic">
+          <picture>
+            <source srcset="logo1.webp" type="image/webp">
+            <img src="logo1.png" alt="Il capitano di Quizzotti, ritratto dorato" width="240" height="240">
+          </picture>
+        </div>
+        <div class="home-logo__cap"><span>Quizzotti</span><span class="faint" style="font-size:17px">Il capitano</span></div>
+      </div>
+      <span class="note home-logo__note">la figurina che non trovavi mai</span>
     </div>
   </section>
 
-  <div class="marquee" aria-hidden="true"><div class="marquee__track" id="marquee"></div></div>
+  <div class="ticker" aria-hidden="true">
+    <span class="ticker__label">Ultim'ora</span>
+    <div class="ticker__view"><div class="ticker__track" id="ticker"></div></div>
+  </div>
 
   <section id="giochi">
     <div class="section-head">
-      <div>
-        <span class="eyebrow">La rosa</span>
-        <h2 class="mt-1">Scegli il tuo gioco</h2>
-      </div>
-      <div class="filters" id="filters" role="group" aria-label="Filtra giochi">
+      <h2>L'album dei giochi</h2>
+      <div class="filters" id="filters" role="group" aria-label="Filtra i giochi">
         <button type="button" data-f="all" aria-pressed="true">Tutti</button>
         <button type="button" data-f="quiz" aria-pressed="false">Da solo</button>
         <button type="button" data-f="party" aria-pressed="false">In compagnia</button>
@@ -64,26 +70,26 @@
   </section>
 
   <section class="how" aria-label="Come funziona">
-    <div class="card card--flat">
+    <div class="card" style="--tilt:-1deg">
       <div class="how__icon" data-icon="lock"></div>
       <h3>Niente account</h3>
-      <p class="muted">Apri e giochi. Livello e record restano solo sul tuo dispositivo.</p>
+      <p class="muted">Apri e giochi. Livello e figurine restano sul tuo telefono, non su un server.</p>
     </div>
-    <div class="card card--flat">
+    <div class="card" style="--tilt:0.8deg">
       <div class="how__icon" data-icon="smartphone"></div>
       <h3>Un telefono per tutti</h3>
-      <p class="muted">I giochi di gruppo funzionano passando il telefono: nessuna app da installare.</p>
+      <p class="muted">I giochi di gruppo si fanno passandosi il telefono. Nessuno deve installare niente.</p>
     </div>
-    <div class="card card--flat">
+    <div class="card" style="--tilt:-0.5deg">
       <div class="how__icon" data-icon="star"></div>
-      <h3>Sali di livello</h3>
-      <p class="muted">Ogni partita, in qualsiasi gioco, ti dà XP. Vediamo fin dove arrivi.</p>
+      <h3>Completa l'album</h3>
+      <p class="muted">Ogni gioco che provi attacca una figurina. Ogni partita ti fa salire di livello.</p>
     </div>
   </section>
 
 </main>
 
-<script src="assets/qz.js?v=27d37bac" defer></script>
-<script src="assets/home.js?v=31331b9f" defer></script>
+<script src="assets/qz.js?v=9c216f8a" defer></script>
+<script src="assets/home.js?v=da0b0a3a" defer></script>
 </body>
 </html>
