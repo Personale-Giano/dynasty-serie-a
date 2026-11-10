@@ -1,29 +1,90 @@
-# Il server non mandava alcun header di cache per index.html (solo Last-Modified), quindi i
-# browser potevano continuare a servire una copia vecchia della pagina anche dopo un deploy,
-# ignorando i "?v=N" su styles.css/sim.js/ui.js perché quei nomi stavano dentro un HTML
-# stantio. Qui forziamo il browser a rivalidare SEMPRE l'HTML (una richiesta in più, quasi
-# gratis) mentre CSS/JS, che cambiano nome ad ogni release grazie al "?v=N", possono restare
-# in cache a lungo senza problemi.
+# Presidente · Serie A — regole del server (Apache, hosting condiviso).
+#
+# Tutto dentro <IfModule>: se un modulo non c'è la regola viene saltata, mai un errore 500 su
+# tutto il sito. Niente direttive "Options" né "Require/Deny" qui (su alcuni hosting condivisi
+# non sono permesse in .htaccess e bloccherebbero l'intero sito): i divieti passano tutti da
+# mod_rewrite, lo stesso modulo che l'hosting usa già per i permalink.
+
+# ---------------------------------------------------------------- file che non si scaricano
+# I dati del gioco (stanze, classifica, log errori) vivono in _data/, che ha un suo .htaccess
+# "deny all" e i cui file sono comunque .php che non restituiscono nulla. Queste regole sono
+# la terza barriera, e coprono anche i file della versione precedente (room_XXXX.json,
+# data.sqlite, *_rate.json, errors_log.json, activity.log) finché la migrazione automatica
+# non li ha tolti di mezzo: stavano accanto ai file del sito e si scaricavano con un GET.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # cartelle di servizio e file nascosti (.git, .htaccess, .gitignore...)
+  RewriteRule ^(_data|server-test|test|node_modules)(/|$) - [F,L,NC]
+  RewriteRule (^|/)\. - [F,L]
+  # qualunque .json tranne il manifest della PWA; database, log, copie di riserva, sorgenti di servizio
+  RewriteCond %{REQUEST_URI} !/manifest\.json$ [NC]
+  RewriteRule \.json$ - [F,L,NC]
+  RewriteRule \.(sqlite|sqlite-wal|sqlite-shm|db|log|lock|bak|tmp|md|sh|yml|yaml|ini|inc)$ - [F,L,NC]
+  # storage.php è una libreria, non un endpoint (risponde comunque 404 da solo)
+  RewriteRule ^storage\.php$ - [F,L,NC]
+
+  # Segna le richieste "versionate" (?v=N): solo quelle possono restare in cache a lungo.
+  RewriteCond %{QUERY_STRING} (^|&)v=[^&]+
+  RewriteRule \.(css|js|webp|png|jpg|jpeg|gif|svg|ico|woff2?)$ - [E=VERSIONED:1]
+</IfModule>
+
+# ---------------------------------------------------------------- cache
+# index.html: il browser deve SEMPRE rivalidarlo (una richiesta in più, quasi gratis),
+# altrimenti dopo un deploy continua a servire una pagina vecchia che punta ai "?v=N" vecchi.
+# CSS/JS/immagini: cache lunga SOLO se richiesti con "?v=N" (cambia ad ogni release, quindi il
+# contenuto di quell'URL non cambia mai: "immutable"). Lo stesso file chiesto SENZA "?v="
+# viene rivalidato ogni volta: prima qualunque .js/.css restava in cache un anno anche senza
+# versione, e bastava dimenticare di alzare un "?v=" per lasciare i giocatori su un file
+# vecchio senza modo di rimediare da qui.
+# sw.js e manifest.json: sempre rivalidati (un service worker servito con cache lunga può
+# restare "vecchio" a lungo). Le risposte PHP impostano da sole "no-store".
 <IfModule mod_headers.c>
-  <FilesMatch "\.html$">
+  <FilesMatch "\.(html|css|js|json|webp|png|jpg|jpeg|gif|svg|ico|woff2?)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  <FilesMatch "\.(css|js|webp|png|jpg|jpeg|gif|svg|ico|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable" env=VERSIONED
+    Header set Cache-Control "public, max-age=31536000, immutable" env=REDIRECT_VERSIONED
+  </FilesMatch>
+  # Deve stare DOPO la regola generale (Apache applica l'ultima che corrisponde): anche con un
+  # "?v=" per sbaglio, questi due non vanno mai in cache lunga.
+  <FilesMatch "^(sw\.js|manifest\.json|index\.html)$">
     Header set Cache-Control "no-cache, must-revalidate"
   </FilesMatch>
-  <FilesMatch "\.(css|js)$">
-    Header set Cache-Control "public, max-age=31536000"
-  </FilesMatch>
-  # sw.js e manifest.json restano SEMPRE no-cache anche se sono .js/.json: sw.js in
-  # particolare deve poter essere ricontrollato dal browser ad ogni deploy (un service
-  # worker aggiornato ma servito con cache lunga puo' restare "vecchio" per un anno),
-  # quindi questa regola piu' specifica deve stare DOPO quella generale su *.js per
-  # sovrascriverla (Apache applica l'ultimo FilesMatch che corrisponde).
-  <FilesMatch "^(sw\.js|manifest\.json)$">
-    Header set Cache-Control "no-cache, must-revalidate"
-  </FilesMatch>
+
+  # ---------------------------------------------------------------- header di sicurezza
+  # nosniff: il browser non "indovina" il tipo di un file (un JSON non diventa mai HTML).
+  Header always set X-Content-Type-Options "nosniff"
+  # Il gioco non va incorniciato dentro altri siti (clickjacking).
+  Header always set X-Frame-Options "SAMEORIGIN"
+  # Ai siti esterni si manda solo l'origine, mai l'indirizzo completo della pagina.
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  # Nessuna API "sensibile" serve al gioco.
+  Header always set Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=()"
 </IfModule>
 <IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresByType text/html "access"
-  ExpiresByType text/css "access plus 1 year"
-  ExpiresByType application/javascript "access plus 1 year"
-  ExpiresByType text/javascript "access plus 1 year"
+  # Solo come ripiego per chi non ha mod_headers: niente scadenze lunghe (non si può
+  # distinguere "?v=" da qui), i file vengono rivalidati.
+  <IfModule !mod_headers.c>
+    ExpiresActive On
+    ExpiresDefault "access"
+  </IfModule>
 </IfModule>
+
+# ---------------------------------------------------------------- tipi e compressione
+<IfModule mod_mime.c>
+  AddDefaultCharset utf-8
+  AddType application/manifest+json .webmanifest
+  AddType image/webp .webp
+  AddCharset utf-8 .html .css .js .json
+</IfModule>
+# Testo compresso al volo: ui.js/sim.js/data.js insieme pesano più di 700 KB, compressi circa
+# un quinto. Le immagini .webp sono già compresse e restano fuori.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/javascript application/javascript application/x-javascript application/json application/manifest+json image/svg+xml
+</IfModule>
+
+# ---------------------------------------------------------------- pagine di errore
+# Un 403/404 non deve raccontare nulla del server.
+ErrorDocument 403 "Non disponibile."
+ErrorDocument 404 "Non trovato."

@@ -21,15 +21,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;0,900;1,600;1,800&family=Inter:wght@400;500;600;700;800;900&display=swap" />
-<link rel="stylesheet" href="styles.css?v=18" />
-<script src="errors.js?v=66"></script>
+<link rel="stylesheet" href="styles.css?v=19" />
+<script src="errors.js?v=67"></script>
 </head>
 <body class="dyn">
 
 <!-- Barra home / indietro: rivelata da show() su ogni schermata di gioco, resta nascosta sulla schermata iniziale. -->
 <div id="owTopbar" class="dyn-topbar hidden">
-  <button id="owHomeBtn" class="dyn-home" type="button">
-    <span id="owHomeCrestWrap" class="dyn-home-crest"></span>
+  <button id="owHomeBtn" class="dyn-home" type="button" title="Salva e torna alla schermata iniziale" aria-label="Presidente: salva e torna alla schermata iniziale">
+    <span id="owHomeCrestWrap" class="dyn-home-crest" aria-hidden="true"></span>
     <span>Presidente</span>
   </button>
   <div class="dyn-topbar-right">
@@ -40,8 +40,15 @@
   </div>
 </div>
 
+<!-- Nuova versione del gioco pronta (vedi syncUpdateNote in ui.js): mai mostrata a campionato
+     in corso o sopra un modale, e mai bloccante. -->
+<div id="owUpdateNote" class="ow-update-note hidden" role="status">
+  <span>✨ Nuova versione pronta</span>
+  <button type="button" id="owUpdateBtn" class="dyn-mini" title="Salva la carriera e ricarica il gioco aggiornato">Aggiorna</button>
+</div>
+
 <!-- ============ SETUP: nome + acquisizione ============ -->
-<main id="owSetupScreen" class="dyn-screen">
+<main id="owSetupScreen" tabindex="-1" class="dyn-screen">
   <div class="dyn-topbar" style="padding-bottom:0">
     <span></span>
     <div class="dyn-topbar-right">
@@ -55,10 +62,9 @@
     <div class="dyn-kicker">Modalità Proprietario</div>
     <h1 class="dyn-h1">Compra il <em>Club</em></h1>
     <p class="dyn-sub">Scegli da che categoria partire e compra un club a tua misura. Ingaggia giocatori con gli spin, gestisci il monte ingaggi, assumi l'allenatore, scegli lo sponsor, fai crescere lo stadio e tieni i tifosi dalla tua parte. Scala la piramide fino alla Serie A, e vendi quando il prezzo è giusto.</p>
-    <button type="button" id="owMultiplayerBtn" class="dyn-btn dyn-btn-primary" style="margin:0 auto 12px;display:block;max-width:340px">👥 Gioca con gli amici</button>
+    <button type="button" id="owMultiplayerBtn" class="dyn-btn" style="margin:0 auto 12px;display:block;max-width:340px">👥 Gioca con gli amici</button>
     <button type="button" id="owTutorialBtn" class="dyn-mini" style="margin:0 auto 10px;display:block">📖 Come si gioca (tutorial)</button>
     <button type="button" id="owInstallBtn" class="dyn-mini hidden" style="margin:0 auto 10px;display:block">📲 Installa l'app</button>
-    <button type="button" id="owForceUpdateBtn" class="dyn-mini" style="margin:0 auto 10px;display:block">🔄 Forza aggiornamento del gioco</button>
     <div id="hotseatWrap"></div>
     <div id="saveSlotsWrap"></div>
     <label class="dyn-field">
@@ -72,7 +78,7 @@
     <span id="crestPreviewWrap"></span>
     <div class="dyn-aggr-label" style="text-align:center;margin:6px 0 8px">Disegna lo stemma del club</div>
     <div class="ow-crest-picker">
-      <div class="ow-crest-shapes" id="crestShapes">
+      <div class="ow-crest-shapes" id="crestShapes" role="group" aria-label="Forma dello stemma">
         <button type="button" class="ow-crest-shape" data-shape="shield">Scudo</button>
         <button type="button" class="ow-crest-shape" data-shape="round">Tondo</button>
         <button type="button" class="ow-crest-shape" data-shape="hex">Esagono</button>
@@ -84,11 +90,11 @@
       <button type="button" class="ow-crest-reroll" id="crestRerollBtn">🎲 Colori casuali</button>
     </div>
     <div class="dyn-aggr-label" style="text-align:center;margin:6px 0 8px">Scegli la categoria di partenza</div>
-    <div id="divPicker" class="ow-div-picker"></div>
+    <div id="divPicker" class="ow-div-picker" role="group" aria-label="Categoria di partenza"></div>
     <div class="dyn-aggr-label" id="regionPickerLabel" style="text-align:center;margin:6px 0 8px">Scegli la regione (determina anche i derby)</div>
-    <div id="regionPicker" class="ow-div-picker"></div>
+    <div id="regionPicker" class="ow-div-picker" role="group" aria-label="Regione"></div>
     <div class="dyn-aggr-label" style="text-align:center;margin:6px 0 8px">Scegli la difficoltà</div>
-    <div id="diffPicker" class="ow-diff-picker"></div>
+    <div id="diffPicker" class="ow-diff-picker" role="group" aria-label="Difficoltà"></div>
     <label class="ow-hardcore-toggle" id="hardcoreToggle" title="Cessioni immediate senza conferma, spin senza rimborso, niente rilancio sulle offerte, niente 'fallo comunque' se la cassa non basta, +25% rischio infortuni, imprevisti negativi più pesanti, buonuscita staff al 50% invece del 30%. Una sola dynasty Hardcore alla volta. Indipendente dalla difficoltà scelta.">
       <input type="checkbox" id="hardcoreChk" />
       <span class="ow-hardcore-icon">🔥</span>
@@ -98,23 +104,26 @@
       </span>
     </label>
     <div class="dyn-aggr-label" style="text-align:center;margin:6px 0 8px">Quante stagioni dura la dynasty?</div>
-    <div id="seasonsPicker" class="ow-div-picker"></div>
+    <div id="seasonsPicker" class="ow-div-picker" role="group" aria-label="Durata della dynasty"></div>
     <div class="dyn-aggr-label" style="text-align:center;margin:6px 0 8px">Scegli la tua situazione di partenza</div>
-    <div id="takeoverGrid" class="ow-takeovers"></div>
-    <button id="owRerollBtn" class="dyn-btn" style="margin-top:2px">🔄 Nuove condizioni di partenza</button>
-    <button id="owStartBtn" class="dyn-btn dyn-btn-primary">Compra il club</button>
+    <div id="takeoverGrid" class="ow-takeovers" role="group" aria-label="Situazione di partenza"></div>
+    <button id="owRerollBtn" type="button" class="dyn-btn" style="margin-top:2px">🔄 Nuove condizioni di partenza</button>
+    <button id="owStartBtn" type="button" class="dyn-btn dyn-btn-primary">Compra il club</button>
+    <!-- In fondo e in piccolo: è uno strumento di emergenza (app installata bloccata su una
+         versione vecchia), non una scelta di gioco da mettere fra tutorial e nome del club. -->
+    <button type="button" id="owForceUpdateBtn" class="ow-crest-reroll" style="margin:22px auto 0;display:block">🔄 Il gioco non si aggiorna? Forza l'aggiornamento</button>
   </div>
 </main>
 
 <!-- ============ SALA DEL CONSIGLIO (pre-stagione) ============ -->
-<main id="owBoardScreen" class="dyn-screen hidden">
+<main id="owBoardScreen" tabindex="-1" class="dyn-screen hidden">
   <div class="dyn-wrap" id="boardBody"></div>
 </main>
 
 <!-- ============ STAGIONE ============ -->
-<main id="owSeasonScreen" class="dyn-screen hidden">
+<main id="owSeasonScreen" tabindex="-1" class="dyn-screen hidden">
   <div class="dyn-wrap">
-    <div class="dyn-hud">
+    <div class="dyn-hud" role="group" aria-label="Andamento della stagione">
       <div class="dyn-hud-cell"><span>Stagione</span><b id="hudSeason">1/20</b></div>
       <div class="dyn-hud-cell"><span>Giocate</span><b id="hudPlayed">0/46</b></div>
       <div class="dyn-hud-cell"><span>Posizione</span><b id="hudPos">-</b></div>
@@ -128,28 +137,30 @@
         <div class="cell" id="owWorthChip"><span>Valore del club</span><b>-</b></div>
       </div>
     </div>
+    <!-- Forma recente (ultime 5) + avanzamento della stagione: riempito da renderHud(). -->
+    <div class="ow-form" id="owForm"></div>
     <div class="ow-season-target" id="owSeasonTarget"></div>
     <div class="dyn-cups" id="owCups"></div>
     <div class="dyn-manage-row">
-      <button id="owTableBtn" class="dyn-mini">📊 Classifica</button>
-      <button id="owClubBtn" class="dyn-mini">🏦 Il mio club</button>
+      <button id="owTableBtn" type="button" class="dyn-mini">📊 Classifica</button>
+      <button id="owClubBtn" type="button" class="dyn-mini">🏦 Il mio club</button>
     </div>
     <div id="owScouting" class="ow-scouting"></div>
     <div id="owLog" class="dyn-log"></div>
     <div class="dyn-season-actions">
-      <button id="owNextBtn" class="dyn-btn dyn-btn-primary">Gioca prossima partita</button>
-      <button id="owSimBtn" class="dyn-btn">Simula fino a fine stagione</button>
+      <button id="owNextBtn" type="button" class="dyn-btn dyn-btn-primary">Gioca prossima partita</button>
+      <button id="owSimBtn" type="button" class="dyn-btn">Simula fino a fine stagione</button>
     </div>
   </div>
 </main>
 
 <!-- ============ FINE STAGIONE ============ -->
-<main id="owSeasonEndScreen" class="dyn-screen hidden">
+<main id="owSeasonEndScreen" tabindex="-1" class="dyn-screen hidden">
   <div class="dyn-wrap" id="owSeasonEndBody"></div>
 </main>
 
 <!-- ============ FINE DINASTIA ============ -->
-<main id="owEndScreen" class="dyn-screen hidden">
+<main id="owEndScreen" tabindex="-1" class="dyn-screen hidden">
   <div class="dyn-wrap" id="owEndBody"></div>
 </main>
 
@@ -158,13 +169,16 @@
   <div class="dyn-modal" id="owOverlayModal"></div>
 </div>
 
-<div id="owToast" class="dyn-toast hidden"></div>
+<!-- role=status: i toast (incassi, spese, conferme) vengono letti dagli screen reader senza
+     interrompere; owLive annuncia invece il risultato dell'ultima partita giocata. -->
+<div id="owToast" class="dyn-toast hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="owLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-<script src="sfx.js?v=73"></script>
-<script src="data.js?v=73"></script>
-<script src="rosters.js?v=73"></script>
-<script src="sim.js?v=73"></script>
-<script src="ui.js?v=73"></script>
+<script src="sfx.js?v=74"></script>
+<script src="data.js?v=74"></script>
+<script src="rosters.js?v=74"></script>
+<script src="sim.js?v=74"></script>
+<script src="ui.js?v=74"></script>
 <script>
   // Service worker: rende il gioco installabile ("aggiungi a Home") e disponibile offline
   // dopo la prima visita. Nessun impatto sul deploy: index.html resta sempre network-first.
@@ -178,8 +192,32 @@
       swRefreshing = true;
       window.location.reload();
     });
+    // Il service worker nuovo, prima di subentrare, chiede alle pagine aperte (SW_UPDATE_READY).
+    // Rispondendo SW_UPDATE_DEFER la pagina si prende la responsabilità del momento: il worker
+    // resta in attesa in window.__swWaiting finché l'interfaccia (ui.js, syncUpdateNote) non
+    // chiama __applySwUpdate(), cioè SKIP_WAITING; da lì il `controllerchange` qui sopra
+    // ricarica. Senza questo l'aggiornamento poteva ricaricare la pagina a metà stagione.
+    window.__swWaiting = null;
+    window.__applySwUpdate = function () {
+      const w = window.__swWaiting; if (!w) return false;
+      window.__swWaiting = null;
+      try { w.postMessage({ type: 'SKIP_WAITING' }); } catch (e) { return false; }
+      return true;
+    };
+    navigator.serviceWorker.addEventListener('message', (ev) => {
+      if (!ev.data || ev.data.type !== 'SW_UPDATE_READY' || !ev.source) return;
+      try { ev.source.postMessage({ type: 'SW_UPDATE_DEFER' }); } catch (e) { return; }
+      window.__swWaiting = ev.source;
+      if (typeof window.__onSwUpdateReady === 'function') window.__onSwUpdateReady();
+    });
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').then((reg) => {
+        // Un worker rimasto in attesa da una visita precedente (pagina chiusa prima di
+        // aggiornare): lo si riprende in carico subito, la schermata iniziale è un momento sicuro.
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          window.__swWaiting = reg.waiting;
+          if (typeof window.__onSwUpdateReady === 'function') window.__onSwUpdateReady();
+        }
         // Il browser controlla da solo se sw.js è cambiato al massimo una volta al giorno:
         // un'app installata che resta aperta per settimane potrebbe non ricontrollare mai.
         // Ogni volta che torna in primo piano chiediamo esplicitamente un controllo subito.

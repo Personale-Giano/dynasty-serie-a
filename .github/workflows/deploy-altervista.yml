@@ -25,3 +25,5 @@ jobs:
             **/node_modules/**
             **/quizzotti/tests/**
             **/quizzotti/node_modules/**
+            **/carriera-serie-a/server-test/**
+            **/carriera-serie-a/test/**

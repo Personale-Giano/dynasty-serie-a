@@ -1,0 +1,5 @@
+# Dati creati dal server a runtime (stanze, classifica, log): mai nel repository.
+# Restano versionati solo i due file che proteggono la cartella.
+/_data/*
+!/_data/.htaccess
+!/_data/index.html

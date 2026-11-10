@@ -861,3 +861,254 @@ body{
 }
 .ow-formation-pick:hover{ border-color:var(--dyn); }
 .ow-formation-pick.on{ border-color:var(--dyn); background:rgba(201,144,47,.14); color:var(--txt); }
+
+/* ============================================================
+   Rifiniture d'interfaccia (v2): accessibilità, bersagli al tocco, feedback, coerenza.
+   Tutto in coda al file apposta: sono ritocchi sopra i componenti già esistenti (stessa
+   palette, stessi nomi di classe), non un secondo sistema grafico. Dove una regola qui
+   sotto ridefinisce una proprietà già impostata più su, vince questa per ordine di cascata.
+   ============================================================ */
+
+/* Altezza minima di tutto ciò che si tocca: 44px col dito (pointer:coarse), un po' meno col
+   mouse dove la precisione non è un problema e la densità conta di più. */
+:root{ --tap:38px; }
+@media (pointer:coarse){ :root{ --tap:44px; } }
+
+/* Testo solo per screen reader (es. "da controllare" accanto al pallino rosso di una tab). */
+.sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+/* Le schermate ricevono il focus al cambio (show(), ui.js) per chi usa tastiera/screen reader:
+   nessun anello attorno all'intera pagina, il focus lì è solo un punto di ripartenza. */
+.dyn-screen:focus{ outline:none; }
+
+/* ---------- bersagli al tocco ---------- */
+.dyn-icon-btn{ width:44px; height:44px; font-size:18px; }
+.dyn-home{ min-height:44px; }
+.dyn-mini{ min-height:var(--tap); }
+.ow-tab{ min-height:44px; white-space:nowrap; }
+.ow-filter-pill, .ow-formation-pick, .ow-div-pick, .ow-crest-shape{ min-height:var(--tap); }
+.ow-x{ width:var(--tap); height:var(--tap); font-size:14px; border-radius:10px; }
+.ow-renew{ min-height:var(--tap); padding:0 12px; }
+.ow-jan-switch{ width:var(--tap); height:var(--tap); }
+.ow-modal-x{ width:var(--tap); height:var(--tap); }
+.ow-bench-chip{ min-height:var(--tap); }
+.ow-crest-reroll, .ow-tut-skip{ min-height:var(--tap); }
+.dyn-back{ display:inline-flex; align-items:center; min-height:var(--tap); }
+.ow-saveslot .act .dyn-mini{ min-width:var(--tap); }
+/* Carriere salvate su schermo stretto: con tre bottoni a misura di dito il nome del club restava
+   in una colonnina di 100px, spezzato su tre righe. I bottoni scendono sotto, il nome ha tutta la riga. */
+.ow-saveslot{ flex-wrap:wrap; }
+.ow-saveslot .info{ flex:1 1 170px; }
+.ow-saveslot .act{ margin-left:auto; }
+/* Le caselle di spunta native sono 13px: troppo piccole da toccare e quasi invisibili sul
+   fondo scuro. Più grandi, col bronzo del gioco, e l'intera riga (label) come bersaglio. */
+.dyn input[type=checkbox]{ width:20px; height:20px; flex:0 0 auto; accent-color:var(--dyn); cursor:pointer; margin:0; }
+label.ow-sub{ min-height:var(--tap); text-align:left; }
+.dyn .ow-hardcore-toggle input[type=checkbox]{ accent-color:#ff7828; }
+@media(max-width:400px){
+  .ow-tab{ font-size:11px; padding:10px 2px; letter-spacing:-.01em; }
+  .ow-tab .dot{ top:4px; right:4px; }
+  .dyn-topbar-right{ gap:4px; }
+  .dyn-home{ padding-right:12px; }
+}
+
+/* ---------- allineamenti dentro contenitori centrati ----------
+   Modali, pannello di fine stagione e setup sono text-align:center: le etichette lunghe di
+   righe/indicatori andavano a capo centrate ("Sponsor di maglia (…)" su due righe al centro),
+   staccandosi dalla colonna. L'etichetta resta sempre allineata a sinistra, il valore a destra. */
+.ow-fin-row > span:first-child{ text-align:left; min-width:0; }
+.ow-fin-row > b{ text-align:right; }
+.ow-meter .lbl{ text-align:left; }
+.ow-hardcore-toggle{ text-align:left; }
+.ow-invdeal-row > span{ flex:0 0 auto; text-align:left; }
+.ow-invdeal-row > b{ min-width:0; }
+.ow-offer .info small{ display:block; line-height:1.45; }
+.dyn-modal .ow-sec{ box-shadow:none; }
+
+/* ---------- campi di testo e select coerenti ----------
+   Prima solo .dyn-field input aveva uno stile: il nome dello stadio e le select delle stanze
+   multiplayer uscivano col bianco nativo del browser in mezzo a un'interfaccia tutta scura. */
+.dyn-field select, .ow-text-input{
+  width:100%; box-sizing:border-box; background:var(--panel); border:1px solid var(--line); color:var(--txt);
+  border-radius:11px; padding:12px 14px; font:700 16px var(--sans); min-height:44px;
+}
+.dyn-field select:focus, .ow-text-input:focus{ outline:none; border-color:var(--dyn); box-shadow:0 0 0 3px rgba(201,144,47,.18); }
+.dyn-field select option{ background:var(--panel); color:var(--txt); }
+/* Stesso aspetto per i campi sciolti dentro i modali (trattative, chat, controproposta, annuncio
+   della stanza): senza, restavano bianchi nativi in mezzo alla lobby scura. */
+.dyn-modal input[type=text], .dyn-modal input[type=number], .dyn-modal select, .dyn-modal textarea{
+  box-sizing:border-box; background:var(--panel); border:1px solid var(--line); color:var(--txt);
+  border-radius:11px; padding:10px 12px; font:700 16px var(--sans); min-height:44px; max-width:100%;
+}
+.dyn-modal textarea{ width:100%; resize:vertical; line-height:1.4; }
+.dyn-modal input:focus, .dyn-modal select:focus, .dyn-modal textarea:focus{ outline:none; border-color:var(--dyn); box-shadow:0 0 0 3px rgba(201,144,47,.18); }
+
+/* ---------- modale: altezza reale su mobile, niente scroll della pagina sotto ----------
+   100vh su mobile include la barra degli indirizzi: l'ultimo bottone di un modale lungo
+   finiva sotto il bordo. 100dvh (dove supportato) è l'altezza davvero visibile. */
+.dyn-modal{ max-height:calc(100dvh - 36px); overscroll-behavior:contain; }
+body.ov-open{ overflow:hidden; }
+.dyn-overlay{ padding:18px 14px; }
+@media(max-width:400px){ .dyn-modal{ padding:22px 16px; } }
+
+/* ---------- toast: mai sopra i bottoni d'azione ----------
+   Stava a 30px dal fondo, esattamente sopra "Gioca prossima partita"/"Inizia Stagione" (i
+   bottoni che si premono di continuo): per quasi 4 secondi copriva proprio il tasto da
+   ritoccare. Ora sta appena SOPRA la barra d'azione fissa (più in alto sulla schermata
+   partite, che ha due bottoni impilati); a modale aperto i bottoni sono dentro il modale, in
+   un punto qualunque, quindi lì sale in cima allo schermo. Un tocco lo chiude subito.
+   Era anche largo al massimo metà schermo (left:50% + translate): ora usa tutta la larghezza
+   utile, così i messaggi lunghi non vanno a capo ogni due parole. */
+.dyn-toast{
+  bottom:calc(env(safe-area-inset-bottom, 0px) + 84px); left:14px; right:14px; margin:0 auto;
+  width:fit-content; max-width:min(calc(100vw - 28px),460px); transform:none; cursor:pointer;
+  padding:12px 18px; font-size:14px; animation:toastRise .2s ease;
+}
+body:has(#owSeasonScreen:not(.hidden)) .dyn-toast{ bottom:calc(env(safe-area-inset-bottom, 0px) + 142px); }
+body:has(#owSetupScreen:not(.hidden)) .dyn-toast, body:has(#owEndScreen:not(.hidden)) .dyn-toast{ bottom:calc(env(safe-area-inset-bottom, 0px) + 24px); }
+/* bottom:auto con !important: le regole per schermata qui sopra sono più specifiche e, lasciando
+   impostati insieme top e bottom, stiravano il toast su tutta l'altezza dello schermo. */
+body.ov-open .dyn-toast{ top:calc(env(safe-area-inset-top, 0px) + 10px); bottom:auto !important; }
+@keyframes toastRise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+.dyn-toast[data-kind="error"]{ border-color:var(--bad); }
+.dyn-toast[data-kind="success"]{ border-color:var(--good); }
+.dyn-toast[data-kind="money"]{ border-color:var(--gold); }
+
+/* ---------- barra d'azione fissa in basso ----------
+   "Inizia Stagione" e "Torna in sala del consiglio" stavano in fondo a pagine lunghe 3-4
+   schermate: ad ogni stagione toccava scorrere tutto solo per andare avanti. Restano
+   agganciati al bordo basso, con una sfumatura dietro perché il contenuto che scorre sotto
+   non si legga attraverso. Stesso trattamento per i due bottoni della schermata partite. */
+.ow-cta-sticky, .dyn-season-actions{
+  position:sticky; bottom:0; z-index:25; margin:0 -16px; padding:14px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background:linear-gradient(180deg, rgba(11,9,6,0), rgba(11,9,6,.94) 34%);
+}
+.ow-cta-sticky{ display:flex; flex-direction:column; gap:8px; }
+/* Schermata partite: i due bottoni stanno SEMPRE sul bordo basso, anche a inizio stagione
+   quando il log è vuoto e la pagina è corta. Prima partivano a metà schermo e scendevano man
+   mano che il log cresceva: il tasto che si preme 46 volte a stagione cambiava posto sotto il
+   dito. La colonna occupa almeno l'altezza visibile (meno la barra in alto) e i bottoni si
+   spingono in fondo. */
+#owSeasonScreen .dyn-wrap{ min-height:calc(100vh - 60px); min-height:calc(100dvh - 60px); display:flex; flex-direction:column; padding-bottom:0; }
+#owSeasonScreen .dyn-season-actions{ margin-top:auto; }
+#owSeasonScreen .dyn-log{ min-height:60px; }
+.ow-nw{ white-space:nowrap; }
+.ow-cta-note{ text-align:center; font-size:11.5px; font-weight:700; color:var(--bad); line-height:1.35; }
+.ow-cta-note.ok{ color:var(--muted); }
+
+/* ---------- lista rosa: più giocatori visibili prima di dover scorrere nel riquadro ----------
+   Con i bottoni portati a misura di dito la riga a due piani (nome sopra, stipendio + bottoni
+   sotto) diventava alta quasi 90px. Ora nome e contratto restano a sinistra su due righe e i
+   bottoni (Rinnova, 💷) stanno a destra, centrati sull'intera riga: stessa informazione, righe
+   più basse, e il bottone di cessione sempre nello stesso punto. Il riscatto del prestito, che
+   è largo, tiene una riga propria sotto. */
+.ow-squadlist{ max-height:min(62vh, 560px); }
+.ow-player{ display:grid; grid-template-columns:minmax(0,1fr) auto auto; column-gap:8px; row-gap:2px; align-items:center; padding:6px 2px; }
+.ow-player-row1{ grid-column:1; grid-row:1; min-width:0; }
+.ow-player-row2{ display:contents; }
+.ow-player-row2-left{ grid-column:1; grid-row:2; padding-left:44px; }
+.ow-player .ow-renew{ grid-column:2; grid-row:1 / span 2; }
+.ow-player .ow-x{ grid-column:3; grid-row:1 / span 2; }
+.ow-player .ow-renew[data-buyback]{ grid-column:1 / -1; grid-row:3; justify-self:end; }
+/* Nome mai troncato a "Enrico …": va a capo se serve, ed età/potenziale scendono su una riga loro. */
+.ow-player .nm{ white-space:normal; overflow-wrap:anywhere; line-height:1.25; }
+.ow-player .nm small{ display:block; margin-left:0; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ow-player .ow-renew{ font-size:11.5px; padding:0 10px; }
+.ow-player:focus-visible, .ow-pitch-chip:focus-visible, .ow-bench-chip:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+
+/* ---------- mercato di gennaio / vivaio: badge OVR come nel resto della rosa ---------- */
+.ow-jan-head .ovr{
+  width:34px; height:30px; flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+  border-radius:8px; font-weight:900; font-size:13px; font-family:var(--serif);
+}
+
+/* ---------- variazione di cassa: un "+€140k" che compare accanto al budget ---------- */
+.ow-delta{ display:inline-block; margin-left:6px; font-style:normal; font-weight:900; font-size:10.5px; letter-spacing:0; animation:deltaFloat 2.2s ease forwards; }
+.ow-delta.up{ color:var(--good); }
+.ow-delta.down{ color:var(--bad); }
+@keyframes deltaFloat{ 0%{ opacity:0; transform:translateY(5px); } 12%{ opacity:1; transform:none; } 75%{ opacity:1; } 100%{ opacity:0; } }
+
+/* ---------- primi passi (solo alla prima stagione) ---------- */
+.ow-guide{
+  border:1px solid rgba(255,210,74,.32); background:linear-gradient(180deg, rgba(255,210,74,.08), rgba(255,210,74,.02));
+  border-radius:15px; padding:12px 14px 6px; margin:0 0 14px; text-align:left;
+}
+.ow-guide-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:4px; }
+.ow-guide-title{ font-family:var(--serif); font-weight:700; font-size:15px; }
+.ow-guide-x{ appearance:none; background:none; border:none; color:var(--muted); font:700 11.5px var(--sans); text-decoration:underline; text-underline-offset:2px; cursor:pointer; min-height:var(--tap); padding:0 2px; }
+.ow-guide-step{
+  appearance:none; background:none; border:none; border-top:1px solid rgba(255,255,255,.07); color:var(--txt); width:100%;
+  display:flex; align-items:center; gap:11px; text-align:left; padding:8px 0; min-height:48px; cursor:pointer; font:700 12.5px/1.35 var(--sans);
+}
+.ow-guide-step small{ display:block; color:var(--muted); font-weight:600; font-size:11px; margin-top:1px; }
+.ow-guide-step .ck{
+  width:24px; height:24px; flex:0 0 auto; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:900; color:var(--muted); font-family:var(--serif);
+}
+.ow-guide-step.done .ck{ background:var(--good); border-color:var(--good); color:#06281d; }
+.ow-guide-step.done > span:last-child{ color:var(--muted); }
+.ow-guide-step:hover .ck{ border-color:var(--dyn); }
+
+/* ---------- schermata partite: forma recente + avanzamento stagione ---------- */
+.dyn-hud-cell span{ font-size:10px; }
+.ow-form{ display:flex; align-items:center; gap:10px; margin:0 0 12px; min-height:22px; }
+.ow-form:empty{ display:none; }
+.ow-form-lbl{ font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); flex:0 0 auto; }
+.ow-form-dots{ display:flex; gap:4px; flex:0 0 auto; }
+.ow-form-dot{ width:22px; height:22px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:900; }
+.ow-form-dot.W{ color:var(--good); background:rgba(40,217,160,.14); }
+.ow-form-dot.D{ color:var(--muted); background:rgba(255,255,255,.07); }
+.ow-form-dot.L{ color:var(--bad); background:rgba(255,84,112,.14); }
+.ow-form-dot:last-child{ box-shadow:0 0 0 1.5px currentColor inset; }
+.ow-progress{ flex:1; height:5px; border-radius:999px; background:rgba(255,255,255,.07); overflow:hidden; min-width:40px; }
+.ow-progress > i{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--dyn-deep),var(--dyn),var(--gold)); transition:width .3s ease; }
+.ow-progress-lbl{ font-size:10.5px; font-weight:800; color:var(--muted); font-variant-numeric:tabular-nums; flex:0 0 auto; }
+.mrow-mw{ width:44px; }
+.cup-pill.clickable{ padding:9px 12px; }
+.cup-pill.clickable::after{ content:" ›"; opacity:.7; }
+
+/* ---------- classifica: posizione in colonna propria, mister sotto il nome ----------
+   Con quattro colonne a 375px nomi e allenatori andavano a capo su due righe ciascuno,
+   sfalsando tutte le altezze. Ora la squadra ha tutta la larghezza che serve. */
+.dyn-table td.pos{ width:30px; padding-right:0; color:var(--muted); font-weight:800; font-variant-numeric:tabular-nums; }
+.dyn-table tr.me td.pos{ color:var(--dyn); }
+.dyn-table td.tname{ text-align:left; }
+.dyn-table td.tname small{ display:block; font-size:10.5px; font-weight:600; color:var(--muted); margin-top:1px; }
+.dyn-table td.pts{ font-weight:900; }
+.dyn-table th{ white-space:nowrap; }
+/* Con G/V/N/P le colonne numeriche si stringono (stanno tutte a 375px) e i gol fatti:subiti
+   compaiono solo dove c'è spazio per tenerli senza mandare a capo i nomi. */
+.dyn-table.full th, .dyn-table.full td{ padding-left:4px; padding-right:4px; }
+.dyn-table.full td.pos{ width:24px; padding-left:6px; }
+.dyn-table .st{ width:22px; color:var(--muted); font-size:12px; }
+.dyn-table tr.me .st{ color:var(--txt); }
+.dyn-table .tgoals{ display:none; color:var(--muted); font-size:12px; white-space:nowrap; }
+@media(min-width:520px){ .dyn-table .tgoals{ display:table-cell; } }
+/* Gare di coppa/playoff nella striscia della forma: tonde invece che quadrate. */
+.ow-form-dot.cup{ border-radius:50%; }
+
+/* ---------- primati del club ---------- */
+.ow-records-scroll{ max-height:56vh; overflow:auto; margin:10px -6px 12px; padding:0 6px; overscroll-behavior:contain; }
+.ow-rec > span small{ display:block; font-size:11px; font-weight:600; color:var(--muted); margin-top:1px; }
+.ow-rec > b{ color:var(--gold); max-width:55%; white-space:normal; }
+.ow-rec-rank{ display:inline-flex; width:20px; height:20px; align-items:center; justify-content:center; border-radius:50%; background:rgba(201,144,47,.16); color:var(--dyn); font-size:10.5px; font-weight:900; font-family:var(--serif); margin-right:4px; }
+.ow-records-new{
+  margin:12px 0; padding:12px 14px 6px; border-radius:15px; text-align:left;
+  border:1px solid rgba(255,210,74,.4); background:linear-gradient(180deg, rgba(255,210,74,.12), rgba(255,210,74,.03));
+}
+.ow-records-new-title{ font-family:var(--serif); font-weight:800; font-size:15px; color:var(--gold); margin-bottom:4px; }
+.ow-records-new .ow-fin-row b{ color:var(--gold); white-space:normal; }
+
+/* ---------- nuova versione pronta ---------- */
+.ow-update-note{
+  max-width:608px; margin:10px auto 0; padding:6px 8px 6px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px;
+  border:1px solid rgba(255,210,74,.35); border-radius:12px; background:rgba(255,210,74,.07); font-size:12.5px; font-weight:800; color:var(--gold);
+}
+@media(max-width:640px){ .ow-update-note{ margin-left:16px; margin-right:16px; } }
+
+/* ---------- meno movimento per chi lo chiede al sistema ----------
+   Coriandoli, pulsazioni dorate, trofei che rimbalzano e comparse animate si spengono; i
+   contatori animati di budget/indicatori vanno dritti al valore finale (vedi ui.js). */
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
+  .confetti-wrap{ display:none !important; }
+}

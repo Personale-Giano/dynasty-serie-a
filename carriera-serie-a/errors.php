@@ -2,104 +2,95 @@
 /**
  * Presidente · Serie A — raccolta errori client (errors.js).
  *
- * Stesso identico schema di leaderboard.php (nessun account, un file JSON come
- * "database", validazione stretta, rate-limit per IP): qui l'unica azione è POST,
- * non c'è nulla da restituire in GET (i log non sono pubblici, a differenza della
- * classifica). Pensato per essere ignorato in tranquillità se il PHP non gira
- * (es. sviluppo locale): errors.js fallisce in silenzio in quel caso.
+ * Stesso schema di leaderboard.php (nessun account, un file JSON dentro `_data/` come
+ * "database", validazione stretta, rate-limit per IP): qui l'unica azione è POST, non c'è
+ * nulla da restituire in GET (i log non sono pubblici, a differenza della classifica — e da
+ * questa versione non sono più nemmeno scaricabili via HTTP: per leggerli, via FTP, il file è
+ * `_data/errors.json.php`, JSON dalla seconda riga in poi). Pensato per essere ignorato in
+ * tranquillità se il PHP non gira (es. sviluppo locale): errors.js fallisce in silenzio.
  *
- * POST errors.php {body JSON} -> registra un errore client (rifiutato se invalido
- *                                 o troppo frequente dallo stesso IP)
+ * Un endpoint che accetta testo da chiunque è per natura un secchio per lo spam: non si può
+ * impedire a qualcuno di scriverci, solo fare in modo che non serva a niente e non costi
+ * niente — testo ripulito e corto, nessuna lettura pubblica, un tetto per IP, un tetto
+ * GLOBALE all'ora (un flood da tanti IP non può comunque far girare il log più di così), lo
+ * stesso errore ripetuto conta una volta sola (un contatore, non 300 righe uguali che
+ * spingono fuori tutti gli altri) e al più 300 voci in tutto.
+ *
+ * POST errors.php {message, stack?, url?, source?, v?} -> registra un errore client
  */
 
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store');
-
+define('PRESIDENTE_API', true);
 require_once __DIR__ . '/storage.php';
+api_bootstrap();
+storage_migrate_legacy();
 
-// Stesso backend condiviso di leaderboard.php: SQLite se pdo_sqlite c'è, altrimenti il .json
-// qui sotto come sempre. Vedi storage.php.
-$SQLITE_FILE = __DIR__ . '/data.sqlite';
-$DATA_FILE = __DIR__ . '/errors_log.json';
-$RATE_FILE = __DIR__ . '/errors_rate.json';
 $MAX_ENTRIES = 300;        // quanti errori restano salvati (i più recenti)
 $RATE_LIMIT_SECONDS = 10;  // un invio ogni 10 secondi per IP: basta a non farsi sommergere
                            // da un loop di errori dello stesso client, senza perdere segnale
                            // da client diversi che incontrano lo stesso bug nello stesso minuto
+$IP_HOURLY_MAX = 30;       // e comunque non più di 30 all'ora dallo stesso IP
+$GLOBAL_HOURLY_MAX = 240;  // tetto complessivo all'ora, da qualunque IP
 
-function fail($msg, $code = 400) {
-    http_response_code($code);
-    echo json_encode(['ok' => false, 'error' => $msg]);
-    exit;
-}
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { header('Allow: POST'); api_fail('Metodo non supportato.', 405); }
+api_require_same_origin();
 
-function read_json_file($path, $default) {
-    if (!file_exists($path)) return $default;
-    $raw = @file_get_contents($path);
-    if ($raw === false || $raw === '') return $default;
-    $data = json_decode($raw, true);
-    return is_array($data) ? $data : $default;
-}
+$ipKey = client_ip_key();
+$wait = max(rate_peek('err_ip', $ipKey, $RATE_LIMIT_SECONDS, 1), rate_peek('err_ip_hour', $ipKey, 3600, $IP_HOURLY_MAX));
+if ($wait > 0) api_fail('Troppi invii ravvicinati.', 429, $wait);
 
-function write_json_file_locked($path, $data) {
-    $fp = fopen($path, 'c+');
-    if (!$fp) return false;
-    if (!flock($fp, LOCK_EX)) { fclose($fp); return false; }
-    ftruncate($fp, 0);
-    rewind($fp);
-    fwrite($fp, json_encode($data));
-    fflush($fp);
-    flock($fp, LOCK_UN);
-    fclose($fp);
-    return true;
-}
+list($body) = api_read_json_body(8192);
 
-// Testo libero (messaggio/stack): niente HTML/markup, solo caratteri stampabili, lunghezza
-// limitata — a differenza di clean_name (leaderboard.php) qui serve testo tecnico (stack
-// trace, path di file), quindi si accettano più simboli ma sempre niente tag.
-function clean_text($v, $maxLen) {
-    $v = is_string($v) ? $v : '';
-    $v = strip_tags($v);
-    $v = preg_replace('/[\x00-\x09\x0B\x0C\x0E-\x1F]/', '', $v);   // niente caratteri di controllo (tab/newline ok)
-    if (function_exists('mb_substr')) $v = mb_substr($v, 0, $maxLen);
-    else $v = substr($v, 0, $maxLen);
-    return $v;
-}
+// Solo l'indirizzo della pagina senza query/frammento: non serve altro per capire dove è
+// successo, e una query può contenere dati che non devono finire in un log.
+$url = clean_text(p_str($body, 'url', 300), 300);
+$url = preg_replace('/[?#].*$/s', '', $url);
+if ($url !== '' && !preg_match('#^https?://#i', $url)) $url = '';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') fail('Metodo non supportato.', 405);
-
-$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-$ipHash = substr(hash('sha256', $ip), 0, 24);
-$rates = read_json_file($RATE_FILE, []);
 $now = time();
-foreach ($rates as $k => $t) { if ($now - $t > $RATE_LIMIT_SECONDS) unset($rates[$k]); }
-if (isset($rates[$ipHash]) && ($now - $rates[$ipHash]) < $RATE_LIMIT_SECONDS) {
-    fail('Troppi invii ravvicinati.', 429);
+$entry = [
+    'message' => clean_text(p_str($body, 'message', 500), 500),
+    'stack' => clean_text(p_str($body, 'stack', 2000), 2000),
+    'url' => $url,
+    'source' => clean_text(p_str($body, 'source', 200), 200),
+    'v' => clean_name(p_str($body, 'v', 24), 24),               // versione del client (?v= di ui.js), se errors.js la manda
+    'ua' => clean_text((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 160),
+    'ts' => $now,
+    'count' => 1,
+];
+if (trim($entry['message']) === '') api_fail('Messaggio mancante.');
+
+// Da qui in poi l'invio è valido: conta per i limiti (anche se poi risulta un doppione).
+rate_hit('err_ip', $ipKey, $RATE_LIMIT_SECONDS, 1);
+rate_hit('err_ip_hour', $ipKey, 3600, $IP_HOURLY_MAX);
+if (rate_hit('err_global', 'all', 3600, $GLOBAL_HOURLY_MAX) > 0) {
+    // Tetto globale raggiunto: si risponde ok (il client non deve riprovare né mostrare nulla)
+    // ma non si salva.
+    api_send(['ok' => true, 'dropped' => true]);
 }
 
-$raw = file_get_contents('php://input');
-if (strlen($raw) > 4096) fail('Corpo della richiesta troppo grande.');
-$body = json_decode($raw, true);
-if (!is_array($body)) fail('JSON non valido.');
-
-$entry = [
-    'message' => clean_text($body['message'] ?? '', 500),
-    'stack' => clean_text($body['stack'] ?? '', 2000),
-    'url' => clean_text($body['url'] ?? '', 300),
-    'source' => clean_text($body['source'] ?? '', 200),
-    'ts' => $now,
-];
-if ($entry['message'] === '') fail('Messaggio mancante.');
-
-$entries = storage_read_all($SQLITE_FILE, $DATA_FILE, 'errors', []);
-$entries[] = $entry;
+$lock = lock_or_fail('errors');
+$entries = store_read('errors', []);
+// Lo stesso errore (stesso messaggio, stessa origine, stessa versione) già presente fra i
+// recenti: si aggiorna quello (contatore + ultima volta visto) invece di aggiungerne un altro.
+$dupIdx = null;
+for ($i = count($entries) - 1, $seen = 0; $i >= 0 && $seen < 60; $i--, $seen++) {
+    $e = $entries[$i];
+    if (is_array($e) && ($e['message'] ?? null) === $entry['message'] && ($e['source'] ?? '') === $entry['source'] && ($e['v'] ?? '') === $entry['v']) { $dupIdx = $i; break; }
+}
+if ($dupIdx !== null) {
+    $dup = $entries[$dupIdx];
+    $dup['count'] = min(1000000, (int) ($dup['count'] ?? 1) + 1);
+    $dup['ts'] = $now;
+    array_splice($entries, $dupIdx, 1);
+    $entries[] = $dup;
+} else {
+    $entries[] = $entry;
+}
 // Solo i più RECENTI: a differenza della leaderboard (ordinata per punteggio), qui l'ordine
 // utile è cronologico — un bug nuovo conta quanto uno vecchio, anzi di più.
 if (count($entries) > $MAX_ENTRIES) $entries = array_slice($entries, -$MAX_ENTRIES);
+$saved = store_write('errors', array_values($entries), true);
+lock_release($lock);
+if (!$saved) api_fail('Impossibile salvare al momento.', 500);
 
-if (!storage_write_all($SQLITE_FILE, $DATA_FILE, 'errors', $entries)) fail('Impossibile salvare al momento.', 500);
-
-$rates[$ipHash] = $now;
-write_json_file_locked($RATE_FILE, $rates);
-
-echo json_encode(['ok' => true]);
+api_send(['ok' => true]);

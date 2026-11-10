@@ -264,7 +264,11 @@
     // della stagione: resta nella tua rosa (torna automaticamente alla stagione successiva) ma
     // non è mai selezionabile qui.
     const available = squad.filter((p) => !(p.outWeeks > 0) && !(p.suspMatches > 0) && !p.loanedOut);
-    const pool = available.length >= Math.min(11, squad.length) ? available : squad;   // rosa decimata: si gioca comunque con chi c'è
+    // Rosa decimata: si gioca comunque con chi c'è (anche acciaccati/squalificati), ma mai con
+    // chi è in prestito altrove — a meno che in casa non resti proprio nessuno.
+    const atHome = squad.filter((p) => !p.loanedOut);
+    const fallbackPool = atHome.length ? atHome : squad;
+    const pool = available.length >= Math.min(11, fallbackPool.length) ? available : fallbackPool;
     const availPids = new Set(pool.map((p) => p.pid));
     const target = Math.min(11, pool.length);
     // Margine di casualità a partita stretto (±7%, non più ±18%): la forma stagionale
@@ -926,7 +930,16 @@
   // Servono a portare un club in difficoltà al minimo di 16 giocatori, non a vincere partite.
   const freeAgent = (role) => { const d = divOf(); const ovr = clamp(d.avg - 13 + rnd(6), 40, 99); const age = genAge(27, 5.5, 18, 37); const nat = pickNationality(S.div); return { n: genName(nat), nat, ovr, age, wage: roundWage(wageFor(ovr) * 0.7), yrs: 1 + rnd(2), pid: newPid(), pos: role || randPos(), seasonGoals: 0, seasonAssists: 0, seasonCleanSheets: 0, seasonApps: 0, potential: genPotential(ovr, age) }; };
 
-  const playerValue = (p) => p.wage * 52 * (p.ovr >= 85 ? 9 : p.ovr >= 78 ? 7 : p.ovr >= 68 ? 5 : 3.5) * (p.age <= 23 ? 1.4 : p.age >= 31 ? 0.6 : 1);
+  // Il valore segue lo stipendio (per fascia di overall ed età). Oltre VALUE_SOFT_CAP cresce
+  // solo di un quarto: con stipendi che in Serie A salgono dell'8% l'anno e overall oltre il
+  // 100, la formula pura arrivava a cartellini da oltre un miliardo l'uno — tre cessioni
+  // bastavano a rendere irrilevante ogni altra voce di bilancio. Sotto la soglia (cioè quasi
+  // sempre, e sempre sotto la Serie A) non cambia nulla.
+  const VALUE_SOFT_CAP = 150e6;
+  const playerValue = (p) => {
+    const v = p.wage * 52 * (p.ovr >= 85 ? 9 : p.ovr >= 78 ? 7 : p.ovr >= 68 ? 5 : 3.5) * (p.age <= 23 ? 1.4 : p.age >= 31 ? 0.6 : 1);
+    return v <= VALUE_SOFT_CAP ? v : VALUE_SOFT_CAP + (v - VALUE_SOFT_CAP) * 0.25;
+  };
 
   // Prezzo per trattenere in rosa a titolo definitivo un giocatore preso in prestito a
   // gennaio: più caro del semplice prestito, in linea col cartellino del mercato di gennaio.
@@ -1031,6 +1044,8 @@
     if (S.stadiumName === undefined) S.stadiumName = null;
     if (S.stadiumRecordAtt == null) S.stadiumRecordAtt = 0;
     if (S.stadiumRecordSeason === undefined) S.stadiumRecordSeason = null;
+    if (S.dominance == null) S.dominance = 0;
+    ensureRecords(S);
     S.squad.forEach((p) => { if (p.loanedOut == null) p.loanedOut = false; if (p.fatigue == null) p.fatigue = 0; });
     S.squad.forEach((p) => { if (p.yrs == null) p.yrs = 2 + rnd(2); if (p.pid == null) p.pid = newPid(); if (!p.pos) p.pos = randPos(); if (p.seasonGoals == null) p.seasonGoals = 0; if (p.seasonAssists == null) p.seasonAssists = 0; if (p.seasonCleanSheets == null) p.seasonCleanSheets = 0; if (p.seasonApps == null) p.seasonApps = 0; if (p.careerGoals == null) p.careerGoals = 0; if (p.careerAssists == null) p.careerAssists = 0; if (p.careerCleanSheets == null) p.careerCleanSheets = 0; if (p.careerApps == null) p.careerApps = 0; if (p.joinedSeason == null) p.joinedSeason = S.season; if (!p.nat) p.nat = pickNationality(S.div); if (p.outWeeks == null) p.outWeeks = 0; if (p.suspMatches == null) p.suspMatches = 0; if (p.potential == null) p.potential = genPotential(p.ovr, p.age); });
     if (S.manager && !S.manager.nat) S.manager.nat = S.manager.real ? natByCode(REAL_MANAGERS.find((m) => m.n === S.manager.n)?.nat) || pickNationality(S.div) : pickNationality(S.div);
@@ -1089,7 +1104,7 @@
   function buyerClub(fee, ctx = S, band) {
     const CAP = DIVS.map((dv) => dv.premium * 3);
     let tier = CAP.findIndex((cap) => fee <= cap);
-    if (tier < 0) tier = 4;
+    if (tier < 0) tier = DIVS.length - 1;   // cifra oltre ogni soglia: può permettersela solo un club di massima serie
     tier = clamp(Math.max(tier, ctx.div + 1), 0, DIVS.length - 1);
     // Una volta arrivati in Serie A, buona parte dell'interesse vero sui big arriva anche
     // dall'estero, non solo da rivali italiani: le stesse rose di EURO_CLUBS (già usate per gli
@@ -1135,8 +1150,10 @@
     // Il direttore sportivo "rete di osservatori" allarga il giro di squadre interessate: un
     // candidato extra in lista e più probabilità che ciascuno si faccia davvero avanti.
     const scoutNetwork = ctx.sportingDirector && ctx.sportingDirector.spec === 'scout_network';
+    // Mai per un giocatore che è qui solo in prestito (p.loan): non è nostro da vendere —
+    // prima l'offerta arrivava lo stesso e accettarla incassava il cartellino di un altro club.
     const targets = ctx.squad
-      .filter((p) => p.ovr >= d.avg + 3 || (p.age <= 22 && p.ovr >= d.avg))
+      .filter((p) => !p.loan && (p.ovr >= d.avg + 3 || (p.age <= 22 && p.ovr >= d.avg)))
       .sort((a, b) => (b.ovr + (b.age <= 22 ? 4 : 0)) - (a.ovr + (a.age <= 22 ? 4 : 0)))
       .slice(0, scoutNetwork ? 4 : 3);
     // Decide PRIMA quali fasce di forza (0=fortissimo..3=scarso, vedi buyerClub/bandSlice)
@@ -1158,6 +1175,29 @@
   // costa il 30% in più dell'ultimo (standard e marquee condividono il contatore). Uno o
   // due spin restano accessibili, ripetere l'intera rosa in una sola estate diventa
   // rovinosamente costoso.
+  // Uno spin pagato ma non ancora deciso (firma o rifiuto) vive in ctx._spin finché il popup è
+  // aperto. Se la pagina viene chiusa in quel momento, alla ripresa il popup non c'è più: senza
+  // questo, soldi e giocatore sparivano entrambi. Si restituisce l'INTERO costo (non il 40% del
+  // rifiuto: non è stata una scelta) e lo spin non conta fra quelli comprati in estate.
+  // Il costo esatto è ctx._spinCost se l'interfaccia lo ha annotato al momento dell'acquisto;
+  // altrimenti si stima per difetto, come uno spin base al prezzo che aveva in quel momento.
+  // Restituisce la cifra rimborsata (0 se non c'era nulla in sospeso) e la lascia in
+  // ctx._spinRefunded, così chi riprende la carriera può dirlo al giocatore.
+  function resolvePendingSpin(ctx = S) {
+    if (!ctx || !ctx._spin) return 0;
+    const n = Math.max(0, (ctx.spinsBought || 0) - 1);
+    let refund = Number.isFinite(ctx._spinCost) && ctx._spinCost > 0 ? ctx._spinCost : null;
+    if (refund == null) {
+      const w = DIVS[ctx.div].spin * 1.12 * Math.pow(1.3, n) * diffOf(null, ctx).scoutCostMult;
+      refund = w >= 1e6 ? Math.round(w / 1e5) * 1e5 : w >= 1e5 ? Math.round(w / 5e3) * 5e3 : Math.round(w / 1e3) * 1e3;
+    }
+    ctx.budget += refund;
+    ctx.spinsBought = n;
+    ctx._spin = null; ctx._spinCost = null;
+    ctx._spinRefunded = refund;
+    return refund;
+  }
+
   function spinCostNow(premium) {
     const base = premium ? divOf().premium : divOf().spin;
     // +12% su ogni spin (normale o di lusso, ogni categoria/difficoltà): un rialzo leggero e
@@ -1379,7 +1419,10 @@
 
   /* ---------------- forza della rosa + aspettative ---------------- */
   function squadStr(ctx = S) {
-    const s = ctx.squad.slice().sort((a, b) => b.ovr - a.ovr);
+    // Chi è in prestito in uscita (p.loanedOut) gioca altrove fino a fine stagione: non può
+    // contare nella forza della squadra — prima contava, e mandare in prestito un giovane
+    // forte a gennaio fruttava la quota del prestito senza perdere nulla in campo.
+    const s = ctx.squad.filter((p) => !p.loanedOut).sort((a, b) => b.ovr - a.ovr);
     const eleven = s.slice(0, 11); while (eleven.length < 11) eleven.push({ ovr: 42 });
     const avg = eleven.reduce((a, p) => a + p.ovr, 0) / 11;
     return Math.round((avg + clamp((s.length - 11) * 0.25, 0, 2.5)) * 10) / 10;
@@ -1481,18 +1524,50 @@
   // uguale. Scala solo il bonus di CHI gioca in casa (l'avversario bot non ha uno stadio
   // modellato con cui fare lo stesso calcolo).
   const homeAdvantage = (ctx = S) => {
-    const capFactor = clamp(capOf(ctx) / 30000, 0.65, 1.35);
+    // La capienza si misura sul metro più favorevole fra quello assoluto (30.000 posti = 1) e
+    // quello della categoria (1.6 volte il pubblico tipico = 1): uno stadio da 3.500 posti è una
+    // bolgia in Promozione, non un handicap. Col solo metro assoluto ogni club delle categorie
+    // minori partiva al minimo (-33% e oltre) qualunque cosa facesse, mentre i rivali si
+    // affrontano fra loro con il fattore campo pieno. In Serie B/A non cambia nulla.
+    const capFactor = clamp(Math.max(capOf(ctx) / 30000, capOf(ctx) / (divOf(ctx).demand * 1.6)), 0.65, 1.35);
     const moodFactor = clamp(0.75 + (ctx.sent || 50) / 100 * 0.5, 0.75, 1.25);
     return capFactor * moodFactor;
   };
 
+  const EXPECT_SPREAD = 4.5, EXPECT_AMBITION = 2.5;
   function expectedPos(ctx = S) {
-    const mine = squadStr(ctx) + mgrBonus(ctx);
+    // La forza "attesa" comprende il ritocco di difficoltà (teamEffDelta), lo stesso che pesa
+    // davvero in campo (teamEff): senza, a Difficile/Estremo i tifosi si aspettavano sempre un
+    // piazzamento da rosa SENZA handicap — obiettivo mancato ogni anno, umore e gradimento a
+    // picco, esonero in 3-5 stagioni anche gestendo bene (misurato: 100% delle carriere) — e a
+    // Facile ogni stagione risultava un'impresa. La severità dei tifosi resta regolata dal suo
+    // parametro dedicato (patienceMult), non da un'aspettativa falsata.
+    const mine = squadStr(ctx) + mgrBonus(ctx) + diffOf(null, ctx).teamEffDelta + captainBonus(ctx) - promoStreakMalus(ctx);
     // Le aspettative (obiettivo di stagione + gradimento proprietario a fine anno, endSeason)
-    // contavano ogni rivale anche solo di un soffio più forte: un margine di tolleranza (un
-    // rivale deve essere chiaramente più forte, non solo pari) abbassa leggermente l'asticella,
-    // così un piazzamento in linea con la vera forza della rosa non delude quasi mai i tifosi.
-    return 1 + ctx.opps.filter((o) => o.s > mine + 1.5).length;
+    // sono la posizione che una squadra di questa forza occupa DAVVERO in media, non il numero
+    // di rivali più forti sulla carta: ogni rivale ha la sua annata (startSeason: forza di base
+    // ± una gaussiana larga 8), quindi anche chi è più debole sulla carta ha una probabilità
+    // concreta di finire davanti. Ogni rivale conta per quella probabilità (curva logistica
+    // sulla differenza di forza, larghezza EXPECT_SPREAD tarata sul banco di prova).
+    // Il vecchio conteggio secco ("quanti rivali hanno s > mia + 1.5") dava quasi sempre "1°"
+    // a chiunque avesse una rosa sopra la media, mentre il piazzamento reale medio di quelle
+    // stagioni era il 4° a Medio e il 6°-7° a Difficile: obiettivo mancato quasi ogni anno,
+    // umore in caduta libera e, ai livelli alti, esonero in poche stagioni pur gestendo bene.
+    // I tifosi però chiedono sempre qualcosa in più di quel che dice la sola forza: l'asticella
+    // sta EXPECT_AMBITION posizioni sopra la media statistica, moltiplicate per la pazienza
+    // della piazza a quella difficoltà (patienceMult: meno di 2 posizioni a Facile, circa 4 a
+    // Estremo). È la stessa pressione che il vecchio conteggio esercitava a Medio (lì il
+    // piazzamento reale restava in media 2-3 posti sotto le attese), resa però uguale per
+    // tutti: prima a Estremo lo scarto medio era di 9 posizioni, cioè incolmabile.
+    // varianceMult (difficoltà) smorza quanto pesa la NOSTRA differenza di forza in partita
+    // (rollMatchScore), non quella fra i rivali: ai fini della classifica è come avere una
+    // forza più vicina alla media del girone (o più lontana, a Facile).
+    const avgS = ctx.opps.length ? ctx.opps.reduce((a, o) => a + o.s, 0) / ctx.opps.length : mine;
+    const eff = avgS + (mine - avgS) / (diffOf(null, ctx).varianceMult || 1);
+    let ahead = 0;
+    ctx.opps.forEach((o) => { ahead += 1 / (1 + Math.exp(-(o.s - eff) / EXPECT_SPREAD)); });
+    const ambition = EXPECT_AMBITION * (diffOf(null, ctx).patienceMult || 1);
+    return clamp(Math.round(1 + ahead - ambition), 1, ctx.opps.length + 1);
   }
 
   // Dove finiresti al ritmo di punti attuale (pre-stagione: proiettato sulla forza della rosa).
@@ -1532,7 +1607,9 @@
   // il che va bene per campi aggiunti ma si romperebbe silenziosamente su un campo RINOMINATO
   // o RISTRUTTURATO. Da qui in poi ogni salvataggio porta `_v`: un futuro cambio di forma può
   // controllarlo e migrare/avvisare invece di produrre uno stato parzialmente `undefined`.
-  const SAVE_FORMAT_VERSION = 1;
+  // v2: `records` (primati del club), piramide ripulita dai nomi doppi. I salvataggi v0/v1
+  // restano caricabili: li porta alla forma attuale migrateSave (più sotto) insieme a normSquad.
+  const SAVE_FORMAT_VERSION = 2;
   // Un solo avviso per sessione se il salvataggio fallisce (storage pieno/bloccato, es.
   // navigazione privata): senza, il giocatore crede che il progresso sia al sicuro e lo scopre
   // solo alla riapertura, quando ormai l'ha perso.
@@ -1554,7 +1631,9 @@
       if (i >= 0) idx[i] = meta; else idx.push(meta);
       writeSavesIndex(idx);
       localStorage.setItem(ACTIVE_SAVE_KEY, S._saveId);
-      saveFailWarned = false;
+      // saveFailWarned NON si riarma dopo un salvataggio riuscito: con lo storage quasi pieno
+      // riuscite e fallimenti si alternano, e l'avviso ricompariva a ogni clic. Una volta per
+      // sessione basta a far sapere che il progresso è a rischio.
     } catch (e) {
       if (!saveFailWarned && typeof toast === 'function') {
         toast('⚠️ Impossibile salvare la partita (memoria del browser piena o bloccata, es. navigazione privata): il progresso di questa sessione rischia di andare perso.', 'error');
@@ -1566,19 +1645,193 @@
   // Carica uno slot specifico (per id) SENZA attivarlo come corrente — usato dalla
   // schermata di setup per mostrare l'elenco/riprendere una carriera a scelta.
   function loadSaveSlot(id) {
-    try { const raw = localStorage.getItem(saveSlotKey(id)); if (!raw) return null; const s = JSON.parse(raw); return (s && s.squad && !s.over) ? s : null; } catch (e) { return null; }
+    try { const raw = localStorage.getItem(saveSlotKey(id)); if (!raw) return null; const s = JSON.parse(raw); return (s && Array.isArray(s.squad) && !s.over) ? migrateSave(s) : null; } catch (e) { return null; }
+  }
+
+  // Porta un salvataggio di QUALSIASI versione precedente (o rovinato a metà: storage pieno,
+  // scheda chiusa durante la scrittura, modifica a mano) a uno stato che il motore può
+  // giocare senza NaN né crash. Non sostituisce normSquad (che riempie i campi AGGIUNTI nel
+  // tempo ed è chiamata subito dopo dal chiamante): qui si controlla che quello che c'è abbia
+  // la FORMA giusta — numeri finiti e nei limiti, array che sono array, riferimenti che puntano
+  // a qualcosa che esiste. Ogni correzione è conservativa: un valore valido non viene mai
+  // toccato. Se qualcosa va storto qui dentro si restituisce lo stato così com'è (il
+  // comportamento di prima), mai un salvataggio "perso" per colpa della pulizia.
+  function migrateSave(s) {
+    try {
+      const num = (v, def, lo, hi) => (typeof v === 'number' && Number.isFinite(v) ? clamp(v, lo, hi) : def);
+      const int = (v, def, lo, hi) => Math.round(num(v, def, lo, hi));
+      const from = typeof s._v === 'number' ? s._v : 0;
+      s.div = int(s.div, 0, 0, DIVS.length - 1);
+      s.season = int(s.season, 1, 1, 999);
+      if (!DIFFICULTIES.some((x) => x.key === s.difficulty)) s.difficulty = 'medio';
+      s.budget = Math.round(num(s.budget, 0, -1e12, 1e12));
+      s.fanbase = num(s.fanbase, 1, 0.7, 3.0);
+      s.sent = num(s.sent, 55, 0, 100);
+      s.ownerRating = num(s.ownerRating, 62, 0, 100);
+      s.prestige = num(s.prestige, 0, 0, 1e12);
+      s.stadiumTier = int(s.stadiumTier, 0, 0, STADIUM.length - 1);
+      s.stadiumSpent = num(s.stadiumSpent, 0.6e6, 0, 1e12);
+      s.ticket = int(s.ticket, 1, 0, TICKETS.length - 1);
+      s.debtSeasons = int(s.debtSeasons, 0, 0, 99);
+      s.peakWorth = num(s.peakWorth, 0, 0, 1e13);
+      s.spinsBought = int(s.spinsBought, 0, 0, 99);
+      s.promoStreak = int(s.promoStreak, 0, 0, 99);
+      s.maxSeasons = int(s.maxSeasons, MAX_SEASONS, 1, 99);
+      s.form = num(s.form, 0, -2.5, 2.5);
+      if (typeof s.club !== 'string' || !s.club) s.club = 'Il mio club';
+      if (typeof s.owner !== 'string' || !s.owner) s.owner = 'Il Presidente';
+      // rosa: solo giocatori veri, con numeri giocabili e un pid unico
+      const dAvg = DIVS[s.div].avg;
+      const pids = new Set();
+      s.squad = s.squad.filter((p) => p && typeof p === 'object');
+      s.squad.forEach((p) => {
+        p.ovr = int(p.ovr, dAvg - 5, 30, 110);
+        p.age = int(p.age, 25, 15, 50);
+        p.wage = num(p.wage, 0, 0, 1e9) || roundWage(540 * Math.pow(1.135, p.ovr - 45));
+        if (typeof p.n !== 'string' || !p.n) p.n = genName();
+        if (!POS_LABEL[p.pos]) p.pos = null;                                   // normSquad gliene assegna uno utile alla rosa
+        if (p.yrs != null) p.yrs = int(p.yrs, 2, 0, 9);
+        if (p.pid == null || typeof p.pid !== 'number' || pids.has(p.pid)) p.pid = null;   // doppione o mancante: normSquad ne dà uno nuovo
+        else pids.add(p.pid);
+        ['seasonGoals', 'seasonAssists', 'seasonCleanSheets', 'seasonApps', 'careerGoals', 'careerAssists', 'careerCleanSheets', 'careerApps', 'outWeeks', 'suspMatches', 'fatigue'].forEach((k) => { if (p[k] != null) p[k] = num(p[k], 0, 0, 1e6); });
+        if (p.formSeason != null) p.formSeason = num(p.formSeason, 1, 0.45, 1.9);
+        if (p.potential != null) p.potential = num(p.potential, p.ovr, 30, 110);
+      });
+      s.pidNext = Math.max(int(s.pidNext, 1, 1, 1e9), pids.size ? Math.max(...pids) + 1 : 1);
+      // allenatore e staff: senza un allenatore valido kickoffBill/mgrBonus darebbero NaN
+      const person = (m) => m && typeof m === 'object' && typeof m.n === 'string' && Number.isFinite(m.rating) && Number.isFinite(m.salary);
+      if (!person(s.manager)) { const r = DIVS[s.div].mgrBase; s.manager = { n: genName(ITA_NAT), rating: r, salary: mgrSalaryFor(r, s), nat: ITA_NAT, spec: pick(MANAGER_SPECS).key }; }
+      if (s.sportingDirector && !person(s.sportingDirector)) s.sportingDirector = null;
+      if (s.fitnessCoach && !person(s.fitnessCoach)) s.fitnessCoach = null;
+      // accordi economici: o sono leggibili o non ci sono
+      const deal = (sp) => sp && typeof sp === 'object' && Number.isFinite(sp.perYear) && Number.isFinite(sp.left);
+      ['sponsor', 'stadiumSponsor', 'techSponsor'].forEach((k) => { if (s[k] && !deal(s[k])) s[k] = null; });
+      if (s.investorDeal && !(Number.isFinite(s.investorDeal.targetDiv) && Number.isFinite(s.investorDeal.deadlineSeason) && Number.isFinite(s.investorDeal.yearly))) s.investorDeal = null;
+      if (s.euro && !EURO_COMPS[s.euroComp]) { s.euro = false; s.euroComp = null; }
+      if (s.euroCompNext && !EURO_COMPS[s.euroCompNext]) s.euroCompNext = null;
+      // bacheca, storico, liste
+      const tr = (s.trophies && typeof s.trophies === 'object') ? s.trophies : (s.trophies = {});
+      if (!Array.isArray(tr.titles)) tr.titles = [];
+      for (let i = 0; i < DIVS.length; i++) tr.titles[i] = int(tr.titles[i], 0, 0, 999);
+      ['nat', 'ucl', 'uel', 'conf'].forEach((k) => { tr[k] = int(tr[k], 0, 0, 999); });
+      tr.total = int(tr.total, tr.titles.reduce((a, b) => a + b, 0) + tr.nat + tr.ucl + tr.uel + tr.conf, 0, 9999);
+      ['history', 'alumni', 'achievements', 'offers', 'rivalries'].forEach((k) => { if (s[k] != null && !Array.isArray(s[k])) s[k] = []; });
+      if (!Array.isArray(s.history)) s.history = [];
+      if (Array.isArray(s.offers)) s.offers = s.offers.filter((o) => o && Number.isFinite(o.fee) && s.squad.some((p) => p.pid != null && p.pid === o.pid));
+      if (s.captainPid != null && !s.squad.some((p) => p.pid === s.captainPid)) s.captainPid = null;
+      // stagione in corso: serve un calendario completo, altrimenti si torna in Dirigenza
+      // (restituendo il monte ingaggi già pagato al calcio d'inizio, che startSeason richiederà)
+      if (s.seasonActive) {
+        const G = (DIVS[s.div].teams - 1) * 2;
+        const okSeason = Array.isArray(s.opps) && s.opps.length >= DIVS[s.div].teams - 1 && Array.isArray(s.fixtures) && s.fixtures.length >= G
+          && s.fixtures.every((fx) => fx && s.opps[fx.opp]) && Number.isFinite(s.played) && s.cups && s.cups.nat && Array.isArray(s.results);
+        if (!okSeason) { s.seasonActive = false; s._playoffState = null; s._end = null; s._screen = 'owBoardScreen'; s.budget += kickoffBill(s); }
+        else { s.played = int(s.played, 0, 0, G); s.pts = int(s.pts, 0, 0, G * 3); s.gf = int(s.gf, 0, 0, 9999); s.ga = int(s.ga, 0, 0, 9999); s.wins = int(s.wins, 0, 0, G); if (!Array.isArray(s.last5)) s.last5 = []; }
+      }
+      if (s._screen === 'owSeasonEndScreen' && !(s._end && Array.isArray(s._end.statement))) { s._end = null; s._screen = 'owBoardScreen'; }
+      // Un popup rimasto aperto alla chiusura della scheda lasciava `_pause` a true per sempre
+      // ("Simula fino alla fine" non faceva più nulla): chi riprende decide da capo, e la
+      // finestra di gennaio — l'unica pausa che deve sopravvivere — viene riaperta da ui.js.
+      s._pause = false;
+      resolvePendingSpin(s);
+      ensureRecords(s);
+      s._vFrom = from;
+    } catch (e) { /* stato lasciato com'è: meglio un salvataggio grezzo che nessun salvataggio */ }
+    return s;
   }
 
   // Ripristina anche POOLS (la piramide con le sue promozioni/retrocessioni accumulate)
   // per lo slot indicato, mutando gli array esistenti in place così ogni riferimento a
   // POOLS nel resto del codice resta valido.
   function loadPoolsForSlot(id) {
+    // Si riparte SEMPRE dalla piramide di partenza (con la regione della carriera che si sta
+    // riprendendo, se è già in S): se i gironi salvati mancano o sono illeggibili, prima
+    // restavano in memoria quelli dell'ULTIMA carriera aperta nella stessa sessione — un
+    // presidente si ritrovava i rivali (e le promozioni) di un'altra partita.
+    resetPools(S && S.region);
     try {
-      const raw = localStorage.getItem(savePoolsKey(id)); if (!raw) return;
-      const saved = JSON.parse(raw);
-      if (!Array.isArray(saved) || saved.length !== POOLS.length) return;
-      POOLS.forEach((arr, i) => { if (Array.isArray(saved[i])) { arr.length = 0; arr.push(...saved[i]); } });
+      const raw = localStorage.getItem(savePoolsKey(id));
+      const saved = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(saved) && saved.length === POOLS.length) {
+        POOLS.forEach((arr, i) => {
+          const clubs = Array.isArray(saved[i]) ? saved[i].filter((c) => c && typeof c.n === 'string' && c.n && Number.isFinite(c.s)) : [];
+          if (clubs.length) { arr.length = 0; arr.push(...clubs); }
+        });
+      }
     } catch (e) {}
+    sanitizePools();
+  }
+
+  /* ---------------- la piramide di partenza ----------------
+     POOLS (data.js) è la piramide VIVA: viene modificata sul posto stagione dopo stagione
+     (evolveRivalStrengths, simulatePyramidMovement) e salvata accanto a ogni carriera. Qui
+     se ne conserva una copia intatta, presa al caricamento dello script — prima che qualunque
+     carriera la tocchi — per poter ripartire puliti. */
+  const POOLS_PRISTINE = POOLS.map((pool) => pool.map((c) => ({ n: c.n, s: c.s })));
+  // Media e scarto di forza di ogni girone alla partenza: il "profilo" a cui la piramide viva
+  // viene riportata dolcemente ogni estate (rebalancePools) perché i campionati non si
+  // appiattiscano col passare degli anni.
+  const POOL_PROFILE = POOLS_PRISTINE.map((pool) => {
+    const mean = pool.reduce((a, c) => a + c.s, 0) / pool.length;
+    const sd = Math.sqrt(pool.reduce((a, c) => a + (c.s - mean) * (c.s - mean), 0) / pool.length);
+    return { mean, sd };
+  });
+
+  // Rimette POOLS com'era all'inizio, con il cast regionale scelto per Promozione/Eccellenza
+  // (REGIONS, data.js; senza regione vale il Lazio, cioè la copia intatta). Sempre per copia:
+  // i modelli non vengono mai condivisi con la piramide viva.
+  function resetPools(regionKey) {
+    const region = regionKey ? REGIONS.find((r) => r.key === regionKey) : null;
+    POOLS.forEach((arr, i) => {
+      const src = (region && i === 0 && region.promozione) || (region && i === 1 && region.eccellenza) || POOLS_PRISTINE[i];
+      arr.length = 0;
+      arr.push(...src.map((c) => ({ n: c.n, s: c.s })));
+    });
+  }
+
+  // Ripulisce la piramide viva dopo un caricamento: forze nei limiti, nessun nome ripetuto
+  // (né nello stesso girone né in due gironi diversi), ogni girone con il numero di squadre
+  // che il calendario si aspetta. I doppioni "storici" fra Serie C e Serie B dei salvataggi
+  // precedenti (POOL_RENAMES, data.js) prendono il nome nuovo; per ogni altro doppione resta
+  // il club della categoria più alta e l'altro viene sostituito da un club del girone di
+  // partenza che non gioca altrove.
+  function sanitizePools() {
+    const taken = new Set();
+    POOLS.forEach((pool) => pool.forEach((c) => { if (c && typeof c.n === 'string') taken.add(c.n); }));
+    const seen = new Set();
+    for (let i = POOLS.length - 1; i >= 0; i--) {
+      const pool = POOLS[i], avg = DIVS[i].avg;
+      const spare = () => { const c = (POOLS_PRISTINE[i] || []).find((x) => !taken.has(x.n)); return c ? c.n : null; };
+      for (let k = pool.length - 1; k >= 0; k--) {
+        const c = pool[k];
+        if (!c || typeof c.n !== 'string' || !c.n) { pool.splice(k, 1); continue; }
+        c.s = Number.isFinite(c.s) ? clamp(c.s, 30, 99) : avg;
+        if (!seen.has(c.n)) { seen.add(c.n); continue; }
+        const renamed = (POOL_RENAMES[i] && POOL_RENAMES[i][c.n] && !taken.has(POOL_RENAMES[i][c.n]) && POOL_RENAMES[i][c.n]) || spare();
+        if (!renamed) { pool.splice(k, 1); continue; }
+        c.n = renamed; delete c._seasonPos; delete c._seasonAt;
+        taken.add(renamed); seen.add(renamed);
+      }
+      // girone a corto di squadre: si completa con chi manca dal girone di partenza
+      while (pool.length < DIVS[i].teams) {
+        const n = spare(); if (!n) break;
+        const src = POOLS_PRISTINE[i].find((x) => x.n === n);
+        pool.push({ n, s: src.s }); taken.add(n); seen.add(n);
+      }
+      // Girone "appiattito": nelle carriere giocate a lungo prima che la piramide viva venisse
+      // corretta (vedi evolveOtherDivisions) tutti i club di una categoria finivano con la stessa
+      // forza. Se lo scarto è sceso sotto un terzo di quello di partenza si ridà al girone il
+      // suo ventaglio originale, rispettando l'ordine attuale dei club (il più forte resta il
+      // più forte): da solo, rebalancePools non può allargare un girone che non ha più distanze.
+      if (pool.length >= 4) {
+        const mean = pool.reduce((a, c) => a + c.s, 0) / pool.length;
+        const sd = Math.sqrt(pool.reduce((a, c) => a + (c.s - mean) * (c.s - mean), 0) / pool.length);
+        if (sd < POOL_PROFILE[i].sd * 0.33) {
+          const fan = POOLS_PRISTINE[i].map((c) => c.s).sort((a, b) => b - a);
+          pool.slice().sort((a, b) => b.s - a.s).forEach((c, k) => { c.s = fan[Math.round(k * (fan.length - 1) / Math.max(1, pool.length - 1))]; });
+        }
+      }
+    }
   }
 
   // "Continua" implicito: l'ultimo slot attivo, comportamento invariato per chi chiamava
@@ -1657,6 +1910,12 @@
     // toccare quella (eventualmente) ancora in memoria — resta al suo posto nell'indice
     // finché non viene esplicitamente cancellata.
     const diffKey = DIFFICULTIES.some((x) => x.key === difficulty) ? difficulty : 'medio';
+    // Ogni carriera nuova parte dalla piramide di partenza (con la regione scelta): POOLS è un
+    // unico oggetto condiviso da tutta la pagina e la carriera giocata o ripresa poco prima
+    // nella stessa sessione lo lascia modificato (promozioni, retrocessioni, rivali cresciuti).
+    // Senza questo reset la nuova carriera ereditava i gironi di quella vecchia dalla Serie D
+    // in su (il selettore della regione riscrive solo Promozione ed Eccellenza).
+    resetPools(region);
     const squad = [];
     const dAvg = DIVS[div].avg;
     for (let i = 0; i < 16; i++) { const ovr = clamp(gaussInt(t.str - 1, 3.5), dAvg - 9, dAvg + 9); const nat = pickNationality(div); squad.push({ n: genName(nat), nat, ovr, age: genAge(23, 4.5, 17, 34), wage: wageFor(ovr), yrs: 1 + rnd(3), pos: randPos(squad), seasonGoals: 0, seasonAssists: 0, seasonCleanSheets: 0, seasonApps: 0 }); }
@@ -1683,6 +1942,7 @@
       maxSeasons: [8, 12, 15].includes(seasons) ? seasons : MAX_SEASONS,
       stadiumName: null, stadiumRecordAtt: 0, stadiumRecordSeason: null,
       hardcore: !!hardcore, youthSquad: [], youthSquadSeason: 0,
+      dominance: 0, records: null,
       // Solo per Promozione/Eccellenza (le uniche due categorie regionali): quale regione ha
       // scelto POOLS[0]/POOLS[1] già rimpiazzati sul tavolo (vedi applyStartRegion, ui.js)
       // prima di chiamare startDynasty. null altrove (Serie D e su restano sempre nazionali).
@@ -1726,7 +1986,41 @@
   }
 
   /* ---------------- stagione ---------------- */
-  function rivals(ctx = S) { return POOLS[ctx.div].filter((c) => c.n !== ctx.club).slice(0, divOf(ctx).teams - 1); }
+  // I rivali di campionato della stagione: sempre ESATTAMENTE teams-1, qualunque cosa contenga
+  // il girone. Il calendario (e gp()) dà per scontato quel numero: un rivale in meno significava
+  // giornate senza avversario e un crash a fine calendario.
+  //  - un nome già visto (o uguale al nostro) si salta: mai due club omonimi in classifica;
+  //  - se il nostro club non "sostituisce" un omonimo del girone, a restare fuori è il più
+  //    debole (a pari forza l'ultimo in elenco) — come all'inizio della carriera, quando
+  //    l'ultimo dell'elenco è anche il più debole. Prima restava fuori semplicemente l'ultimo
+  //    dell'array, cioè (dopo il primo giro di promozioni/retrocessioni) l'ultimo club appena
+  //    arrivato da un'altra categoria, che spariva dal campionato senza motivo;
+  //  - se il girone è a corto di squadre (salvataggio rovinato) si completa con i club del
+  //    girone di partenza che non giocano altrove, poi con nomi di fantasia.
+  function rivals(ctx = S) {
+    const want = divOf(ctx).teams - 1;
+    const pool = POOLS[ctx.div] || (POOLS[ctx.div] = []);
+    const seen = new Set([ctx.club]);
+    const list = pool.filter((c) => { if (!c || typeof c.n !== 'string' || seen.has(c.n)) return false; seen.add(c.n); return true; });
+    while (list.length > want) {
+      let wi = 0;
+      list.forEach((c, i) => { if (c.s <= list[wi].s) wi = i; });
+      list.splice(wi, 1);
+    }
+    if (list.length < want) {
+      const elsewhere = new Set(seen);
+      POOLS.forEach((p) => p.forEach((c) => { if (c && c.n) elsewhere.add(c.n); }));
+      const spare = (POOLS_PRISTINE[ctx.div] || []).filter((c) => !elsewhere.has(c.n));
+      let k = 1;
+      while (list.length < want) {
+        let club = spare.shift();
+        if (club) club = { n: club.n, s: club.s };
+        else { let n; do { n = 'Atletico ' + divOf(ctx).name + ' ' + (k++); } while (elsewhere.has(n)); club = { n, s: divOf(ctx).avg - 3 }; }
+        elsewhere.add(club.n); pool.push(club); list.push(club);
+      }
+    }
+    return list;
+  }
 
   // Una partita fra due rivali (mai il presidente): stesso motore a gol delle sue partite
   // (poisson sulla differenza di forza), poi 3/1/0 SOLO in base al risultato reale — mai una
@@ -1751,14 +2045,23 @@
   // presidente sono già simulate a parte via simMatch, vedi creditRivalResult): a fine
   // stagione ogni rivale ha giocato le stesse partite di chiunque altro, punti reali.
   function simRivalRoundRobin(opps, drawBoost) {
+    // partite, vittorie e pareggi del girone fra rivali (rrP/rrW/rrD): servono alla classifica
+    // per mostrare G/V/N/P, non solo i punti (computeTable)
+    const tally = (home, away, gh, ga) => {
+      home.rrP = (home.rrP || 0) + 1; away.rrP = (away.rrP || 0) + 1;
+      if (gh > ga) home.rrW = (home.rrW || 0) + 1; else if (gh < ga) away.rrW = (away.rrW || 0) + 1;
+      else { home.rrD = (home.rrD || 0) + 1; away.rrD = (away.rrD || 0) + 1; }
+    };
     for (let i = 0; i < opps.length; i++) {
       for (let j = i + 1; j < opps.length; j++) {
         const m1 = simRivalMatch(opps[i].effS, opps[j].effS, drawBoost);
         opps[i].rrPts += m1.gf > m1.ga ? 3 : m1.gf === m1.ga ? 1 : 0; opps[i].rrGF += m1.gf; opps[i].rrGA += m1.ga;
         opps[j].rrPts += m1.ga > m1.gf ? 3 : m1.ga === m1.gf ? 1 : 0; opps[j].rrGF += m1.ga; opps[j].rrGA += m1.gf;
+        tally(opps[i], opps[j], m1.gf, m1.ga);
         const m2 = simRivalMatch(opps[j].effS, opps[i].effS, drawBoost);
         opps[j].rrPts += m2.gf > m2.ga ? 3 : m2.gf === m2.ga ? 1 : 0; opps[j].rrGF += m2.gf; opps[j].rrGA += m2.ga;
         opps[i].rrPts += m2.ga > m2.gf ? 3 : m2.ga === m2.gf ? 1 : 0; opps[i].rrGF += m2.ga; opps[i].rrGA += m2.gf;
+        tally(opps[j], opps[i], m2.gf, m2.ga);
       }
     }
   }
@@ -1768,12 +2071,38 @@
   function creditRivalResult(opp, myGf, myGa) {
     opp.vsPts += myGa > myGf ? 3 : myGa === myGf ? 1 : 0;
     opp.vsGF += myGa; opp.vsGA += myGf;
+    opp.vsP = (opp.vsP || 0) + 1;
+    if (myGa > myGf) opp.vsW = (opp.vsW || 0) + 1; else if (myGa === myGf) opp.vsD = (opp.vsD || 0) + 1;
   }
 
   // `sharedOpps`/`sharedFixtures` (opzionali): quando l'host multiplayer li passa già pronti
   // (griglia condivisa umani+bot, calendario coordinato — vedi buildMultiplayerFixtures),
   // startSeason li usa al posto di generarseli da solo con rivals()/simRivalRoundRobin. Tutto
   // il resto (reset statistiche, budget, coppe, obiettivo di stagione) resta identico.
+  // La rincorsa: quando lo stesso club vince il campionato più volte di fila senza salire
+  // (di fatto: solo in Serie A, sotto il titolo vale sempre la promozione), le rivali non
+  // restano a guardare. Per ogni titolo consecutivo (ctx.dominance, aggiornato in advance,
+  // massimo 4) le prime sei per forza guadagnano, per la stagione che comincia, 1 punto più un
+  // quarto del divario fra la rosa del presidente e la rivale più forte (fino a +12: al
+  // quarto titolo di fila il divario è colmato); le altre un terzo di quel rinforzo. Il
+  // margine cala di un gradino ogni anno senza titolo e si azzera cambiando categoria. È un rinforzo di stagione, scritto su ctx.opps (quindi visibile nelle
+  // aspettative e in classifica), non su POOLS: la forza di base dei club segue la sua strada.
+  // Senza, i rivali avevano un tetto a 99 mentre la rosa del presidente può superare il 105:
+  // dal terzo-quarto anno di Serie A lo scudetto arrivava quasi d'ufficio (misurato: 79% dei
+  // campionati giocati, 2 trofei a stagione) e gli ultimi anni di carriera non avevano storia.
+  const CHASE_TOP = 6, CHASE_STEP = 1, CHASE_MAX = 4, CHASE_CAP = 12;
+  function rivalChase(ctx) {
+    const out = new Map();
+    const dom = clamp(ctx.dominance || 0, 0, CHASE_MAX);
+    if (!dom) return out;
+    const sorted = rivals(ctx).slice().sort((a, b) => b.s - a.s);
+    if (!sorted.length) return out;
+    const gap = Math.max(0, squadStr(ctx) + mgrBonus(ctx) + diffOf(null, ctx).teamEffDelta - sorted[0].s);
+    const top = Math.min(CHASE_CAP, dom * CHASE_STEP + gap * 0.25 * dom);
+    sorted.forEach((o, i) => out.set(o, Math.round((i < CHASE_TOP ? top : top / 3) * 10) / 10));
+    return out;
+  }
+
   function startSeason(ctx = S, sharedOpps = null, sharedFixtures = null) {
     if (!isClubCtx(ctx)) ctx = S;
     const local = ctx === S;
@@ -1786,18 +2115,25 @@
     ctx._motmSnapshot = {};
     ctx._playoffState = null;
     ctx._congestion = 0;
-    if (ctx.budget < 0) { ctx.budget = Math.round(ctx.budget * 0.6); if (local) toast('Il debito di inizio stagione si riduce del 40%: ora sei a ' + fmtMoney(ctx.budget) + '.'); }
+    // Una volta sola per stagione: senza questo controllo, ogni tentativo fallito di iniziare
+    // (rosa corta, cassa sotto il monte ingaggi) scontava un altro 40%, e bastava premere il
+    // bottone più volte per azzerare il debito.
+    if (ctx.budget < 0 && ctx._debtReliefSeason !== ctx.season) { ctx._debtReliefSeason = ctx.season; ctx.budget = Math.round(ctx.budget * 0.6); if (local) toast('Il debito di inizio stagione si riduce del 40%: ora sei a ' + fmtMoney(ctx.budget) + '.'); }
     // Ultima chiamata per riscattare i prestiti dell'estate scorsa (bottone 💰 Riscatta
     // nella rosa, in sala del consiglio): chi non è stato riscattato torna al suo club ora.
     const loanedBack = ctx.squad.filter((p) => p.loan).map((p) => p.n);
     ctx.squad = ctx.squad.filter((p) => !p.loan);
     if (local && loanedBack.length) toast(loanedBack.join(', ') + ' torna' + (loanedBack.length === 1 ? '' : 'no') + ' al suo club, non riscattat' + (loanedBack.length === 1 ? 'o' : 'i') + '.');
-    if (ctx.squad.length < MIN_SQUAD) { if (local) { toast('Ti servono almeno ' + MIN_SQUAD + ' giocatori per iniziare la stagione. Ingaggia svincolati gratis se sei a corto.'); renderBoard(); } return; }
-    if (ctx.budget < kickoffBill(ctx)) { if (local) { toast('Ti mancano ' + fmtMoney(kickoffBill(ctx) - ctx.budget) + ' per il monte ingaggi. Vendi giocatori o trova soldi.'); renderBoard(); } return; }
+    // Valore di ritorno: null se la stagione è partita, altrimenti il motivo per cui non è
+    // partita ('squad' = rosa sotto il minimo, 'budget' = cassa sotto il monte ingaggi). Chi
+    // chiamava senza guardare il risultato continua a funzionare come prima.
+    if (ctx.squad.length < MIN_SQUAD) { if (local) { toast('Ti servono almeno ' + MIN_SQUAD + ' giocatori per iniziare la stagione. Ingaggia svincolati gratis se sei a corto.'); renderBoard(); } return 'squad'; }
+    if (ctx.budget < kickoffBill(ctx)) { if (local) { toast('Ti mancano ' + fmtMoney(kickoffBill(ctx) - ctx.budget) + ' per il monte ingaggi. Vendi giocatori o trova soldi.'); renderBoard(); } return 'budget'; }
     ctx.budget -= kickoffBill(ctx);
     ctx.sent = clamp(ctx.sent + TICKETS[ctx.ticket].sent, 0, 100);
     ctx.seasonActive = true; ctx.winterDone = false; ctx._janCands = null; ctx._janSwitchUsed = false; ctx._janMgrCands = null;
     ctx.played = 0; ctx.pts = 0; ctx.gf = 0; ctx.ga = 0; ctx.wins = 0; ctx.results = []; ctx.last5 = []; ctx.form = 0;
+    ctx.cupResults = [];
     ctx._recapCountSeason = 0;
     // Chi è in panchina ORA, per il resoconto di fine stagione (endSeason) — se a gennaio ne
     // arriva un altro, il suo nome si aggiunge qui invece di sostituirlo: il resoconto deve
@@ -1828,7 +2164,9 @@
     } else {
       const usedMgrNames = new Set(ctx.manager && ctx.manager.n ? [ctx.manager.n] : []);
       const mgrRegistry = ctx._mgrByClub || (ctx._mgrByClub = {});
-      ctx.opps = rivals(ctx).map((o) => ({ name: o.n, s: o.s, effS: clamp(o.s + gaussInt(0, 8), 30, 99), rrPts: 0, rrGF: 0, rrGA: 0, vsPts: 0, vsGF: 0, vsGA: 0, mgr: managerForClub(o.n, 0, ctx, usedMgrNames, mgrRegistry), fmt: randomFmt(), personality: personalityFor(o) }));
+      const chase = rivalChase(ctx);
+      ctx.opps = rivals(ctx).map((o) => { const up = chase.get(o) || 0; return { name: o.n, s: o.s + up, effS: clamp(o.s + up + gaussInt(0, 8), 30, 99 + up), rrPts: 0, rrGF: 0, rrGA: 0, vsPts: 0, vsGF: 0, vsGA: 0, mgr: managerForClub(o.n, 0, ctx, usedMgrNames, mgrRegistry), fmt: randomFmt(), personality: personalityFor(o) }; });
+      if (local && chase.size) toast('📈 Dopo ' + (ctx.dominance === 1 ? 'il tuo titolo' : 'i tuoi ' + ctx.dominance + ' titoli di fila') + ' le rivali di vertice hanno investito per colmare il divario.');
       simRivalRoundRobin(ctx.opps, RIVAL_DRAW_BOOST[ctx.div]);
       const fx = [];
       ctx.opps.forEach((o, i) => { fx.push({ opp: i, home: true }); fx.push({ opp: i, home: false }); });
@@ -1858,6 +2196,7 @@
       show('owSeasonScreen'); $('owLog').innerHTML = ''; renderHud(); renderCups(); renderSeasonTarget(); renderScouting(); saveGame();
       toast('🎯 Obiettivo di stagione: ' + ctx.seasonTargetInfo.label + '.');
     }
+    return null;
   }
 
   // L'obiettivo che la proprietà/i tifosi si aspettano per la stagione appena iniziata,
@@ -2038,8 +2377,9 @@
       if (res === 'W') rec.w++; else if (res === 'D') rec.d++; else rec.l++;
       derbyRecord = Object.assign({}, rec);
     }
-    const row = { mw: fx.mw, opp: opp.name, oppPersonality: opp.personality, home: fx.home, gf, ga, res, goalsFor, goalsAgainst, events: lineup.events, derby, derbyRecord };
+    const row = { comp: 'league', mw: fx.mw, opp: opp.name, oppPersonality: opp.personality, home: fx.home, gf, ga, res, goalsFor, goalsAgainst, events: lineup.events, derby, derbyRecord };
     ctx.results.push(row);
+    updateMatchRecords(ctx, row);
     // Durante "Simula fino a fine stagione" (BULK_SIM) saltiamo la scrittura DOM partita per
     // partita (fino a 46 volte in un colpo solo): computeTable() aggiorna comunque lo stato
     // (serve subito dopo per le coppe/il traguardo stagione), il log/HUD si ricostruiscono
@@ -2212,6 +2552,15 @@
   // quello attivo, quindi si scartano a favore dell'altra opzione (o l'evento passa senza
   // effetto meccanico, restando comunque annotato). Gli eventi senza scelte usano sempre solo
   // campi numerici semplici, mai `apply` — sicuri da applicare così come sono.
+  // Quanto vale in euro un effetto `budgetPct` di un evento: una percentuale della cassa, ma
+  // calcolata sul suo valore ASSOLUTO — con la cassa in rosso il prodotto diretto invertiva il
+  // segno (un contributo dello sponsor aumentava il debito, una spesa lo riduceva). Con la
+  // cassa a zero non c'è nulla su cui calcolare la percentuale: l'effetto economico è nullo.
+  function narrativeBudgetDelta(budget, pct) {
+    const v = Math.round(Math.abs(budget || 0) * pct);
+    return Number.isFinite(v) ? v : 0;
+  }
+
   function autoResolveNarrativeEvent(ev, ctx) {
     const built = typeof ev.build === 'function' ? ev.build(ctx) : null;
     const text = typeof ev.text === 'function' ? ev.text(ctx, built) : ev.text;
@@ -2223,7 +2572,7 @@
     }
     if (eff) {
       if (eff.sent) ctx.sent = clamp(ctx.sent + eff.sent, 0, 100);
-      if (eff.budgetPct) ctx.budget += Math.round(ctx.budget * eff.budgetPct);
+      if (eff.budgetPct) ctx.budget += narrativeBudgetDelta(ctx.budget, eff.budgetPct);
       if (eff.ownerRating) ctx.ownerRating = clamp(ctx.ownerRating + eff.ownerRating, 0, 100);
       if (eff.fanbaseDelta) ctx.fanbase = Math.round(clamp(ctx.fanbase + eff.fanbaseDelta, 0.7, 3.0) * 100) / 100;
       if (eff.prestige) ctx.prestige += eff.prestige;
@@ -2245,10 +2594,27 @@
     // fortuna no.
     const bite = (v) => (S.hardcore && v < 0 ? v * 1.35 : v);
     if (eff.sent) S.sent = clamp(S.sent + bite(eff.sent), 0, 100);
-    if (eff.budgetPct) S.budget += Math.round(S.budget * bite(eff.budgetPct));
+    if (eff.budgetPct) S.budget += narrativeBudgetDelta(S.budget, bite(eff.budgetPct));
     if (eff.ownerRating) S.ownerRating = clamp(S.ownerRating + bite(eff.ownerRating), 0, 100);
     if (eff.fanbaseDelta) S.fanbase = Math.round(clamp(S.fanbase + bite(eff.fanbaseDelta), 0.7, 3.0) * 100) / 100;
     if (eff.prestige) S.prestige += bite(eff.prestige);
+  }
+
+  // Ogni gara fuori dal campionato (Coppa Italia, coppe europee, playoff) finisce in
+  // ctx.cupResults, nell'ordine in cui è stata giocata: stessa forma essenziale delle righe di
+  // ctx.results ({ comp, opp, gf, ga, res }) più il turno e la giornata di campionato dopo la
+  // quale si è giocata (afterMw), così l'interfaccia può intrecciarle con il campionato in una
+  // striscia di forma unica. comp: 'league' (solo in ctx.results), 'nat', 'ucl', 'uel', 'conf',
+  // 'playoff'. ctx.results resta di sole gare di campionato: la sua lunghezza è il calendario.
+  function noteCupResult(ctx, comp, round, opp, gf, ga, leg) {
+    if (!Array.isArray(ctx.cupResults)) ctx.cupResults = [];
+    ctx.cupResults.push({ comp, round, leg: leg || null, opp, gf, ga, res: gf > ga ? 'W' : gf < ga ? 'L' : 'D', afterMw: ctx.played || 0 });
+  }
+  // Campionato e coppe in un'unica sequenza cronologica (la più recente in fondo).
+  function allResults(ctx = S) {
+    const league = (ctx.results || []).map((r, i) => ({ comp: r.comp || 'league', opp: r.opp, gf: r.gf, ga: r.ga, res: r.res, home: r.home, order: (i + 1) * 2 }));
+    const cups = (ctx.cupResults || []).map((r, i) => ({ comp: r.comp, round: r.round, leg: r.leg, opp: r.opp, gf: r.gf, ga: r.ga, res: r.res, order: r.afterMw * 2 + 1 + i / 1000 }));
+    return league.concat(cups).sort((a, b) => a.order - b.order);
   }
 
   /* ---------------- coppe (checkpoint scalati sulla lunghezza di stagione) ---------------- */
@@ -2326,11 +2692,16 @@
     const wonLeg = Math.random() < winP;
     let { gf, ga } = cupMatchScore(diff, ctx);
     if (legs === 1) {
-      // gara secca: manteniamo il risultato coerente con l'esito (parità = rigori)
+      // gara secca: manteniamo il risultato coerente con l'esito (parità = rigori vinti da noi).
+      // Se invece l'esito sorteggiato è l'eliminazione e il punteggio è in parità, l'avversario
+      // la decide ai supplementari: prima ogni pareggio valeva come passaggio del turno a
+      // prescindere da wonLeg, e in coppa si avanzava molto più spesso del dovuto.
       if (wonLeg && gf < ga) { const t = gf; gf = ga; ga = t; }
       else if (!wonLeg && gf > ga) { const t = gf; gf = ga; ga = t; }
+      else if (!wonLeg && gf === ga) ga++;
     }
     cup.aggGF += gf; cup.aggGA += ga;
+    noteCupResult(ctx, 'nat', cup.rounds[i], oppName, gf, ga, legs > 1 ? (cup.legAt === 0 ? 'Andata' : 'Ritorno') : null);
     const cupLineup = pickMatchLineup(ctx.squad, ctx);
     registerAppearances(cupLineup, ctx);
     const golsF = genGoals(gf, true, null, cupLineup, ctx), golsA = genGoals(ga, false, oppName, null, ctx);
@@ -2376,6 +2747,7 @@
     else if (won && gf <= ga) gf = ga + 1;
     else if (!won && gf >= ga) ga = gf + 1;
     cup.leagueAt++;
+    noteCupResult(ctx, ctx.euroComp, 'Fase campionato', oppName, gf, ga, null);
     cup.leaguePts += won ? 3 : draw ? 1 : 0;
     cup.leagueGF += gf; cup.leagueGA += ga;
     (cup.leaguePath || (cup.leaguePath = [])).push({ mw: cup.leagueAt, opp: oppName, gf, ga, res: won ? 'W' : draw ? 'D' : 'L', ptsSoFar: cup.leaguePts });
@@ -2411,6 +2783,7 @@
     const diff = teamEff(ctx) - oppStr;
     const { gf, ga } = cupMatchScore(diff, ctx);
     cup.playoffAggGF += gf; cup.playoffAggGA += ga;
+    noteCupResult(ctx, ctx.euroComp, 'Spareggio', oppName, gf, ga, cup.playoffLegAt === 0 ? 'Andata' : 'Ritorno');
     const lineup = pickMatchLineup(ctx.squad, ctx);
     registerAppearances(lineup, ctx);
     const golsF = genGoals(gf, true, null, lineup, ctx), golsA = genGoals(ga, false, oppName, null, ctx);
@@ -2449,11 +2822,16 @@
     const wonLeg = Math.random() < winP;
     let { gf, ga } = cupMatchScore(diff, ctx);
     if (legs === 1) {
-      // gara secca: manteniamo il risultato coerente con l'esito (parità = rigori)
+      // gara secca: manteniamo il risultato coerente con l'esito (parità = rigori vinti da noi).
+      // Se invece l'esito sorteggiato è l'eliminazione e il punteggio è in parità, l'avversario
+      // la decide ai supplementari: prima ogni pareggio valeva come passaggio del turno a
+      // prescindere da wonLeg, e in coppa si avanzava molto più spesso del dovuto.
       if (wonLeg && gf < ga) { const t = gf; gf = ga; ga = t; }
       else if (!wonLeg && gf > ga) { const t = gf; gf = ga; ga = t; }
+      else if (!wonLeg && gf === ga) ga++;
     }
     cup.aggGF += gf; cup.aggGA += ga;
+    noteCupResult(ctx, compKey, cup.rounds[i], oppName, gf, ga, legs > 1 ? (cup.legAt === 0 ? 'Andata' : 'Ritorno') : null);
     const cupLineup = pickMatchLineup(ctx.squad, ctx);
     registerAppearances(cupLineup, ctx);
     const golsF = genGoals(gf, true, null, cupLineup, ctx), golsA = genGoals(ga, false, oppName, null, ctx);
@@ -2507,6 +2885,125 @@
       const a = ACHIEVEMENTS.find((x) => x.key === key);
       if (a) toast('🏅 Traguardo sbloccato: ' + a.title, 'success');
     }
+  }
+
+  /* ---------------- primati del club ----------------
+     ctx.records: i record di tutta la carriera, aggiornati dal motore partita dopo partita
+     (updateMatchRecords) e a fine stagione (updateSeasonRecords). Solo dati: l'interfaccia può
+     mostrarli con clubRecordsList(ctx), che restituisce righe già pronte { icon, label, value,
+     detail }. Ogni primato vale per il CAMPIONATO (le coppe hanno la loro bacheca), tranne i
+     gol stagionali del singolo, che contano tutte le competizioni come le statistiche di rosa.
+       bestWin / worstLoss : { gf, ga, opp, home, season, div }
+       winStreak / unbeaten: { best, season, div, cur }   (cur = serie aperta, a cavallo di stagione)
+       points / goalsFor / goalsAgainst / income / attendance : { v, season, div }
+       topScorer           : { n, v, season, div }
+       bestFinish          : { pos, div, season }         (categoria più alta, poi posizione)
+       sale                : { n, fee, club, season }     (lo aggiorna chi vende: noteSaleRecord) */
+  function ensureRecords(ctx = S) {
+    if (!ctx) return null;
+    const r = (ctx.records && typeof ctx.records === 'object') ? ctx.records : (ctx.records = {});
+    ['bestWin', 'worstLoss', 'points', 'goalsFor', 'goalsAgainst', 'income', 'attendance', 'topScorer', 'bestFinish', 'sale'].forEach((k) => { if (r[k] === undefined || (r[k] !== null && typeof r[k] !== 'object')) r[k] = null; });
+    ['winStreak', 'unbeaten'].forEach((k) => { if (!r[k] || typeof r[k] !== 'object') r[k] = { best: 0, season: null, div: null, cur: 0 }; });
+    // carriere iniziate prima dei primati: lo stadio aveva già il suo record di presenze
+    if (!r.attendance && ctx.stadiumRecordAtt > 0) r.attendance = { v: ctx.stadiumRecordAtt, season: ctx.stadiumRecordSeason, div: null };
+    return r;
+  }
+
+  // Dopo ogni giornata di campionato: vittoria più larga, sconfitta più pesante, serie aperte.
+  function updateMatchRecords(ctx, row) {
+    const r = ensureRecords(ctx);
+    const snap = () => ({ gf: row.gf, ga: row.ga, opp: row.opp, home: !!row.home, season: ctx.season, div: ctx.div });
+    const margin = row.gf - row.ga;
+    if (margin > 0 && (!r.bestWin || margin > r.bestWin.gf - r.bestWin.ga || (margin === r.bestWin.gf - r.bestWin.ga && row.gf > r.bestWin.gf))) r.bestWin = snap();
+    if (margin < 0 && (!r.worstLoss || margin < r.worstLoss.gf - r.worstLoss.ga || (margin === r.worstLoss.gf - r.worstLoss.ga && row.ga > r.worstLoss.ga))) r.worstLoss = snap();
+    const bump = (st, on) => {
+      st.cur = on ? (st.cur || 0) + 1 : 0;
+      if (st.cur > (st.best || 0)) { st.best = st.cur; st.season = ctx.season; st.div = ctx.div; }
+    };
+    bump(r.winStreak, row.res === 'W');
+    bump(r.unbeaten, row.res !== 'L');
+  }
+
+  // A fine stagione: i primati "di annata". Restituisce quelli battuti quest'anno, già
+  // raccontati ({ icon, label, value }), per il riepilogo di fine stagione (ctx._end.newRecords).
+  // Nella prima stagione tutto sarebbe un record: i valori si registrano ma non si annunciano.
+  function updateSeasonRecords(ctx, info) {
+    const r = ensureRecords(ctx);
+    const out = [];
+    const d = divOf(ctx);
+    const announce = (ctx.history || []).length > 0;
+    const stamp = (v) => ({ v, season: ctx.season, div: ctx.div });
+    const higher = (key, v, icon, label, fmt) => {
+      if (!(v > 0) || (r[key] && r[key].v >= v)) return;
+      r[key] = stamp(v);
+      if (announce) out.push({ icon, label, value: fmt ? fmt(v) : String(v) });
+    };
+    higher('points', ctx.pts, '📊', 'Record di punti in campionato');
+    higher('goalsFor', ctx.gf, '⚽', 'Record di gol segnati in campionato');
+    higher('income', info.net, '💶', 'Miglior incasso di stagione', fmtMoney);
+    higher('attendance', info.att, '🏟️', 'Record di presenze medie', (v) => v.toLocaleString('it-IT'));
+    // meno gol subiti: solo a campionato completo, e si confronta la media a partita perché
+    // le categorie hanno un numero di giornate diverso
+    if (ctx.played >= gp(ctx)) {
+      const perGame = ctx.ga / Math.max(1, ctx.played);
+      if (!r.goalsAgainst || perGame < r.goalsAgainst.v / Math.max(1, r.goalsAgainst.played || gp(ctx))) {
+        r.goalsAgainst = { v: ctx.ga, played: ctx.played, season: ctx.season, div: ctx.div };
+        if (announce) out.push({ icon: '🧱', label: 'Miglior difesa di sempre', value: ctx.ga + ' gol subiti in ' + ctx.played + ' partite' });
+      }
+    }
+    const top = ctx.squad.slice().sort((a, b) => (b.seasonGoals || 0) - (a.seasonGoals || 0))[0];
+    if (top && (top.seasonGoals || 0) > 0 && (!r.topScorer || top.seasonGoals > r.topScorer.v)) {
+      r.topScorer = { n: top.n, v: top.seasonGoals, season: ctx.season, div: ctx.div };
+      if (announce) out.push({ icon: '👟', label: 'Record di gol in una stagione', value: top.n + ', ' + top.seasonGoals });
+    }
+    if (!r.bestFinish || ctx.div > r.bestFinish.div || (ctx.div === r.bestFinish.div && info.pos < r.bestFinish.pos)) {
+      r.bestFinish = { pos: info.pos, div: ctx.div, season: ctx.season };
+      if (announce) out.push({ icon: '🏅', label: 'Miglior piazzamento di sempre', value: ord(info.pos) + ' in ' + d.name });
+    }
+    return out;
+  }
+
+  // Da chiamare quando un giocatore viene venduto (offerta accettata o cessione immediata):
+  // tiene il primato della cessione più ricca. Restituisce true se è un nuovo record.
+  function noteSaleRecord(p, fee, club, ctx = S) {
+    const r = ensureRecords(ctx);
+    if (!p || !(fee > 0) || (r.sale && r.sale.fee >= fee)) return false;
+    r.sale = { n: p.n, fee, club: club || null, season: ctx.season };
+    return true;
+  }
+
+  // I primati in righe pronte da mostrare, nell'ordine in cui ha senso leggerli. Solo quelli
+  // già stabiliti: una carriera appena iniziata restituisce un elenco vuoto.
+  function clubRecordsList(ctx = S) {
+    const r = ensureRecords(ctx);
+    if (!r) return [];
+    const when = (x) => 'Stagione ' + x.season + (x.div != null && DIVS[x.div] ? ' · ' + DIVS[x.div].name : '');
+    const rows = [];
+    const add = (icon, label, value, detail) => rows.push({ icon, label, value, detail });
+    if (r.bestFinish) add('🏅', 'Miglior piazzamento', ord(r.bestFinish.pos) + ' in ' + DIVS[r.bestFinish.div].name, 'Stagione ' + r.bestFinish.season);
+    if (r.points) add('📊', 'Più punti in un campionato', String(r.points.v), when(r.points));
+    if (r.goalsFor) add('⚽', 'Più gol segnati in un campionato', String(r.goalsFor.v), when(r.goalsFor));
+    if (r.goalsAgainst) add('🧱', 'Miglior difesa', r.goalsAgainst.v + ' gol subiti', when(r.goalsAgainst));
+    if (r.bestWin) add('🎉', 'Vittoria più larga', r.bestWin.gf + '-' + r.bestWin.ga + ' ' + (r.bestWin.home ? 'in casa con' : 'in casa di') + ' ' + r.bestWin.opp, when(r.bestWin));
+    if (r.worstLoss) add('😬', 'Sconfitta più pesante', r.worstLoss.gf + '-' + r.worstLoss.ga + ' ' + (r.worstLoss.home ? 'in casa con' : 'in casa di') + ' ' + r.worstLoss.opp, when(r.worstLoss));
+    if (r.winStreak.best >= 2) add('🔥', 'Vittorie consecutive', String(r.winStreak.best), when(r.winStreak));
+    if (r.unbeaten.best >= 2) add('🛡️', 'Partite senza sconfitte', String(r.unbeaten.best), when(r.unbeaten));
+    if (r.topScorer) add('👟', 'Più gol in una stagione', r.topScorer.n + ', ' + r.topScorer.v, when(r.topScorer));
+    if (r.attendance) add('🏟️', 'Record di presenze medie', r.attendance.v.toLocaleString('it-IT'), r.attendance.season != null ? when(r.attendance) : '');
+    if (r.income) add('💶', 'Miglior incasso di stagione', fmtMoney(r.income.v), when(r.income));
+    if (r.sale) add('💰', 'Cessione più ricca', r.sale.n + ', ' + fmtMoney(r.sale.fee), (r.sale.club ? 'al ' + r.sale.club + ' · ' : '') + 'Stagione ' + r.sale.season);
+    return rows;
+  }
+
+  // I migliori di sempre con la maglia del club, fra chi è in rosa e chi se n'è andato
+  // (ctx.alumni): `by` è 'goals' (default), 'apps', 'assists' o 'cleanSheets'.
+  function clubLegends(ctx = S, by = 'goals', n = 5) {
+    const season = { goals: 'seasonGoals', apps: 'seasonApps', assists: 'seasonAssists', cleanSheets: 'seasonCleanSheets' }[by] || 'seasonGoals';
+    const career = { goals: 'careerGoals', apps: 'careerApps', assists: 'careerAssists', cleanSheets: 'careerCleanSheets' }[by] || 'careerGoals';
+    const key = { seasonGoals: 'goals', seasonApps: 'apps', seasonAssists: 'assists', seasonCleanSheets: 'cleanSheets' }[season];
+    const now = (ctx.squad || []).map((p) => ({ n: p.n, pos: p.pos, nat: p.nat, v: (p[career] || 0) + (p[season] || 0), current: true }));
+    const past = (ctx.alumni || []).map((a) => ({ n: a.n, pos: a.pos, nat: a.nat, v: a[key] || 0, current: false }));
+    return now.concat(past).filter((x) => x.v > 0).sort((a, b) => b.v - a.v).slice(0, n);
   }
 
   /* ---------------- fine stagione ---------------- */
@@ -2629,6 +3126,7 @@
         if (!won) eliminated = true;
       }
     }
+    if (entry) noteCupResult(ctx, 'playoff', step.stage, oppName, entry.gf, entry.ga, entry.leg || null);
     if (eliminated || pf.queue.length === 0) { pf.done = true; pf.won = !eliminated; }
     return { entry, done: pf.done, won: pf.won, eliminated };
   }
@@ -2713,7 +3211,11 @@
     const relegated = d.releg > 0 && pos > d.teams - d.releg;
     const title = pos === 1;
     const natWon = !!(ctx.cups.nat && ctx.cups.nat.won);
-    const natSF = !!(ctx.cups.nat && ctx.cups.nat.at >= 5 && !natWon);
+    // "Un bel percorso in coppa" = semifinale raggiunta. Il tabellone ha una lunghezza diversa
+    // per categoria (CUP_ROUNDS_BY_DIV): la semifinale è sempre il penultimo turno, non un
+    // indice fisso — con `at >= 5` in Serie A/B non scattava mai, e in Promozione scattava già
+    // agli ottavi.
+    const natSF = !!(ctx.cups.nat && !natWon && ctx.cups.nat.at >= Math.max(1, ctx.cups.nat.rounds.length - 2));
     const euroWon = !!(ctx.cups.euro && ctx.cups.euro.won);
     const ecPlaying = ctx.euro ? EURO_COMPS[ctx.euroComp] : null;
     // ----- soldi -----
@@ -2789,8 +3291,18 @@
     // a quanto la difficoltà scelta rende i tifosi/la proprietà più o meno pazienti -----
     const target = ctx.seasonTargetInfo || seasonTarget(ctx);
     const patience = diffOf(null, ctx).patienceMult || 1;
-    const targetMet = target.key === 'vertice' ? title
-      : target.key === 'playoff' ? promoted
+    // L'esito deve corrispondere a quello che l'etichetta dell'obiettivo promette (seasonTarget):
+    //  - "vincere lo scudetto" (Serie A, favoriti assoluti): il titolo;
+    //  - "lottare per un posto in Europa": un posto in Europa (o il titolo);
+    //  - "lottare per la vittoria del campionato" / "vincere il campionato": il titolo, o
+    //    comunque la promozione (diretta o dai playoff);
+    //  - "giocarsi la promozione nei playoff": arrivare almeno in zona playoff.
+    // Prima "vertice" voleva SEMPRE il primo posto (anche con l'etichetta "un posto in Europa",
+    // anche da secondi promossi direttamente) e "playoff" voleva la promozione: obiettivi
+    // dichiarati centrati che a fine anno risultavano mancati, con la relativa stangata di umore.
+    const reachedPlayoffZone = pos <= d.promoted + (d.playoff || 0);
+    const targetMet = target.key === 'vertice' ? (title || (d.promoted ? promoted : (target.exp > 1 && !!qualTier)))
+      : target.key === 'playoff' ? (promoted || reachedPlayoffZone)
       : target.key === 'salvezza' ? !relegated
       : pos <= target.exp + 3;
     bump((targetMet ? 'Obiettivo di stagione centrato: ' : 'Obiettivo di stagione mancato: ') + target.label, Math.round((targetMet ? 6 : -8) * patience));
@@ -2832,7 +3344,11 @@
     // non è già scattato un destino più grave (esonero/amministrazione controllata).
     let investorCompleted = null, investorFailedName = null, investorFailedPenalty = 0;
     if (ctx.investorDeal) {
-      if (ctx.div >= ctx.investorDeal.targetDiv) { investorCompleted = ctx.investorDeal; ctx.budget += investorCompleted.completionBonus; ctx.investorDeal = null; }
+      // La categoria che conta è quella in cui il club giocherà DOPO questa stagione: ctx.div
+      // cambia solo in advance(), quindi una promozione centrata proprio nell'anno della scadenza
+      // risultava "obiettivo mancato" (con tanto di penale) pur avendolo raggiunto sul campo.
+      const divAfter = clamp(ctx.div + (promoted ? 1 : 0) - (relegated ? 1 : 0), 0, DIVS.length - 1);
+      if (divAfter >= ctx.investorDeal.targetDiv) { investorCompleted = ctx.investorDeal; ctx.budget += investorCompleted.completionBonus; ctx.investorDeal = null; }
       else if (ctx.season >= ctx.investorDeal.deadlineSeason) {
         // Mancare l'obiettivo non porta più alla cessione forzata del club (troppo punitivo,
         // e comunque un destino che si vedeva solo a fine stagione): il fondo si ritira e
@@ -2878,6 +3394,8 @@
     // di arrivo): il resoconto di fine carriera deve mostrarli tutti, non solo l'ultimo in
     // panchina a fine anno.
     const seasonMgrs = (ctx._seasonManagers && ctx._seasonManagers.length) ? ctx._seasonManagers : (ctx.manager ? [ctx.manager.n] : []);
+    const newRecords = updateSeasonRecords(ctx, { pos, net, att });
+    if (local && newRecords.length) toast('📈 Nuov' + (newRecords.length === 1 ? 'o primato' : 'i primati') + ' del club: ' + newRecords.map((x) => x.label.toLowerCase() + ' (' + x.value + ')').join(', ') + '.', 'success');
     ctx.history.push({ season: ctx.season, div: d.name, pos, promoted, relegated, trophies, net, worth, budget: ctx.budget, ppg: Math.round((ctx.pts / Math.max(1, ctx.played)) * 100) / 100, mgr: seasonMgrs.length ? seasonMgrs.join(' → ') : null });
     const statement = [
       ['Incasso stadio (' + att.toLocaleString('it-IT') + ' medi)', matchday],
@@ -2928,6 +3446,8 @@
       // Eventi narrativi auto-risolti in multiplayer (autoResolveNarrativeEvent): non hanno
       // avuto un popup, ma restano qui per non sparire dal resoconto di fine stagione.
       mpEvents: ctx._mpEvents || [],
+      // primati del club battuti quest'anno: [{ icon, label, value }], vuoto se nessuno
+      newRecords,
     };
     ctx._mpEvents = [];
     if (local) renderSeasonEnd();
@@ -2950,7 +3470,73 @@
     return items.length - 1;
   }
 
-  function simulatePyramidMovement(ctx = S) {
+  // Gaussiana continua (gaussInt arrotonda all'intero, qui servono i decimi).
+  function gaussFloat(sd) { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v) * sd; }
+  const round1 = (x) => Math.round(x * 10) / 10;
+
+  // Forza di un club che cambia categoria, ragionata in "scarti" dal profilo dei due gironi
+  // (POOL_PROFILE) invece che dimezzando la distanza dalla media: una neopromossa arriva nella
+  // parte bassa della nuova categoria (la più forte di tutte poco sotto metà classifica), una
+  // retrocessa riparte fra le favorite di quella sotto. La vecchia formula faceva l'opposto di
+  // quel che succede davvero: la prima della B entrava in A a +5 sopra la media (più forte di
+  // mezza Serie A), l'ultima della A scendeva in B come la più debole del girone.
+  function promotedStrength(s, fromDiv) {
+    const lo = POOL_PROFILE[fromDiv], up = POOL_PROFILE[fromDiv + 1];
+    const z = clamp((s - lo.mean) / (lo.sd || 1), -1, 3);
+    return round1(clamp(up.mean + up.sd * (-1.2 + 0.35 * z), 30, 99));
+  }
+  function relegatedStrength(s, fromDiv) {
+    const up = POOL_PROFILE[fromDiv], lo = POOL_PROFILE[fromDiv - 1];
+    const z = clamp((s - up.mean) / (up.sd || 1), -3, 1);
+    return round1(clamp(lo.mean + lo.sd * (1.0 + 0.5 * z), 30, 99));
+  }
+
+  // Le altre cinque categorie non giocano un campionato vero, ma non restano ferme: ogni club
+  // ha la sua annata (forza di base + un po' di sorte, `perf`), e da quella "classifica" escono
+  // gli stessi piccoli passi di forza che evolveRivalStrengths dà ai rivali veri del presidente
+  // (chi vince cresce, chi affonda cala) e, in simulatePyramidMovement, chi sale e chi scende.
+  // Prima salivano SEMPRE i più forti sulla carta e scendevano sempre i più deboli: un girone
+  // perdeva ogni anno testa e coda, e in una decina di stagioni tutti i club di una categoria
+  // finivano con la stessa identica forza (misurato a fine carriera: scarto 0.0 in Eccellenza e
+  // Serie D, contro ~5 alla partenza). In più tutti i club della piramide hanno una piccola
+  // oscillazione annuale: le gerarchie cambiano lentamente anche dove il presidente non gioca.
+  function evolveOtherDivisions(ctx = S) {
+    const perf = new Map();
+    POOLS.forEach((pool, div) => {
+      const d = DIVS[div];
+      pool.forEach((c) => { c.s = round1(clamp(c.s + gaussFloat(0.5), 30, 99)); perf.set(c, c.s + gaussFloat(3.2)); });
+      if (div === ctx.div) return;   // qui la classifica è quella vera, già applicata
+      const order = pool.slice().sort((a, b) => perf.get(b) - perf.get(a));
+      order.forEach((c, i) => {
+        const posN = i + 1;
+        const drift = posN === 1 ? 0.8 : posN <= 3 ? 0.4 : (d.releg && posN > pool.length - d.releg) ? -0.7 : posN > pool.length * 0.7 ? -0.2 : 0;
+        if (drift) c.s = round1(clamp(c.s + drift, d.avg - 20, d.avg + 22));
+      });
+    });
+    return perf;
+  }
+
+  // Riporta dolcemente ogni girone verso il suo profilo di partenza (media e scarto di forza):
+  // metà della distanza ogni estate, mantenendo l'ordine e le distanze relative fra i club.
+  // È la rete di sicurezza che tiene i campionati vivi per tutta la carriera, qualunque cosa
+  // facciano promozioni, retrocessioni e crescita dei singoli: né gironi appiattiti, né una
+  // categoria che anno dopo anno diventa tutta più forte o tutta più debole.
+  function rebalancePools() {
+    POOLS.forEach((pool, i) => {
+      if (pool.length < 4) return;
+      const prof = POOL_PROFILE[i];
+      const mean = pool.reduce((a, c) => a + c.s, 0) / pool.length;
+      const sd = Math.sqrt(pool.reduce((a, c) => a + (c.s - mean) * (c.s - mean), 0) / pool.length);
+      const k = sd > 0.05 ? clamp(1 + (prof.sd / sd - 1) * 0.5, 0.9, 1.35) : 1;
+      const target = mean + (prof.mean - mean) * 0.5;
+      pool.forEach((c) => { c.s = round1(clamp(target + (c.s - mean) * k, 30, 99)); });
+    });
+  }
+
+  function simulatePyramidMovement(ctx = S, perf = null) {
+    // `perf` (evolveOtherDivisions): l'annata di ogni club. Senza (chiamata diretta, test) si
+    // ripiega sulla sola forza di base, come una volta.
+    const rank = (c) => (perf && perf.has(c) ? perf.get(c) : c.s);
     for (let div = 1; div < DIVS.length; div++) {
       const upper = POOLS[div], lower = POOLS[div - 1];
       const releg = DIVS[div].releg || 0;
@@ -2968,7 +3554,7 @@
         ? upper.filter((c) => c.n !== ctx.club && c._seasonAt === ctx.season && c._seasonPos > DIVS[div].teams - releg)
         : [];
       if (relegated.length !== releg) {
-        const fallback = upper.filter((c) => !(ctx.div === div && c.n === ctx.club) && relegated.indexOf(c) === -1).sort((a, b) => a.s - b.s);
+        const fallback = upper.filter((c) => !(ctx.div === div && c.n === ctx.club) && relegated.indexOf(c) === -1).sort((a, b) => rank(a) - rank(b));
         relegated = relegated.concat(fallback.slice(0, releg - relegated.length));
       }
 
@@ -2981,7 +3567,7 @@
         }
       }
       if (promotedUp.length !== promo) {
-        const fallback = lower.filter((c) => !(ctx.div === div - 1 && c.n === ctx.club) && promotedUp.indexOf(c) === -1).sort((a, b) => b.s - a.s);
+        const fallback = lower.filter((c) => !(ctx.div === div - 1 && c.n === ctx.club) && promotedUp.indexOf(c) === -1).sort((a, b) => rank(b) - rank(a));
         promotedUp = promotedUp.concat(fallback.slice(0, promo - promotedUp.length));
       }
 
@@ -2990,13 +3576,15 @@
       relegated.slice(0, n).forEach((c) => {
         const i = upper.indexOf(c); if (i < 0) return;
         upper.splice(i, 1);
-        c.s = clamp(Math.round(DIVS[div - 1].avg + (c.s - DIVS[div].avg) * 0.5), DIVS[div - 1].avg - 12, DIVS[div - 1].avg + 14);
+        c.s = relegatedStrength(c.s, div);
+        delete c._seasonPos; delete c._seasonAt;   // il piazzamento valeva per la categoria appena lasciata
         lower.push(c);
       });
       promotedUp.slice(0, n).forEach((c) => {
         const i = lower.indexOf(c); if (i < 0) return;
         lower.splice(i, 1);
-        c.s = clamp(Math.round(DIVS[div].avg + (c.s - DIVS[div - 1].avg) * 0.5), DIVS[div].avg - 14, DIVS[div].avg + 10);
+        c.s = promotedStrength(c.s, div - 1);
+        delete c._seasonPos; delete c._seasonAt;
         upper.push(c);
       });
     }
@@ -3048,7 +3636,8 @@
     const rivalsBefore = {};
     (POOLS[ctx.div] || []).forEach((c) => { rivalsBefore[c.n] = c.s; });
     evolveRivalStrengths(ctx);
-    simulatePyramidMovement(ctx);
+    simulatePyramidMovement(ctx, evolveOtherDivisions(ctx));
+    rebalancePools();
     // Chi si è rinforzato di più nella categoria appena lasciata (0.5+ di forza guadagnata):
     // fa parte del riassunto "cosa è cambiato" mostrato a inizio stagione (renderBoard, ui.js).
     const risingRivals = (POOLS[ctx.div] || [])
@@ -3062,6 +3651,8 @@
       if (ctx.startDiv === 0) unlockAchievement(ctx, 'from_bottom');
     }
     ctx.promoStreak = e.promoted ? (ctx.promoStreak || 0) + 1 : 0;
+    // titoli consecutivi nella stessa categoria: alimenta la rincorsa delle rivali (rivalChase)
+    ctx.dominance = (e.promoted || e.relegated) ? 0 : e.title ? Math.min(CHASE_MAX, (ctx.dominance || 0) + 1) : Math.max(0, (ctx.dominance || 0) - 1);
     ctx.euro = !!ctx.euroCompNext && ctx.div === 5;
     ctx.euroComp = ctx.euro ? ctx.euroCompNext : null;
     // Mercato semi-realistico: si sblocca e si muove appena si mette piede in una categoria
@@ -3258,7 +3849,12 @@
       ctx.table.forEach((row) => {
         if (row.me) return;
         const otherHuman = humanCtxs.find((h) => h.club === row.name);
-        if (otherHuman) { row.pts = otherHuman.pts; row.gd = otherHuman.gf - otherHuman.ga; return; }
+        if (otherHuman) {
+          row.pts = otherHuman.pts; row.gd = otherHuman.gf - otherHuman.ga;
+          const hw = otherHuman.wins || 0, hd = otherHuman.pts - hw * 3;
+          row.played = otherHuman.played; row.w = hw; row.d = hd; row.l = otherHuman.played - hw - hd; row.gf = otherHuman.gf; row.ga = otherHuman.ga;
+          return;
+        }
         const bot = bots.find((b) => b.name === row.name);
         if (bot) { row.pts = bot.rrPts + bot.vsPts; row.gd = (bot.rrGF + bot.vsGF) - (bot.rrGA + bot.vsGA); }
       });
@@ -3391,8 +3987,30 @@
     // classifica finale dal giorno 1); i punti contro il presidente (vsPts/vsGF/vsGA) sono
     // invece reali e già certi non appena quella partita è stata giocata, niente da scalare.
     const f = clamp(ctx.played / gp(ctx), 0, 1);
-    const rows = ctx.opps.map((o) => ({ name: o.name, pts: Math.round(o.rrPts * f) + o.vsPts, gd: Math.round((o.rrGF - o.rrGA) * f) + (o.vsGF - o.vsGA), me: false, mgr: o.mgr }));
-    rows.push({ name: ctx.club, pts: ctx.pts, gd: ctx.gf - ctx.ga, me: true, mgr: ctx.manager });
+    // Ogni riga porta anche partite giocate, vittorie/pareggi/sconfitte e gol (played, w, d, l,
+    // gf, ga) oltre a pts e gd. Per i rivali la parte "girone" è scalata come i punti: le
+    // vittorie e i pareggi mostrati sono arrotondati in modo che 3·w + d dia sempre i punti in
+    // classifica; a campionato finito sono quelli veri. Stagioni iniziate prima di questa
+    // aggiunta (senza rrP/rrW/rrD) hanno played/w/d/l a null: l'interfaccia può ometterli.
+    const rows = ctx.opps.map((o) => {
+      const pts = Math.round(o.rrPts * f) + o.vsPts;
+      const gfRR = Math.round(o.rrGF * f), gdRR = Math.round((o.rrGF - o.rrGA) * f);
+      const row = { name: o.name, pts, gd: gdRR + (o.vsGF - o.vsGA), me: false, mgr: o.mgr, played: null, w: null, d: null, l: null, gf: gfRR + o.vsGF, ga: gfRR - gdRR + o.vsGA };
+      if (o.rrP != null) {
+        const vsP = o.vsP || 0, vsW = o.vsW || 0, vsD = o.vsD || 0;
+        const rrPts = pts - o.vsPts;
+        let pRR = Math.round(o.rrP * f);
+        let wRR = Math.min(Math.round((o.rrW || 0) * f), Math.floor(rrPts / 3));
+        let dRR = rrPts - wRR * 3;
+        // i pareggi non possono superare le partite rimaste: quel che avanza diventa vittorie
+        while (wRR + dRR > pRR && dRR >= 3) { dRR -= 3; wRR++; }
+        if (wRR + dRR > pRR) pRR = wRR + dRR;
+        row.played = pRR + vsP; row.w = wRR + vsW; row.d = dRR + vsD; row.l = row.played - row.w - row.d;
+      }
+      return row;
+    });
+    const myD = ctx.pts - (ctx.wins || 0) * 3;
+    rows.push({ name: ctx.club, pts: ctx.pts, gd: ctx.gf - ctx.ga, me: true, mgr: ctx.manager, played: ctx.played, w: ctx.wins || 0, d: myD, l: ctx.played - (ctx.wins || 0) - myD, gf: ctx.gf, ga: ctx.ga });
     rows.sort((a, b) => b.pts - a.pts || b.gd - a.gd);
     ctx.table = rows;
   }

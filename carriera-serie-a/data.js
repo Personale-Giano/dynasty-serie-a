@@ -643,7 +643,7 @@
       icon: '💼', title: 'Nuove regole di fair play finanziario',
       text: 'La Lega inasprisce i controlli sui conti dei club: chi supera certi parametri di spesa rispetto ai ricavi rischia penalizzazioni nelle prossime finestre di mercato.',
       choices: [
-        { label: 'Adegua subito i conti, anche a costo di tagli', apply: (S) => { S.budget = Math.round(S.budget * 1.015); S.sent = clamp(S.sent - 2, 0, 100); } },
+        { label: 'Adegua subito i conti, anche a costo di tagli', apply: (S) => { S.budget += narrativeBudgetDelta(S.budget, 0.015); S.sent = clamp(S.sent - 2, 0, 100); } },
         { label: 'Rischia, i controlli sono lenti', sent: 1, ownerRating: -2 },
       ],
     },
@@ -658,6 +658,130 @@
       choices: [
         { label: 'Sostieni la riforma: aiuterebbe chi cresce', sent: 2, ownerRating: 1 },
         { label: 'Difendi lo status quo, meno rischi', ownerRating: 1 },
+      ],
+    },
+    // ---- eventi "di momento": compaiono solo quando la stagione li giustifica davvero (una
+    // striscia di risultati, la classifica, i conti, l'infermeria), così quello che succede
+    // fuori dal campo racconta la stagione che si sta giocando invece di pescare sempre dallo
+    // stesso mazzo. Stesse regole degli altri: `requires` decide se l'evento è pescabile, ogni
+    // scelta con `apply` ha il suo `hint`, e c'è sempre almeno una scelta a effetto semplice
+    // (è quella usata in modalità veloce e in multiplayer, dove non si può scegliere). ----
+    {
+      icon: '🚀', title: 'Cinque vittorie di fila',
+      requires: (S) => Array.isArray(S.last5) && S.last5.length === 5 && S.last5.every((r) => r === 1),
+      text: 'Cinque successi consecutivi: in città non si parla d\'altro e lo spogliatoio chiede un riconoscimento.',
+      choices: [
+        { label: 'Premio partita a tutta la squadra', sent: 5, budgetPct: -0.006 },
+        { label: 'Testa bassa: i conti si fanno a maggio', sent: 1, ownerRating: 2 },
+      ],
+    },
+    {
+      icon: '🧯', title: 'Crisi di risultati',
+      requires: (S) => Array.isArray(S.last5) && S.last5.length === 5 && S.last5.reduce((a, b) => a + b, 0) <= -4,
+      text: (S) => 'Quattro sconfitte nelle ultime cinque: la stampa chiede la testa di ' + (S.manager ? S.manager.n : 'chi siede in panchina') + ' e la curva aspetta un segnale.',
+      choices: [
+        { label: 'Conferma pubblica dell\'allenatore', sent: -2, ownerRating: 3 },
+        { label: 'Ritiro punitivo per tutta la rosa', sent: 3, ownerRating: -2 },
+      ],
+    },
+    {
+      icon: '🎟️', title: 'Febbre da alta classifica',
+      requires: (S) => S.played >= 10 && Array.isArray(S.table) && S.table.findIndex((r) => r.me) >= 0 && S.table.findIndex((r) => r.me) < 3,
+      text: 'La squadra è stabilmente nelle prime tre posizioni: ai botteghini c\'è la fila e in città spuntano le bandiere ai balconi.',
+      sent: 3, budgetPct: 0.006, fanbaseDelta: 0.01,
+    },
+    {
+      icon: '📉', title: 'Aria di retrocessione',
+      requires: (S) => { const d = DIVS[S.div]; if (!d || !d.releg || !(S.played >= 10) || !Array.isArray(S.table)) return false; const i = S.table.findIndex((r) => r.me); return i >= 0 && i + 1 > d.teams - d.releg; },
+      text: 'La classifica piange e la zona retrocessione è una realtà: allo stadio compaiono i primi striscioni di contestazione.',
+      choices: [
+        { label: 'Scendi negli spogliatoi a parlare alla squadra', sent: 4, ownerRating: -1 },
+        { label: 'Silenzio stampa fino a nuovo ordine', sent: -2, ownerRating: 1 },
+      ],
+    },
+    {
+      icon: '🏦', title: 'Creditori alla porta',
+      requires: (S) => S.budget < 0,
+      text: 'I conti in rosso non sono più un segreto: fornitori e banche chiedono garanzie, e la notizia arriva ai giornali.',
+      choices: [
+        { label: 'Colletta dei tifosi e dei soci storici', sent: -3, budgetPct: 0.1 },
+        { label: 'Piano di rientro concordato con le banche', sent: -1, ownerRating: 2 },
+      ],
+    },
+    {
+      icon: '🧒', title: 'Il ragazzino che segna sempre',
+      requires: (S) => S.squad && S.squad.some((p) => !p.loan && p.age <= 21 && (p.seasonGoals || 0) >= 5),
+      build: (S) => ({ player: S.squad.filter((p) => !p.loan && p.age <= 21 && (p.seasonGoals || 0) >= 5).sort((a, b) => (b.seasonGoals || 0) - (a.seasonGoals || 0))[0] }),
+      text: (S, ctx) => (ctx && ctx.player ? ctx.player.n + ', ' + ctx.player.age + ' anni e già ' + ctx.player.seasonGoals + ' gol in stagione' : 'Un ragazzo del gruppo segna a raffica') + ': gli osservatori delle nazionali giovanili sono di casa al campo d\'allenamento.',
+      sent: 3, fanbaseDelta: 0.01,
+    },
+    {
+      icon: '🏟️', title: 'Tutto esaurito',
+      requires: (S) => S.played >= 4 && estAttendanceFor(S.ticket, S).pct >= 0.99,
+      text: 'Lo stadio è pieno da settimane e fuori dai cancelli resta sempre qualcuno senza biglietto.',
+      choices: [
+        { label: 'Maxischermo in piazza per chi resta fuori', sent: 4, budgetPct: -0.003, fanbaseDelta: 0.01 },
+        { label: 'Ritocca i prezzi per le prossime gare', sent: -3, budgetPct: 0.008 },
+      ],
+    },
+    {
+      icon: '🚑', title: 'Infermeria piena',
+      requires: (S) => S.squad && S.squad.filter((p) => p.outWeeks > 0).length >= 3,
+      text: (S) => 'Gli infortunati sono ' + S.squad.filter((p) => p.outWeeks > 0).length + ' e lo staff medico non riesce a stare dietro a tutti.',
+      choices: [
+        {
+          label: 'Chiama un consulente esterno',
+          hint: 'Costa l\'1% della cassa: ogni infortunato rientra una partita prima',
+          apply: (S) => {
+            S.budget += narrativeBudgetDelta(S.budget, -0.01);
+            S.squad.forEach((p) => { if (p.outWeeks > 0) p.outWeeks--; });
+          },
+        },
+        { label: 'Ci si arrangia con chi c\'è', sent: -1 },
+      ],
+    },
+    {
+      icon: '⚖️', title: 'Ricorso contro la squalifica',
+      requires: (S) => S.squad && S.squad.some((p) => p.suspMatches > 0),
+      build: (S) => ({ player: S.squad.filter((p) => p.suspMatches > 0).sort((a, b) => b.ovr - a.ovr)[0] }),
+      text: (S, ctx) => 'Il giudice sportivo ha fermato ' + (ctx && ctx.player ? ctx.player.n : 'un tuo giocatore') + ': i legali del club pensano che ci siano i margini per un ricorso.',
+      choices: [
+        {
+          label: 'Presenta ricorso',
+          hint: '50%: squalifica cancellata. Altrimenti -2 gradimento per la figuraccia',
+          apply: (S, ctx) => {
+            const p = ctx && ctx.player; if (!p) return;
+            if (Math.random() < 0.5) { p.suspMatches = 0; toast('Ricorso accolto: ' + p.n + ' è subito a disposizione.', 'success'); }
+            else { S.ownerRating = clamp(S.ownerRating - 2, 0, 100); toast('Ricorso respinto: la squalifica di ' + p.n + ' resta.', 'error'); }
+          },
+        },
+        { label: 'Accetta la decisione', ownerRating: 1 },
+      ],
+    },
+    {
+      icon: '👴', title: 'L\'ultimo giro del veterano',
+      requires: (S) => S.squad && S.squad.some((p) => !p.loan && p.age >= 34),
+      build: (S) => ({ player: S.squad.filter((p) => !p.loan && p.age >= 34).sort((a, b) => b.age - a.age)[0] }),
+      text: (S, ctx) => (ctx && ctx.player ? ctx.player.n + ', ' + ctx.player.age + ' anni,' : 'Il più anziano della rosa') + ' lascia intendere in un\'intervista che questa potrebbe essere la sua ultima stagione.',
+      choices: [
+        { label: 'Organizza una giornata in suo onore', sent: 4, budgetPct: -0.003 },
+        { label: 'Se ne parlerà a fine stagione', sent: -1 },
+      ],
+    },
+    {
+      icon: '🏆', title: 'Aria di coppa',
+      requires: (S) => !!(S.cups && S.cups.nat && !S.cups.nat.out && !S.cups.nat.won && S.cups.nat.at >= 2),
+      text: (S) => 'Il cammino in Coppa Italia continua: per la piazza i ' + String(S.cups.nat.rounds[S.cups.nat.at] || 'prossimi turni').toLowerCase() + ' sono già l\'evento dell\'anno.',
+      sent: 3, fanbaseDelta: 0.01,
+    },
+    {
+      icon: '🔝', title: 'La rivale storica nel mirino',
+      requires: (S) => Array.isArray(S.rivalries) && S.rivalries.length > 0 && Array.isArray(S.table) && S.table.some((r) => S.rivalries.indexOf(r.name) !== -1),
+      build: (S) => ({ rival: S.table.filter((r) => S.rivalries.indexOf(r.name) !== -1)[0] }),
+      text: (S, ctx) => 'In città si guarda solo una classifica: quella con ' + (ctx && ctx.rival ? ctx.rival.name : 'la rivale di sempre') + '. I tifosi vogliono chiudere davanti, costi quel che costi.',
+      choices: [
+        { label: 'Promettilo pubblicamente', sent: 4, ownerRating: -1 },
+        { label: 'Una partita alla volta', ownerRating: 1 },
       ],
     },
   ];
@@ -699,7 +823,7 @@
   // che la piramide viva può spostarli di categoria negli anni.
   const DERBIES = [
     ['Inter', 'Milan'], ['Roma', 'Lazio'], ['Torino', 'Juventus'],
-    ['Avellino', 'Benevento'], ['Padova', 'Vicenza'],
+    ['Avellino', 'Benevento'], ['Padova', 'Vicenza'], ['Salernitana', 'Cavese'],
     ['Perugia', 'Ternana'], ['Catania', 'Messina'],
     ['Frascati', 'Marino'], ['Fiumicino', 'Ostia Antica'],
     ['Anzio', 'Aprilia'], ['Formia', 'Gaeta'],
@@ -752,10 +876,16 @@
       { n: 'Vigor Senigallia', s: 61 }, { n: 'Castelfidardo', s: 61 }, { n: 'Recanatese', s: 60 }, { n: 'Termoli', s: 60 },
       { n: 'Notaresco', s: 58 }, { n: 'Montevarchi', s: 56 }, { n: 'Poggibonsi', s: 54 }, { n: 'Trastevere', s: 50 },
     ],
-    [ // Serie C — stesso criterio di allargamento.
-      { n: 'Padova', s: 77 }, { n: 'Vicenza', s: 76 }, { n: 'Triestina', s: 75 }, { n: 'Pescara', s: 74 },
-      { n: 'Ternana', s: 74 }, { n: 'Perugia', s: 72 }, { n: 'Foggia', s: 72 }, { n: 'Avellino', s: 71 },
-      { n: 'Catania', s: 71 }, { n: 'Benevento', s: 70 }, { n: 'Casertana', s: 70 }, { n: 'Turris', s: 69 },
+    [ // Serie C — stesso criterio di allargamento. Nessun nome qui può comparire anche in un
+      // altro girone: Padova, Vicenza, Avellino e Benevento erano elencate sia qui sia in Serie B
+      // (dove giocano davvero nel 2026/27), e con la piramide viva finivano per incontrare il
+      // proprio doppione nello stesso campionato — due "Padova" in classifica, e una stagione
+      // con due giornate in meno (e un crash a fine calendario) per chi aveva scelto proprio
+      // quel nome per il suo club. Sostituite da quattro piazze storiche di pari forza; i
+      // salvataggi vecchi vengono ripuliti al caricamento (POOL_RENAMES qui sotto).
+      { n: 'Salernitana', s: 77 }, { n: 'Cittadella', s: 76 }, { n: 'Triestina', s: 75 }, { n: 'Pescara', s: 74 },
+      { n: 'Ternana', s: 74 }, { n: 'Perugia', s: 72 }, { n: 'Foggia', s: 72 }, { n: 'Cosenza', s: 71 },
+      { n: 'Catania', s: 71 }, { n: 'Cavese', s: 70 }, { n: 'Casertana', s: 70 }, { n: 'Turris', s: 69 },
       { n: 'Monopoli', s: 69 }, { n: 'Picerno', s: 68 }, { n: 'Crotone', s: 68 }, { n: 'Taranto', s: 67 },
       { n: 'Latina', s: 67 }, { n: 'Giugliano', s: 66 }, { n: 'Sorrento', s: 66 }, { n: 'Potenza', s: 64 },
       { n: 'Cerignola', s: 64 }, { n: 'Messina', s: 61 }, { n: 'Trapani', s: 59 }, { n: 'Rimini', s: 55 },
@@ -783,6 +913,11 @@
       { n: 'Parma', s: 76 }, { n: 'Lecce', s: 73 }, { n: 'Venezia', s: 70 }, { n: 'Como', s: 65 },
     ],
   ];
+
+  // Doppioni storici fra i gironi (vedi il commento sulla Serie C qui sopra): quando un
+  // salvataggio precedente porta ancora lo stesso nome in due categorie, quello della
+  // categoria indicata viene ribattezzato così al caricamento (sanitizePools, sim.js).
+  const POOL_RENAMES = { 3: { Padova: 'Salernitana', Vicenza: 'Cittadella', Avellino: 'Cosenza', Benevento: 'Cavese' } };
 
   // Regioni scelte in fase di creazione del club, per le due categorie che il vero sistema
   // calcistico italiano organizza su base regionale (Promozione ed Eccellenza — Serie D e su
