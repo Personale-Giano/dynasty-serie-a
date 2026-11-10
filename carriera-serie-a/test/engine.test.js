@@ -145,9 +145,11 @@ const TEST_BODY = `
     __newCareer(2, 'medio');
     var bill = kickoffBill();
     __assert(bill === wageBill() + S.manager.salary, 'kickoffBill = monte ingaggi + allenatore (senza altro staff)');
-    S.sportingDirector = { n: 'DS', rating: 60, salary: 12345 }; S.fitnessCoach = { n: 'PA', rating: 60, salary: 1000 };
-    __assert(kickoffBill() === bill + 12345 + 1000, 'kickoffBill somma direttore sportivo e preparatore');
-    S.sportingDirector = null; S.fitnessCoach = null;
+    // direttore sportivo e preparatore atletico tolti dal gioco: anche se una vecchia carriera li
+    // avesse ancora, il costo d'avvio non li conta più
+    S.sportingDirector = { n: 'DS', rating: 60, salary: 12345 };
+    __assert(kickoffBill() === bill, 'kickoffBill ignora un vecchio direttore sportivo');
+    S.sportingDirector = null;
     // spin: ogni acquisto della stessa estate costa il 30% in più
     var c0 = spinCostNow(false); S.spinsBought = 1; var c1 = spinCostNow(false); S.spinsBought = 0;
     __assert(c1 > c0 * 1.25 && c1 < c0 * 1.35, 'spinCostNow: +30% a ogni spin della stessa stagione (' + c0 + ' -> ' + c1 + ')');

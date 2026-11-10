@@ -191,8 +191,6 @@
   // fascia — così un giovane resta davvero una scommessa, non un dato già scoperto in rosa.
   const potentialBadge = (p) => { const r = potentialRange(p); return r ? ` · potenziale ${r.lo}-${r.hi}` : ''; };
   const specOf = (spec) => MANAGER_SPECS.find((s) => s.key === spec) || MANAGER_SPECS[0];
-  const dsSpecOf = (spec) => DS_SPECS.find((s) => s.key === spec) || DS_SPECS[0];
-  const fitnessSpecOf = (spec) => FITNESS_SPECS.find((s) => s.key === spec) || FITNESS_SPECS[0];
 
   /* ---------------- tutorial ----------------
      Un carosello di schermate (icona + titolo + testo), richiamabile dalla home prima di
@@ -2431,32 +2429,6 @@
         toast(m.n + ' prende in carico la squadra. Buonuscita pagata: ' + fmtMoney(sev), 'spend'); renderBoard(); saveGame(); return;
       }
 
-      if ((el = on('.ow-hire-ds'))) {
-        const m = (S.dsOpts || [])[+el.dataset.hireds]; if (!m) return;
-        S.sportingDirector = m; S.dsOpts = null;
-        toast(m.n + ' è il nuovo direttore sportivo.', 'success'); renderBoard(); saveGame(); return;
-      }
-
-      if (on('#dsFireBtn')) {
-        const sev = Math.round(S.sportingDirector.salary * severanceRate());
-        if (S.budget < sev) { toast('Non puoi permetterti la buonuscita.', 'error'); return; }
-        S.budget -= sev; S.sportingDirector = null; S.dsOpts = null;
-        toast('Direttore sportivo licenziato. Buonuscita pagata: ' + fmtMoney(sev), 'spend'); renderBoard(); saveGame(); return;
-      }
-
-      if ((el = on('.ow-hire-fit'))) {
-        const m = (S.fitOpts || [])[+el.dataset.hirefit]; if (!m) return;
-        S.fitnessCoach = m; S.fitOpts = null;
-        toast(m.n + ' è il nuovo preparatore atletico.', 'success'); renderBoard(); saveGame(); return;
-      }
-
-      if (on('#fitFireBtn')) {
-        const sev = Math.round(S.fitnessCoach.salary * severanceRate());
-        if (S.budget < sev) { toast('Non puoi permetterti la buonuscita.', 'error'); return; }
-        S.budget -= sev; S.fitnessCoach = null; S.fitOpts = null;
-        toast('Preparatore atletico licenziato. Buonuscita pagata: ' + fmtMoney(sev), 'spend'); renderBoard(); saveGame(); return;
-      }
-
       if ((el = on('.ow-offer[data-sp]'))) {
         const o = S.sponsorOpts[+el.dataset.sp]; if (!o) return;
         S.sponsor = o; S.sponsorOpts = null;
@@ -2705,7 +2677,7 @@
     const steps = [
       { tab: 'sponsor', done: sponsorsDone, t: 'Firma i tre sponsor', s: 'Soldi garantiti ogni stagione: maglia, stadio, tecnico.' },
       { tab: 'rosa', done: squadDone, t: 'Sistema la rosa', s: S.squad.length < MIN_SQUAD ? 'Ti servono almeno ' + MIN_SQUAD + ' giocatori: gli svincolati sono gratis.' : fyCount ? fyCount + ' contratt' + (fyCount === 1 ? 'o' : 'i') + ' in scadenza: rinnova chi vuoi tenere, poi rinforzati con gli spin.' : 'Rinnovi a posto. Se avanza cassa, uno spin può rinforzarti.' },
-      { tab: 'finanze', done: !broke, t: 'Tieni in cassa il costo d\'avvio', s: broke ? 'Ora non basta: vendi qualcuno o scegli uno staff più economico.' : 'Gli stipendi si pagano al calcio d\'inizio: sei coperto.' },
+      { tab: 'finanze', done: !broke, t: 'Tieni in cassa il costo d\'avvio', s: broke ? 'Ora non basta: vendi qualcuno o scegli un allenatore più economico.' : 'Gli stipendi si pagano al calcio d\'inizio: sei coperto.' },
     ];
     return `<div class="ow-guide" role="region" aria-label="Primi passi">
       <div class="ow-guide-head"><span class="ow-guide-title">Primi passi</span><button type="button" class="ow-guide-x" id="guideDismissBtn">Nascondi</button></div>
@@ -2755,8 +2727,6 @@
       const legend = legendManagerCandidate();
       if (legend) S.mgrOpts[rnd(S.mgrOpts.length)] = legend;
     }
-    if (!S.sportingDirector && !S.dsOpts) S.dsOpts = [genSportingDirector(0), genSportingDirector(4)];
-    if (!S.fitnessCoach && !S.fitOpts) S.fitOpts = [genFitnessCoach(0), genFitnessCoach(4)];
     const bill = kickoffBill();
     const free = freeToSpend();
     const broke = S.budget < bill;
@@ -2809,8 +2779,6 @@
         <div class="ow-sec-title">📋 Bilancio di stagione</div>
         <div class="ow-fin-row"><span>Stipendi giocatori (${S.squad.length} giocatori, pagati all'avvio)</span><b>${fmtMoney(wageBill())}</b></div>
         <div class="ow-fin-row"><span>Stipendio allenatore (pagato all'avvio)</span><b>${fmtMoney(S.manager.salary)}</b></div>
-        ${S.sportingDirector ? `<div class="ow-fin-row"><span>Stipendio direttore sportivo (pagato all'avvio)</span><b>${fmtMoney(S.sportingDirector.salary)}</b></div>` : ''}
-        ${S.fitnessCoach ? `<div class="ow-fin-row"><span>Stipendio preparatore atletico (pagato all'avvio)</span><b>${fmtMoney(S.fitnessCoach.salary)}</b></div>` : ''}
         <div class="ow-fin-row total ${broke ? 'bad' : ''}"><span>Costo d'avvio</span><b>${fmtMoney(bill)}</b></div>
         <div class="ow-fin-row"><span>Ricavi di stagione (stima)</span><b>${fmtMoney(estRevenue)}</b></div>
         ${broke ? '<div class="ow-warn">⚠️ Ti mancano <b>' + fmtMoney(bill - S.budget) + '</b> per coprire il costo d\'avvio. Ricorda: gli spin spendono cassa anche se rifiuti il giocatore. Vendi giocatori (💷) o assumi un allenatore più economico prima dell\'inizio.</div>' : ''}
@@ -2870,28 +2838,6 @@
         <div class="ow-sub" title="${specOf(S.manager.spec).desc}">${specOf(S.manager.spec).icon} ${specOf(S.manager.spec).desc}</div>
         <div class="ow-sub">Candidati (l'esonero paga il 30% di buonuscita):</div>
         ${S.mgrOpts.map((m, i) => `<div class="ow-mgr cand"><span class="ovr">${m.rating}</span><span class="nm">${flagOf(m)}${m.n}${m.exPlayer ? ' <small title="Una tua ex leggenda">🎓</small>' : ''}<small>${fmtMoney(m.salary)}/anno · ${specOf(m.spec).icon} ${specOf(m.spec).label}${m.exPlayer ? ' · Ex giocatore del club' : ''}</small></span><button class="dyn-mini ow-hire" data-hire="${i}">Assumi</button></div>`).join('')}
-      </div>
-      <div class="ow-sec">
-        <div class="ow-sec-title">📋 Direttore sportivo</div>
-        ${S.sportingDirector ? `
-          <div class="ow-mgr"><span class="ovr">${S.sportingDirector.rating}</span><span class="nm">${flagOf(S.sportingDirector)}${S.sportingDirector.n}<small>${fmtMoney(S.sportingDirector.salary)}/anno · ${dsSpecOf(S.sportingDirector.spec).icon} ${dsSpecOf(S.sportingDirector.spec).label}</small></span><span class="tag">In carica</span></div>
-          <div class="ow-sub" title="${dsSpecOf(S.sportingDirector.spec).desc}">${dsSpecOf(S.sportingDirector.spec).icon} ${dsSpecOf(S.sportingDirector.spec).desc}</div>
-          <button class="dyn-mini ow-danger" id="dsFireBtn">Licenzia (buonuscita 30%)</button>
-        ` : `
-          <div class="ow-sub">Ruolo opzionale: si occupa del mercato in uscita, non tocca la squadra in campo.</div>
-          ${(S.dsOpts || []).map((m, i) => `<div class="ow-mgr cand"><span class="ovr">${m.rating}</span><span class="nm">${flagOf(m)}${m.n}<small>${fmtMoney(m.salary)}/anno · ${dsSpecOf(m.spec).icon} ${dsSpecOf(m.spec).label}</small></span><button class="dyn-mini ow-hire-ds" data-hireds="${i}">Assumi</button></div>`).join('')}
-        `}
-      </div>
-      <div class="ow-sec">
-        <div class="ow-sec-title">🩺 Preparatore atletico</div>
-        ${S.fitnessCoach ? `
-          <div class="ow-mgr"><span class="ovr">${S.fitnessCoach.rating}</span><span class="nm">${flagOf(S.fitnessCoach)}${S.fitnessCoach.n}<small>${fmtMoney(S.fitnessCoach.salary)}/anno · ${fitnessSpecOf(S.fitnessCoach.spec).icon} ${fitnessSpecOf(S.fitnessCoach.spec).label}</small></span><span class="tag">In carica</span></div>
-          <div class="ow-sub" title="${fitnessSpecOf(S.fitnessCoach.spec).desc}">${fitnessSpecOf(S.fitnessCoach.spec).icon} ${fitnessSpecOf(S.fitnessCoach.spec).desc}</div>
-          <button class="dyn-mini ow-danger" id="fitFireBtn">Licenzia (buonuscita 30%)</button>
-        ` : `
-          <div class="ow-sub">Ruolo opzionale: lavora sul fisico della squadra (affaticamento, infortuni, tenuta della forma), non tocca il mercato.</div>
-          ${(S.fitOpts || []).map((m, i) => `<div class="ow-mgr cand"><span class="ovr">${m.rating}</span><span class="nm">${flagOf(m)}${m.n}<small>${fmtMoney(m.salary)}/anno · ${fitnessSpecOf(m.spec).icon} ${fitnessSpecOf(m.spec).label}</small></span><button class="dyn-mini ow-hire-fit" data-hirefit="${i}">Assumi</button></div>`).join('')}
-        `}
       </div>
       <div class="ow-sec">
         <div class="ow-sec-title">🔭 Settore giovanile</div>
@@ -3020,7 +2966,7 @@
     if (startBlockInfo && startBlockInfo.sig !== startBlockSig()) startBlockInfo = null;
     const startBlock = !startBlockInfo ? ''
       : startBlockInfo.why === 'squad' ? 'Ti servono almeno ' + MIN_SQUAD + ' giocatori (ne hai ' + S.squad.length + '): ingaggia svincolati gratis in Rosa.'
-      : 'Ti mancano ' + fmtMoney(bill - S.budget) + ' per il costo d\'avvio: vendi qualcuno in Rosa o scegli uno staff più economico.';
+      : 'Ti mancano ' + fmtMoney(bill - S.budget) + ' per il costo d\'avvio: vendi qualcuno in Rosa o scegli un allenatore più economico.';
     const TABS = [
       { key: 'finanze', label: '💰 Finanze', html: financeHTML, warn: broke || S.ownerRating < 35 || !!S.debtSeasons || !!(S.offers && S.offers.length) },
       { key: 'rosa', label: '👥 Rosa', html: rosaHTML, warn: S.squad.length < MIN_SQUAD || fyCount > 0 || !!(S.scoutProspects && S.scoutProspects.length) },

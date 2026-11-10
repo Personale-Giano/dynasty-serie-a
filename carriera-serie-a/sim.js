@@ -223,9 +223,8 @@
       // Allenatore "preparatore di ferro": uno staff medico-atletico migliore tiene la rosa
       // più sana, sia sul fronte infortuni sia su quello cartellini.
       const mgrMedic = ctx.manager && ctx.manager.spec === 'medic' ? 0.7 : 1;
-      const fitnessPrevention = ctx.fitnessCoach && ctx.fitnessCoach.spec === 'injury_prevention' ? 0.72 : 1;
       // Sponsor tecnico "tecnologia sportiva" (perk injuryDiscount): materiali migliori, un
-      // filo meno rischio — si somma (non sostituisce) al preparatore atletico/manager medic.
+      // filo meno rischio — si somma (non sostituisce) all'allenatore medic.
       const sponsorInjuryMult = 1 - clamp(sponsorPerkValue('injuryDiscount', ctx), 0, 0.5);
       // Pressing/ritmo alti (tacticDeltas.fatigue) tirano un filo di più il fisico: un rischio
       // in più di infortunio, coerente con l'idea di una tattica più dispendiosa da sostenere.
@@ -236,7 +235,7 @@
       // Hardcore: +25% di rischio infortunio fisso, indipendente dalla difficoltà scelta (che
       // ha già il suo injuryMult) — un ulteriore giro di vite, non un sostituto.
       const hardcoreRisk = ctx.hardcore ? 1.25 : 1;
-      const injMult = diffOf(null, ctx).injuryMult * mgrMedic * fitnessPrevention * sponsorInjuryMult * fatigueRisk * hardcoreRisk * (1 + Math.max(0, tacticDeltas(ctx).fatigue) * 0.5);
+      const injMult = diffOf(null, ctx).injuryMult * mgrMedic * sponsorInjuryMult * fatigueRisk * hardcoreRisk * (1 + Math.max(0, tacticDeltas(ctx).fatigue) * 0.5);
       const recidivism = p._muscleRisk > 0 ? 0.02 * p._muscleRisk : 0;
       const injChance = ((p.age >= 32 ? 0.03 : p.age >= 28 ? 0.02 : 0.013) + recidivism) * injMult;
       let injuredNow = false;
@@ -702,10 +701,7 @@
   // subito dopo questa) lo spinge di nuovo su — una vera striscia positiva/negativa nasce da
   // sé, partita dopo partita, invece di restare un unico numero per tutta la stagione.
   function regressPlayerForm(lineup, ctx = S) {
-    // Preparatore "di punta": la forma regredisce più lentamente verso la media, quindi chi è
-    // in un buon momento lo mantiene più a lungo (e viceversa, un momento no scivola via più
-    // lentamente) — un filo di più continuità, in entrambe le direzioni.
-    const rate = ctx.fitnessCoach && ctx.fitnessCoach.spec === 'peak_form' ? 0.055 : 0.08;
+    const rate = 0.08;
     ctx.squad.forEach((p) => {
       if (!(lineup.starters.has(p.pid) || lineup.subs.has(p.pid))) return;
       const cur = p.formSeason || 1;
@@ -1028,7 +1024,9 @@
     if (!S.achievements) S.achievements = [];
     if (S.startDiv == null) S.startDiv = S.div;
     if (S.noRelegStreak == null) S.noRelegStreak = 0;
-    if (S.sportingDirector === undefined) S.sportingDirector = null;
+    // Direttore sportivo e preparatore atletico non esistono più (troppi ruoli di staff per
+    // poche decisioni vere): chi li aveva in una carriera salvata li perde qui, e con loro lo stipendio.
+    S.sportingDirector = null; S.fitnessCoach = null; S.dsOpts = null; S.fitOpts = null;
     if (S.opps) {
       const usedMgrNames = new Set(S.opps.filter((o) => o.mgr).map((o) => o.mgr.n).concat(S.manager && S.manager.n ? [S.manager.n] : []));
       const mgrRegistry = S._mgrByClub || (S._mgrByClub = {});
@@ -1053,7 +1051,6 @@
     if (!S.formation || !FORMATION_TACTICS[S.formation]) S.formation = '433';
     if (!S.tacticStyle) S.tacticStyle = { ...DEFAULT_TACTIC_STYLE };
     else { if (!TACTIC_PRESS[S.tacticStyle.press]) S.tacticStyle.press = 'medio'; if (!TACTIC_WIDTH[S.tacticStyle.width]) S.tacticStyle.width = 'bilanciata'; if (!TACTIC_TEMPO[S.tacticStyle.tempo]) S.tacticStyle.tempo = 'normale'; }
-    if (S.fitnessCoach === undefined) S.fitnessCoach = null;
     if (S.stadiumSponsor === undefined) S.stadiumSponsor = null;
     if (S.techSponsor === undefined) S.techSponsor = null;
     if (S.investorDeal === undefined) S.investorDeal = null;
@@ -1105,11 +1102,10 @@
   // redditizio ma perdi il giocatore. Arrotondata a una cifra tonda.
   const OFFER_FEE_CAP_MULT = 1;
   function offerFee(p, ctx = S) {
-    const dsMult = ctx.sportingDirector && ctx.sportingDirector.spec === 'sales_expert' ? 1.12 : 1;
     // Era 0.95-1.5 volte il valore: vendere a chiunque offrisse e ricomprare con gli spin
     // moltiplicava la cassa finale per 15 (banco di prova). Ora 0.7-1.05: resta un affare
     // rispetto alla cessione immediata (30%), non una macchina da soldi.
-    const raw = playerValue(p) * (0.7 + Math.random() * 0.35) * dsMult;
+    const raw = playerValue(p) * (0.7 + Math.random() * 0.35);
     // Tetto morbido per categoria (OFFER_FEE_CAP_MULT volte lo spin di lusso della categoria
     // sopra, oltre si incassa solo un decimo): il valore segue lo stipendio, che cresce in modo
     // esponenziale con l'overall, mentre lo spin costa un prezzo fisso — vendere ogni stella e
@@ -1175,15 +1171,12 @@
   const ROLE_DEMAND_WEIGHT = { POR: 0.55, DIF: 0.8, CEN: 1, ATT: 1.25 };
   function genOffers(ctx = S) {
     const d = divOf(ctx);
-    // Il direttore sportivo "rete di osservatori" allarga il giro di squadre interessate: un
-    // candidato extra in lista e più probabilità che ciascuno si faccia davvero avanti.
-    const scoutNetwork = ctx.sportingDirector && ctx.sportingDirector.spec === 'scout_network';
     // Mai per un giocatore che è qui solo in prestito (p.loan): non è nostro da vendere —
     // prima l'offerta arrivava lo stesso e accettarla incassava il cartellino di un altro club.
     const targets = ctx.squad
       .filter((p) => !p.loan && (p.ovr >= d.avg + 3 || (p.age <= 22 && p.ovr >= d.avg)))
       .sort((a, b) => (b.ovr + (b.age <= 22 ? 4 : 0)) - (a.ovr + (a.age <= 22 ? 4 : 0)))
-      .slice(0, scoutNetwork ? 4 : 3);
+      .slice(0, 3);
     // Decide PRIMA quali fasce di forza (0=fortissimo..3=scarso, vedi buyerClub/bandSlice)
     // compaiono in questa tornata: mescolate e assegnate in ordine crescente man mano che le
     // offerte si concretizzano, così più offerte nella stessa estate coprono davvero livelli
@@ -1192,7 +1185,7 @@
     const bandOrder = shuffle([0, 1, 2, 3]).slice(0, targets.length).sort((a, b) => a - b);
     const offers = [];
     targets.forEach((p, i) => {
-      const baseChance = (i === 0 ? 0.95 : i === 1 ? 0.75 : 0.55) + (scoutNetwork ? 0.15 : 0);
+      const baseChance = (i === 0 ? 0.95 : i === 1 ? 0.75 : 0.55);
       const chance = clamp(baseChance * (ROLE_DEMAND_WEIGHT[p.pos] || 1), 0, 0.98);
       if (Math.random() < chance) { const fee = offerFee(p, ctx); offers.push({ pid: p.pid, club: buyerClub(fee, ctx, bandOrder[offers.length]), fee }); }
     });
@@ -1237,49 +1230,14 @@
     return Math.round(w / 1e3) * 1e3;
   }
 
-  // Ciò che resta davvero da spendere una volta coperti stipendi + allenatore (+ direttore
-  // sportivo, se assunto: opzionale, 0 se non c'è) della stagione.
-  const kickoffBill = (ctx = S) => wageBill(ctx) + ctx.manager.salary + (ctx.sportingDirector ? ctx.sportingDirector.salary : 0) + (ctx.fitnessCoach ? ctx.fitnessCoach.salary : 0);
+  // Ciò che resta davvero da spendere una volta coperti stipendi e allenatore della stagione.
+  const kickoffBill = (ctx = S) => wageBill(ctx) + ctx.manager.salary;
 
   const freeToSpend = () => S.budget - kickoffBill();
 
   const mgrSalaryFor = (rating, ctx = S) => Math.round(40e3 * Math.pow(1.14, rating - 50) * diffOf(null, ctx).mgrCostMult / 1e3) * 1e3;
 
-  // Il direttore sportivo costa meno dell'allenatore (ruolo di supporto, non decide le
-  // formazioni): stessa curva salariale scalata al 55%.
-  const dsSalaryFor = (rating, ctx = S) => Math.round(mgrSalaryFor(rating, ctx) * 0.55 / 1e3) * 1e3;
-
-  // Generato come un allenatore: un candidato su circa 3 è un vero direttore sportivo (vedi
-  // REAL_DS in data.js), con la specializzazione coerente con la sua fama reale invece che
-  // a caso — non sostituiscono i generati, si aggiungono come opzione possibile in più.
-  function genSportingDirector(bonus, ctx = S) {
-    const r = clamp(divOf(ctx).mgrBase - 6 + rnd(14) + (bonus || 0), 40, 90);
-    if (Math.random() < 0.35) {
-      const near = REAL_DS.filter((m) => Math.abs(m.rating - r) <= 8);
-      if (near.length) {
-        const m = pick(near);
-        const rating = clamp(m.rating + mgrRepDelta(m.n, ctx), 40, 97);
-        const salary = Math.round(dsSalaryFor(rating, ctx) * (m.spec === 'all_rounder' ? 0.85 : 1) / 1e3) * 1e3;
-        return { n: m.n, rating, salary, nat: natByCode(m.nat), real: true, spec: m.spec };
-      }
-    }
-    const nat = pickNationality(ctx.div);
-    const spec = pick(DS_SPECS).key;
-    const salary = Math.round(dsSalaryFor(r, ctx) * (spec === 'all_rounder' ? 0.85 : 1) / 1e3) * 1e3;
-    return { n: genName(nat), rating: r, salary, nat, spec };
-  }
-
-  // Preparatore atletico: generato come il direttore sportivo (terzo ruolo di staff,
-  // opzionale), niente candidati "reali" per questo ruolo (a differenza di manager/DS non ha
-  // un pool di nomi noti in data.js — resta un tecnico dello staff, mai un volto pubblico).
-  function genFitnessCoach(bonus, ctx = S) {
-    const r = clamp(divOf(ctx).mgrBase - 8 + rnd(14) + (bonus || 0), 40, 88);
-    const nat = pickNationality(ctx.div);
-    const spec = pick(FITNESS_SPECS).key;
-    return { n: genName(nat), rating: r, salary: Math.round(dsSalaryFor(r, ctx) * 0.8 / 1e3) * 1e3, nat, spec };
-  }
-
-  // Reputazione persistente di un allenatore/DS "vero" (REAL_MANAGERS/REAL_DS): cresce o cala
+  // Reputazione persistente di un allenatore "vero" (REAL_MANAGERS): cresce o cala
   // stagione dopo stagione in base a come va il club che sta guidando in quel momento (vedi
   // evolveRivalStrengths), così due partite diverse della stessa carriera possono offrire lo
   // stesso nome noto con un rating diverso — non più statico come il dato di partenza in
@@ -1522,7 +1480,7 @@
   // Quante settimane cariche di fila (coppa+campionato nella stessa settimana, vedi
   // maybeCupRound) la squadra si porta dietro: 0.35 a settimana, fino a un tetto di 3
   // settimane (-1.05) — un preparatore di ferro (spec `medic`) la dimezza.
-  const fatigueMalus = (ctx = S) => (ctx._congestion || 0) * 0.35 * (ctx.manager && ctx.manager.spec === 'medic' ? 0.5 : 1) * (ctx.fitnessCoach && ctx.fitnessCoach.spec === 'recovery' ? 0.6 : 1);
+  const fatigueMalus = (ctx = S) => (ctx._congestion || 0) * 0.35 * (ctx.manager && ctx.manager.spec === 'medic' ? 0.5 : 1);
 
   // Istruzioni tattiche (TACTIC_PRESS/WIDTH/TEMPO, data.js): tre leve indipendenti dal modulo,
   // stessa convenzione atk/def di FORMATION_TACTICS. Si sommano ai delta del modulo in
@@ -1747,8 +1705,7 @@
       // allenatore e staff: senza un allenatore valido kickoffBill/mgrBonus darebbero NaN
       const person = (m) => m && typeof m === 'object' && typeof m.n === 'string' && Number.isFinite(m.rating) && Number.isFinite(m.salary);
       if (!person(s.manager)) { const r = DIVS[s.div].mgrBase; s.manager = { n: genName(ITA_NAT), rating: r, salary: mgrSalaryFor(r, s), nat: ITA_NAT, spec: pick(MANAGER_SPECS).key }; }
-      if (s.sportingDirector && !person(s.sportingDirector)) s.sportingDirector = null;
-      if (s.fitnessCoach && !person(s.fitnessCoach)) s.fitnessCoach = null;
+      s.sportingDirector = null; s.fitnessCoach = null;
       // accordi economici: o sono leggibili o non ci sono
       const deal = (sp) => sp && typeof sp === 'object' && Number.isFinite(sp.perYear) && Number.isFinite(sp.left);
       ['sponsor', 'stadiumSponsor', 'techSponsor'].forEach((k) => { if (s[k] && !deal(s[k])) s[k] = null; });
@@ -3507,7 +3464,7 @@
       ['Percorso in Coppa Italia', ctx.cupMoney],
     );
     if (ctx.euroMoney + euroTitleBonus > 0) statement.push([EURO_COMPS[ctx.euroComp].name + ' ' + EURO_COMPS[ctx.euroComp].flag, ctx.euroMoney + euroTitleBonus]);
-    statement.push(['Costi di gestione', -upkeep], ['Stipendi + allenatore' + (ctx.sportingDirector ? ' + direttore sportivo' : '') + (ctx.fitnessCoach ? ' + preparatore atletico' : '') + ' (pagati all\'avvio)', 0]);
+    statement.push(['Costi di gestione', -upkeep], ['Stipendi + allenatore (pagati all\'avvio)', 0]);
     const treble = title && natWon && euroWon && ctx.euroComp === 'ucl';
     // ----- traguardi di carriera (ACHIEVEMENTS, data.js) -----
     if (title && ctx.div === 5) unlockAchievement(ctx, 'scudetto');

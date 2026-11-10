@@ -493,30 +493,20 @@
     { icon: '🧓', title: 'Ex bandiera in tribuna', text: 'Una vecchia bandiera del club, ora ritirata, assiste alla partita dalla tribuna d\'onore: standing ovation per lui.', sent: 4, prestige: 0.5e6 },
     { icon: '🛑', title: 'Sciopero dei tifosi organizzati', text: 'La curva organizzata annuncia una protesta silenziosa per la prossima partita.', sent: -4, ownerRating: -1 },
     {
-      icon: '📝', title: 'Un club più ricco fa un\'offerta al tuo staff',
-      // Un allenatore/DS chiaramente sopra il livello della categoria attira l'interesse di
-      // chi può pagarlo di più: prima si controlla l'allenatore (il ruolo più visibile),
-      // solo se non è lui abbastanza forte si guarda al direttore sportivo.
+      icon: '📝', title: 'Un club più ricco vuole il tuo allenatore',
+      // Un allenatore chiaramente sopra il livello della categoria attira l'interesse di chi
+      // può pagarlo di più.
       requires: (S) => {
         const base = (DIVS[S.div] || {}).mgrBase || 70;
-        return (S.manager && S.manager.rating >= base + 12) || (S.sportingDirector && S.sportingDirector.rating >= base + 8);
+        return !!(S.manager && S.manager.rating >= base + 12);
       },
-      build: (S) => {
-        const base = (DIVS[S.div] || {}).mgrBase || 70;
-        return { role: (S.manager && S.manager.rating >= base + 12) ? 'manager' : 'ds' };
-      },
-      text: (S, ctx) => {
-        const isManager = !ctx || ctx.role === 'manager';
-        const person = isManager ? S.manager : S.sportingDirector;
-        return 'Un club più prestigioso ha messo gli occhi su ' + (person ? person.n : 'un membro del tuo staff') + ' (' + (isManager ? 'il tuo allenatore' : 'il tuo direttore sportivo') + '): per trattenerlo serve un accordo migliore.';
-      },
+      text: (S) => 'Un club più prestigioso ha messo gli occhi su ' + (S.manager ? S.manager.n : 'il tuo allenatore') + ' (il tuo allenatore): per trattenerlo serve un accordo migliore.',
       choices: [
         {
           label: 'Trattienilo con un rinnovo migliore',
           hint: 'Stipendio +25% da subito',
-          apply: (S, ctx) => {
-            const isManager = !ctx || ctx.role === 'manager';
-            const person = isManager ? S.manager : S.sportingDirector;
+          apply: (S) => {
+            const person = S.manager;
             if (!person) return;
             person.salary = Math.round(person.salary * 1.25 / 1e3) * 1e3;
             S.sent = clamp(S.sent + 2, 0, 100);
@@ -525,19 +515,14 @@
         {
           label: 'Lascialo andare',
           hint: 'Incassi un indennizzo, ma dovrai trovarne uno nuovo',
-          apply: (S, ctx) => {
-            const isManager = !ctx || ctx.role === 'manager';
-            const person = isManager ? S.manager : S.sportingDirector;
+          apply: (S) => {
+            const person = S.manager;
             if (!person) return;
             S.budget += Math.round(person.salary * 0.6 / 1e3) * 1e3;
-            if (isManager) {
-              const base = (DIVS[S.div] || {}).mgrBase || 70;
-              const r = clamp(base - 6 + rnd(10), 45, 90);
-              const nat = pickNationality(S.div);
-              S.manager = { n: genName(nat), rating: r, salary: mgrSalaryFor(r), nat, spec: pick(MANAGER_SPECS).key };
-            } else {
-              S.sportingDirector = null; S.dsOpts = null;
-            }
+            const base = (DIVS[S.div] || {}).mgrBase || 70;
+            const r = clamp(base - 6 + rnd(10), 45, 90);
+            const nat = pickNationality(S.div);
+            S.manager = { n: genName(nat), rating: r, salary: mgrSalaryFor(r), nat, spec: pick(MANAGER_SPECS).key };
             S.sent = clamp(S.sent - 2, 0, 100);
           },
         },
@@ -805,24 +790,6 @@
     { key: 'negotiator', label: 'Negoziatore', icon: '💬', desc: 'Sa trattare bene con i giocatori: i rinnovi di contratto costano un po\' meno.' },
   ];
 
-  // Staff tecnico, secondo ruolo assumibile oltre l'allenatore: non tocca la squadra in campo,
-  // solo il mercato in uscita (offerte che arrivano per i tuoi giocatori). Chiavi diverse da
-  // MANAGER_SPECS di proposito, anche se lette da una lookup separata (dsSpecOf, ui.js): niente
-  // ambiguità visiva fra "il negoziatore dell'allenatore" e questo.
-  const DS_SPECS = [
-    { key: 'sales_expert', label: 'Esperto di cessioni', icon: '💰', desc: 'Offerte in uscita più alte per i tuoi giocatori più richiesti.' },
-    { key: 'scout_network', label: 'Rete di osservatori', icon: '🔭', desc: 'Più club rivali si fanno avanti per i tuoi giocatori migliori.' },
-    { key: 'all_rounder', label: 'Uomo di fiducia', icon: '⚖️', desc: 'Nessuna specializzazione spiccata, ma costa un po\' meno.' },
-  ];
-
-  // Preparatore atletico: terzo ruolo di staff, opzionale come il direttore sportivo, ma
-  // sul fisico della squadra invece che sul mercato in uscita — si somma (non sostituisce) al
-  // manager "medic" e alla scelta tattica di ritmo/pressing per chi vuole spingere di più.
-  const FITNESS_SPECS = [
-    { key: 'recovery', label: 'Specialista del recupero', icon: '🩹', desc: 'Affaticamento da calendario congestionato ridotto sensibilmente.' },
-    { key: 'injury_prevention', label: 'Prevenzione infortuni', icon: '🛡️', desc: 'Meno infortuni muscolari, in partita e per il pressing/ritmo alti.' },
-    { key: 'peak_form', label: 'Preparazione di punta', icon: '📈', desc: 'La forma dei giocatori regredisce più lentamente verso la media dopo una prestazione.' },
-  ];
 
   // Derby/rivalità storiche: coppie di nomi già presenti nei POOLS di qualche categoria
   // (vere per Serie A/B/C, plausibili per geografia nelle categorie con nomi di fantasia).
