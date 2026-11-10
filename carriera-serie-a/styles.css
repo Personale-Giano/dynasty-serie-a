@@ -1416,3 +1416,20 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 /* icone tonde nella barra: velo del colore del testo, così si vedono anche su un giallo o un bianco */
 #owTopbar .dyn-icon-btn{ background:color-mix(in srgb, currentColor 18%, transparent); }
 #owTopbar .dyn-icon-btn:hover{ background:color-mix(in srgb, currentColor 30%, transparent); }
+
+/* ---------- fine carriera: tutti i giocatori in una finestra ---------- */
+.ow-retire-list{ display:flex; flex-direction:column; gap:8px; margin:0 0 14px; text-align:left; }
+.ow-retire-row{ display:grid; grid-template-columns:auto 1fr; gap:6px 10px; align-items:center; background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:9px 10px; }
+.ow-retire-row .ovr{ width:34px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:6px; font:800 15px/1 var(--cond); }
+.ow-retire-row .nm{ font-weight:800; font-size:13.5px; min-width:0; }
+.ow-retire-row .nm small{ display:block; color:var(--muted); font-weight:600; font-size:11px; margin-top:1px; }
+.ow-retire-pick{ grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+/* scheda avversario: avviso tattico */
+.ow-scout-card.warn{ border-left:5px solid var(--bad); }
+.ow-scout-tactic small b{ color:var(--txt); }
+.ow-scout-adapt{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:6px; color:var(--bad); font-weight:800; font-size:12.5px; }
+.ow-scout-adapt .dyn-mini{ flex:0 0 auto; padding:8px 12px; }
+.ow-scout-ok{ display:block; margin-top:4px; color:var(--good); font-weight:800; font-size:12px; }
+.ow-pos-delta{ font:800 13px/1 var(--cond); font-style:normal; vertical-align:middle; margin-left:2px; }
+.ow-pos-delta.up{ color:var(--good); }
+.ow-pos-delta.down{ color:var(--bad); }

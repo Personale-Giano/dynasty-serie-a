@@ -1454,7 +1454,9 @@
   function personalityCounter(opp, ctx = S) {
     const def = opp && CLUB_PERSONALITIES[opp.personality];
     if (!def || !def.punishes(ctx.tacticStyle || DEFAULT_TACTIC_STYLE)) return 0;
-    return 0.06;
+    // Era 0.06, impercettibile: ora che la tattica si adatta dalla scheda avversario, sbagliare
+    // l'approccio deve costare davvero qualcosa (circa un gol ogni 6-7 partite).
+    return 0.12;
   }
 
   // Quanto la rosa disponibile (non infortunati/squalificati) copre DAVVERO il modulo scelto:
@@ -2134,7 +2136,11 @@
     ctx.seasonActive = true; ctx.winterDone = false; ctx._janCands = null; ctx._janSwitchUsed = false; ctx._janMgrCands = null;
     ctx.played = 0; ctx.pts = 0; ctx.gf = 0; ctx.ga = 0; ctx.wins = 0; ctx.results = []; ctx.last5 = []; ctx.form = 0;
     ctx.cupResults = [];
-    ctx._recapCountSeason = 0;
+    ctx._recapCountSeason = 0; ctx._rivalryPromptCountSeason = 0; ctx._pressCountSeason = 0;
+    // Tetto COMUNE alle finestre fra una partita e l'altra (conferenza stampa, partita in
+    // bilico, batosta da trasformare in rivalità): prima ognuna aveva il suo, e sommate
+    // arrivavano a 8 interruzioni a stagione più gli eventi. Ora al massimo 4 in tutto.
+    ctx._matchPopupsSeason = 0;
     // Chi è in panchina ORA, per il resoconto di fine stagione (endSeason) — se a gennaio ne
     // arriva un altro, il suo nome si aggiunge qui invece di sostituirlo: il resoconto deve
     // mostrare TUTTI gli allenatori avuti in quella stagione, non solo l'ultimo.
@@ -2415,14 +2421,18 @@
   // del giocatore, non solo la classifica. Raro per costruzione (tetto a parte da
   // maybeMatchRecap, una batosta è un evento diverso da una gara in bilico) e mai due volte
   // per lo stesso club.
+  const MATCH_POPUPS_PER_SEASON = 4;
+  function matchPopupAllowed(ctx) { return (ctx._matchPopupsSeason || 0) < MATCH_POPUPS_PER_SEASON; }
+  function useMatchPopup(ctx) { ctx._matchPopupsSeason = (ctx._matchPopupsSeason || 0) + 1; }
+
   function maybeRivalryPrompt(ctx, row) {
-    if (ctx.turboMode) return false;
+    if (ctx.turboMode || !matchPopupAllowed(ctx)) return false;
     if (row.res !== 'L' || (row.ga - row.gf) < 3) return false;
     if (row.derby) return false;
     if (!ctx.rivalries) ctx.rivalries = [];
     if (ctx.rivalries.indexOf(row.opp) !== -1) return false;
     if ((ctx._rivalryPromptCountSeason || 0) >= 2) return false;
-    ctx._rivalryPromptCountSeason = (ctx._rivalryPromptCountSeason || 0) + 1;
+    ctx._rivalryPromptCountSeason = (ctx._rivalryPromptCountSeason || 0) + 1; useMatchPopup(ctx);
     ctx._pause = true;
     openRivalryPromptOverlay(row, ctx);
     return true;
@@ -2437,14 +2447,14 @@
   // gara (umore tifosi/affaticamento, ctx.sent/ctx._congestion) — una conseguenza vera, non
   // solo testo di colore.
   function maybeMatchRecap(ctx, row) {
-    if (ctx.turboMode) return false;
+    if (ctx.turboMode || !matchPopupAllowed(ctx)) return false;
     // Tenuto raro apposta (2-3 a stagione, non una ad ogni gara in bilico): un click extra ad
     // ogni giornata "vicina" stancava troppo l'esperienza. Il tetto per stagione è il freno
     // principale, la probabilità bassa serve solo a spalmarle nel tempo invece che tutte insieme.
     if ((ctx._recapCountSeason || 0) >= 3) return false;
     if (Math.abs(row.gf - row.ga) > 1) return false;
     if (Math.random() >= 0.12) return false;
-    ctx._recapCountSeason = (ctx._recapCountSeason || 0) + 1;
+    ctx._recapCountSeason = (ctx._recapCountSeason || 0) + 1; useMatchPopup(ctx);
     ctx._pause = true;
     openMatchRecapOverlay(row, ctx);
     return true;
@@ -2480,7 +2490,9 @@
   function simToEnd(ctx = S) {
     if (!isClubCtx(ctx)) ctx = S;
     BULK_SIM = true;
-    const bulkStartIdx = (ctx.results || []).length;
+    // Se la simulazione riparte dopo la pausa di gennaio, il riepilogo copre tutto il blocco
+    // simulato dall'inizio (S._bulkFrom), non solo il pezzo dopo il mercato.
+    const bulkStartIdx = ctx === S && typeof S._bulkFrom === 'number' ? S._bulkFrom : (ctx.results || []).length;
     while (ctx.seasonActive && ctx.played < gp(ctx) && !ctx._pause) { const b = ctx.played; simMatch(ctx); if (ctx._pause) break; if (ctx.played === b) break; }
     BULK_SIM = false;
     // Un solo render del log/HUD/coppe alla fine, invece di uno per ciascuna partita appena
@@ -2497,9 +2509,19 @@
         // per una pausa vera (mercato di gennaio, checkSeasonMilestones), quella ha già aperto
         // il suo overlay: mostrare anche il digest lo sovrascriverebbe, perdendo il mercato.
         if (!ctx._pause) {
+          S._bulkFrom = null;
           const digest = buildBulkDigest((ctx.results || []).slice(bulkStartIdx));
           if (digest && digest.length) openBulkDigestOverlay(digest);
+        } else {
+          // Pausa (di solito il mercato di gennaio): "Continua così" riprende la simulazione.
+          S._bulkFrom = bulkStartIdx;
         }
+      } else {
+        // La stagione è finita dentro al ciclo (endSeason ha già disegnato la fine stagione):
+        // prima il riepilogo non compariva mai. Ora va in testa alla schermata di fine stagione.
+        S._bulkFrom = null;
+        const digest = buildBulkDigest((ctx.results || []).slice(bulkStartIdx));
+        if (digest && digest.length && typeof showSeasonEndDigest === 'function') showSeasonEndDigest(digest);
       }
       saveGame();
     }
@@ -3693,7 +3715,7 @@
     ctx.squad = ctx.squad.filter((p) => { if ((p.yrs || 0) <= 0) { freed.push(p.n); pushAlumnus(p, ctx); return false; } return true; });
     if (local && freed.length) toast(freed.join(', ') + ' ' + (freed.length === 1 ? 'è andato' : 'sono andati') + ' in scadenza e ' + (freed.length === 1 ? 'parte' : 'partono') + ' a parametro zero.');
     ctx.season++;
-    ctx.mgrOpts = null; ctx.sponsorOpts = null; ctx.investorUsed = false; ctx.spinsBought = 0; ctx.premiumRoleUsed = false; ctx.stdRoleUsed = false; ctx._end = null;
+    ctx.mgrOpts = null; ctx.sponsorOpts = null; ctx.investorUsed = false; ctx.investorAmount = 0; ctx.spinsBought = 0; ctx.premiumRoleUsed = false; ctx.stdRoleUsed = false; ctx._end = null;
     ctx.offers = genOffers(ctx);   // i club rivali fanno offerte per i tuoi giocatori migliori quest'estate
     // Riassunto "cosa è cambiato" a inizio stagione: null se non c'è nulla di rilevante da
     // dire (niente rinnovi scaduti, nessuno calato vistosamente, nessun rivale rinforzato) —

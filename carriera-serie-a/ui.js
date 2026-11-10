@@ -1966,7 +1966,7 @@
     if (mpBtn) mpBtn.addEventListener('click', openMultiplayerHub);
     const tutBtn = $('owTutorialBtn');
     if (tutBtn) tutBtn.addEventListener('click', openTutorial);
-    $('owNextBtn').addEventListener('click', () => { if (S._playoffState && !S._playoffState.done) playNextPlayoffStepUI(); else maybePressConference(() => simMatch()); });
+    $('owNextBtn').addEventListener('click', () => { S._bulkFrom = null; if (S._playoffState && !S._playoffState.done) playNextPlayoffStepUI(); else maybePressConference(() => simMatch()); });
     $('owSimBtn').addEventListener('click', () => simToEnd());
     $('owTableBtn').addEventListener('click', showTable);
     $('owClubBtn').addEventListener('click', showClub);
@@ -2521,11 +2521,6 @@
       if (on('#spinStdRoleBtn')) { doSpin(false, true); return; }
       if (on('#freeAgentBtn')) { pickFreeAgentRole(); return; }
 
-      if (on('#investorBtn')) {
-        const amount = Math.round(divOf().investor * diffOf().sponsorMult / 1e4) * 1e4;
-        S.investorUsed = true; S.budget += amount;
-        toast('Un investitore stacca un assegno: +' + fmtMoney(amount), 'money'); renderBoard(); saveGame(); return;
-      }
 
       if (on('#scoutUpgBtn')) {
         const lvl = (S.scoutLevel || 0) + 1, cost = scoutUpgradeCost(lvl); if (S.budget < cost) return;
@@ -2600,7 +2595,7 @@
           // silenzio nel browser dell'host (startSeason si ferma senza toast per un ctx remoto).
           if (S.squad.length < MIN_SQUAD) { toast('Ti servono almeno ' + MIN_SQUAD + ' giocatori per iniziare la prossima stagione. Ingaggia svincolati gratis se sei a corto.', 'error'); return; }
           const bill = kickoffBill();
-          if (S.budget < bill) { toast('Ti mancano ' + fmtMoney(bill - S.budget) + ' per il monte ingaggi della prossima stagione: vendi giocatori, prendi il bonus investitore o trova soldi prima di essere pronto.', 'error'); return; }
+          if (S.budget < bill) { toast('Ti mancano ' + fmtMoney(bill - S.budget) + ' per il monte ingaggi della prossima stagione: vendi giocatori o trova soldi prima di essere pronto.', 'error'); return; }
           saveGame();
           try {
             const data = await mpApi('ready', { code: mpSess.code, playerId: mpSess.playerId, ready: true, state: S });
@@ -2650,7 +2645,6 @@
     });
 
     body.addEventListener('change', (ev) => {
-      if (ev.target.id === 'autoInvestorChk') { S.autoInvestor = ev.target.checked; saveGame(); return; }
       if (ev.target.id === 'turboModeChk') { S.turboMode = ev.target.checked; toast(S.turboMode ? '⏩ Modalità veloce attiva.' : 'Modalità veloce disattivata.'); saveGame(); return; }
     });
 
@@ -2710,7 +2704,7 @@
     const steps = [
       { tab: 'sponsor', done: sponsorsDone, t: 'Firma i tre sponsor', s: 'Soldi garantiti ogni stagione: maglia, stadio, tecnico.' },
       { tab: 'rosa', done: squadDone, t: 'Sistema la rosa', s: S.squad.length < MIN_SQUAD ? 'Ti servono almeno ' + MIN_SQUAD + ' giocatori: gli svincolati sono gratis.' : fyCount ? fyCount + ' contratt' + (fyCount === 1 ? 'o' : 'i') + ' in scadenza: rinnova chi vuoi tenere, poi rinforzati con gli spin.' : 'Rinnovi a posto. Se avanza cassa, uno spin può rinforzarti.' },
-      { tab: 'finanze', done: !broke, t: 'Tieni in cassa il costo d\'avvio', s: broke ? 'Ora non basta: vendi qualcuno o prendi il bonus investitore.' : 'Gli stipendi si pagano al calcio d\'inizio: sei coperto.' },
+      { tab: 'finanze', done: !broke, t: 'Tieni in cassa il costo d\'avvio', s: broke ? 'Ora non basta: vendi qualcuno o scegli uno staff più economico.' : 'Gli stipendi si pagano al calcio d\'inizio: sei coperto.' },
     ];
     return `<div class="ow-guide" role="region" aria-label="Primi passi">
       <div class="ow-guide-head"><span class="ow-guide-title">Primi passi</span><button type="button" class="ow-guide-x" id="guideDismissBtn">Nascondi</button></div>
@@ -2736,13 +2730,13 @@
     previewFormation = S.formation;   // il modulo mostrato riflette quello persistito (ora pesa in partita)
     maybeScoutProspect();
     advanceYouthSquad();
-    // QoL: chi lo desidera può evitare di ripremere manualmente "Bonus investitore" ogni
-    // singola stagione (l'esito ottimale — prenderlo — non cambia mai in 20 stagioni): un
-    // interruttore per carriera, non imposto a chi preferisce comunque decidere volta per volta.
-    if (S.autoInvestor && !S.investorUsed) {
+    // Bonus investitore: prima era un bottone (più una casella "prendilo sempre"), ma prenderlo
+    // era sempre la scelta giusta, quindi un click senza decisione. Ora arriva da solo all'apertura
+    // della Dirigenza, una volta a stagione, e resta scritto nel bilancio.
+    if (!S.investorUsed) {
       const amount = Math.round(divOf().investor * diffOf().sponsorMult / 1e4) * 1e4;
-      S.investorUsed = true; S.budget += amount;
-      toast('Bonus investitore automatico: +' + fmtMoney(amount), 'money');
+      S.investorUsed = true; S.investorAmount = amount; S.budget += amount;
+      toast('Un investitore stacca l\'assegno di inizio stagione: +' + fmtMoney(amount), 'money');
       saveGame();
     }
     const fyCount = S.squad.filter(finalYear).length;
@@ -2818,9 +2812,8 @@
         ${S.fitnessCoach ? `<div class="ow-fin-row"><span>Stipendio preparatore atletico (pagato all'avvio)</span><b>${fmtMoney(S.fitnessCoach.salary)}</b></div>` : ''}
         <div class="ow-fin-row total ${broke ? 'bad' : ''}"><span>Costo d'avvio</span><b>${fmtMoney(bill)}</b></div>
         <div class="ow-fin-row"><span>Ricavi di stagione (stima)</span><b>${fmtMoney(estRevenue)}</b></div>
-        ${broke ? '<div class="ow-warn">⚠️ Ti mancano <b>' + fmtMoney(bill - S.budget) + '</b> per coprire il costo d\'avvio. Ricorda: gli spin spendono cassa anche se rifiuti il giocatore. Vendi giocatori (💷), prendi il bonus investitore o assumi un allenatore più economico prima dell\'inizio.</div>' : ''}
-        ${!S.investorUsed ? `<button class="dyn-btn ow-investor" id="investorBtn">💼 Bonus investitore · +${fmtMoney(Math.round(d.investor * diffOf().sponsorMult / 1e4) * 1e4)}</button>` : ''}
-        <label class="ow-sub" style="display:flex;align-items:center;gap:6px;margin-top:4px;cursor:pointer"><input type="checkbox" id="autoInvestorChk" ${S.autoInvestor ? 'checked' : ''} /> Prendilo sempre in automatico a inizio stagione, da qui in poi</label>
+        ${broke ? '<div class="ow-warn">⚠️ Ti mancano <b>' + fmtMoney(bill - S.budget) + '</b> per coprire il costo d\'avvio. Ricorda: gli spin spendono cassa anche se rifiuti il giocatore. Vendi giocatori (💷) o assumi un allenatore più economico prima dell\'inizio.</div>' : ''}
+        ${S.investorAmount ? `<div class="ow-fin-row"><span>💼 Bonus investitore (già in cassa)</span><b class="good">+${fmtMoney(S.investorAmount)}</b></div>` : ''}
         <label class="ow-sub" style="display:flex;align-items:center;gap:6px;margin-top:8px;cursor:pointer" title="Salta i mini-resoconti partita, il mercato di gennaio e il riassunto a inizio stagione; chi è a fine carriera resta sempre 'un'altra stagione'. Utile per arrivare in fondo alle 20 stagioni il più in fretta possibile."><input type="checkbox" id="turboModeChk" ${S.turboMode ? 'checked' : ''} /> ⏩ Modalità veloce: salta interruzioni non essenziali (gennaio incluso)</label>
       </div>
       ${S.offers && S.offers.length ? `
@@ -3026,7 +3019,7 @@
     if (startBlockInfo && startBlockInfo.sig !== startBlockSig()) startBlockInfo = null;
     const startBlock = !startBlockInfo ? ''
       : startBlockInfo.why === 'squad' ? 'Ti servono almeno ' + MIN_SQUAD + ' giocatori (ne hai ' + S.squad.length + '): ingaggia svincolati gratis in Rosa.'
-      : 'Ti mancano ' + fmtMoney(bill - S.budget) + ' per il costo d\'avvio: vendi, o prendi il bonus investitore in Finanze.';
+      : 'Ti mancano ' + fmtMoney(bill - S.budget) + ' per il costo d\'avvio: vendi qualcuno in Rosa o scegli uno staff più economico.';
     const TABS = [
       { key: 'finanze', label: '💰 Finanze', html: financeHTML, warn: broke || S.ownerRating < 35 || !!S.debtSeasons || !!(S.offers && S.offers.length) },
       { key: 'rosa', label: '👥 Rosa', html: rosaHTML, warn: S.squad.length < MIN_SQUAD || fyCount > 0 || !!(S.scoutProspects && S.scoutProspects.length) },
@@ -3173,24 +3166,13 @@
     $('ovFaRoleCancel').onclick = closeOverlay;
   }
 
+  // Prima c'era una seconda finestra con il solo tasto "OK" (e chiudendola senza premerlo lo
+  // svincolato andava perso): ora il tesseramento è immediato e il giocatore compare in rosa.
   function confirmFreeAgent(role) {
     const p = freeAgent(role);
-    overlay(`
-      <h2>🖊️ Svincolato tesserato</h2>
-      <div class="ow-spin-card">
-        <div class="big" style="color:${ovrTier(p.ovr).c}">${p.ovr}</div>
-        <div class="nm">${flagOf(p)}${p.n} <span class="postag postag-${p.pos}" style="vertical-align:middle">${p.pos}</span></div>
-        <div class="meta">${POS_LABEL[p.pos]} · età ${p.age} · ${fmtYr(p.wage)}</div>
-      </div>
-      <div class="dyn-modal-actions">
-        <button class="dyn-btn dyn-btn-primary" id="ovFaOk">OK</button>
-      </div>`);
-    $('ovFaOk').onclick = () => {
-      S.squad.push(markSigned(p, 0));
-      closeOverlay();
-      toast('Lo svincolato ' + p.n + ' si aggrega alla rosa.', 'success');
-      renderBoard(); saveGame();
-    };
+    S.squad.push(markSigned(p, 0));
+    toast('🖊️ Tesserato lo svincolato ' + p.n + ' (' + POS_LABEL[p.pos] + ', ' + p.ovr + ' · ' + fmtYr(p.wage) + ')', 'success');
+    renderBoard(); saveGame();
   }
 
   function runSpin(premium, cost, role) {
@@ -3458,33 +3440,46 @@
   // o una partita d'addio davanti ai tifosi. Chiamata da advance() (sim.js) al posto di
   // renderBoard() quando c'è almeno un giocatore in questa situazione; richiama se stessa
   // sul resto dell'elenco finché non ne resta nessuno, poi apre la Dirigenza normale.
+  // Tutti i giocatori a fine carriera in UNA finestra (prima: una finestra per ciascuno, in fila).
+  // Per ognuno si sceglie "addio" o "un'altra stagione"; di partenza è proposto l'addio.
   function openRetirementOverlay(players) {
-    const p = players && players[0];
-    if (!p) { closeOverlay(); if (S._seasonRecap) openSeasonRecapOverlay(S._seasonRecap); else renderBoard(); return; }
+    const list = (players || []).filter((p) => S.squad.some((x) => x.pid === p.pid));
+    if (!list.length) { closeOverlay(); if (S._seasonRecap) openSeasonRecapOverlay(S._seasonRecap); else renderBoard(); return; }
+    const keep = {};
+    const row = (p) => `<div class="ow-retire-row" data-pid="${p.pid}">
+        <span class="ovr" style="${ovrBadge(p.ovr)}">${p.ovr}</span>
+        <span class="nm">${flagOf(p)}${escapeHtml(p.n)}<small>${POS_LABEL[p.pos]} · ${p.age} anni · ${(p.careerApps || 0) + (p.seasonApps || 0)} presenze</small></span>
+        <span class="ow-retire-pick" role="group" aria-label="Scelta per ${escapeHtml(p.n)}">
+          <button type="button" class="ow-formation-pick on" data-ret="bye" aria-pressed="true">Addio</button>
+          <button type="button" class="ow-formation-pick" data-ret="stay" aria-pressed="false">Resta</button>
+        </span>
+      </div>`;
     overlay(`
       <h2>🎽 Fine carriera in vista</h2>
-      <div class="ow-spin-card">
-        <div class="big" style="color:${ovrTier(p.ovr).c}">${p.ovr}</div>
-        <div class="nm">${flagOf(p)}${p.n} <span class="postag postag-${p.pos}" style="vertical-align:middle">${p.pos}</span></div>
-        <div class="meta">${p.age} anni · ${(p.careerApps || 0) + (p.seasonApps || 0)} presenze con questa maglia</div>
-      </div>
-      <p class="ow-sub">Ha raggiunto l'età del ritiro. Può giocare ancora un'altra stagione (il suo rendimento continuerà comunque a calare con l'età) oppure chiudere qui, con una partita d'addio davanti ai suoi tifosi.</p>
-      <div class="dyn-modal-actions">
-        <button class="dyn-btn" id="ovOneMore">Un'altra stagione</button>
-        <button class="dyn-btn dyn-btn-primary" id="ovFarewell">🎉 Partita d'addio e ritiro</button>
-      </div>`);
-    $('ovOneMore').onclick = () => {
-      p._retiring = false;
-      toast(p.n + ' resta un\'altra stagione.', 'success');
-      openRetirementOverlay(players.slice(1));
-    };
-    $('ovFarewell').onclick = () => {
-      const i = S.squad.findIndex((x) => x.pid === p.pid);
-      if (i >= 0) { pushAlumnus(p, S, true); S.squad.splice(i, 1); }
-      S.sent = clamp(S.sent + 4, 0, 100);
-      toast('Una partita d\'addio per ' + p.n + ': i tifosi lo salutano con affetto.', 'success');
-      if (DynSound) DynSound.trophy();
-      openRetirementOverlay(players.slice(1));
+      <p>${list.length === 1 ? 'Un giocatore ha' : list.length + ' giocatori hanno'} raggiunto l'età del ritiro. Chi resta gioca un'altra stagione (ma continua a calare); chi saluta ha la sua partita d'addio davanti ai tifosi.</p>
+      <div class="ow-retire-list">${list.map(row).join('')}</div>
+      <div class="dyn-modal-actions"><button class="dyn-btn dyn-btn-primary" id="ovRetireGo">Conferma</button></div>`);
+    const modal = $('owOverlayModal');
+    modal.querySelectorAll('[data-ret]').forEach((btn) => btn.addEventListener('click', () => {
+      const r = btn.closest('.ow-retire-row'); const pid = r.dataset.pid;
+      keep[pid] = btn.dataset.ret === 'stay';
+      r.querySelectorAll('[data-ret]').forEach((x) => { const on = x === btn; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on); });
+      if (DynSound) DynSound.tap();
+    }));
+    $('ovRetireGo').onclick = () => {
+      const byes = [];
+      list.forEach((p) => {
+        if (keep[p.pid]) { p._retiring = false; return; }
+        const i = S.squad.findIndex((x) => String(x.pid) === String(p.pid));
+        if (i >= 0) { pushAlumnus(p, S, true); S.squad.splice(i, 1); byes.push(p.n); }
+      });
+      if (byes.length) {
+        S.sent = clamp(S.sent + 4, 0, 100);
+        toast('Partita d\'addio per ' + byes.join(', ') + ': i tifosi salutano con affetto.', 'success');
+        if (DynSound) DynSound.trophy();
+      } else toast('Restano tutti un\'altra stagione.', 'success');
+      saveGame();
+      openRetirementOverlay([]);
     };
   }
 
@@ -3560,7 +3555,10 @@
       <div class="ow-sub" style="margin:8px 0 6px;text-align:left">Esonera (30% di buonuscita) e nomina:</div>
       ${mgrCands.map((m, i) => `<div class="ow-mgr cand"><span class="ovr" style="${ovrBadge(m.rating)}">${m.rating}</span><span class="nm">${flagOf(m)}${m.n}${m.exPlayer ? ' <small title="Una tua ex leggenda">🎓</small>' : ''}<small>${fmtMoney(m.salary)}/anno, metà pagata subito · ${specOf(m.spec).icon} ${specOf(m.spec).label}${m.exPlayer ? ' · Ex giocatore del club' : ''}</small></span><button class="dyn-mini" data-wh="${i}" title="${specOf(m.spec).desc}">Assumi</button></div>`).join('')}
       <div class="dyn-modal-actions"><button class="dyn-btn dyn-btn-primary" id="ovPlayOn">Continua così</button></div>`);
-    $('ovPlayOn').onclick = () => { S.winterDone = true; S._pause = false; S._janCands = null; S._janSwitchUsed = false; S._janMgrCands = null; closeOverlay(); saveGame(); if (S.played >= gp()) endSeason(); };
+    $('ovPlayOn').onclick = () => { S.winterDone = true; S._pause = false; S._janCands = null; S._janSwitchUsed = false; S._janMgrCands = null; closeOverlay(); saveGame();
+      if (S.played >= gp()) endSeason();
+      else if (typeof S._bulkFrom === 'number') simToEnd();   // era partito "Simula": riprende da solo
+    };
     document.querySelectorAll('#owOverlayModal [data-jan-loan]').forEach((el) => el.addEventListener('click', () => {
       const i = +el.dataset.janLoan, p = S._janCands[i]; if (!p) return;
       const cost = janLoanCost(p);
@@ -4124,7 +4122,14 @@
     $('hudSeason').textContent = S.season + '/' + (S.maxSeasons || MAX_SEASONS);
     $('hudPlayed').textContent = S.played + '/' + gp();
     const pos = S.table ? (S.table.findIndex((t) => t.me) + 1) : 0;
-    $('hudPos').textContent = pos ? ord(pos) : '-';
+    // Freccia di classifica come in TV: quante posizioni guadagnate o perse con l'ultima giornata.
+    if (S.played === 0) { S._posTrack = null; }
+    else if (pos && (!S._posTrack || S._posTrack.played !== S.played)) {
+      const prev = S._posTrack ? S._posTrack.pos : pos;
+      S._posTrack = { played: S.played, pos, delta: prev - pos };
+    }
+    const dl = S._posTrack && S._posTrack.played === S.played ? S._posTrack.delta : 0;
+    $('hudPos').innerHTML = (pos ? ord(pos) : '-') + (dl ? ` <i class="ow-pos-delta ${dl > 0 ? 'up' : 'down'}" title="${dl > 0 ? 'Guadagnate' : 'Perse'} ${Math.abs(dl)} posizioni dall'ultimo aggiornamento">${dl > 0 ? '▲' : '▼'}${Math.abs(dl)}</i>` : '');
     $('hudPts').textContent = S.pts;
     $('owDivChip').textContent = divOf().name;
     $('owBudgetChip').querySelector('b').textContent = fmtMoney(S.budget);
@@ -4197,14 +4202,48 @@
     if (!opp) { el.innerHTML = ''; return; }
     const def = CLUB_PERSONALITIES[opp.personality];
     const isRival = isDerby(S.club, opp.name) || (S.rivalries && S.rivalries.indexOf(opp.name) !== -1);
-    el.innerHTML = `<div class="ow-scout-card">
+    // La scheda avversario ora serve a qualcosa: dice se le TUE istruzioni tattiche gli fanno
+    // comodo e permette di adattarle qui, partita per partita, senza tornare in Dirigenza.
+    const style = S.tacticStyle || DEFAULT_TACTIC_STYLE;
+    const punished = !!(def && def.punishes(style));
+    const tacticLabel = (st) => 'pressing ' + TACTIC_PRESS[st.press].label.toLowerCase() + ' · gioco ' + TACTIC_WIDTH[st.width].label.toLowerCase() + ' · ritmo ' + TACTIC_TEMPO[st.tempo].label.toLowerCase();
+    const tacticTxt = tacticLabel(style);
+    el.innerHTML = `<div class="ow-scout-card${punished ? ' warn' : ''}">
       <div class="ow-scout-row"><span>${fx.home ? '🏠 Prossima in casa vs' : '✈️ Prossima in trasferta vs'} <b>${escapeHtml(opp.name)}</b>${isRival ? ' <span title="Rivalità sentita">🔥</span>' : ''}</span></div>
       ${def ? `<div class="ow-scout-row ow-scout-report"><span>${def.icon} ${def.label}</span><small>${def.desc}</small></div>` : ''}
+      ${def ? `<div class="ow-scout-row ow-scout-tactic"><small>La tua tattica: <b>${tacticTxt}</b></small>${punished
+        ? `<div class="ow-scout-adapt"><span>⚠️ Così gli fai un favore</span><button type="button" class="dyn-mini" id="owAdaptTactic">Adatta la tattica</button></div>`
+        : '<span class="ow-scout-ok">✓ Nessun vantaggio per loro</span>'}</div>` : ''}
     </div>`;
+    const adapt = $('owAdaptTactic');
+    if (adapt) adapt.onclick = () => {
+      // Torna alla scelta neutra solo sulla voce che l'avversario punisce, una alla volta.
+      const next = { ...style };
+      for (const g of ['press', 'tempo', 'width']) {
+        if (!def.punishes(next)) break;
+        const trial = { ...next, [g]: DEFAULT_TACTIC_STYLE[g] };
+        if (trial[g] !== next[g]) Object.assign(next, trial);
+      }
+      S.tacticStyle = next; saveGame(); renderScouting();
+      toast('Tattica adattata: ' + tacticLabel(next));
+      if (DynSound) DynSound.tap();
+    };
   }
 
   // Digest a fine "Simula fino a fine stagione" (buildBulkDigest, sim.js): un piccolo
   // riepilogo invece di ripartire subito dalla board senza sapere cosa è successo.
+  // Stesso riepilogo, ma quando "Simula" arriva fino all'ultima giornata: un riquadro in cima
+  // alla fine stagione invece di un'altra finestra da chiudere.
+  function showSeasonEndDigest(items) {
+    const body = $('owSeasonEndBody'); if (!body || !items || !items.length) return;
+    const old = body.querySelector('.ow-digest'); if (old) old.remove();
+    const box = document.createElement('div');
+    box.className = 'ow-sec ow-digest';
+    box.innerHTML = '<div class="ow-sec-title">📰 Le partite simulate</div>' + items.map((it) => '<div class="ow-fin-row"><span>' + it.icon + ' ' + escapeHtml(it.text) + '</span></div>').join('');
+    const anchor = body.querySelector('.dyn-panel');
+    if (anchor && anchor.nextSibling) body.insertBefore(box, anchor.nextSibling); else body.prepend(box);
+  }
+
   function openBulkDigestOverlay(items) {
     overlay(`
       <div class="ow-event-modal">
@@ -4229,8 +4268,8 @@
     if (!opp) { go(); return; }
     const isDerbyMatch = isDerby(S.club, opp.name) || (S.rivalries && S.rivalries.indexOf(opp.name) !== -1);
     const highStakes = seasonStakesBoost(S) > 1;
-    if ((!isDerbyMatch && !highStakes) || (S._pressCountSeason || 0) >= 3) { go(); return; }
-    S._pressCountSeason = (S._pressCountSeason || 0) + 1;
+    if ((!isDerbyMatch && !highStakes) || (S._pressCountSeason || 0) >= 3 || !matchPopupAllowed(S)) { go(); return; }
+    S._pressCountSeason = (S._pressCountSeason || 0) + 1; useMatchPopup(S);
     openPressConferenceOverlay(opp, isDerbyMatch, go);
   }
 
