@@ -1437,3 +1437,61 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ow-target-status{ font:800 13px/1.2 var(--cond); letter-spacing:.04em; text-transform:uppercase; }
 .ow-target-status.ok{ color:var(--good); }
 .ow-target-status.bad{ color:var(--bad); }
+
+/* ---------- storia del club: una finestra, cinque schede ---------- */
+.ow-hist-tabs{ display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; margin:0 -4px 10px; padding:0 4px 2px; }
+.ow-hist-tabs::-webkit-scrollbar{ display:none; }
+.ow-hist-tab{
+  flex:0 0 auto; appearance:none; cursor:pointer; background:var(--panel2); border:1.5px solid var(--line); color:var(--ink);
+  font:800 13.5px/1 var(--cond); text-transform:uppercase; letter-spacing:.04em; padding:10px 12px; border-radius:6px; min-height:var(--tap);
+}
+.ow-hist-tab.on{ background:var(--c1); border-color:var(--c1); color:var(--on-c1); }
+.ow-hist-body{ text-align:left; }
+.ow-hist-sub{ margin:14px 0 4px; font:800 13px/1.2 var(--cond); letter-spacing:.1em; text-transform:uppercase; }
+
+/* ---------- calendario e rosa a stagione in corso ---------- */
+.dyn-manage-row{ grid-template-columns:1fr 1fr; }
+.ow-next{ margin:8px 0 0; background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.ow-next-title{ font:800 12px/1 var(--cond); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); padding:8px 12px 6px; }
+.ow-next-row, .ow-cal-row{ display:grid; grid-template-columns:40px 46px 1fr auto; align-items:center; gap:6px; padding:7px 12px; border-top:1px solid var(--line); font-size:13px; font-weight:700; }
+.ow-next-row .mw, .ow-cal-row .mw{ font:800 12.5px/1 var(--cond); color:var(--muted); letter-spacing:.04em; }
+.ow-next-row .ha, .ow-cal-row .ha{ font:800 11.5px/1 var(--cond); text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.ow-next-row .nm, .ow-cal-row .nm{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ow-next-row .pos, .ow-cal-row .pos{ font:800 13px/1 var(--cond); color:var(--muted); }
+.ow-next-row.rival, .ow-cal-row.rival{ box-shadow:inset 4px 0 0 var(--bad); }
+.ow-cal{ text-align:left; border:1px solid var(--line); border-radius:8px; padding:0; }
+.ow-cal-row:first-child{ border-top:0; }
+.ow-cal-row.next{ background:color-mix(in srgb, var(--c1) 12%, var(--panel)); box-shadow:inset 6px 0 0 var(--c1); }
+.ow-cal-res{ font:400 15px/1 var(--display); color:#fff; padding:5px 8px 4px; border-radius:3px; min-width:42px; text-align:center; }
+.ow-cal-res.W{ background:var(--good); } .ow-cal-res.D{ background:var(--draw); } .ow-cal-res.L{ background:var(--bad); }
+.ow-sq-row{ display:flex; align-items:center; gap:9px; padding:8px 2px; border-bottom:1px solid var(--line); text-align:left; }
+.ow-sq-row:last-child{ border-bottom:0; }
+.ow-sq-row .ovr{ width:34px; height:30px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; border-radius:6px; font:800 15px/1 var(--cond); }
+.ow-sq-row .nm{ flex:1; min-width:0; font-weight:800; font-size:13px; }
+.ow-sq-row .nm small{ display:block; color:var(--muted); font-weight:600; font-size:11px; margin-top:1px; }
+
+/* ---------- fine stagione: essenziale in alto, il resto in sezioni apribili ---------- */
+.ow-end-strip{ display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin:-6px -8px 14px; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+.ow-end-strip > div{ padding:8px 8px 7px; border-right:1px solid var(--line); text-align:left; }
+.ow-end-strip > div:last-child{ border-right:0; }
+.ow-end-strip span{ display:block; font:800 10.5px/1.1 var(--cond); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.ow-end-strip b{ display:block; font:400 21px/1.15 var(--display); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ow-end-strip b.good{ color:var(--good); } .ow-end-strip b.bad{ color:var(--bad); }
+@media(max-width:400px){ .ow-end-strip b{ font-size:18px; } }
+.ow-fold{ background:var(--panel); border:1px solid var(--line); border-radius:10px; margin:0 0 8px; box-shadow:0 1px 0 rgba(20,22,26,.05); text-align:left; }
+.ow-fold > summary{
+  list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px; min-height:48px; padding:10px 14px;
+  font:800 16px/1.15 var(--cond); font-style:italic; text-transform:uppercase; letter-spacing:.04em; color:var(--ink);
+}
+.ow-fold > summary::-webkit-details-marker{ display:none; }
+.ow-fold > summary::after{ content:"+"; margin-left:auto; font:400 22px/1 var(--display); color:var(--c1-ink); font-style:normal; }
+.ow-fold[open] > summary::after{ content:"–"; }
+.ow-fold[open] > summary{ border-bottom:1px solid var(--line); }
+.ow-fold-body{ padding:6px 14px 12px; }
+.ow-fold-body > .ow-sec{ margin:0; padding:0; border:0; box-shadow:none; background:none; }
+.ow-fold-body > .ow-sec > .ow-sec-title:first-child{ display:none; }
+.ow-fold-body .ow-sec-title{ margin:12px 0 6px; padding:0; border:0; font-size:14px; }
+.ow-fold-body .ow-sec-title::before{ display:none; }
+/* le cinque schede stanno tutte nello schermo: si va a capo invece di scorrere di lato */
+.ow-hist-tabs{ flex-wrap:wrap; justify-content:center; overflow:visible; margin:0 0 10px; padding:0; }
+.ow-hist-tab{ padding:9px 10px; font-size:13px; }

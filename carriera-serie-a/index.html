@@ -21,7 +21,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Inter:wght@400;500;600;700;800;900&display=swap" />
-<link rel="stylesheet" href="styles.css?v=22" />
+<link rel="stylesheet" href="styles.css?v=24" />
 <script src="errors.js?v=67"></script>
 </head>
 <body class="dyn">
@@ -35,7 +35,7 @@
   <div class="dyn-topbar-right">
     <button id="owNotifBtn" class="dyn-icon-btn" type="button" title="Promemoria" aria-label="Promemoria" style="position:relative">🔔<span id="owNotifDot" aria-hidden="true" style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--bad);box-shadow:0 0 0 2px var(--panel2);display:none"></span></button>
     <button id="owGlobalLeaderboardBtn" class="dyn-icon-btn" type="button" title="Classifica presidenti" aria-label="Classifica presidenti">🌍</button>
-    <button id="owTrophyCaseBtn" class="dyn-icon-btn" type="button" title="Bacheca trofei" aria-label="Bacheca trofei">🏆</button>
+    <button id="owTrophyCaseBtn" class="dyn-icon-btn" type="button" title="Storia del club: trofei, traguardi, primati, leggende, derby" aria-label="Storia del club">🏆</button>
     <button id="owSoundBtn" class="dyn-icon-btn" type="button" title="Audio" aria-label="Attiva o disattiva l'audio">🔊</button>
   </div>
 </div>
@@ -143,6 +143,8 @@
     <div class="dyn-cups" id="owCups"></div>
     <div class="dyn-manage-row">
       <button id="owTableBtn" type="button" class="dyn-mini">📊 Classifica</button>
+      <button id="owCalendarBtn" type="button" class="dyn-mini">📅 Calendario</button>
+      <button id="owSquadBtn" type="button" class="dyn-mini">👥 Rosa</button>
       <button id="owClubBtn" type="button" class="dyn-mini">🏦 Il mio club</button>
     </div>
     <div id="owScouting" class="ow-scouting"></div>
@@ -174,11 +176,11 @@
 <div id="owToast" class="dyn-toast hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="owLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-<script src="sfx.js?v=77"></script>
-<script src="data.js?v=77"></script>
-<script src="rosters.js?v=77"></script>
-<script src="sim.js?v=77"></script>
-<script src="ui.js?v=77"></script>
+<script src="sfx.js?v=78"></script>
+<script src="data.js?v=78"></script>
+<script src="rosters.js?v=78"></script>
+<script src="sim.js?v=78"></script>
+<script src="ui.js?v=78"></script>
 <script>
   // Service worker: rende il gioco installabile ("aggiungi a Home") e disponibile offline
   // dopo la prima visita. Nessun impatto sul deploy: index.html resta sempre network-first.

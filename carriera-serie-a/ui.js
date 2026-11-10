@@ -1968,6 +1968,8 @@
     $('owSimBtn').addEventListener('click', () => simToEnd());
     $('owTableBtn').addEventListener('click', showTable);
     $('owClubBtn').addEventListener('click', showClub);
+    $('owCalendarBtn').addEventListener('click', showCalendar);
+    $('owSquadBtn').addEventListener('click', showSeasonSquad);
     bindGlobalKeys();
   }
 
@@ -3567,6 +3569,13 @@
     return r._penScore;
   }
 
+  // Fine stagione più corta: in alto solo l'essenziale (posizione, punti, soldi, trofei), il
+  // resto in sezioni da aprire. Prima erano una dozzina di blocchi uno sotto l'altro.
+  function seFold(title, inner) {
+    if (!inner) return '';
+    return `<details class="ow-fold"><summary>${title}</summary><div class="ow-fold-body">${inner}</div></details>`;
+  }
+
   function renderSeasonEnd() {
     const e = S._end, d = divOf(), body = $('owSeasonEndBody');
     const banner = e.fate === 'forced' ? ['😡 I tifosi hanno parlato', 'Gradimento troppo basso. Sei costretto a dimetterti.']
@@ -3604,7 +3613,6 @@
     // Classifica finale del campionato appena chiuso: a colpo d'occhio, senza dover
     // riaprire il tabellone dalla sala del consiglio.
     const tableRecapHTML = `
-        <div class="ow-sec-title" style="margin-top:12px">📋 Classifica finale · ${d.name}</div>
         <div style="max-height:44vh;overflow:auto;margin:0 -6px">${tableHTML()}</div>`;
     // Percorso in coppa, turno per turno: solo se ci sono stati turni da mostrare (niente
     // se il presidente non è nemmeno iscritto a una coppa europea quest'anno).
@@ -3710,28 +3718,30 @@
         ${e.newRecords.map((r) => `<div class="ow-fin-row"><span><span aria-hidden="true">${escapeHtml(r.icon)}</span> ${escapeHtml(r.label)}</span><b>${escapeHtml(r.value)}</b></div>`).join('')}
       </div>` : ''}
       <div class="dyn-panel">
+        <div class="ow-end-strip">
+          <div><span>Posizione</span><b>${ord(e.pos)}</b></div>
+          <div><span>Punti</span><b>${S.pts}</b></div>
+          <div><span>Saldo</span><b class="${e.net < 0 ? 'bad' : 'good'}">${e.net < 0 ? '-' : '+'}${fmtMoney(Math.abs(e.net))}</b></div>
+          <div><span>Valore club</span><b>${fmtMoney(e.worth)}</b></div>
+        </div>
         <div class="dyn-trophies">${trophyChips}</div>
-        ${playoffHTML}
-        ${cupPathHTML}
-        ${(e.mpEvents && e.mpEvents.length) ? `
-          <div class="ow-sec-title" style="margin-top:12px">📰 Cronaca della stagione</div>
-          ${e.mpEvents.map((ev) => `<div class="ow-fin-row" style="align-items:flex-start"><span>${escapeHtml(ev.icon || '📰')} <b>${escapeHtml(ev.title || '')}</b><small style="display:block;color:var(--muted)">${escapeHtml(ev.text || '')}</small></span></div>`).join('')}
-        ` : ''}
-        ${tableRecapHTML}
-        <div class="ow-sec-title" style="margin-top:12px">📋 Bilancio economico</div>
+        ${e.euroQual ? '<div class="ow-fin-row"><span>' + EURO_COMPS[e.euroQual].flag + ' Qualificazione europea</span><b class="good">' + EURO_COMPS[e.euroQual].name + ' la prossima stagione</b></div>' : ''}
+        <div class="ow-fin-row"><span>Budget attuale</span><b class="${S.budget < 0 ? 'bad' : ''}">${fmtMoney(S.budget)}</b></div>
+      </div>
+      ${seFold('📋 Classifica finale · ' + d.name, tableRecapHTML)}
+      ${(playoffHTML || cupPathHTML) ? seFold('🏟️ Playoff e coppe', playoffHTML + cupPathHTML) : ''}
+      ${(e.mpEvents && e.mpEvents.length) ? seFold('📰 Cronaca della stagione', e.mpEvents.map((ev) => `<div class="ow-fin-row" style="align-items:flex-start"><span>${escapeHtml(ev.icon || '📰')} <b>${escapeHtml(ev.title || '')}</b><small style="display:block;color:var(--muted)">${escapeHtml(ev.text || '')}</small></span></div>`).join('')) : ''}
+      ${seFold('💶 Bilancio economico', `
         ${e.statement.map((r) => r[1] === 0 && r[0].indexOf('avvio') > 0 ? `<div class="ow-fin-row memo"><span>${r[0]}</span><b>già pagati</b></div>` : `<div class="ow-fin-row"><span>${r[0]}</span><b class="${r[1] < 0 ? 'bad' : ''}">${r[1] < 0 ? '-' : '+'}${fmtMoney(Math.abs(r[1]))}</b></div>`).join('')}
         <div class="ow-fin-row total"><span>Saldo di stagione</span><b class="${e.net < 0 ? 'bad' : ''}">${e.net < 0 ? '-' : '+'}${fmtMoney(Math.abs(e.net))}</b></div>
-        <div class="ow-fin-row total"><span>Budget attuale</span><b class="${S.budget < 0 ? 'bad' : ''}">${fmtMoney(S.budget)}</b></div>
-        <div class="ow-sec-title" style="margin-top:12px">📣 L'umore</div>
+        <div class="ow-fin-row total"><span>Budget attuale</span><b class="${S.budget < 0 ? 'bad' : ''}">${fmtMoney(S.budget)}</b></div>`)}
+      ${seFold('📣 Tifosi e gradimento', `
         ${e.sentItems.length ? e.sentItems.map((s) => `<div class="ow-fin-row"><span>${s[0]}</span><b class="${s[1] < 0 ? 'bad' : 'good'}">${s[1] > 0 ? '+' : ''}${s[1]}</b></div>`).join('') : '<div class="ow-sub">Un\'estate tranquilla in curva.</div>'}
         ${meterHTML('Umore tifosi', S.sent, S.sent < 30)}
         ${meterHTML('Gradimento (' + (e.ratingDelta >= 0 ? '+' : '') + e.ratingDelta + ')', S.ownerRating, S.ownerRating < 35)}
-        <div class="ow-fin-row"><span>Indice tifoseria</span><b class="${(e.fbDelta || 0) < 0 ? 'bad' : 'good'}">${S.fanbase.toFixed(2)} (${(e.fbDelta || 0) >= 0 ? '+' : ''}${(e.fbDelta || 0).toFixed(2)})</b></div>
-        ${e.euroQual ? '<div class="ow-fin-row"><span>' + EURO_COMPS[e.euroQual].flag + ' Qualificazione europea</span><b class="good">' + EURO_COMPS[e.euroQual].name + ' la prossima stagione</b></div>' : ''}
-        <div class="ow-fin-row total" style="margin-top:10px"><span>Valore del club</span><b>${fmtMoney(e.worth)}</b></div>
-      </div>
-      ${statsHTML}
-      ${bestXiHTML}
+        <div class="ow-fin-row"><span>Indice tifoseria</span><b class="${(e.fbDelta || 0) < 0 ? 'bad' : 'good'}">${S.fanbase.toFixed(2)} (${(e.fbDelta || 0) >= 0 ? '+' : ''}${(e.fbDelta || 0).toFixed(2)})</b></div>`)}
+      ${seFold('📊 Statistiche giocatori', statsHTML)}
+      ${seFold('⭐ Squadra della stagione', bestXiHTML)}
       <button class="dyn-btn" id="owShareBtn">📤 Condividi la stagione</button>
       <div class="ow-cta-sticky"><button type="button" class="dyn-btn dyn-btn-primary" id="owEndBtn">${e.fate ? 'Affronta le conseguenze' : S.season >= (S.maxSeasons || MAX_SEASONS) ? 'Concludi la tua carriera' : 'Torna in sala del consiglio'}</button></div>`;
     $('owShareBtn').onclick = exportSeasonCard;
@@ -4158,6 +4168,67 @@
     el.innerHTML = `<div class="ow-target"><span class="ow-target-pill ${t.key}">🎯 Obiettivo: ${t.label}</span>${status}</div>`;
   }
 
+  // Calendario e rosa consultabili a stagione in corso: prima per vedere chi avevi in squadra
+  // o chi avresti incontrato dopo bisognava aspettare la fine della stagione.
+  function fixtureInfo(i) {
+    const fx = S.fixtures && S.fixtures[i];
+    const opp = fx && S.opps && S.opps[fx.opp];
+    if (!opp) return null;
+    const pos = S.table ? S.table.findIndex((r) => r.name === opp.name) + 1 : 0;
+    const rival = isDerby(S.club, opp.name) || (S.rivalries && S.rivalries.indexOf(opp.name) !== -1);
+    return { fx, opp, pos, rival };
+  }
+  // Le prossime partite dopo quella in arrivo (che ha già la sua scheda sopra).
+  function upcomingStripHTML(n) {
+    if (!S.fixtures || !S.seasonActive) return '';
+    const rows = [];
+    for (let i = S.played + 1; i < S.fixtures.length && rows.length < n; i++) {
+      const f = fixtureInfo(i); if (!f) continue;
+      rows.push(`<div class="ow-next-row${f.rival ? ' rival' : ''}"><span class="mw">G${f.fx.mw || i + 1}</span><span class="ha">${f.fx.home ? 'Casa' : 'Fuori'}</span><span class="nm">${escapeHtml(f.opp.name)}${f.rival ? ' 🔥' : ''}</span><span class="pos">${f.pos ? f.pos + 'ª' : ''}</span></div>`);
+    }
+    return rows.length ? `<div class="ow-next"><div class="ow-next-title">Poi</div>${rows.join('')}</div>` : '';
+  }
+
+  function showCalendar() {
+    if (!S.fixtures) return;
+    const res = S.results || [];
+    // I risultati di campionato sono in ordine di giornata; quelli di coppa stanno altrove.
+    const league = res.filter((r) => !r.comp || r.comp === 'league');
+    const rows = S.fixtures.map((fx, i) => {
+      const f = fixtureInfo(i); if (!f) return '';
+      const r = i < S.played ? league[i] : null;
+      const cls = r ? ' res-' + r.res : (i === S.played ? ' next' : '');
+      const right = r ? `<b class="ow-cal-res ${r.res}">${r.gf}-${r.ga}</b>` : `<span class="pos">${f.pos ? f.pos + 'ª' : ''}</span>`;
+      return `<div class="ow-cal-row${cls}${f.rival ? ' rival' : ''}"${i === S.played ? ' data-next' : ''}><span class="mw">G${fx.mw || i + 1}</span><span class="ha">${fx.home ? 'Casa' : 'Fuori'}</span><span class="nm">${escapeHtml(f.opp.name)}${f.rival ? ' 🔥' : ''}</span>${right}</div>`;
+    }).join('');
+    overlay(`<h2>📅 Calendario</h2>
+      <div class="ow-sub" style="text-align:center">${escapeHtml(divOf().name)} · ${S.played}/${S.fixtures.length} giocate · 🔥 derby e rivalità</div>
+      <div class="ow-records-scroll ow-cal">${rows}</div>
+      <div class="dyn-modal-actions"><button class="dyn-btn dyn-btn-primary" id="ovClose">Chiudi</button></div>`);
+    $('ovClose').onclick = closeOverlay;
+    const next = $('owOverlayModal').querySelector('[data-next]');
+    if (next && next.scrollIntoView) next.scrollIntoView({ block: 'center' });
+  }
+
+  function showSeasonSquad() {
+    const order = { POR: 0, DIF: 1, CEN: 2, ATT: 3 };
+    const list = S.squad.slice().sort((a, b) => (order[a.pos] - order[b.pos]) || (b.ovr - a.ovr));
+    const rows = list.map((p) => {
+      const status = p.outWeeks > 0 ? `<span class="stat-tag inj" title="Infortunato">🚑 ${p.outWeeks}</span>` : p.suspMatches > 0 ? '<span class="stat-tag susp" title="Squalificato">🟥</span>' : '';
+      const stats = p.pos === 'POR'
+        ? `${p.seasonApps || 0} pres · ${p.seasonCleanSheets || 0} inviolate`
+        : `${p.seasonApps || 0} pres · ${p.seasonGoals || 0} gol · ${p.seasonAssists || 0} assist`;
+      return `<div class="ow-sq-row"><span class="ovr" style="${ovrBadge(p.ovr)}">${p.pid === S.captainPid ? p.ovr + 1 : p.ovr}</span><span class="postag postag-${p.pos}">${p.pos}</span><span class="nm">${flagOf(p)}${escapeHtml(p.n)}${p.pid === S.captainPid ? ' ©' : ''}<small>${stats}</small></span>${status}</div>`;
+    }).join('');
+    const out = S.squad.filter((p) => p.outWeeks > 0 || p.suspMatches > 0).length;
+    overlay(`<h2>👥 La rosa</h2>
+      <div class="ow-sub" style="text-align:center">${S.squad.length} giocatori · ${out ? out + ' indisponibil' + (out === 1 ? 'e' : 'i') : 'tutti disponibili'} · statistiche di questa stagione</div>
+      <div class="ow-records-scroll">${rows}</div>
+      <div class="ow-sub" style="text-align:center">Mercato, rinnovi e formazione si gestiscono in Dirigenza, fra una stagione e l'altra.</div>
+      <div class="dyn-modal-actions"><button class="dyn-btn dyn-btn-primary" id="ovClose">Chiudi</button></div>`);
+    $('ovClose').onclick = closeOverlay;
+  }
+
   // Scouting report sul prossimo avversario: CLUB_PERSONALITIES (data.js) esiste già e
   // "legge" le tue istruzioni tattiche dentro simMatch, ma prima il giocatore non lo sapeva
   // mai in anticipo — le scelte tattiche erano informate solo a posteriori (dal risultato).
@@ -4184,7 +4255,7 @@
       ${def ? `<div class="ow-scout-row ow-scout-tactic"><small>La tua tattica: <b>${tacticTxt}</b></small>${punished
         ? `<div class="ow-scout-adapt"><span>⚠️ Così gli fai un favore</span><button type="button" class="dyn-mini" id="owAdaptTactic">Adatta la tattica</button></div>`
         : '<span class="ow-scout-ok">✓ Nessun vantaggio per loro</span>'}</div>` : ''}
-    </div>`;
+    </div>${upcomingStripHTML(4)}`;
     const adapt = $('owAdaptTactic');
     if (adapt) adapt.onclick = () => {
       // Torna alla scelta neutra solo sulla voce che l'avversario punisce, una alla volta.
@@ -4446,31 +4517,20 @@
     if (meRow && meRow.scrollIntoView) meRow.scrollIntoView({ block: 'center' });
   }
 
-  // Bacheca trofei: richiamabile in ogni momento dal topbar (non solo nel riepilogo di
-  // fine carriera), con il totale per competizione e lo storico stagione per stagione.
-  function showTrophyCase(tab) {
-    tab = tab === 'traguardi' ? 'traguardi' : 'trofei';
+  // Storia del club: una sola finestra con le schede Trofei, Traguardi, Primati, Leggende e
+  // Derby. Prima erano quattro finestre separate (bacheca, primati, storico derby, più il
+  // riquadro del club che le collegava), raggiungibili da posti diversi.
+  const HISTORY_TABS = [['trofei', '🏆 Trofei'], ['traguardi', '🏅 Traguardi'], ['primati', '📜 Primati'], ['leggende', '⭐ Leggende'], ['derby', '🥊 Derby']];
+  const LEGEND_BY = [['goals', '⚽ Gol'], ['apps', '🎽 Presenze'], ['assists', '👟 Assist'], ['cleanSheets', '🧤 Porta inviolata']];
+  function showClubHistory(tab, by) {
+    tab = HISTORY_TABS.some((t) => t[0] === tab) ? tab : 'trofei';
     if (!S || !S.trophies) {
-      overlay(`<h2>🏆 Bacheca trofei</h2><p class="ow-sub" style="text-align:center">Nessuna carriera attiva al momento.</p><div class="dyn-modal-actions"><button class="dyn-btn dyn-btn-primary" id="ovClose">Chiudi</button></div>`);
+      overlay(`<h2>📜 Storia del club</h2><p class="ow-sub" style="text-align:center">Nessuna carriera attiva al momento.</p><div class="dyn-modal-actions"><button class="dyn-btn dyn-btn-primary" id="ovClose">Chiudi</button></div>`);
       $('ovClose').onclick = closeOverlay;
       return;
     }
-    const tabsHTML = `<div class="dyn-modal-actions" style="gap:6px;margin-bottom:10px">
-        <button class="dyn-btn${tab === 'trofei' ? ' dyn-btn-primary' : ''}" id="ovTabTrofei">🏆 Trofei</button>
-        <button class="dyn-btn${tab === 'traguardi' ? ' dyn-btn-primary' : ''}" id="ovTabTraguardi">🏅 Traguardi</button>
-      </div>`;
-    let bodyHTML;
-    if (tab === 'traguardi') {
-      const unlocked = S.achievements || [];
-      const sorted = ACHIEVEMENTS.slice().sort((a, b) => (unlocked.indexOf(b.key) !== -1) - (unlocked.indexOf(a.key) !== -1));
-      bodyHTML = `<div class="ow-sub" style="text-align:center">${unlocked.length}/${ACHIEVEMENTS.length} traguardi sbloccati con ${S.club}</div>
-      <div style="max-height:52vh;overflow:auto;margin:10px -6px 4px">
-        ${sorted.map((a) => {
-          const done = unlocked.indexOf(a.key) !== -1;
-          return `<div class="ow-fin-row"${done ? '' : ' style="opacity:.5"'}><span>${done ? a.icon : '🔒'} ${a.title}<small style="display:block;color:var(--muted)">${a.desc}</small></span></div>`;
-        }).join('')}
-      </div>`;
-    } else {
+    let body = '';
+    if (tab === 'trofei') {
       const t = S.trophies;
       const rows = [];
       DIVS.forEach((d, i) => { if (t.titles[i]) rows.push(['🏆 ' + d.name + ' - Titolo', t.titles[i]]); });
@@ -4479,25 +4539,58 @@
       if (t.uel) rows.push(['🟠 ' + EURO_COMPS.uel.name, t.uel]);
       if (t.conf) rows.push(['🟢 ' + EURO_COMPS.conf.name, t.conf]);
       const timeline = (S.history || []).filter((h) => h.trophies && h.trophies.length).slice().reverse();
-      bodyHTML = `<div class="ow-sub" style="text-align:center">${t.total} trofe${t.total === 1 ? 'o' : 'i'} in ${S.season} stagion${S.season === 1 ? 'e' : 'i'} con ${S.club}</div>
-      <div style="max-height:52vh;overflow:auto;margin:10px -6px 4px">
-        ${rows.length ? rows.map((r) => `<div class="ow-fin-row"><span>${r[0]}</span><b class="good">${r[1]}×</b></div>`).join('') : '<div class="ow-sub" style="margin:14px 0">Ancora nessun trofeo: il momento buono arriverà.</div>'}
-        ${timeline.length ? `<div class="ow-sec-title" style="margin-top:14px">Stagione per stagione</div>${timeline.map((h) => `<div class="ow-fin-row"><span>Stagione ${h.season} · ${h.div}</span><b class="good">${h.trophies.join(', ')}</b></div>`).join('')}` : ''}
-      </div>`;
+      body = `<div class="ow-sub" style="text-align:center">${t.total} trofe${t.total === 1 ? 'o' : 'i'} in ${S.season} stagion${S.season === 1 ? 'e' : 'i'} con ${escapeHtml(S.club)}</div>
+        ${rows.length ? rows.map((r) => `<div class="ow-fin-row"><span>${r[0]}</span><b class="good">${r[1]}×</b></div>`).join('') : '<div class="ow-sub" style="margin:14px 0;text-align:center">Ancora nessun trofeo: il momento buono arriverà.</div>'}
+        ${timeline.length ? `<div class="ow-sub ow-hist-sub">Stagione per stagione</div>${timeline.map((h) => `<div class="ow-fin-row"><span>Stagione ${h.season} · ${h.div}</span><b class="good">${h.trophies.join(', ')}</b></div>`).join('')}` : ''}`;
+    } else if (tab === 'traguardi') {
+      const unlocked = S.achievements || [];
+      const sorted = ACHIEVEMENTS.slice().sort((a, b) => (unlocked.indexOf(b.key) !== -1) - (unlocked.indexOf(a.key) !== -1));
+      body = `<div class="ow-sub" style="text-align:center">${unlocked.length}/${ACHIEVEMENTS.length} traguardi sbloccati con ${escapeHtml(S.club)}</div>
+        ${sorted.map((a) => {
+          const done = unlocked.indexOf(a.key) !== -1;
+          return `<div class="ow-fin-row"${done ? '' : ' style="opacity:.5"'}><span>${done ? a.icon : '🔒'} ${a.title}<small style="display:block;color:var(--muted)">${a.desc}</small></span></div>`;
+        }).join('')}`;
+    } else if (tab === 'primati') {
+      const recs = clubRecordsList(S) || [];
+      body = `<div class="ow-sub" style="text-align:center">La storia di ${escapeHtml(S.club)} sotto la tua presidenza</div>
+        ${recs.length ? recs.map((r) => `<div class="ow-fin-row ow-rec"><span><span aria-hidden="true">${escapeHtml(r.icon)}</span> ${escapeHtml(r.label)}${r.detail ? '<small>' + escapeHtml(r.detail) + '</small>' : ''}</span><b>${escapeHtml(r.value)}</b></div>`).join('')
+          : '<div class="ow-sub" style="margin:14px 0;text-align:center">Ancora nessun primato: si scrivono giocando. Torna qui dopo le prime partite.</div>'}`;
+    } else if (tab === 'leggende') {
+      by = LEGEND_BY.some((x) => x[0] === by) ? by : 'goals';
+      const legends = clubLegends(S, by, 8) || [];
+      body = `<div class="ow-squad-filters" role="group" aria-label="Classifica per">${LEGEND_BY.map(([k, lbl]) => `<button type="button" class="ow-filter-pill ${by === k ? 'on' : ''}" aria-pressed="${by === k}" data-legend="${k}">${lbl}</button>`).join('')}</div>
+        ${legends.length ? legends.map((x, i) => `<div class="ow-fin-row ow-rec"><span><span class="ow-rec-rank">${i + 1}</span> ${flagOf(x)}${escapeHtml(x.n)} <span class="postag postag-${escapeHtml(x.pos)}">${escapeHtml(x.pos)}</span>${x.current ? '' : '<small>ex giocatore</small>'}</span><b>${escapeHtml(x.v)}</b></div>`).join('')
+          : '<div class="ow-sub" style="margin:10px 0">Nessuno ancora in questa classifica.</div>'}`;
+    } else {
+      const entries = Object.entries(S.derbyRecord || {}).sort((a, b) => (b[1].w + b[1].d + b[1].l) - (a[1].w + a[1].d + a[1].l));
+      body = `<div class="ow-sub" style="text-align:center">Bilancio testa a testa contro le rivali storiche</div>
+        ${entries.length ? entries.map(([opp, r]) => `<div class="ow-fin-row"><span>${escapeHtml(opp)}</span><b>${r.w}V ${r.d}N ${r.l}P</b></div>`).join('') : '<div class="ow-sub" style="margin:14px 0;text-align:center">Nessun derby giocato ancora.</div>'}`;
     }
-    overlay(`<h2>${tab === 'traguardi' ? '🏅 Traguardi' : '🏆 Bacheca trofei'}</h2>
-      ${tabsHTML}
-      ${bodyHTML}
+    overlay(`<h2>📜 Storia del club</h2>
+      <div class="ow-hist-tabs" role="tablist" aria-label="Sezioni della storia del club">${HISTORY_TABS.map(([k, lbl]) => `<button type="button" role="tab" aria-selected="${tab === k}" class="ow-hist-tab${tab === k ? ' on' : ''}" data-htab="${k}">${lbl}</button>`).join('')}</div>
+      <div class="ow-records-scroll ow-hist-body">${body}</div>
       <div class="dyn-modal-actions"><button class="dyn-btn dyn-btn-primary" id="ovClose">Chiudi</button></div>`);
     $('ovClose').onclick = closeOverlay;
-    $('ovTabTrofei').onclick = () => showTrophyCase('trofei');
-    $('ovTabTraguardi').onclick = () => showTrophyCase('traguardi');
+    const modal = $('owOverlayModal');
+    modal.querySelectorAll('[data-htab]').forEach((el) => el.addEventListener('click', () => {
+      showClubHistory(el.dataset.htab);
+      const cur = $('owOverlayModal').querySelector('[data-htab].on'); if (cur) cur.focus({ preventScroll: true });
+      if (DynSound) DynSound.tap();
+    }));
+    modal.querySelectorAll('[data-legend]').forEach((el) => el.addEventListener('click', () => {
+      showClubHistory('leggende', el.dataset.legend);
+      const cur = $('owOverlayModal').querySelector('[data-legend].on'); if (cur) cur.focus({ preventScroll: true });
+    }));
   }
+  // Vecchi nomi, ancora usati qua e là: aprono la scheda giusta della finestra unica.
+  function showTrophyCase(tab) { showClubHistory(tab === 'traguardi' ? 'traguardi' : 'trofei'); }
+  function showClubRecords(by) { showClubHistory(by ? 'leggende' : 'primati', by); }
+  function showDerbyHistory() { showClubHistory('derby'); }
 
   function showClub() {
     const worth = computeWorth();
     overlay(`
-      <h2>${S.club}</h2>
+      <h2>${escapeHtml(S.club)}</h2>
       <div style="display:flex;justify-content:center;margin:2px 0 10px">${crestMarkup(S.crestShape, S.crestColors, 'ow-club-crest-preview')}</div>
       <div class="ow-fin-row"><span>Budget</span><b>${fmtMoney(S.budget)}</b></div>
       <div class="ow-fin-row"><span>Valore del club</span><b>${fmtMoney(worth)}</b></div>
@@ -4505,59 +4598,15 @@
       ${meterHTML('Umore tifosi', S.sent, S.sent < 30)}
       ${meterHTML('Gradimento proprietario', S.ownerRating, S.ownerRating < 35)}
       <div class="dyn-modal-actions" style="margin-top:12px">
+        <button class="dyn-btn" id="ovClubHistory">📜 Storia del club</button>
         <button class="dyn-btn" id="ovEditCrest">🎨 Modifica stemma</button>
-        <button class="dyn-btn" id="ovClubRecords">📜 Primati del club</button>
-        ${S.derbyRecord && Object.keys(S.derbyRecord).length ? '<button class="dyn-btn" id="ovDerbyHistory">🥊 Storico derby</button>' : ''}
         <button class="dyn-btn" id="ovSellNow">💷 Vendi per ${fmtMoney(worth)}</button>
         <button class="dyn-btn dyn-btn-primary" id="ovClose">Chiudi</button>
       </div>`);
     $('ovClose').onclick = closeOverlay;
     $('ovSellNow').onclick = () => { closeOverlay(); confirmSell(); };
     $('ovEditCrest').onclick = showCrestEditor;
-    $('ovClubRecords').onclick = () => showClubRecords();
-    const derbyBtn = $('ovDerbyHistory');
-    if (derbyBtn) derbyBtn.onclick = showDerbyHistory;
-  }
-
-  // Primati del club (clubRecordsList, sim.js) e i migliori di sempre con questa maglia
-  // (clubLegends: chi è in rosa più chi se n'è andato), per gol, presenze, assist o partite a
-  // porta inviolata. Il motore li tiene aggiornati partita dopo partita; qui solo la vista.
-  const LEGEND_BY = [['goals', '⚽ Gol'], ['apps', '🎽 Presenze'], ['assists', '👟 Assist'], ['cleanSheets', '🧤 Porta inviolata']];
-  function showClubRecords(by) {
-    by = LEGEND_BY.some((x) => x[0] === by) ? by : 'goals';
-    const recs = clubRecordsList(S) || [], legends = clubLegends(S, by, 5) || [];
-    overlay(`<h2>📜 Primati del club</h2>
-      <div class="ow-sub" style="text-align:center">La storia di ${escapeHtml(S.club)} sotto la tua presidenza</div>
-      <div class="ow-records-scroll">
-        ${recs.length ? recs.map((r) => `<div class="ow-fin-row ow-rec"><span><span aria-hidden="true">${escapeHtml(r.icon)}</span> ${escapeHtml(r.label)}${r.detail ? '<small>' + escapeHtml(r.detail) + '</small>' : ''}</span><b>${escapeHtml(r.value)}</b></div>`).join('')
-          : '<div class="ow-sub" style="margin:14px 0;text-align:center">Ancora nessun primato: si scrivono giocando. Torna qui dopo le prime partite.</div>'}
-        <div class="ow-sec-title" style="margin:16px 0 8px;text-align:left">I migliori di sempre</div>
-        <div class="ow-squad-filters" role="group" aria-label="Classifica per">${LEGEND_BY.map(([k, lbl]) => `<button type="button" class="ow-filter-pill ${by === k ? 'on' : ''}" aria-pressed="${by === k}" data-legend="${k}">${lbl}</button>`).join('')}</div>
-        ${legends.length ? legends.map((x, i) => `<div class="ow-fin-row ow-rec"><span><span class="ow-rec-rank">${i + 1}</span> ${flagOf(x)}${escapeHtml(x.n)} <span class="postag postag-${escapeHtml(x.pos)}">${escapeHtml(x.pos)}</span>${x.current ? '' : '<small>ex giocatore</small>'}</span><b>${escapeHtml(x.v)}</b></div>`).join('')
-          : '<div class="ow-sub" style="margin:10px 0">Nessuno ancora in questa classifica.</div>'}
-      </div>
-      <div class="dyn-modal-actions"><button class="dyn-btn dyn-btn-primary" id="ovRecBack" data-esc>← Il mio club</button></div>`);
-    $('ovRecBack').onclick = showClub;
-    $('owOverlayModal').querySelectorAll('[data-legend]').forEach((el) => el.addEventListener('click', () => {
-      const keep = $('owOverlayModal').querySelector('.ow-records-scroll').scrollTop;
-      showClubRecords(el.dataset.legend);
-      const sc = $('owOverlayModal').querySelector('.ow-records-scroll'); if (sc) sc.scrollTop = keep;
-      const cur = $('owOverlayModal').querySelector('[data-legend].on'); if (cur) cur.focus({ preventScroll: true });
-    }));
-  }
-
-  // Il bilancio testa a testa di ogni derby storico (S.derbyRecord, sim.js: simMatch) esiste
-  // già da tempo ma restava sepolto nel log partita: qui una vista dedicata, ordinata dal
-  // derby più giocato al meno giocato.
-  function showDerbyHistory() {
-    const entries = Object.entries(S.derbyRecord || {}).sort((a, b) => (b[1].w + b[1].d + b[1].l) - (a[1].w + a[1].d + a[1].l));
-    overlay(`<h2>🥊 Storico derby</h2>
-      <div class="ow-sub" style="text-align:center">Bilancio testa a testa con ${S.club} contro le rivali storiche</div>
-      <div style="max-height:58vh;overflow:auto;margin:10px -6px 4px">
-        ${entries.length ? entries.map(([opp, r]) => `<div class="ow-fin-row"><span>${opp}</span><b>${r.w}V ${r.d}N ${r.l}P</b></div>`).join('') : '<div class="ow-sub" style="margin:14px 0">Nessun derby giocato ancora.</div>'}
-      </div>
-      <div class="dyn-modal-actions"><button class="dyn-btn dyn-btn-primary" id="ovClose">Chiudi</button></div>`);
-    $('ovClose').onclick = () => { closeOverlay(); showClub(); };
+    $('ovClubHistory').onclick = () => showClubHistory('trofei');
   }
 
   // Riapre lo stesso editor visto in fase di creazione (forma + due colori), ma per il
