@@ -4552,6 +4552,8 @@
   // bottone Classifica): si aggiorna a ogni giornata insieme al resto del tabellone.
   function renderSideTable() {
     const el = $('owSideTable'); if (!el) return;
+    // a inizio stagione la classifica non è ancora stata calcolata: tutti a zero, ma già visibile
+    if (S && !S.table && S.opps && S.seasonActive) computeTable();
     if (!S || !S.table || !S.table.length) { el.innerHTML = ''; return; }
     el.innerHTML = tableHTML();
   }

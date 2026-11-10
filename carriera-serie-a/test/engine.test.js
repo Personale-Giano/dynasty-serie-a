@@ -196,6 +196,8 @@ const TEST_BODY = `
       __assert(!__hasDup(names.concat(upper)), 'regione ' + r.key + ': nessun nome doppio, nemmeno con le categorie nazionali');
     });
     DERBIES.forEach(function (pair) { __assert(pair.length === 2 && pair[0] !== pair[1], 'derby ben formato: ' + pair.join(' - ')); });
+    // elenchi dei nomi senza buchi (una virgola di troppo dava giocatori "undefined Cognome")
+    [['FIRST', FIRST], ['LAST', LAST], ['ITA_FIRST', ITA_FIRST], ['ITA_LAST', ITA_LAST]].forEach(function (x) { var holes = 0; for (var i = 0; i < x[1].length; i++) if (!(i in x[1]) || !x[1][i]) holes++; __assert(holes === 0, 'nomi: ' + x[0] + ' senza buchi'); });
 
     // la regione scelta finisce in POOLS, per copia
     var template = JSON.stringify(REGIONS);

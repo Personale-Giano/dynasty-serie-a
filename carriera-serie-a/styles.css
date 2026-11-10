@@ -1518,104 +1518,175 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ow-news-row .gap{ font:800 13px/1 var(--cond); color:var(--muted); }
 
 /* ============================================================
-   PC — schermi larghi (da 1100px). Fino a qui tutto il gioco era una colonna da 640px al
-   centro, con più di metà dello schermo vuota. Qui ogni schermata usa la larghezza:
-   - stagione: tabellone su tutta la larghezza, poi tre colonne (informazioni, partite,
-     classifica fissa che si aggiorna a ogni giornata);
-   - dirigenza: le schede delle sezioni su due colonne;
-   - creazione del club: presentazione a sinistra, modulo a destra;
-   - fine stagione: riepilogo largo e sezioni su due colonne.
-   Sul telefono non cambia nulla: tutto sta dentro questa media query.
+   PC — impianto da schermo largo (da 1100px), rifatto da capo.
+   Sul telefono non cambia nulla: tutto quello che segue sta nelle media query.
+   L'idea: niente più colonna centrale. A sinistra una barra laterale fissa con i colori del
+   club (stemma, nome, menu); a destra il contenuto, che riempie SEMPRE tutta la larghezza
+   rimasta. Le sezioni si dispongono in griglie che si adattano al loro numero: se ce n'è una
+   sola prende tutta la riga, se sono due o più si affiancano. Così non resta mai una colonna
+   spostata da una parte con il vuoto accanto.
    ============================================================ */
-.ow-col-title, .ow-col-table, .ow-setup-form-title{ display:none; }
+.ow-col-title, .ow-col-table, .ow-setup-form-title, .dyn-icon-lbl{ display:none; }
+/* telefono: la colonna delle partite occupa lo spazio rimasto, così i bottoni restano in fondo */
+#owSeasonScreen .ow-col-log{ flex:1; display:flex; flex-direction:column; }
 
 @media (min-width:1100px){
-  :root{ --wrapw:1320px; }
-  #owTopbar.dyn-topbar{ padding-left:max(24px, calc((100% - var(--wrapw)) / 2 + 24px)); padding-right:max(24px, calc((100% - var(--wrapw)) / 2 + 24px)); padding-top:16px; padding-bottom:40px; }
-  #owTopbar .dyn-home-crest{ width:52px; height:60px; }
-  .dyn-home-txt b{ font-size:32px; }
-  .dyn-home-txt small{ font-size:14px; }
-  .dyn-wrap{ max-width:var(--wrapw); padding-left:24px; padding-right:24px; }
-  .dyn-modal{ max-width:540px; }
+  :root{ --side:260px; --pad:32px; }
 
-  /* ---------- stagione: tre colonne ---------- */
+  /* ---------- barra laterale del club ---------- */
+  #owTopbar.dyn-topbar{
+    position:fixed; z-index:40; left:0; top:0; bottom:0; width:var(--side); margin:0;
+    flex-direction:column; align-items:stretch; justify-content:flex-start; gap:22px;
+    padding:28px 20px 24px; clip-path:none; overflow-y:auto;
+    background:
+      linear-gradient(90deg, transparent 70%, rgba(0,0,0,.14)),
+      repeating-linear-gradient(90deg, var(--c1) 0 28px, color-mix(in srgb, var(--c1) 76%, var(--c2)) 28px 56px);
+    box-shadow:6px 0 24px -12px rgba(20,22,26,.45);
+  }
+  #owTopbar .dyn-home{ flex:0 0 auto; flex-direction:column; align-items:flex-start; gap:14px; }
+  #owTopbar .dyn-home-crest{ width:84px; height:96px; border-radius:12px; padding:8px; }
+  .dyn-home-txt b{ font-size:34px; line-height:.95; white-space:normal; overflow:visible; }
+  .dyn-home-txt small{ font-size:14px; white-space:normal; margin-top:6px; }
+  #owTopbar .dyn-topbar-right{ flex-direction:column; gap:6px; }
+  #owTopbar .dyn-icon-btn{
+    width:100%; height:44px; border-radius:8px; justify-content:flex-start; gap:12px; padding:0 14px; font-size:17px;
+  }
+  #owTopbar .dyn-icon-lbl{ display:inline; font:800 15px/1 var(--cond); text-transform:uppercase; letter-spacing:.06em; }
+  #owTopbar #owSoundBtn::after{ content:"Audio"; font:800 15px/1 var(--cond); text-transform:uppercase; letter-spacing:.06em; }
+  #owNotifDot{ top:10px !important; right:12px !important; }
+  /* il contenuto parte dopo la barra laterale (solo quando c'è: nella schermata iniziale no) */
+  body:has(#owTopbar:not(.hidden)) .dyn-screen, body:has(#owTopbar:not(.hidden)) .ow-update-note{ margin-left:var(--side); }
+  body:has(#owTopbar:not(.hidden)) .dyn-toast{ left:calc(50% + var(--side) / 2); }
+
+  /* ---------- contenitore: tutta la larghezza disponibile ---------- */
+  .dyn-wrap{ max-width:1680px; padding:28px var(--pad) 40px; }
+  #owSeasonScreen .dyn-wrap, #owBoardScreen .dyn-wrap, #owSeasonEndScreen .dyn-wrap, #owEndScreen .dyn-wrap{ margin-top:0; padding-top:28px; }
+  .dyn-modal{ max-width:600px; }
+  .dyn-top-title{ font-size:40px; }
+
+  /* ---------- stagione: tabellone in alto, poi tre colonne ---------- */
   #owSeasonScreen .ow-season-grid{
-    display:grid; gap:0 20px; align-items:start;
-    grid-template-columns:minmax(320px, 360px) minmax(0, 1fr) minmax(340px, 400px);
+    display:grid; gap:0 22px; align-items:start; min-height:0; padding-bottom:28px;
+    grid-template-columns:minmax(300px, 340px) minmax(0, 1fr) minmax(330px, 380px);
   }
   .ow-season-grid > .dyn-hud, .ow-season-grid > .ow-subhud{ grid-column:1 / -1; }
   .ow-season-grid > .dyn-hud{ margin-bottom:14px; }
-  .ow-season-grid .dyn-hud-cell{ padding:10px 16px 9px; }
-  .ow-season-grid .dyn-hud-cell b{ font-size:34px; }
-  .ow-season-grid > .ow-subhud{ margin-bottom:18px; }
-  .ow-subhud{ flex-wrap:nowrap; }
-  .ow-div-chip{ width:auto; padding:0 22px; font-size:17px; }
-  .ow-subcells .cell b{ font-size:22px; }
+  .ow-season-grid .dyn-hud-cell{ padding:12px 18px 10px; }
+  .ow-season-grid .dyn-hud-cell b{ font-size:38px; }
+  .ow-season-grid > .ow-subhud{ margin-bottom:22px; flex-wrap:nowrap; }
+  .ow-div-chip{ width:auto; padding:0 24px; font-size:18px; }
+  .ow-subcells .cell b{ font-size:24px; }
   .ow-col-info{ grid-column:1; }
-  .ow-col-log{ grid-column:2; min-width:0; }
-  .ow-col-table{ display:block; grid-column:3; position:sticky; top:12px; max-height:calc(100vh - 24px); overflow:auto; scrollbar-width:thin; }
+  #owSeasonScreen .ow-col-log{ grid-column:2; min-width:0; display:block; }
+  .ow-col-table{ display:block; grid-column:3; position:sticky; top:16px; max-height:calc(100vh - 32px); overflow:auto; scrollbar-width:thin; }
   .ow-col-title{
     display:flex; align-items:center; gap:8px; margin:0 0 10px;
     font:800 17px/1.1 var(--cond); font-style:italic; text-transform:uppercase; letter-spacing:.05em; color:var(--ink);
   }
   .ow-col-title::before{ content:""; width:5px; height:17px; background:var(--c1); transform:skewX(-14deg); box-shadow:3px 0 0 var(--c2); margin-right:4px; }
-  /* la classifica è già sempre in vista: il bottone che la apre in una finestra non serve */
   #owTableBtn{ display:none; }
   .dyn-manage-row{ grid-template-columns:1fr 1fr 1fr; }
   .ow-target{ flex-direction:column; align-items:flex-start; }
-  .dyn-log{ min-height:60vh; }
-  .ow-col-log .dyn-season-actions{ display:grid; grid-template-columns:2fr 1fr; gap:10px; align-items:stretch; }
-  .ow-col-log .dyn-season-actions .dyn-btn{ height:100%; min-height:56px; }
-  /* classifica laterale compatta */
+  .dyn-log{ min-height:55vh; }
+  .ow-col-log .dyn-season-actions{ display:grid; grid-template-columns:2fr 1fr; gap:10px; }
+  .ow-col-log .dyn-season-actions .dyn-btn{ height:100%; min-height:58px; }
   #owSideTable .dyn-table{ margin:0; font-size:12.5px; }
   #owSideTable .dyn-table td, #owSideTable .dyn-table th{ padding:6px 6px; }
   #owSideTable .dyn-table .tname small, #owSideTable .dyn-table .tgoals{ display:none; }
-  #owSideTable .dyn-table .tname{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px; }
+  #owSideTable .dyn-table .tname{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:160px; }
 
   /* ---------- dirigenza ---------- */
-  #owBoardScreen .dyn-wrap{ max-width:1240px; }
-  #boardTabBody{ columns:2; column-gap:18px; }
-  #boardTabBody > *{ break-inside:avoid; }
-  #boardTabBody > .ow-sec{ display:inline-block; width:100%; }
-  .ow-tabs{ max-width:720px; }
-  .ow-cta-sticky{ max-width:620px; margin-left:auto; margin-right:auto; }
-  .ow-exit-row{ max-width:620px; margin-left:auto; margin-right:auto; }
-  .ow-guide{ max-width:none; }
+  .ow-stickybar{ top:12px; }
+  .ow-stickybar .cell{ padding:12px 18px; }
+  .ow-stickybar .cell b{ font-size:26px; }
+  .ow-stickybar .cell.main b{ font-size:30px; }
+  /* i tre "primi passi" affiancati invece che uno sotto l'altro */
+  .ow-guide{ display:grid; grid-template-columns:repeat(3, 1fr); column-gap:18px; padding:14px 18px 10px; }
+  .ow-guide > *{ grid-column:1 / -1; }
+  .ow-guide > .ow-guide-step{ grid-column:auto; border-top:1px solid var(--line); }
+  .ow-tabs{ max-width:none; }
+  .ow-tab{ font-size:16px; padding:15px 4px 13px; }
+  /* le sezioni della scheda attiva: griglia che si adatta, mai colonne vuote */
+  #boardTabBody{ display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap:18px; align-items:start; }
+  #boardTabBody > *{ margin:0; min-width:0; }
+  .ow-cta-sticky{ max-width:640px; margin:18px auto 0; }
+  .ow-exit-row{ max-width:640px; margin:12px auto 0; }
 
-  /* ---------- creazione del club ---------- */
+  /* ---------- creazione del club (senza barra laterale) ---------- */
   #owSetupScreen .dyn-wrap.dyn-setup{
-    max-width:1200px; display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.05fr); gap:48px; align-items:start; text-align:left; padding-top:36px;
+    max-width:1400px; display:grid; grid-template-columns:minmax(0, .9fr) minmax(0, 1.1fr); gap:56px; align-items:start; text-align:left; padding-top:40px;
   }
-  .ow-setup-hero{ position:sticky; top:24px; }
+  .ow-setup-hero{ position:sticky; top:28px; }
   .ow-setup-hero .dyn-brand{ align-items:flex-start; }
-  .ow-setup-hero .dyn-h1{ font-size:96px; }
-  .ow-setup-hero .dyn-sub{ margin-left:0; max-width:520px; font-size:16px; }
+  .ow-setup-hero .dyn-brand-mark{ width:180px; height:180px; }
+  .ow-setup-hero .dyn-h1{ font-size:104px; }
+  .ow-setup-hero .dyn-sub{ margin-left:0; max-width:560px; font-size:16.5px; }
   .ow-setup-hero .dyn-btn, .ow-setup-hero .dyn-mini{ margin-left:0 !important; }
-  .ow-setup-form{ background:var(--panel); border:1px solid var(--line); border-top:6px solid var(--c1); border-radius:14px; padding:22px 26px 26px; box-shadow:var(--shadow); text-align:center; }
-  .ow-setup-form-title{ display:block; font:400 34px/1 var(--display); text-transform:uppercase; text-align:left; margin:0 0 16px; }
+  .ow-setup-form{ background:var(--panel); border:1px solid var(--line); border-top:6px solid var(--c1); border-radius:14px; padding:26px 30px 30px; box-shadow:var(--shadow); text-align:center; }
+  .ow-setup-form-title{ display:block; font:400 38px/1 var(--display); text-transform:uppercase; text-align:left; margin:0 0 18px; }
   .ow-setup-form .dyn-field{ max-width:none; }
-  .ow-setup-form .ow-crest-picker{ box-shadow:none; }
+  .ow-setup-form .ow-crest-picker{ box-shadow:none; max-width:none; }
   .ow-setup-form .dyn-btn{ max-width:none; }
   .ow-setup-form .ow-takeovers{ grid-template-columns:1fr 1fr; }
+  .ow-setup-form .ow-diff-picker{ grid-template-columns:repeat(4, 1fr); }
 
   /* ---------- fine stagione ---------- */
-  #owSeasonEndScreen .dyn-wrap{ max-width:1180px; }
-  #owSeasonEndBody{ display:grid; grid-template-columns:1fr 1fr; gap:0 16px; align-items:start; }
+  #owSeasonEndBody{ display:grid; grid-template-columns:1fr 1fr; gap:0 18px; align-items:start; }
   #owSeasonEndBody > *{ grid-column:1 / -1; }
   #owSeasonEndBody > .ow-fold{ grid-column:auto; }
-  #owSeasonEndBody > #owShareBtn, #owSeasonEndBody > .ow-cta-sticky{ max-width:620px; width:100%; justify-self:center; }
-  .ow-end-strip b{ font-size:30px; }
+  #owSeasonEndBody > #owShareBtn, #owSeasonEndBody > .ow-cta-sticky{ max-width:640px; width:100%; justify-self:center; }
+  .ow-end-strip b{ font-size:34px; }
 
   /* ---------- fine carriera ---------- */
-  #owEndScreen .dyn-wrap{ max-width:1000px; }
+  #owEndBody{ display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+  #owEndBody > *{ grid-column:1 / -1; margin:0; }
+  #owEndBody > .pl-card:not(:has(table)){ grid-column:auto; }
+  #owEndBody > .dyn-top{ flex-direction:row; align-items:center; gap:18px; }
+  #owEndBody > .dyn-top .ow-hero-crest{ margin:0; width:72px; height:84px; }
+  #owEndBody > .dyn-btn{ grid-column:auto; }
+  #owEndBody > .dyn-btn:last-of-type{ grid-column:1 / -1; max-width:640px; justify-self:center; width:100%; }
+}
+
+@media (min-width:1600px){
+  :root{ --side:280px; --pad:44px; }
+  #owSeasonScreen .ow-season-grid{ grid-template-columns:360px minmax(0, 1fr) 440px; }
+}
+@media (min-width:1100px){
+  /* a stagione appena iniziata la colonna delle partite non resta un vuoto muto */
+  #owLog:empty::before{
+    content:"Nessuna partita giocata: premi \"Gioca prossima partita\" per il calcio d'inizio.";
+    display:block; padding:28px 22px; border:2px dashed var(--line); border-radius:10px; text-align:center;
+    color:var(--muted); font-weight:700; font-size:14px;
+  }
+  #owLog:empty{ min-height:0; margin-bottom:14px; }
+}
+@media (min-width:1100px){
+  /* fino a 3 sezioni: affiancate, ognuna a tutta altezza della riga; da 4 in su: due colonne
+     "a muro" (le sezioni si impilano senza buchi), così nessuna resta sola con il vuoto accanto */
+  #boardTabBody{ grid-template-columns:repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+  #boardTabBody:has(> :nth-child(4)){ display:block; columns:2; column-gap:18px; }
+  #boardTabBody:has(> :nth-child(4)) > *{ break-inside:avoid; display:inline-block; width:100%; margin:0 0 18px; }
+}
+@media (min-width:1100px){
+  /* da 3 sezioni in su: due colonne a muro (3 → una a sinistra, due impilate a destra) */
+  #boardTabBody:has(> :nth-child(3)){ display:block; columns:2; column-gap:18px; }
+  #boardTabBody:has(> :nth-child(3)) > *{ break-inside:avoid; display:inline-block; width:100%; margin:0 0 18px; }
+}
+/* schermi medi (1100-1499): tre colonne renderebbero quella delle partite troppo stretta.
+   Due colonne: a sinistra le informazioni (su due sottocolonne) e sotto le partite, a destra la classifica. */
+@media (min-width:1100px) and (max-width:1499px){
+  #owSeasonScreen .ow-season-grid{ grid-template-columns:minmax(0, 1fr) minmax(320px, 360px); }
+  .ow-col-info{ grid-column:1; columns:2; column-gap:18px; }
+  .ow-col-info > *{ break-inside:avoid; }
+  .ow-col-info > .ow-scouting, .ow-col-info > .ow-news-wrap{ display:block; }
+  #owSeasonScreen .ow-col-log{ grid-column:1; margin-top:8px; }
+  .ow-col-table{ grid-column:2; grid-row:3 / span 2; }
 }
 @media (min-width:1500px){
-  :root{ --wrapw:1440px; }
-  #owSeasonScreen .ow-season-grid{ grid-template-columns:380px minmax(0, 1fr) 440px; }
+  #owSeasonScreen .ow-season-grid{ grid-template-columns:minmax(320px, 360px) minmax(0, 1fr) minmax(360px, 420px); }
 }
-/* telefono: la colonna delle partite occupa lo spazio rimasto, così i bottoni restano in fondo */
-#owSeasonScreen .ow-col-log{ flex:1; display:flex; flex-direction:column; }
 @media (min-width:1100px){
-  #owSeasonScreen .ow-season-grid{ min-height:0; padding-bottom:24px; }
-  #owSeasonScreen .ow-col-log{ display:block; }
+  /* esattamente 3 sezioni (Sponsor, Finanze): tre colonne affiancate, nessun buco a destra */
+  #boardTabBody:has(> :nth-child(3)):not(:has(> :nth-child(4))){ display:grid; columns:auto; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:18px; }
+  #boardTabBody:has(> :nth-child(3)):not(:has(> :nth-child(4))) > *{ display:block; margin:0; }
 }

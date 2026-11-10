@@ -1027,6 +1027,11 @@
     // Direttore sportivo e preparatore atletico non esistono più (troppi ruoli di staff per
     // poche decisioni vere): chi li aveva in una carriera salvata li perde qui, e con loro lo stipendio.
     S.sportingDirector = null; S.fitnessCoach = null; S.dsOpts = null; S.fitOpts = null;
+    // Un buco nell'elenco dei nomi stranieri (data.js, corretto il 10 nov 2026) faceva nascere
+    // ogni tanto giocatori chiamati "undefined Cognome": nelle carriere salvate gli si dà un nome vero.
+    ['squad', 'youthSquad', 'alumni'].forEach((k) => (Array.isArray(S[k]) ? S[k] : []).forEach((p) => {
+      if (p && typeof p.n === 'string' && p.n.indexOf('undefined ') === 0) p.n = pick(p.nat && p.nat.code === 'ITA' ? ITA_FIRST : FOREIGN_FIRST) + p.n.slice(9);
+    }));
     if (!S.story || typeof S.story !== 'object') S.story = {};
     if (!S.cast || typeof S.cast !== 'object') S.cast = {};
     if (S.opps) {
