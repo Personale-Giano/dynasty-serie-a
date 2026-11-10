@@ -1433,3 +1433,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ow-pos-delta{ font:800 13px/1 var(--cond); font-style:normal; vertical-align:middle; margin-left:2px; }
 .ow-pos-delta.up{ color:var(--good); }
 .ow-pos-delta.down{ color:var(--bad); }
+.ow-target{ display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+.ow-target-status{ font:800 13px/1.2 var(--cond); letter-spacing:.04em; text-transform:uppercase; }
+.ow-target-status.ok{ color:var(--good); }
+.ow-target-status.bad{ color:var(--bad); }

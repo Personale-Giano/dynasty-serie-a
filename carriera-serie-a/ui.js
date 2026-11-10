@@ -4118,6 +4118,7 @@
   }
 
   function renderHud() {
+    renderSeasonTarget();   // a che punto sei rispetto all'obiettivo cambia a ogni giornata
     syncNotifDot();
     $('hudSeason').textContent = S.season + '/' + (S.maxSeasons || MAX_SEASONS);
     $('hudPlayed').textContent = S.played + '/' + gp();
@@ -4185,7 +4186,29 @@
       return;
     }
     const t = S.seasonTargetInfo;
-    el.innerHTML = t ? `<span class="ow-target-pill ${t.key}">🎯 Obiettivo: ${t.label}</span>` : '';
+    if (!t) { el.innerHTML = ''; return; }
+    // Non solo l'etichetta: a che punto sei rispetto all'obiettivo, in posizione e punti, così
+    // ogni giornata ha qualcosa in palio (prima era una pillola fissa per tutta la stagione).
+    const d = divOf();
+    const line = t.key === 'vertice' ? (d.promoted || (t.label.indexOf('scudetto') !== -1 ? 1 : 4))
+      : t.key === 'playoff' ? d.promoted + d.playoff
+      : t.key === 'salvezza' ? d.teams - d.releg
+      : d.releg ? d.teams - d.releg : Math.ceil(d.teams / 2);
+    let status = '';
+    if (S.table && S.played > 0) {
+      const myPos = S.table.findIndex((r) => r.me) + 1;
+      const me = S.table[myPos - 1], ref = S.table[line - 1], out = S.table[line];
+      if (me && ref) {
+        if (myPos <= line) {
+          const margin = out ? me.pts - out.pts : 0;
+          status = `<span class="ow-target-status ok">✓ In linea · ${margin > 0 ? margin + ' punt' + (margin === 1 ? 'o' : 'i') + ' di margine' : 'nessun margine'}</span>`;
+        } else {
+          const gap = ref.pts - me.pts;
+          status = `<span class="ow-target-status bad">Fuori obiettivo · ${gap > 0 ? gap + ' punt' + (gap === 1 ? 'o' : 'i') + ' dalla ' + line + 'ª' : 'a pari punti con la ' + line + 'ª'}</span>`;
+        }
+      }
+    }
+    el.innerHTML = `<div class="ow-target"><span class="ow-target-pill ${t.key}">🎯 Obiettivo: ${t.label}</span>${status}</div>`;
   }
 
   // Scouting report sul prossimo avversario: CLUB_PERSONALITIES (data.js) esiste già e
@@ -4241,7 +4264,7 @@
     box.className = 'ow-sec ow-digest';
     box.innerHTML = '<div class="ow-sec-title">📰 Le partite simulate</div>' + items.map((it) => '<div class="ow-fin-row"><span>' + it.icon + ' ' + escapeHtml(it.text) + '</span></div>').join('');
     const anchor = body.querySelector('.dyn-panel');
-    if (anchor && anchor.nextSibling) body.insertBefore(box, anchor.nextSibling); else body.prepend(box);
+    if (anchor) body.insertBefore(box, anchor); else body.prepend(box);
   }
 
   function openBulkDigestOverlay(items) {
