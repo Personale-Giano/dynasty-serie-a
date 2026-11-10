@@ -92,6 +92,32 @@ function leaderboard_normalize($e) {
     ];
 }
 
+// Correzione una tantum (10 nov 2026, chiesta da Emanuele): le carriere inviate durante la
+// Stagione 2 della classifica passano alla Stagione 1, e la Stagione 2 riparte vuota da adesso.
+// Gira una sola volta, sotto lock, e se ne segna l'esecuzione nel file della stagione
+// (chiave moved_s2_to_s1): richieste successive, o un ritorno a una versione vecchia, non la ripetono.
+// Solo se la stagione corrente è proprio la 2, così non tocca mai una classifica diversa.
+function leaderboard_move_s2_to_s1() {
+    $data = store_read('leaderboard_season', null);
+    if (!is_array($data) || (int) ($data['current'] ?? 0) !== 2 || !empty($data['moved_s2_to_s1'])) return;
+    $lock = lock_acquire('leaderboard', true, 4);
+    if (!$lock) return;
+    $data = store_read('leaderboard_season', null);
+    if (is_array($data) && (int) ($data['current'] ?? 0) === 2 && empty($data['moved_s2_to_s1'])) {
+        $moved = 0;
+        $entries = [];
+        foreach (store_read('leaderboard', []) as $e) {
+            if (is_array($e) && (int) ($e['boardSeason'] ?? 1) === 2) { $e['boardSeason'] = 1; $moved++; }
+            $entries[] = $e;
+        }
+        if (!$moved || store_write('leaderboard', $entries, true)) {
+            $data['moved_s2_to_s1'] = time();
+            store_write('leaderboard_season', $data);
+        }
+    }
+    lock_release($lock);
+}
+
 function leaderboard_read() {
     $out = [];
     foreach (store_read('leaderboard', []) as $e) {
@@ -105,6 +131,9 @@ function leaderboard_read() {
     });
     return $out;
 }
+
+leaderboard_season();          // crea il file della stagione se manca
+leaderboard_move_s2_to_s1();
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
