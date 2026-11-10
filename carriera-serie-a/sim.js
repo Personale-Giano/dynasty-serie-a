@@ -1027,6 +1027,8 @@
     // Direttore sportivo e preparatore atletico non esistono più (troppi ruoli di staff per
     // poche decisioni vere): chi li aveva in una carriera salvata li perde qui, e con loro lo stipendio.
     S.sportingDirector = null; S.fitnessCoach = null; S.dsOpts = null; S.fitOpts = null;
+    if (!S.story || typeof S.story !== 'object') S.story = {};
+    if (!S.cast || typeof S.cast !== 'object') S.cast = {};
     if (S.opps) {
       const usedMgrNames = new Set(S.opps.filter((o) => o.mgr).map((o) => o.mgr.n).concat(S.manager && S.manager.n ? [S.manager.n] : []));
       const mgrRegistry = S._mgrByClub || (S._mgrByClub = {});
@@ -1940,7 +1942,7 @@
       euro: false, euroComp: null, form: 0, spinsBought: 0, promoStreak: 0, premiumRoleUsed: false, stdRoleUsed: false,
       trophies: { titles: [0, 0, 0, 0, 0, 0], nat: 0, ucl: 0, uel: 0, conf: 0, total: 0 },
       history: [], over: false, peakWorth: 0,
-      achievements: [], startDiv: div, noRelegStreak: 0, sportingDirector: null, fitnessCoach: null,
+      achievements: [], startDiv: div, noRelegStreak: 0, sportingDirector: null, fitnessCoach: null, story: {}, cast: {},
       pidNext: 1, offers: [], alumni: [],
       crestShape: crestShape, crestColors: crestColors.slice(),
       scoutLevel: 0, scoutProspects: [], scoutProspectSeason: 0,
@@ -2059,7 +2061,14 @@
   function simRivalRoundRobin(opps, drawBoost) {
     // partite, vittorie e pareggi del girone fra rivali (rrP/rrW/rrD): servono alla classifica
     // per mostrare G/V/N/P, non solo i punti (computeTable)
+    // rrSeq: le partite di ogni squadra una per una ([punti, gol fatti, gol subiti]), in ordine
+    // casuale: la classifica ne mostra le prime N man mano che il campionato avanza, così ogni
+    // giornata una rivale fa davvero 3, 1 o 0 punti (prima i punti erano una proporzione del
+    // totale e a volte una squadra "faceva 2 punti" in una giornata).
+    opps.forEach((o) => { o.rrSeq = []; });
     const tally = (home, away, gh, ga) => {
+      home.rrSeq.push([gh > ga ? 3 : gh === ga ? 1 : 0, gh, ga]);
+      away.rrSeq.push([ga > gh ? 3 : ga === gh ? 1 : 0, ga, gh]);
       home.rrP = (home.rrP || 0) + 1; away.rrP = (away.rrP || 0) + 1;
       if (gh > ga) home.rrW = (home.rrW || 0) + 1; else if (gh < ga) away.rrW = (away.rrW || 0) + 1;
       else { home.rrD = (home.rrD || 0) + 1; away.rrD = (away.rrD || 0) + 1; }
@@ -2076,6 +2085,7 @@
         tally(opps[j], opps[i], m2.gf, m2.ga);
       }
     }
+    opps.forEach((o) => shuffle(o.rrSeq));
   }
 
   // Il risultato di una partita del presidente contro un rivale conta anche per il rivale
@@ -2218,6 +2228,7 @@
     // mercato estivo che alza le attese non "si ricorda" a fine anno del progetto più
     // modesto con cui era partito.
     ctx.seasonTargetInfo = seasonTarget(ctx);
+    ctx.sideGoal = pickSideGoal(ctx);
     if (local) {
       show('owSeasonScreen'); $('owLog').innerHTML = ''; renderHud(); renderCups(); renderSeasonTarget(); renderScouting(); saveGame();
       toast('🎯 Obiettivo di stagione: ' + ctx.seasonTargetInfo.label + '.');
@@ -2230,6 +2241,68 @@
   // `cushion` allarga la zona salvezza quanto più la difficoltà è clemente: su Facile un
   // progetto sulla carta a rischio ha comunque margine per sperare in qualcosa di più, su
   // Estremo le attese sono più letterali/dure.
+
+  // Obiettivo extra della dirigenza: uno a stagione, oltre al piazzamento. Centrarlo vale un
+  // po' di umore e un premio in denaro; mancarlo costa poco. Scelto a inizio stagione fra quelli
+  // che hanno senso per la situazione (niente "porta i giovani" senza giovani in rosa).
+  // progress(ctx) dice a che punto sei durante la stagione; done(ctx, end) decide a fine anno.
+  const SIDE_GOALS = [
+    {
+      key: 'coppa', label: 'arrivare in semifinale di Coppa Italia',
+      ok: (ctx) => !!(ctx.cups && ctx.cups.nat && ctx.cups.nat.rounds && ctx.cups.nat.rounds.length >= 3),
+      progress: (ctx) => { const c = ctx.cups.nat; return c.won ? 'coppa vinta' : c.out ? 'eliminati: ' + (c.rounds[c.at] || 'fuori') : 'in corsa: ' + (c.rounds[c.at] || 'finale'); },
+      done: (ctx, end) => end.natWon || end.natSF,
+    },
+    {
+      key: 'attivo', label: 'chiudere la stagione in attivo',
+      ok: () => true,
+      progress: () => 'si valuta col bilancio di fine stagione',
+      done: (ctx, end) => end.net > 0,
+    },
+    {
+      key: 'gol', label: 'segnare almeno {n} gol in campionato',
+      ok: () => true,
+      target: (ctx) => Math.round(gp(ctx) * 1.55),
+      progress: (ctx, g) => ctx.gf + '/' + g.n + ' gol',
+      done: (ctx, end, g) => ctx.gf >= g.n,
+    },
+    {
+      key: 'difesa', label: 'subire al massimo {n} gol in campionato',
+      ok: () => true,
+      target: (ctx) => Math.round(gp(ctx) * 1.05),
+      progress: (ctx, g) => ctx.ga + ' subiti su un massimo di ' + g.n,
+      done: (ctx, end, g) => ctx.ga <= g.n,
+    },
+    {
+      key: 'giovani', label: 'far giocare almeno {n} partite a 3 under 21',
+      ok: (ctx) => ctx.squad.filter((p) => p.age <= 21).length >= 3,
+      target: (ctx) => Math.round(gp(ctx) * 0.45),
+      progress: (ctx, g) => ctx.squad.filter((p) => p.age <= 21 && (p.seasonApps || 0) >= g.n).length + '/3 under 21 con ' + g.n + ' presenze',
+      done: (ctx, end, g) => ctx.squad.filter((p) => p.age <= 21 && (p.seasonApps || 0) >= g.n).length >= 3,
+    },
+    {
+      key: 'casa', label: 'perdere al massimo {n} partite in casa',
+      ok: () => true,
+      target: (ctx) => Math.max(2, Math.round(gp(ctx) / 2 * 0.22)),
+      progress: (ctx, g) => (ctx.results || []).filter((r) => r.home && r.res === 'L').length + ' sconfitte in casa su un massimo di ' + g.n,
+      done: (ctx, end, g) => (ctx.results || []).filter((r) => r.home && r.res === 'L').length <= g.n,
+    },
+  ];
+  const sideGoalDef = (g) => g && SIDE_GOALS.find((x) => x.key === g.key);
+  function pickSideGoal(ctx = S) {
+    const last = ctx.sideGoal && ctx.sideGoal.key;
+    const pool = SIDE_GOALS.filter((g) => g.ok(ctx) && g.key !== last);
+    const g = pick(pool.length ? pool : SIDE_GOALS);
+    const n = g.target ? g.target(ctx) : null;
+    const d = divOf(ctx);
+    return { key: g.key, n, label: g.label.replace('{n}', n), reward: Math.round(d.prize * 0.15 / 1e4) * 1e4 };
+  }
+  function sideGoalProgress(ctx = S) {
+    const g = ctx.sideGoal, def = sideGoalDef(g);
+    if (!def) return '';
+    try { return def.progress(ctx, g); } catch (e) { return ''; }
+  }
+
   function seasonTarget(ctx = S) {
     const d = divOf(ctx), exp = expectedPos(ctx);
     const cushion = { facile: 3, medio: 2, difficile: 1, estremo: 0 }[ctx.difficulty] != null ? { facile: 3, medio: 2, difficile: 1, estremo: 0 }[ctx.difficulty] : 2;
@@ -2576,8 +2649,11 @@
     // Alcuni eventi hanno senso solo con certe condizioni (es. serve uno sponsor attivo, o
     // almeno un giocatore in rosa): `requires` li esclude dal pool finché non sono eleggibili.
     const eligible = NARRATIVE_EVENTS.filter((e) => !e.requires || e.requires(ctx));
-    if (!eligible.length) return false;
-    const ev = pick(eligible);
+    // Personaggi ricorrenti (STORY_EVENTS, data.js): se uno di loro è pronto per la tappa
+    // successiva della sua storia, metà delle volte l'imprevisto è il suo.
+    const storyReadyNow = STORY_EVENTS.filter((e) => e.requires(ctx));
+    if (!eligible.length && !storyReadyNow.length) return false;
+    const ev = storyReadyNow.length && (!eligible.length || Math.random() < 0.5) ? pick(storyReadyNow) : pick(eligible);
     // Niente popup per un club "remoto" simulato in blocco dall'host multiplayer, e nemmeno in
     // Modalità veloce (S.turboMode): stesso trattamento, auto-risolto con la scelta più
     // prudente (autoResolveNarrativeEvent) e annotato comunque nel resoconto di fine stagione,
@@ -2613,6 +2689,7 @@
       eff = null;
     }
     if (eff) {
+      advanceStory(eff, ctx);
       if (eff.sent) ctx.sent = clamp(ctx.sent + eff.sent, 0, 100);
       if (eff.budgetPct) ctx.budget += narrativeBudgetDelta(ctx.budget, eff.budgetPct);
       if (eff.ownerRating) ctx.ownerRating = clamp(ctx.ownerRating + eff.ownerRating, 0, 100);
@@ -2627,8 +2704,23 @@
   // maggior parte degli eventi usa numeri semplici (sent/budgetPct/...), ma alcuni hanno
   // bisogno di logica su misura (rinnovare lo sponsor, rischiare l'infortunio di un
   // giocatore preciso): per quelli basta passare `apply(S)` invece dei campi numerici.
+  // Nome di un personaggio ricorrente (STORY_EVENTS): scelto la prima volta che serve e poi
+  // sempre quello, per tutta la carriera.
+  function castName(ctx, who) {
+    if (!ctx.cast) ctx.cast = {};
+    if (!ctx.cast[who]) ctx.cast[who] = genName(ITA_NAT);
+    return ctx.cast[who];
+  }
+  function advanceStory(eff, ctx) {
+    if (!eff || !eff.story) return;
+    if (!ctx.story) ctx.story = {};
+    const prev = ctx.story[eff.story.who] || { step: 0 };
+    ctx.story[eff.story.who] = { step: eff.story.state === 'fine' ? 3 : prev.step + 1, state: eff.story.state, at: ctx.season * 100 + ctx.played };
+  }
+
   function applyNarrativeEffect(eff, ctx) {
     if (!eff) return;
+    advanceStory(eff, S);
     if (typeof eff.apply === 'function') { eff.apply(S, ctx); return; }
     // Hardcore: gli imprevisti NEGATIVI mordono il 35% in più, quelli positivi restano
     // invariati — non è un doppione di eventMult (quello scala TUTTI gli eventi per
@@ -3315,7 +3407,7 @@
     const prize = Math.round(d.prize + (d.teams - pos) * d.perPlace + (promoted ? d.promoBonus : 0) + (title ? d.titleBonus : 0));
     const euroTitleBonus = euroWon ? EURO_COMPS[ctx.euroComp].titleBonus : 0;
     const upkeep = Math.round(d.admin + ctx.stadiumSpent * 0.03);
-    const net = matchday + merch + sponsorMoney + investorMoney + prize + ctx.cupMoney + ctx.euroMoney + euroTitleBonus - upkeep;
+    let net = matchday + merch + sponsorMoney + investorMoney + prize + ctx.cupMoney + ctx.euroMoney + euroTitleBonus - upkeep;
     ctx.budget += net;
     // ----- trofei + prestigio -----
     const trophies = [];
@@ -3364,6 +3456,16 @@
     if (natWon) bump('Vincitori di coppa', 8); else if (natSF) bump('Un bel percorso in coppa', 4);
     if (euroWon) bump('Gloria in ' + EURO_COMPS[ctx.euroComp].name, EURO_COMPS[ctx.euroComp].gloryBump);
     if (ctx.budget < 0) bump('Preoccupazioni economiche', -5);
+    // ----- obiettivo extra della dirigenza (SIDE_GOALS) -----
+    let sideGoalResult = null;
+    const sgDef = sideGoalDef(ctx.sideGoal);
+    if (sgDef) {
+      const met = !!sgDef.done(ctx, { net, natWon, natSF }, ctx.sideGoal);
+      sideGoalResult = { label: ctx.sideGoal.label, met, reward: met ? ctx.sideGoal.reward : 0 };
+      // il premio entra nel saldo di stagione (cassa finale = cassa iniziale + saldo)
+      if (met) { ctx.budget += ctx.sideGoal.reward; net += ctx.sideGoal.reward; bump('Extra della dirigenza riuscito: ' + ctx.sideGoal.label, 3); }
+      else bump('Extra della dirigenza fallito: ' + ctx.sideGoal.label, -2);
+    }
     // ----- crescita tifoseria: successo e prezzi equi fanno crescere i tifosi, prezzi
     // premium e fallimenti frenano la portata del club. Una tifoseria più grande
     // significa pubblico più grande E più merchandising la stagione dopo, quindi
@@ -3457,6 +3559,7 @@
     if (ctx.stadiumSponsor) statement.push(['Sponsor di stadio (' + ctx.stadiumSponsor.name + ')', stadiumSponsorMoney]);
     if (ctx.techSponsor) statement.push(['Sponsor tecnico (' + ctx.techSponsor.name + ')', techSponsorMoney]);
     if (investorMoney) statement.push(['Fondo d\'investimento (' + investorDealName + ')', investorMoney]);
+    if (sideGoalResult && sideGoalResult.reward) statement.push(['⭐ Premio della dirigenza (obiettivo extra)', sideGoalResult.reward]);
     if (investorCompleted) statement.push(['🎯 Bonus obiettivo raggiunto (' + investorCompleted.name + ')', investorCompleted.completionBonus]);
     if (investorFailedPenalty) statement.push(['📉 Fondo d\'investimento fallito (' + investorFailedName + ')', -investorFailedPenalty]);
     statement.push(
@@ -3493,7 +3596,7 @@
       pos, exp, promoted, relegated, title, natWon, euroWon, euroCompWon: ctx.euroComp, trophies, fate, playoff, fbDelta, euroQual: qualTier, treble, investorCompleted, investorFailedName, investorFailedPenalty,
       newAchievements: (ctx._newAchievements || []).slice(),
       att, statement,
-      net, sentItems, ratingDelta: ratingGain, worth,
+      net, sentItems, ratingDelta: ratingGain, worth, sideGoalResult,
       cupPaths: { nat: (ctx.cups.nat && ctx.cups.nat.path) || [], euro: (ctx.cups.euro && ctx.cups.euro.path) || [] },
       // Eventi narrativi auto-risolti in multiplayer (autoResolveNarrativeEvent): non hanno
       // avuto un popup, ma restano qui per non sparire dal resoconto di fine stagione.
@@ -4048,6 +4151,15 @@
     // classifica; a campionato finito sono quelli veri. Stagioni iniziate prima di questa
     // aggiunta (senza rrP/rrW/rrD) hanno played/w/d/l a null: l'interfaccia può ometterli.
     const rows = ctx.opps.map((o) => {
+      // solo se la sequenza torna ancora con il totale del girone (qualcosa può averlo ritoccato dopo)
+      if (o.rrP != null && Array.isArray(o.rrSeq) && o.rrSeq.length && o.rrSeq.reduce((a, m) => a + m[0], 0) === o.rrPts) {
+        const k = Math.round(o.rrSeq.length * f);
+        let p = 0, gf = 0, ga = 0, w = 0, dr = 0;
+        for (let i = 0; i < k; i++) { const m = o.rrSeq[i]; p += m[0]; gf += m[1]; ga += m[2]; if (m[0] === 3) w++; else if (m[0] === 1) dr++; }
+        const vsP = o.vsP || 0, vsW = o.vsW || 0, vsD = o.vsD || 0;
+        const played = k + vsP, wins = w + vsW, draws = dr + vsD;
+        return { name: o.name, pts: p + o.vsPts, gd: (gf - ga) + (o.vsGF - o.vsGA), me: false, mgr: o.mgr, played, w: wins, d: draws, l: played - wins - draws, gf: gf + o.vsGF, ga: ga + o.vsGA };
+      }
       const pts = Math.round(o.rrPts * f) + o.vsPts;
       const gfRR = Math.round(o.rrGF * f), gdRR = Math.round((o.rrGF - o.rrGA) * f);
       const row = { name: o.name, pts, gd: gdRR + (o.vsGF - o.vsGA), me: false, mgr: o.mgr, played: null, w: null, d: null, l: null, gf: gfRR + o.vsGF, ga: gfRR - gdRR + o.vsGA };

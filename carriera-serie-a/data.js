@@ -778,6 +778,162 @@
       ],
     },
   ];
+  // Personaggi che ritornano: quattro figure fisse attorno al club (il capo della curva, un
+  // giornalista locale, il sindaco, un imprenditore storico). Ognuno ha una piccola storia in
+  // tre tappe: la scelta fatta alla prima tappa decide quale seconda tappa arriva, e così via.
+  // Lo stato vive in S.story[chi] = { step, state, at } e i nomi in S.cast (castName, sim.js).
+  // Le tappe usano solo i campi numerici degli eventi più `story`, che sposta il personaggio
+  // alla tappa successiva (applyNarrativeEffect), così funzionano anche in Modalità veloce.
+  const storyOf = (S, who) => (S.story && S.story[who]) || { step: 0, state: null, at: -99 };
+  // Fra una tappa e l'altra passano almeno 10 giornate (o un cambio di stagione).
+  const storyReady = (S, who, step, state) => {
+    const st = storyOf(S, who);
+    if (st.step !== step) return false;
+    if (state && (Array.isArray(state) ? state.indexOf(st.state) === -1 : st.state !== state)) return false;
+    return step === 0 || (S.season * 100 + S.played) - st.at >= 10;
+  };
+  const STORY_EVENTS = [
+    // ---------- il capo della curva ----------
+    {
+      icon: '📣', title: 'La curva chiede un incontro', who: 'ultras',
+      requires: (S) => storyReady(S, 'ultras', 0),
+      text: (S) => castName(S, 'ultras') + ', detto "il Toro", guida la curva da vent\'anni. Chiede di incontrarti: vuole biglietti scontati per i ragazzi del settore.',
+      choices: [
+        { label: 'Ricevilo e concedi gli sconti', sent: 4, budgetPct: -0.01, story: { who: 'ultras', state: 'amico' } },
+        { label: 'Niente favoritismi', sent: -3, story: { who: 'ultras', state: 'freddo' } },
+      ],
+    },
+    {
+      icon: '🎆', title: 'Una coreografia per il presidente', who: 'ultras',
+      requires: (S) => storyReady(S, 'ultras', 1, 'amico'),
+      text: (S) => 'Il Toro mantiene la parola: prima della partita la curva alza una coreografia con il tuo nome. ' + castName(S, 'ultras') + ' ti saluta dalla balaustra.',
+      sent: 5, ownerRating: 2, story: { who: 'ultras', state: 'amico' },
+    },
+    {
+      icon: '🪧', title: 'Striscione contro la società', who: 'ultras',
+      requires: (S) => storyReady(S, 'ultras', 1, 'freddo'),
+      text: (S) => 'Il Toro non ha dimenticato il tuo no. In curva compare uno striscione contro la presidenza, e ' + castName(S, 'ultras') + ' fa sapere che può andare peggio.',
+      choices: [
+        { label: 'Riapri il dialogo', budgetPct: -0.015, sent: 2, story: { who: 'ultras', state: 'amico' } },
+        { label: 'Tira dritto', sent: -5, ownerRating: -2, story: { who: 'ultras', state: 'rottura' } },
+      ],
+    },
+    {
+      icon: '🏟️', title: 'Una curva da intitolare', who: 'ultras',
+      requires: (S) => storyReady(S, 'ultras', 2, 'amico'),
+      text: (S) => castName(S, 'ultras') + ' ti chiede un ultimo gesto: intitolare la curva a un tifoso storico scomparso quest\'anno.',
+      choices: [
+        { label: 'Sì, la curva porterà il suo nome', sent: 6, fanbaseDelta: 0.03, story: { who: 'ultras', state: 'fine' } },
+        { label: 'Non è il momento', sent: -3, story: { who: 'ultras', state: 'fine' } },
+      ],
+    },
+    {
+      icon: '🔇', title: 'Sciopero del tifo', who: 'ultras',
+      requires: (S) => storyReady(S, 'ultras', 2, 'rottura'),
+      text: (S) => 'Il Toro ha deciso: la curva resta muta per tutta la partita, striscioni girati. ' + castName(S, 'ultras') + ' parla di "presidenza che non ascolta".',
+      sent: -6, fanbaseDelta: -0.02, story: { who: 'ultras', state: 'fine' },
+    },
+    // ---------- il giornalista ----------
+    {
+      icon: '🎙️', title: 'Un\'intervista in esclusiva', who: 'press',
+      requires: (S) => storyReady(S, 'press', 0),
+      text: (S) => castName(S, 'press') + ', la firma sportiva del quotidiano locale, ti chiede un\'intervista lunga, senza filtri, sul progetto del club.',
+      choices: [
+        { label: 'Accetta e parla chiaro', ownerRating: 2, story: { who: 'press', state: 'amico' } },
+        { label: 'Declina con cortesia', story: { who: 'press', state: 'freddo' } },
+      ],
+    },
+    {
+      icon: '📰', title: 'Un editoriale in tua difesa', who: 'press',
+      requires: (S) => storyReady(S, 'press', 1, 'amico'),
+      text: (S) => castName(S, 'press') + ' scrive un editoriale a tutta pagina: "Questo presidente ha un piano, lasciatelo lavorare".',
+      ownerRating: 3, sent: 2, story: { who: 'press', state: 'amico' },
+    },
+    {
+      icon: '🔎', title: 'Un\'inchiesta sui conti', who: 'press',
+      requires: (S) => storyReady(S, 'press', 1, 'freddo'),
+      text: (S) => castName(S, 'press') + ' annuncia un\'inchiesta sui conti del club. Ti chiede di commentare prima dell\'uscita.',
+      choices: [
+        { label: 'Apri i libri e spiega tutto', budgetPct: -0.005, ownerRating: 1, story: { who: 'press', state: 'amico' } },
+        { label: 'Minaccia una querela', budgetPct: -0.01, ownerRating: -2, story: { who: 'press', state: 'nemico' } },
+      ],
+    },
+    {
+      icon: '📚', title: 'Un libro sulla tua presidenza', who: 'press',
+      requires: (S) => storyReady(S, 'press', 2, 'amico'),
+      text: (S) => castName(S, 'press') + ' pubblica un libro sulla storia recente del club: tu sei il protagonista, e in città se ne parla bene.',
+      prestige: 2e6, fanbaseDelta: 0.02, story: { who: 'press', state: 'fine' },
+    },
+    {
+      icon: '🗞️', title: 'Campagna stampa contro di te', who: 'press',
+      requires: (S) => storyReady(S, 'press', 2, 'nemico'),
+      text: (S) => 'La querela non è piaciuta: ' + castName(S, 'press') + ' firma un articolo al giorno contro la tua gestione.',
+      ownerRating: -4, sent: -2, story: { who: 'press', state: 'fine' },
+    },
+    // ---------- il sindaco ----------
+    {
+      icon: '🏛️', title: 'Il sindaco propone un progetto', who: 'mayor',
+      requires: (S) => storyReady(S, 'mayor', 0),
+      text: (S) => 'Il sindaco ' + castName(S, 'mayor') + ' vuole sistemare viabilità e parcheggi attorno allo stadio. Chiede al club di partecipare alle spese, promettendo di ricambiare.',
+      choices: [
+        { label: 'Partecipa alle spese', budgetPct: -0.03, story: { who: 'mayor', state: 'alleato' } },
+        { label: 'Non è compito del club', story: { who: 'mayor', state: 'freddo' } },
+      ],
+    },
+    {
+      icon: '💶', title: 'Il Comune mantiene la promessa', who: 'mayor',
+      requires: (S) => storyReady(S, 'mayor', 1, 'alleato'),
+      text: (S) => 'Il sindaco ' + castName(S, 'mayor') + ' ricambia: il Comune riconosce al club un contributo per le attività giovanili e la gestione dello stadio.',
+      budgetPct: 0.05, sent: 2, story: { who: 'mayor', state: 'alleato' },
+    },
+    {
+      icon: '📋', title: 'Permessi in ritardo', who: 'mayor',
+      requires: (S) => storyReady(S, 'mayor', 1, 'freddo'),
+      text: (S) => 'Dal Comune i permessi per le partite serali arrivano sempre all\'ultimo minuto. Il sindaco ' + castName(S, 'mayor') + ' non risponde al telefono.',
+      budgetPct: -0.01, story: { who: 'mayor', state: 'fine' },
+    },
+    {
+      icon: '📸', title: 'Una foto prima delle elezioni', who: 'mayor',
+      requires: (S) => storyReady(S, 'mayor', 2, 'alleato'),
+      text: (S) => 'Si vota a primavera: il sindaco ' + castName(S, 'mayor') + ' vuole una foto con te e la squadra al centro del campo.',
+      choices: [
+        { label: 'Va bene, è un alleato', budgetPct: 0.01, sent: -1, story: { who: 'mayor', state: 'fine' } },
+        { label: 'Il club resta fuori dalla politica', sent: 2, story: { who: 'mayor', state: 'fine' } },
+      ],
+    },
+    // ---------- l'imprenditore storico ----------
+    {
+      icon: '🎩', title: 'Il cavaliere bussa alla porta', who: 'patron',
+      requires: (S) => storyReady(S, 'patron', 0),
+      text: (S) => 'Il cavalier ' + castName(S, 'patron') + ', imprenditore della zona e tifoso da sempre, vuole il suo marchio sulle maglie da allenamento. Paga bene.',
+      choices: [
+        { label: 'Accetta', budgetPct: 0.02, story: { who: 'patron', state: 'amico' } },
+        { label: 'Rifiuta', story: { who: 'patron', state: 'offeso' } },
+      ],
+    },
+    {
+      icon: '👦', title: 'Un favore per il nipote', who: 'patron',
+      requires: (S) => storyReady(S, 'patron', 1, 'amico'),
+      text: (S) => 'Il cavalier ' + castName(S, 'patron') + ' chiede un posto nelle giovanili per il nipote. Il ragazzo non è un fenomeno, ma il cavaliere sa essere riconoscente.',
+      choices: [
+        { label: 'Fallo entrare', budgetPct: 0.03, sent: -1, story: { who: 'patron', state: 'riconoscente' } },
+        { label: 'Solo per merito', story: { who: 'patron', state: 'offeso' } },
+      ],
+    },
+    {
+      icon: '😤', title: 'Il cavaliere cambia squadra', who: 'patron',
+      requires: (S) => { const st = storyOf(S, 'patron'); return st.state === 'offeso' && storyReady(S, 'patron', st.step, 'offeso'); },
+      text: (S) => 'Offeso, il cavalier ' + castName(S, 'patron') + ' porta i suoi soldi alla rivale cittadina e lo fa sapere a tutti al bar.',
+      sent: -2, story: { who: 'patron', state: 'fine' },
+    },
+    {
+      icon: '🎁', title: 'L\'eredità del cavaliere', who: 'patron',
+      requires: (S) => storyReady(S, 'patron', 2, 'riconoscente'),
+      text: (S) => 'Il cavalier ' + castName(S, 'patron') + ' si ritira dagli affari e lascia al club una donazione importante: "Per la squadra che mi ha fatto innamorare".',
+      budgetPct: 0.04, prestige: 1e6, story: { who: 'patron', state: 'fine' },
+    },
+  ];
+
 
   // Ogni allenatore (generato o candidato) ha una specializzazione, oltre al rating: un
   // piccolo tratto distintivo, non un moltiplicatore che rende uno strettamente più forte

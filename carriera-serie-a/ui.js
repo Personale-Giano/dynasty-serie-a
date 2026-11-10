@@ -3285,6 +3285,8 @@
     if (eff.ownerRating) parts.push((eff.ownerRating > 0 ? '+' : '') + eff.ownerRating + ' reputazione');
     if (eff.fanbaseDelta) parts.push((eff.fanbaseDelta > 0 ? '+' : '') + eff.fanbaseDelta + ' bacino tifosi');
     if (eff.prestige) parts.push((eff.prestige > 0 ? '+' : '') + fmtMoney(eff.prestige) + ' prestigio');
+    // scelta che un personaggio ricorrente si ricorderà (STORY_EVENTS)
+    if (eff.story && eff.story.state !== 'fine') parts.push('se ne ricorderà');
     if (!parts.length) return '';
     return inline ? `<span class="ow-eff-hint">${parts.join(' · ')}</span>` : parts.join(' · ');
   }
@@ -3725,6 +3727,7 @@
           <div><span>Valore club</span><b>${fmtMoney(e.worth)}</b></div>
         </div>
         <div class="dyn-trophies">${trophyChips}</div>
+        ${e.sideGoalResult ? `<div class="ow-fin-row"><span>⭐ Extra della dirigenza: ${escapeHtml(e.sideGoalResult.label)}</span><b class="${e.sideGoalResult.met ? 'good' : 'bad'}">${e.sideGoalResult.met ? 'riuscito · +' + fmtMoney(e.sideGoalResult.reward) : 'fallito'}</b></div>` : ''}
         ${e.euroQual ? '<div class="ow-fin-row"><span>' + EURO_COMPS[e.euroQual].flag + ' Qualificazione europea</span><b class="good">' + EURO_COMPS[e.euroQual].name + ' la prossima stagione</b></div>' : ''}
         <div class="ow-fin-row"><span>Budget attuale</span><b class="${S.budget < 0 ? 'bad' : ''}">${fmtMoney(S.budget)}</b></div>
       </div>
@@ -4075,7 +4078,8 @@
   }
 
   function renderHud() {
-    renderSeasonTarget();   // a che punto sei rispetto all'obiettivo cambia a ogni giornata
+    renderSeasonTarget();
+    renderMatchdayNews();   // a che punto sei rispetto all'obiettivo cambia a ogni giornata
     syncNotifDot();
     $('hudSeason').textContent = S.season + '/' + (S.maxSeasons || MAX_SEASONS);
     $('hudPlayed').textContent = S.played + '/' + gp();
@@ -4165,7 +4169,44 @@
         }
       }
     }
-    el.innerHTML = `<div class="ow-target"><span class="ow-target-pill ${t.key}">🎯 Obiettivo: ${t.label}</span>${status}</div>`;
+    // obiettivo extra della dirigenza (SIDE_GOALS, sim.js) con il suo avanzamento
+    const sg = S.sideGoal;
+    const sgHTML = sg ? `<div class="ow-side-goal"><span class="lbl">⭐ Extra della dirigenza</span><b>${escapeHtml(sg.label)}</b><small>${escapeHtml(sideGoalProgress(S))} · premio ${fmtMoney(sg.reward)}</small></div>` : '';
+    el.innerHTML = `<div class="ow-target"><span class="ow-target-pill ${t.key}">🎯 Obiettivo: ${t.label}</span>${status}</div>${sgHTML}`;
+  }
+
+  // Notizie della giornata: cosa hanno fatto la capolista e le dirette concorrenti dall'ultima
+  // volta che hai guardato (di solito l'ultima giornata). Il motore decide il girone fra le
+  // altre squadre a inizio stagione e la classifica lo mostra giornata dopo giornata: qui si
+  // leggono i punti guadagnati da ognuna confrontando la classifica di adesso con quella di prima.
+  function renderMatchdayNews() {
+    const el = $('owNews'); if (!el) return;
+    if (!S.seasonActive || !S.table || !S.played || (S._playoffState && !S._playoffState.done)) { el.innerHTML = ''; return; }
+    const snapNow = { played: S.played, pts: {}, pos: {} };
+    S.table.forEach((r, i) => { snapNow.pts[r.name] = r.pts; snapNow.pos[r.name] = i + 1; });
+    if (!S._newsSnap || S._newsSnap.played > S.played) S._newsSnap = { played: 0, pts: {}, pos: {} };
+    if (S._newsSnap.played !== S.played) { S._newsPrev = S._newsSnap; S._newsSnap = snapNow; }
+    const prev = S._newsPrev || { played: 0, pts: {}, pos: {} };
+    const myPos = S.table.findIndex((r) => r.me) + 1;
+    const idxs = new Set([0]);
+    for (let p = myPos - 3; p <= myPos + 1; p++) if (p >= 0 && p < S.table.length && p !== myPos - 1) idxs.add(p);
+    const rows = [...idxs].sort((a, b) => a - b).slice(0, 4).map((i) => {
+      const r = S.table[i];
+      const gained = r.pts - (prev.pts[r.name] != null ? prev.pts[r.name] : (prev.played === 0 ? 0 : r.pts));
+      const moved = prev.pos[r.name] ? prev.pos[r.name] - (i + 1) : 0;
+      const gap = r.pts - S.pts;
+      return `<div class="ow-news-row"><span class="pos">${i + 1}ª</span><span class="nm">${escapeHtml(r.name)}${moved ? ` <i class="ow-pos-delta ${moved > 0 ? 'up' : 'down'}">${moved > 0 ? '▲' : '▼'}${Math.abs(moved)}</i>` : ''}</span><span class="gain ${gained >= 3 ? 'w' : gained === 0 ? 'l' : 'd'}">+${gained}</span><span class="gap">${gap === 0 ? 'pari' : (gap > 0 ? '+' : '') + gap}</span></div>`;
+    }).join('');
+    const span = S.played - prev.played;
+    const leader = S.table[0];
+    const head = leader.me
+      ? `Sei in vetta${S.table[1] ? ' con ' + (S.pts - S.table[1].pts) + ' punt' + (S.pts - S.table[1].pts === 1 ? 'o' : 'i') + ' sulla seconda' : ''}`
+      : `In vetta ${escapeHtml(leader.name)}, a ${leader.pts - S.pts} punt${leader.pts - S.pts === 1 ? 'o' : 'i'} da te`;
+    el.innerHTML = `<div class="ow-news">
+      <div class="ow-news-title"><span>📰 ${span === 1 ? 'Giornata ' + S.played : 'Ultime ' + span + ' giornate'}</span><small>${head}</small></div>
+      <div class="ow-news-head"><span></span><span>Squadra</span><span>Punti fatti</span><span>Rispetto a te</span></div>
+      ${rows}
+    </div>`;
   }
 
   // Calendario e rosa consultabili a stagione in corso: prima per vedere chi avevi in squadra
