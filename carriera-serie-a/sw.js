@@ -31,7 +31,7 @@
    - se nessuna risponde (index.html attuale) subentra subito, come ha sempre fatto: la pagina
      vede "controllerchange" e si ricarica da sola. */
 
-const RELEASE = '81';
+const RELEASE = '83';
 
 const CACHE_PREFIX = 'presidente-serie-a-';
 const CACHE = CACHE_PREFIX + 'static';          // un'unica cache stabile: i "?v=" vecchi si tolgono file per file

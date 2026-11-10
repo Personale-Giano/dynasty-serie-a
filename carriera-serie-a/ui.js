@@ -4078,8 +4078,10 @@
   }
 
   function renderHud() {
+    // obiettivo, notizie e classifica fissa cambiano a ogni giornata
     renderSeasonTarget();
-    renderMatchdayNews();   // a che punto sei rispetto all'obiettivo cambia a ogni giornata
+    renderMatchdayNews();
+    renderSideTable();
     syncNotifDot();
     $('hudSeason').textContent = S.season + '/' + (S.maxSeasons || MAX_SEASONS);
     $('hudPlayed').textContent = S.played + '/' + gp();
@@ -4544,6 +4546,14 @@
       const zone = (d.euroSpots && i < d.euroSpots) ? 'ucl' : (d.uelSpots && i >= d.euroSpots && i < d.euroSpots + d.uelSpots) ? 'uel' : (d.confPos && i === d.confPos - 1) ? 'conf' : (d.promoted && i < d.promoted) ? 'ucl' : (d.playoff && i >= d.promoted && i < d.promoted + d.playoff) ? 'po' : (d.releg && i >= d.teams - d.releg) ? 'rel' : '';
       return `<tr class="${t.me ? 'me' : ''} ${zone}"${t.me ? ' aria-current="true"' : ''}><td class="pos">${i + 1}</td><td class="tname">${t.name}${t.mgr ? '<small>' + t.mgr.n + '</small>' : ''}</td><td class="num pts">${t.pts}</td>${full ? `<td class="num st">${t.played}</td><td class="num st">${t.w}</td><td class="num st">${t.d}</td><td class="num st">${t.l}</td>` : ''}${goals ? `<td class="num tgoals">${t.gf}:${t.ga}</td>` : ''}<td class="num">${t.gd > 0 ? '+' : ''}${t.gd}</td></tr>`;
     }).join('')}</tbody></table>`;
+  }
+
+  // Classifica fissa nella colonna di destra su PC (nascosta via CSS sul telefono, dove c'è il
+  // bottone Classifica): si aggiorna a ogni giornata insieme al resto del tabellone.
+  function renderSideTable() {
+    const el = $('owSideTable'); if (!el) return;
+    if (!S || !S.table || !S.table.length) { el.innerHTML = ''; return; }
+    el.innerHTML = tableHTML();
   }
 
   function showTable() {

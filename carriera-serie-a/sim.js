@@ -4153,7 +4153,9 @@
     const rows = ctx.opps.map((o) => {
       // solo se la sequenza torna ancora con il totale del girone (qualcosa può averlo ritoccato dopo)
       if (o.rrP != null && Array.isArray(o.rrSeq) && o.rrSeq.length && o.rrSeq.reduce((a, m) => a + m[0], 0) === o.rrPts) {
-        const k = Math.round(o.rrSeq.length * f);
+        // Ogni giornata ogni rivale gioca una partita: contro di te (vsP) o contro un'altra rivale.
+        // Quindi le partite del girone giocate finora sono le giornate meno quelle contro di te.
+        const k = clamp((ctx.played || 0) - (o.vsP || 0), 0, o.rrSeq.length);
         let p = 0, gf = 0, ga = 0, w = 0, dr = 0;
         for (let i = 0; i < k; i++) { const m = o.rrSeq[i]; p += m[0]; gf += m[1]; ga += m[2]; if (m[0] === 3) w++; else if (m[0] === 1) dr++; }
         const vsP = o.vsP || 0, vsW = o.vsW || 0, vsD = o.vsD || 0;
