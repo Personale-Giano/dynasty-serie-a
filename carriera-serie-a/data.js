@@ -1102,9 +1102,28 @@
         { n: 'Baronissi', s: 51 }, { n: 'Pagani', s: 48 }, { n: 'San Marzano sul Sarno', s: 46 }, { n: 'Striano', s: 43 },
       ],
     },
+    {
+      key: 'piemonte', label: 'Piemonte',
+      promozione: [
+        { n: 'Nichelino', s: 56 }, { n: 'Collegno', s: 55 }, { n: 'Grugliasco', s: 55 }, { n: 'Settimo Torinese', s: 54 },
+        { n: 'Venaria Reale', s: 54 }, { n: 'Orbassano', s: 52 }, { n: 'Giaveno', s: 52 }, { n: 'Ciriè', s: 51 },
+        { n: 'Volpiano', s: 51 }, { n: 'Leinì', s: 50 }, { n: 'Caselle Torinese', s: 50 }, { n: 'San Mauro Torinese', s: 50 },
+        { n: 'Pianezza', s: 49 }, { n: 'Alpignano', s: 49 }, { n: 'Beinasco', s: 48 }, { n: 'Trofarello', s: 48 },
+        { n: 'Santena', s: 48 }, { n: 'Poirino', s: 47 }, { n: 'Piossasco', s: 47 }, { n: 'Avigliana', s: 45 },
+        { n: 'Susa', s: 45 }, { n: 'Cuorgnè', s: 42 }, { n: 'Rivarolo Canavese', s: 40 }, { n: 'Lanzo Torinese', s: 36 },
+      ],
+      eccellenza: [
+        { n: 'Asti', s: 64 }, { n: 'Cuneo', s: 63 }, { n: 'Biella', s: 62 }, { n: 'Vercelli', s: 61 },
+        { n: 'Ivrea', s: 59 }, { n: 'Pinerolo', s: 59 }, { n: 'Alba', s: 58 }, { n: 'Fossano', s: 58 },
+        { n: 'Saluzzo', s: 57 }, { n: 'Savigliano', s: 57 }, { n: 'Borgosesia', s: 56 }, { n: 'Verbania', s: 56 },
+        { n: 'Omegna', s: 55 }, { n: 'Acqui Terme', s: 55 }, { n: 'Novi Ligure', s: 55 }, { n: 'Valenza', s: 54 },
+        { n: 'Casale Monferrato', s: 54 }, { n: 'Moncalieri', s: 53 }, { n: 'Rivoli', s: 53 }, { n: 'Chivasso', s: 51 },
+        { n: 'Carmagnola', s: 51 }, { n: 'Canelli', s: 48 }, { n: 'Ovada', s: 46 }, { n: 'Gozzano', s: 43 },
+      ],
+    },
   ];
 
-  // Derby regionali per Lombardia/Campania, stesso identico criterio delle 4 coppie Lazio
+  // Derby regionali per Lombardia/Campania/Piemonte, stesso identico criterio delle 4 coppie Lazio
   // già in DERBIES sopra (comuni confinanti/gemelli, tutti in Promozione in quella regione):
   // aggiunte alla stessa lista globale invece che a una lista per regione, perché scattano da
   // sole solo quando ENTRAMBI i nomi sono davvero in gioco — coppie di un'altra regione restano
@@ -1113,6 +1132,7 @@
   DERBIES.push(
     ['Legnano', 'Busto Arsizio'], ['Seregno', 'Desio'], ['Cinisello Balsamo', 'Sesto San Giovanni'], ['Cesano Maderno', 'Bovisio Masciago'],
     ['Torre del Greco', 'Torre Annunziata'], ['Portici', 'Ercolano'], ['Nocera Inferiore', 'Nocera Superiore'], ['Scafati', 'Angri'],
+    ['Collegno', 'Grugliasco'], ['Cuorgnè', 'Rivarolo Canavese'], ['Caselle Torinese', 'Leinì'], ['Avigliana', 'Giaveno'],
   );
 
   // Rose reali (Serie A/B, club europei), Squadra Icone, allenatori/direttori sportivi
