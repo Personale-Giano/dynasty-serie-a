@@ -26,11 +26,17 @@
   // playoff (3°-6°), ultime 4 giù. Serie B: prime 2 + playoff (3°-8°, come nella
   // vera Serie B), ultime 3 giù. Serie A: ultime 3 giù. Promozione: come Eccellenza,
   // prime 2 dirette + playoff, nessuna retrocessione modellata sotto di lei.
+  // Categorie basse più ricche (banco di prova: monte ingaggi 1.3-1.4 volte i ricavi, si restava
+  // a galla solo svendendo il migliore ogni estate, e dalla Promozione la Serie A non arrivava
+  // quasi mai). Promozione: prize 0.06e6 -> 0.12e6, perPlace 3e3 -> 6e3, promoBonus 0.3e6 ->
+  // 0.6e6, investor 150e3 -> 250e3. Eccellenza: prize 0.15e6 -> 0.3e6, perPlace 6e3 -> 10e3,
+  // promoBonus 0.6e6 -> 1.2e6, investor 300e3 -> 450e3. Serie D: prize 1.0e6 -> 2.0e6,
+  // promoBonus 1.2e6 -> 2.4e6. Serie C: prize 1.6e6 -> 3.2e6, promoBonus 3e6 -> 6e6.
   const DIVS = [
-    { name: 'Promozione', teams: 24, avg: 48, demand: 2200, ticket: 9, prize: 0.06e6, perPlace: 3e3, promoted: 2, playoff: 4, releg: 0, promoBonus: 0.3e6, titleBonus: 0.12e6, spin: 40e3, premium: 120e3, cupBase: 18e3, admin: 60e3, mgrBase: 46, investor: 150e3 },
-    { name: 'Eccellenza', teams: 24, avg: 55, demand: 4200, ticket: 14, prize: 0.15e6, perPlace: 6e3, promoted: 2, playoff: 4, releg: 3, promoBonus: 0.6e6, titleBonus: 0.25e6, spin: 75e3, premium: 225e3, cupBase: 35e3, admin: 120e3, mgrBase: 52, investor: 300e3 },
-    { name: 'Serie D', teams: 24, avg: 62, demand: 7500, ticket: 17, prize: 1.0e6, perPlace: 15e3, promoted: 3, playoff: 4, releg: 2, promoBonus: 1.2e6, titleBonus: 0.5e6, spin: 200e3, premium: 600e3, cupBase: 70e3, admin: 250e3, mgrBase: 58, investor: 600e3 },
-    { name: 'Serie C', teams: 24, avg: 68, demand: 13000, ticket: 21, prize: 1.6e6, perPlace: 25e3, promoted: 2, playoff: 4, releg: 4, promoBonus: 3e6, titleBonus: 1e6, spin: 500e3, premium: 2.5e6, cupBase: 140e3, admin: 450e3, mgrBase: 63, investor: 1.2e6 },
+    { name: 'Promozione', teams: 24, avg: 48, demand: 2200, ticket: 9, prize: 0.12e6, perPlace: 6e3, promoted: 2, playoff: 4, releg: 0, promoBonus: 0.6e6, titleBonus: 0.12e6, spin: 40e3, premium: 120e3, cupBase: 18e3, admin: 60e3, mgrBase: 46, investor: 250e3 },
+    { name: 'Eccellenza', teams: 24, avg: 55, demand: 4200, ticket: 14, prize: 0.3e6, perPlace: 10e3, promoted: 2, playoff: 4, releg: 3, promoBonus: 1.2e6, titleBonus: 0.25e6, spin: 75e3, premium: 225e3, cupBase: 35e3, admin: 120e3, mgrBase: 52, investor: 450e3 },
+    { name: 'Serie D', teams: 24, avg: 62, demand: 7500, ticket: 17, prize: 2.0e6, perPlace: 15e3, promoted: 3, playoff: 4, releg: 2, promoBonus: 2.4e6, titleBonus: 0.5e6, spin: 200e3, premium: 600e3, cupBase: 70e3, admin: 250e3, mgrBase: 58, investor: 600e3 },
+    { name: 'Serie C', teams: 24, avg: 68, demand: 13000, ticket: 21, prize: 3.2e6, perPlace: 25e3, promoted: 2, playoff: 4, releg: 4, promoBonus: 6e6, titleBonus: 1e6, spin: 500e3, premium: 2.5e6, cupBase: 140e3, admin: 450e3, mgrBase: 63, investor: 1.2e6 },
     // promoBonus riequilibrato: prima era 130e6 (quasi 4x il titleBonus di Serie A, 30e6, e più
     // del prize base di Serie A, 105e6) — un'iniezione sproporzionata rispetto a ogni altro
     // traguardo del gioco. 45e6 resta chiaramente il salto più ricco della piramide (riflette
@@ -77,7 +83,9 @@
     { base: 78, premium: 85 },
     { base: 84, premium: 90 },
     { base: 90, premium: 95 },
-    { base: 95, premium: 105 },
+    // Serie A: era { base: 95, premium: 105 }, sopra ogni rivale (media 83): con i soldi della
+    // Serie A la rosa arrivava a 20 punti di forza sopra il campionato (banco di prova).
+    { base: 88, premium: 92 },
   ];
 
   // Il modulo scelto pesa davvero sulla partita: atk/def sono un piccolo delta aggiunto/
@@ -839,10 +847,13 @@
   // 5° Europa League, 6° Conference League. Ogni livello ha un montepremi, un premio
   // per turno superato, un bonus per la vittoria finale e una forza degli avversari
   // proporzionalmente più bassa scendendo di coppa.
+  // Avversari più forti (oppBase ucl 78 -> 96, uel 70 -> 88, conf 63 -> 80) e Champions meno
+  // ricca (entry 40e6 -> 25e6, roundWin 15e6 -> 8e6, titleBonus 60e6 -> 35e6): la coppa
+  // europea si vinceva tre stagioni su quattro e valeva circa 190M l'anno (banco di prova).
   const EURO_COMPS = {
-    ucl: { name: 'Champions League', flag: '🌍', entry: 40e6, roundWin: 15e6, titleBonus: 60e6, prestige: 320e6, oppBase: 78, attBoost: 1.08, qualPrestige: 25e6, qualBump: 5, gloryBump: 12, growWon: 0.03, growPlaying: 0.01, color: 'var(--dyn)' },
-    uel: { name: 'Europa League', flag: '🟠', entry: 12e6, roundWin: 5e6, titleBonus: 20e6, prestige: 90e6, oppBase: 70, attBoost: 1.04, qualPrestige: 10e6, qualBump: 3, gloryBump: 8, growWon: 0.02, growPlaying: 0.007, color: 'var(--gold)' },
-    conf: { name: 'Conference League', flag: '🟢', entry: 4e6, roundWin: 1.8e6, titleBonus: 8e6, prestige: 30e6, oppBase: 63, attBoost: 1.02, qualPrestige: 5e6, qualBump: 2, gloryBump: 5, growWon: 0.012, growPlaying: 0.004, color: 'var(--good)' },
+    ucl: { name: 'Champions League', flag: '🌍', entry: 25e6, roundWin: 8e6, titleBonus: 35e6, prestige: 320e6, oppBase: 96, attBoost: 1.08, qualPrestige: 25e6, qualBump: 5, gloryBump: 12, growWon: 0.03, growPlaying: 0.01, color: 'var(--dyn)' },
+    uel: { name: 'Europa League', flag: '🟠', entry: 12e6, roundWin: 5e6, titleBonus: 20e6, prestige: 90e6, oppBase: 88, attBoost: 1.04, qualPrestige: 10e6, qualBump: 3, gloryBump: 8, growWon: 0.02, growPlaying: 0.007, color: 'var(--gold)' },
+    conf: { name: 'Conference League', flag: '🟢', entry: 4e6, roundWin: 1.8e6, titleBonus: 8e6, prestige: 30e6, oppBase: 80, attBoost: 1.02, qualPrestige: 5e6, qualBump: 2, gloryBump: 5, growWon: 0.012, growPlaying: 0.004, color: 'var(--good)' },
   };
 
   // In che coppa entra una Serie A che chiude in questa posizione, o null se nessuna.
@@ -989,6 +1000,10 @@
 
   /* ---------------- stadio + biglietti ---------------- */
   // cost = il prezzo per fare l'upgrade A quel livello da quello sotto.
+  // Livello di stadio minimo con cui si parte in ogni categoria (Promozione..Serie A): prima
+  // anche una Serie A partiva da 3.500 o 6.000 posti (vedi genTakeovers, sim.js).
+  const STADIUM_FLOOR = [0, 0, 1, 2, 3, 4];
+
   const STADIUM = [
     { cap: 3500, cost: 0 }, { cap: 6000, cost: 1.2e6 }, { cap: 10000, cost: 3e6 }, { cap: 18000, cost: 8e6 },
     { cap: 28000, cost: 20e6 }, { cap: 42000, cost: 55e6 }, { cap: 60000, cost: 130e6 }, { cap: 80000, cost: 260e6 },
@@ -1538,6 +1553,14 @@
   // Ogni fascia è stata alzata leggermente (5-8% circa su ogni fattore, incluso Medio) rispetto
   // al bilanciamento precedente: il gioco risultava troppo permissivo su tutti i livelli, non
   // solo su quello facile.
+  // Ritaratura col banco di prova (dalla Promozione in Serie A: Medio 68%, Difficile 0%,
+  // Estremo 0%; esoneri tutti da attese irraggiungibili, mai dai conti). Obiettivo: circa
+  // 75% / 35% / 10%. Medio: teamEffDelta 0 -> 0.5. Difficile: budgetMult 0.70 -> 0.80,
+  // teamEffDelta -4 -> 0, varianceMult 1.26 -> 1.08, wageMult 1.17 -> 1.05, sponsorMult 0.82 ->
+  // 0.88, promoStreakMalusMult 1.4 -> 1.1, patienceMult 1.4 -> 1.2. Estremo: budgetMult 0.5 ->
+  // 0.7, teamEffDelta -8 -> -0.5, varianceMult 1.47 -> 1.12, wageMult 1.31 -> 1.12, sponsorMult
+  // 0.69 -> 0.75, promoStreakMalusMult 1.82 -> 1.4, patienceMult 1.72 -> 1.2. La differenza fra
+  // i livelli ora sta soprattutto nei soldi, negli infortuni e negli imprevisti.
   const DIFFICULTIES = [
     {
       key: 'facile', label: 'Facile', blurb: 'Più margine economico, avversari più abbordabili, meno imprevisti.',
@@ -1547,21 +1570,21 @@
     },
     {
       key: 'medio', label: 'Medio', blurb: 'Il bilanciamento classico del gioco, senza sconti né penalità.',
-      budgetMult: 0.95, teamEffDelta: 0, injuryMult: 1.06, varianceMult: 1.05, wageMult: 1.04,
+      budgetMult: 0.95, teamEffDelta: 0.5, injuryMult: 1.06, varianceMult: 1.05, wageMult: 1.04,
       scoutCostMult: 1.05, sponsorMult: 0.94, mgrCostMult: 1.04, prospectMult: 0.92, promoStreakMalusMult: 1.08,
       patienceMult: 1.08, eventMult: 1.08,
     },
     {
       key: 'difficile', label: 'Difficile', blurb: 'Budget più risicato, avversari più ostici, qualche imprevisto di troppo.',
-      budgetMult: 0.70, teamEffDelta: -4, injuryMult: 1.42, varianceMult: 1.26, wageMult: 1.17,
-      scoutCostMult: 1.26, sponsorMult: 0.82, mgrCostMult: 1.17, prospectMult: 0.78, promoStreakMalusMult: 1.4,
-      patienceMult: 1.4, eventMult: 1.34,
+      budgetMult: 0.80, teamEffDelta: 0, injuryMult: 1.42, varianceMult: 1.08, wageMult: 1.05,
+      scoutCostMult: 1.26, sponsorMult: 0.88, mgrCostMult: 1.17, prospectMult: 0.78, promoStreakMalusMult: 1.1,
+      patienceMult: 1.2, eventMult: 1.34,
     },
     {
       key: 'estremo', label: 'Estremo', blurb: 'Si parte con pochissimo, ogni partita è in salita e gli imprevisti sono la norma.',
-      budgetMult: 0.5, teamEffDelta: -8, injuryMult: 1.78, varianceMult: 1.47, wageMult: 1.31,
-      scoutCostMult: 1.52, sponsorMult: 0.69, mgrCostMult: 1.36, prospectMult: 0.58, promoStreakMalusMult: 1.82,
-      patienceMult: 1.72, eventMult: 1.72,
+      budgetMult: 0.7, teamEffDelta: -0.5, injuryMult: 1.78, varianceMult: 1.12, wageMult: 1.12,
+      scoutCostMult: 1.52, sponsorMult: 0.75, mgrCostMult: 1.36, prospectMult: 0.58, promoStreakMalusMult: 1.4,
+      patienceMult: 1.2, eventMult: 1.72,
     },
   ];
 

@@ -2475,13 +2475,14 @@
 
       if ((el = on('[data-inv]'))) {
         const o = (S.investorOpts || [])[+el.dataset.inv]; if (!o) return;
-        // È l'unico bottone della Dirigenza che può costare il club intero (cessione forzata se
-        // l'obiettivo salta) e non si può disdire: un tocco sbagliato scorrendo la pagina non
-        // deve bastare. Stessa conferma di "Vendi il club", con le condizioni ripetute in chiaro.
+        // È l'unico bottone della Dirigenza che può affondare i conti (se l'obiettivo salta il
+        // fondo rivuole INVESTOR_FAIL_PENALTY volte l'iniezione, vedi endSeason) e non si può
+        // disdire: un tocco sbagliato scorrendo la pagina non deve bastare. Stessa conferma di
+        // "Vendi il club", con le condizioni ripetute in chiaro.
         const seasons = o.deadlineSeason - S.season;
         overlay(`<h2>🏦 Firmare con ${escapeHtml(o.name)}?</h2>
           <p>Incassi <b>${fmtMoney(o.injection)}</b> subito e <b>${fmtMoney(o.yearly)}</b> ogni stagione. In cambio devi arrivare in <b>${DIVS[o.targetDiv].name}</b> entro ${seasons} stagion${seasons === 1 ? 'e' : 'i'} (stagione ${o.deadlineSeason}).</p>
-          <div class="ow-warn" style="margin:0 0 14px;text-align:left">⚠️ Se non ci arrivi in tempo il fondo impone la <b>cessione forzata del club</b>: la carriera finisce lì. Il patto non si può sciogliere.</div>
+          <div class="ow-warn" style="margin:0 0 14px;text-align:left">⚠️ Se non ci arrivi in tempo il fondo si ritira e rivuole <b>${fmtMoney(Math.round(o.injection * INVESTOR_FAIL_PENALTY / 1e4) * 1e4)}</b> (${Math.round(INVESTOR_FAIL_PENALTY * 100)}% dell'iniezione), con i tifosi delusi: può mandarti in rosso, e due stagioni di fila in rosso significano l'amministrazione controllata. Il patto non si può sciogliere.</div>
           <div class="dyn-modal-actions">
             <button class="dyn-btn dyn-btn-primary" id="ovInvGo">Firma il patto</button>
             <button class="dyn-btn" id="ovInvNo">Ci penso ancora</button>
@@ -2842,10 +2843,10 @@
             <div class="ow-invdeal-row"><span>🎯 Obiettivo</span><b>${DIVS[dl.targetDiv].name} entro la stagione ${dl.deadlineSeason}</b></div>
             <div class="ow-invdeal-row"><span>📈 Ogni stagione</span><b class="good">+${fmtMoney(dl.yearly)}</b></div>
             <div class="ow-invdeal-row"><span>🏆 Bonus se centri l'obiettivo</span><b class="good">+${fmtMoney(dl.completionBonus)}</b></div>
-            <div class="ow-invdeal-row bad-row"><span>⚠️ Se non arrivi in tempo</span><b class="bad">cessione forzata del club</b></div>
+            <div class="ow-invdeal-row bad-row"><span>⚠️ Se non arrivi in tempo</span><b class="bad">restituisci il doppio di quanto ricevuto all'inizio</b></div>
           </div>`;
         })() : (S.investorOpts && S.investorOpts.length) ? `
-          <div class="ow-sub">Un patto pluriennale serio: cassa subito e un top-up ogni stagione, in cambio di un obiettivo di categoria entro una scadenza — se non lo raggiungi in tempo, cessione forzata del club. Il bonus finale, da solo, può valere più del club oggi.</div>
+          <div class="ow-sub">Un patto pluriennale serio: cassa subito e un top-up ogni stagione, in cambio di un obiettivo di categoria entro una scadenza — se non lo raggiungi in tempo, il fondo si ritira e pretende il doppio di quanto ha versato all'inizio: con la cassa in rosso rischi l'amministrazione controllata.</div>
           ${S.investorOpts.map((o, i) => {
             const seasons = o.deadlineSeason - S.season;
             return `<div class="ow-invoffer">
@@ -2853,7 +2854,7 @@
             <div class="ow-invdeal-row"><span>🎯 Obiettivo</span><b>${DIVS[o.targetDiv].name} entro ${seasons} stagion${seasons === 1 ? 'e' : 'i'} (stagione ${o.deadlineSeason})</b></div>
             <div class="ow-invdeal-row"><span>📈 Ogni stagione</span><b class="good">+${fmtMoney(o.yearly)}</b></div>
             <div class="ow-invdeal-row"><span>🏆 Bonus se centri l'obiettivo</span><b class="good">+${fmtMoney(o.completionBonus)}</b></div>
-            <div class="ow-invdeal-row bad-row"><span>⚠️ Se non arrivi in tempo</span><b class="bad">cessione forzata del club</b></div>
+            <div class="ow-invdeal-row bad-row"><span>⚠️ Se non arrivi in tempo</span><b class="bad">restituisci il doppio di quanto ricevuto all'inizio</b></div>
             <button class="dyn-btn dyn-btn-primary" data-inv="${i}" style="margin-top:8px;width:100%">Accetta il patto</button>
           </div>`;
           }).join('')}

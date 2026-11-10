@@ -361,7 +361,7 @@ const TEST_BODY = `
     };
     var up = run(2, { promoted: true });
     __assert(up.div === 3 && up.streak === 1, 'promozione: una categoria su, promoStreak a 1');
-    __assert(up.ratio > 1.2 && up.ratio < 1.3, 'promozione: stipendi +25% (rapporto ' + up.ratio.toFixed(3) + ')');
+    __assert(Math.abs(up.ratio - (1 + PROMO_WAGE_RAISE)) < 0.05, 'promozione: stipendi +' + Math.round(PROMO_WAGE_RAISE * 100) + '% (rapporto ' + up.ratio.toFixed(3) + ')');
     __assert(up.ach.indexOf('first_promo') >= 0, 'prima promozione: traguardo sbloccato');
     var down = run(2, { relegated: true });
     __assert(down.div === 1 && down.streak === 0 && down.ratio < 0.9, 'retrocessione: una categoria giù, stipendi tagliati');
@@ -374,7 +374,7 @@ const TEST_BODY = `
     // titoli di fila senza salire: alimentano la rincorsa delle rivali, e si azzerano cambiando categoria
     __assert(run(5, { title: true }).dom === 1 && run(5, {}).dom === 0 && run(3, { title: true, promoted: true }).dom === 0, 'dominance: +1 col titolo in Serie A, 0 con una promozione');
     __newCareer(5, 'medio'); __prepare();
-    __assert(rivalChase(S).size === 0, 'rincorsa: nessun rinforzo senza titoli di fila');
+    S.div = 4; __assert(rivalChase(S).size === 0, 'rincorsa: nessun rinforzo senza titoli di fila (sotto la Serie A)'); S.div = 5;
     S.dominance = 3; S.squad.forEach(function (p) { p.ovr = 104; });
     var ch = rivalChase(S), sorted = rivals().slice().sort(function (x, y) { return y.s - x.s; });
     __assert(ch.get(sorted[0]) > 0 && ch.get(sorted[0]) <= CHASE_CAP && ch.get(sorted[0]) > ch.get(sorted[10]) && ch.get(sorted[10]) > 0, 'rincorsa: le prime sei si rinforzano più delle altre, entro il tetto');
@@ -516,7 +516,7 @@ const TEST_BODY = `
     __assert(ok.promoted && ok.investorCompleted && !ok.investorFailedPenalty && S.investorDeal === null, 'fondo: la promozione nell\\'anno della scadenza centra l\\'obiettivo (niente penale)');
     __assert(S.achievements.indexOf('investor_trust') >= 0, 'fondo: traguardo "Fiducia ripagata"');
     var ko = play(false);
-    __assert(!ko.promoted && !ko.investorCompleted && ko.investorFailedPenalty === 1.4e6 && S.investorDeal === null, 'fondo: obiettivo mancato alla scadenza = penale del 140% dell\\'iniezione');
+    __assert(!ko.promoted && !ko.investorCompleted && ko.investorFailedPenalty === INVESTOR_FAIL_PENALTY * 1e6 && S.investorDeal === null, 'fondo: obiettivo mancato alla scadenza = penale di INVESTOR_FAIL_PENALTY volte l\\'iniezione');
     __newCareer(5, 'medio');
     __assert(investorDealOffers().length === 0, 'fondo: nessun patto proposto in Serie A');
     __newCareer(2, 'medio');

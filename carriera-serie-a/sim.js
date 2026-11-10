@@ -430,11 +430,15 @@
   // 23 anni non c'è headroom da segnalare: il potenziale coincide con l'overall attuale (non
   // compare più come fascia in UI, vedi potentialRange). Non tutti i giovani sono predestinati:
   // la distribuzione gaussiana lascia una quota reale di "bust" vicini al loro overall attuale.
+  const POTENTIAL_HIGH_START = 20;   // margine pieno fino a 80 di overall, poi in calo (minimo un quarto)
   function genPotential(ovr, age) {
     if (age > 23) return ovr;
     const headroomBase = age <= 19 ? 16 : age <= 21 ? 11 : 6;
-    const headroom = Math.max(0, gaussInt(headroomBase, 6));
-    return clamp(ovr + headroom, ovr, 108);
+    // Più si parte in alto, meno margine resta (POTENTIAL_HIGH_START): un ventenne da 92 pescato
+    // con uno spin di lusso in Serie A arrivava in tre stagioni a 106-109, e un undici di questi
+    // stava 20 punti sopra il campionato (banco di prova). Sotto 80 non cambia nulla.
+    const headroom = Math.max(0, gaussInt(headroomBase, 6)) * clamp((100 - ovr) / POTENTIAL_HIGH_START, 0.25, 1);
+    return clamp(Math.round(ovr + headroom), ovr, 108);
   }
   // Fascia mostrata in UI: il vero potenziale (p.potential) resta nascosto, si vede solo un
   // intervallo di ±5 intorno ad esso — mai sotto l'overall attuale, mai sopra il tetto assoluto.
@@ -445,9 +449,13 @@
     return { lo, hi };
   }
 
+  // Quota di crescita che resta oltre il potenziale nascosto (vedi seasonOvrDelta).
+  const POTENTIAL_OVERFLOW = 0.33;
   function growthDamp(ovr) {
     if (ovr < 95) return 1;
-    const t = clamp((ovr - 95) / 15, 0, 1);
+    // La frenata arriva al minimo verso 105 (prima verso 110): in una Serie A dominante ogni
+    // titolare ha stagioni "da incorniciare" e cresceva di 4-6 punti l'anno fino a 108-109.
+    const t = clamp((ovr - 95) / 10, 0, 1);
     return clamp(1 - t * t * 0.9, 0.12, 1);
   }
   function seasonOvrDelta(p, ctx = S) {
@@ -464,6 +472,16 @@
     const noise = (Math.random() - 0.5) * 1.5;
     let delta = ageGrowthBase(p.age) + perf + noise;
     if (delta > 0) delta *= growthDamp(p.ovr);
+    // Potenziale nascosto (genPotential): prima valeva solo per la Primavera, in prima squadra
+    // la crescita lo ignorava e chiunque arrivava a 100+ (banco di prova: rosa media 103 in
+    // Serie A contro rivali da 83). Oltre il potenziale la crescita non si azzera ma si riduce
+    // (POTENTIAL_OVERFLOW): un tetto morbido, perché chi entra in rosa dopo i 23 anni ha
+    // potenziale = overall d'ingresso e un tetto rigido lo congelerebbe per sempre. Senza campo
+    // potential (salvataggi vecchi): nessun freno.
+    if (delta > 0 && p.potential != null && p.ovr + delta > p.potential) {
+      const room = Math.max(0, p.potential - p.ovr);
+      delta = room + (delta - room) * POTENTIAL_OVERFLOW;
+    }
     // Allenatore "costruttore di giovani": un filo di crescita in più, ma solo quando
     // c'è già crescita da spingere (non tampona un calo).
     if (delta > 0 && p.age <= 23 && ctx.manager && ctx.manager.spec === 'builder') delta += 1;
@@ -1085,9 +1103,19 @@
 
   // Un'offerta è un vero premio sul 30% del valore di svincolo, quindi incassare è
   // redditizio ma perdi il giocatore. Arrotondata a una cifra tonda.
+  const OFFER_FEE_CAP_MULT = 1;
   function offerFee(p, ctx = S) {
     const dsMult = ctx.sportingDirector && ctx.sportingDirector.spec === 'sales_expert' ? 1.12 : 1;
-    const v = playerValue(p) * (0.95 + Math.random() * 0.55) * dsMult;
+    // Era 0.95-1.5 volte il valore: vendere a chiunque offrisse e ricomprare con gli spin
+    // moltiplicava la cassa finale per 15 (banco di prova). Ora 0.7-1.05: resta un affare
+    // rispetto alla cessione immediata (30%), non una macchina da soldi.
+    const raw = playerValue(p) * (0.7 + Math.random() * 0.35) * dsMult;
+    // Tetto morbido per categoria (OFFER_FEE_CAP_MULT volte lo spin di lusso della categoria
+    // sopra, oltre si incassa solo un decimo): il valore segue lo stipendio, che cresce in modo
+    // esponenziale con l'overall, mentre lo spin costa un prezzo fisso — vendere ogni stella e
+    // ripescarne un'altra con uno spin rendeva più del suo costo anche dieci volte.
+    const cap = DIVS[Math.min(DIVS.length - 1, ctx.div + 1)].premium * OFFER_FEE_CAP_MULT;
+    const v = raw <= cap ? raw : cap + (raw - cap) * 0.1;
     return v >= 1e6 ? Math.round(v / 1e5) * 1e5 : Math.round(v / 1e4) * 1e4;
   }
 
@@ -1340,9 +1368,12 @@
   // l'addebito vero) invece che duplicato in ui.js.
   const stadiumUpgradeCost = (tierSpec, ctx = S) => Math.round(tierSpec.cost * (1 - clamp(sponsorPerkValue('stadiumUpgradeDiscount', ctx), 0, 0.5)) / 1e4) * 1e4;
 
+  // Clausole ridotte (erano 0.7-1.2 per la vittoria e 0.35-0.65 per l'Europa): chi vinceva
+  // sempre incassava quasi due volte e mezzo l'importo fisso, il motivo principale per cui la
+  // Serie A di fine carriera diventava ricca senza limiti.
   const sponsorClauses = (perYear) => ({
-    clauseWin: Math.round(perYear * (0.7 + Math.random() * 0.5) / 1e4) * 1e4,
-    clauseEuro: Math.round(perYear * (0.35 + Math.random() * 0.3) / 1e4) * 1e4,
+    clauseWin: Math.round(perYear * (0.25 + Math.random() * 0.2) / 1e4) * 1e4,
+    clauseEuro: Math.round(perYear * (0.15 + Math.random() * 0.15) / 1e4) * 1e4,
   });
 
   // Il perk di un'offerta sponsor di maglia segue il TAG (community/betting/global sono già
@@ -1352,14 +1383,18 @@
 
   function sponsorOffers() {
     const d = divOf();
-    const base = (d.prize * 0.3 + capOf() * 9) * 1.3 * diffOf().sponsorMult;   // +30% su tutti gli accordi sponsor (aumentato di un ulteriore 8% circa), poi scalato per difficoltà
+    // In Serie A la quota del montepremi è dimezzata (0.15, era 0.3 come altrove): lo sponsor di
+    // maglia mediano valeva 233M l'anno, più del montepremi stesso. Sotto resta 0.3, lì i conti
+    // sono già tirati. +30% su tutti gli accordi, poi la difficoltà.
+    const base = (d.prize * (S.div >= 5 ? 0.15 : 0.3) + capOf() * 9) * 1.3 * diffOf().sponsorMult;
     const mk = (tag, mult, yrs, sent) => { const perYear = Math.round(base * mult * (0.85 + Math.random() * 0.3) / 1e4) * 1e4; return { name: pick(SPONSOR_BRANDS[tag]), tag, perYear, years: yrs, left: yrs, sent, perk: kitPerkFor(tag), ...sponsorClauses(perYear) }; };
     // Sempre QUATTRO offerte, con un peso economico più alto di prima: più scelta e
     // più soldi in ballo. Dalla Serie B in su un mega-sponsor globale sostituisce lo
     // sponsor di comunità, con un accordo regionale a fare da via di mezzo in entrambi
     // i casi.
     return S.div >= 4
-      ? [mk('standard', 1.5, 3, 0), mk('regional', 1.9, 3, 0), mk('betting', 2.3, 2, -2), mk('global', 3.0, 4, 0)]
+      // Lo sponsor globale scende da 3.0 a 2.2 volte la base: era sempre la scelta dominante.
+      ? [mk('standard', 1.5, 3, 0), mk('regional', 1.9, 3, 0), mk('betting', 2.3, 2, -2), mk('global', 2.2, 4, 0)]
       : [mk('community', 0.9, 3, 2), mk('regional', 1.2, 3, 0), mk('standard', 1.5, 2, 0), mk('betting', 2.0, 2, -2)];
   }
 
@@ -1390,9 +1425,15 @@
   // piatto cifre proporzionate a quello, non a un importo fisso di categoria che coi tempi
   // faceva sembrare il patto poco conveniente rispetto al rischio (cessione forzata). Cresce
   // insieme al club, resta un'offerta seria a qualunque punto della carriera.
+  // Penale se l'obiettivo del fondo salta, in multipli dell'iniezione: era 1.4, troppo poco
+  // per essere un vero rischio. Ora può mandare la cassa in rosso (e da lì all'amministrazione
+  // controllata). Letta anche dal popup di conferma in ui.js.
+  const INVESTOR_FAIL_PENALTY = 2.0;
   function investorDealOffers(ctx = S) {
     if (ctx.div >= DIVS.length - 1) return [];
-    const worth = computeWorth(ctx);
+    // Valore del club SENZA la cassa: computeWorth conta l'80% del contante, quindi più soldi
+    // avevi più il fondo ne versava (iniezioni da 1.6 a 2.9 volte i ricavi di una stagione).
+    const worth = computeWorth(ctx) - Math.round(Math.max(0, ctx.budget) * 0.8);
     const diffMult = diffOf(null, ctx).sponsorMult;
     const mk = (name, steps, seasons, injFrac, yrFrac, bonusFrac) => {
       const targetDiv = clamp(ctx.div + steps, 0, DIVS.length - 1);
@@ -1408,12 +1449,15 @@
       // Cauto: poco meno di un quarto del valore del club subito (ridotto leggermente, era
       // 0.25), un top-up modesto, 5 stagioni per un solo passo di categoria — il bonus finale
       // da solo vale più di mezzo club.
-      mk(pick(INVESTOR_FUNDS), Math.max(1, steps - 1), 5, 0.22, 0.05, 0.6),
+      // Quote ridotte (iniezione / top-up annuo / bonus finale erano 0.22 / 0.05 / 0.6): col
+      // patto una Promozione a Difficile arrivava in Serie A quasi sempre, senza quasi mai.
+      mk(pick(INVESTOR_FUNDS), Math.max(1, steps - 1), 5, 0.05, 0.01, 0.1),
       // Aggressivo: poco meno di metà del valore del club subito (ridotto leggermente, era
       // 0.5), un top-up sostanzioso, solo 3 stagioni per il doppio salto di categoria — il
       // bonus finale può superare il valore attuale del club: un vero cambio di vita se ce la
       // fai, una vera scommessa se non ci arrivi.
-      mk(pick(INVESTOR_FUNDS), steps, 3, 0.44, 0.09, 1.1),
+      // Quote ridotte (erano 0.44 / 0.09 / 1.1), stesso motivo del patto cauto.
+      mk(pick(INVESTOR_FUNDS), steps, 3, 0.07, 0.015, 0.15),
     ];
   }
 
@@ -1900,7 +1944,9 @@
         key: s.key, title: v.title, blurb: v.blurb,
         str: s.strRange[0] + shift + rnd(s.strRange[1] - s.strRange[0] + 1),
         budget: (s.budgetRange[0] + Math.random() * (s.budgetRange[1] - s.budgetRange[0])) * budgetScale,
-        stadiumTier: Math.random() < s.stadiumChance ? s.stadiumTier : 0,
+        // Livello minimo di stadio per categoria (STADIUM_FLOOR) + l'eventuale bonus della
+        // situazione: prima una Serie A poteva partire con 3.500 posti.
+        stadiumTier: Math.min(STADIUM.length - 1, (STADIUM_FLOOR[div] || 0) + (Math.random() < s.stadiumChance ? s.stadiumTier : 0)),
         fanbase: s.fanbaseRange[0] + Math.random() * (s.fanbaseRange[1] - s.fanbaseRange[0]),
       };
     });
@@ -1929,7 +1975,9 @@
       owner, club: (customClub || '').slice(0, 24) || pick(POOLS[div]).n, div: div, season: 1,
       difficulty: diffKey,
       budget: Math.round(t.budget * diffOf(diffKey).budgetMult * (1 + legacyBonus)), fanbase: Math.round(t.fanbase * 100) / 100,
-      stadiumTier: t.stadiumTier, stadiumSpent: 0.6e6 + (t.stadiumTier ? STADIUM[1].cost : 0), ticket: 1,
+      // stadiumSpent somma il costo di TUTTI i livelli già costruiti (prima solo il primo):
+      // con STADIUM_FLOOR si può partire anche dal livello 4.
+      stadiumTier: t.stadiumTier, stadiumSpent: 0.6e6 + STADIUM.slice(1, t.stadiumTier + 1).reduce((a, x) => a + x.cost, 0), ticket: 1,
       squad, manager: (function () { const r = clamp(DIVS[div].mgrBase - 2 + rnd(8), 45, 92); const nat = pickNationality(div); return { n: genName(nat), rating: r, salary: mgrSalaryFor(r), nat, spec: pick(MANAGER_SPECS).key }; })(),
       sponsor: null, stadiumSponsor: null, techSponsor: null, investorDeal: null, sent: 55, ownerRating: 62, prestige: 0, debtSeasons: 0,
       euro: false, euroComp: null, form: 0, spinsBought: 0, promoStreak: 0, premiumRoleUsed: false, stdRoleUsed: false,
@@ -1966,10 +2014,15 @@
   // Affluenza/incasso attesi per UNA fascia di prezzo specifica (non necessariamente quella
   // scelta ora): stessa formula di estSeasonRevenue/endSeason, usata per confrontare le 4
   // fasce fra loro prima di scegliere, invece di scoprirlo solo a fine stagione.
+  // Capienza "utile" per una fascia di prezzo: con prezzi alti (t.demand < 1) una parte dei
+  // posti resta vuota anche quando la domanda supera la capienza. Prima lo stadio pieno
+  // annullava l'effetto del prezzo e il biglietto Premium diventava un +60% d'incasso gratis.
+  const ticketCap = (t, ctx = S) => capOf(ctx) * Math.min(1, t.demand);
+
   function estAttendanceFor(ticketIdx, ctx = S) {
     const d = divOf(ctx), t = TICKETS[ticketIdx], ec = ctx.euro ? EURO_COMPS[ctx.euroComp] : null;
     const sentFactor = 1 + (ctx.sent - 50) / 220 + sponsorPerkValue('demandBonus', ctx);
-    const att = Math.min(capOf(ctx), Math.max(600, d.demand * ctx.fanbase * sentFactor * t.demand * (ec ? ec.attBoost : 1)));
+    const att = Math.min(ticketCap(t, ctx), Math.max(600, d.demand * ctx.fanbase * sentFactor * t.demand * (ec ? ec.attBoost : 1)));
     return { att: Math.round(att), pct: clamp(att / capOf(ctx), 0, 1), revenuePerGame: Math.round(att * d.ticket * t.mult) };
   }
 
@@ -1981,7 +2034,7 @@
   function estSeasonRevenue() {
     const d = divOf(), t = TICKETS[S.ticket], ec = S.euro ? EURO_COMPS[S.euroComp] : null;
     const sentFactor = 1 + (S.sent - 50) / 220 + sponsorPerkValue('demandBonus');
-    const att = Math.min(capOf(), Math.max(600, d.demand * S.fanbase * sentFactor * t.demand * (ec ? ec.attBoost : 1)));
+    const att = Math.min(ticketCap(t), Math.max(600, d.demand * S.fanbase * sentFactor * t.demand * (ec ? ec.attBoost : 1)));
     const merch = d.demand * S.fanbase * d.ticket * 5 * 0.8;
     const sponsorEst = (S.sponsor ? S.sponsor.perYear : 0) + (S.stadiumSponsor ? S.stadiumSponsor.perYear : 0) + (S.techSponsor ? S.techSponsor.perYear : 0) + (S.investorDeal ? S.investorDeal.yearly : 0);
     return Math.round(att * d.ticket * t.mult * (gp() / 2) + merch + d.prize + sponsorEst + (ec ? ec.entry : 0) - (d.admin + S.stadiumSpent * 0.03));
@@ -2092,15 +2145,25 @@
   // Senza, i rivali avevano un tetto a 99 mentre la rosa del presidente può superare il 105:
   // dal terzo-quarto anno di Serie A lo scudetto arrivava quasi d'ufficio (misurato: 79% dei
   // campionati giocati, 2 trofei a stagione) e gli ultimi anni di carriera non avevano storia.
-  const CHASE_TOP = 6, CHASE_STEP = 1, CHASE_MAX = 4, CHASE_CAP = 12;
+  // Rincorsa più decisa (CHASE_TOP 6 -> 10, CHASE_STEP 1 -> 2, CHASE_CAP 12 -> 18): prima una
+  // Serie A dominante restava 20 punti di forza sopra tutte le rivali e vinceva lo scudetto 6-7
+  // stagioni su 10 (banco di prova); ora circa 4 su 10.
+  const CHASE_TOP = 10, CHASE_STEP = 2, CHASE_MAX = 4, CHASE_CAP = 18;
+  // Quota del divario di forza colmata per ogni gradino di dominanza (era 0.25 fisso nel codice):
+  // conta in pratica solo in Serie A, l'unica categoria in cui si vincono titoli senza salire.
+  const CHASE_GAP = 0.8;
   function rivalChase(ctx) {
     const out = new Map();
-    const dom = clamp(ctx.dominance || 0, 0, CHASE_MAX);
+    // In Serie A le big rincorrono SEMPRE chi sta sopra di loro (almeno un gradino di
+    // dominanza), non solo dopo titoli consecutivi: in cima alla piramide non c'è una
+    // promozione che azzeri il vantaggio, e senza rincorsa una rosa costruita coi soldi della
+    // Serie A vinceva quasi sempre (banco di prova).
+    const dom = clamp(Math.max(ctx.dominance || 0, ctx.div === DIVS.length - 1 ? 1 : 0), 0, CHASE_MAX);
     if (!dom) return out;
     const sorted = rivals(ctx).slice().sort((a, b) => b.s - a.s);
     if (!sorted.length) return out;
     const gap = Math.max(0, squadStr(ctx) + mgrBonus(ctx) + diffOf(null, ctx).teamEffDelta - sorted[0].s);
-    const top = Math.min(CHASE_CAP, dom * CHASE_STEP + gap * 0.25 * dom);
+    const top = Math.min(CHASE_CAP, dom * CHASE_STEP + gap * CHASE_GAP * dom);
     sorted.forEach((o, i) => out.set(o, Math.round((i < CHASE_TOP ? top : top / 3) * 10) / 10));
     return out;
   }
@@ -2696,13 +2759,17 @@
   // diverso, quindi partite diverse — risolve l'altra e decide il passaggio del turno
   // sull'aggregato. Tutti gli altri turni, finale compresa, restano gara secca risolta in
   // un'unica chiamata, come nel vero tabellone.
+  // Tetto di forza degli avversari di Coppa Italia (era 90): una Serie A da 100+ la vinceva
+  // sette stagioni su dieci, con 30M di premio per la vittoria. Conta solo negli ultimi turni,
+  // dalla Serie C in su.
+  const CUP_OPP_CAP = 98;
   function resolveNatRound(ctx = S) {
     const cup = ctx.cups.nat, d = divOf(ctx), i = cup.at;
     const isTwoLegged = i === cup.rounds.length - 3 || i === cup.rounds.length - 2;
     const legs = isTwoLegged ? 2 : 1;
     if (!cup.legAt) cup.legAt = 0;
     if (cup.legAt === 0) {
-      cup.roundOppStr = Math.min(90, d.avg + 2 + i * 4 + rnd(6));
+      cup.roundOppStr = Math.min(CUP_OPP_CAP, d.avg + 2 + i * 4 + rnd(6));
       const faced = cup.faced || (cup.faced = []);
       cup.roundOppName = cupOpponentName('nat', cup.roundOppStr, faced, ctx);
       faced.push(cup.roundOppName);
@@ -2832,7 +2899,7 @@
     const legs = key === 'euro' && !isEuroFinal ? 2 : 1;   // ottavi/quarti/semifinale: andata/ritorno. Coppa Italia e finale euro: gara secca.
     if (!cup.legAt) cup.legAt = 0;
     if (cup.legAt === 0) {
-      cup.roundOppStr = key === 'euro' ? EURO_COMPS[ctx.euroComp].oppBase + i * 3 + rnd(5) : Math.min(90, d.avg + 2 + i * 4 + rnd(6));
+      cup.roundOppStr = key === 'euro' ? EURO_COMPS[ctx.euroComp].oppBase + i * 3 + rnd(5) : Math.min(CUP_OPP_CAP, d.avg + 2 + i * 4 + rnd(6));
       const faced = cup.faced || (cup.faced = []);
       cup.roundOppName = cupOpponentName(key, cup.roundOppStr, faced, ctx);
       faced.push(cup.roundOppName);
@@ -3153,6 +3220,9 @@
     return { entry, done: pf.done, won: pf.won, eliminated };
   }
 
+  // Sotto 100 - RATING_SOFT_SPAN di gradimento i meriti di fine stagione valgono per intero,
+  // sopra si riducono man mano (vedi endSeason).
+  const RATING_SOFT_SPAN = 40;
   function endSeason(ctx = S) {
     if (!isClubCtx(ctx)) ctx = S;
     const local = ctx === S;
@@ -3247,7 +3317,7 @@
     // Sponsor di stadio "gruppo ospitalità" (perk demandBonus): più pubblico a parità di
     // prezzo, un'esperienza matchday migliore che va oltre il solo risultato in campo.
     const demand = d.demand * ctx.fanbase * (1 + winPct * 0.35 + (ctx.sent - 50) / 220 + sponsorPerkValue('demandBonus', ctx)) * t.demand * (ecPlaying ? ecPlaying.attBoost : 1);
-    const att = Math.round(Math.min(capOf(ctx), Math.max(600, demand)));
+    const att = Math.round(Math.min(ticketCap(t, ctx), Math.max(600, demand)));
     // Record d'affluenza: la media più alta mai registrata in una stagione (non una singola
     // giornata, coerente con `att` che è già una media di stagione) — mostrato in Stadio.
     if (att > (ctx.stadiumRecordAtt || 0)) { ctx.stadiumRecordAtt = att; ctx.stadiumRecordSeason = ctx.season; }
@@ -3354,7 +3424,10 @@
     const fbDelta = Math.round((ctx.fanbase - fbBefore) * 100) / 100;
     // ----- gradimento proprietario -----
     const ratingDelta = Math.round((ctx.sent - 50) / 6 + (exp - pos) * 0.7 + (promoted ? 10 : 0) + (relegated ? -12 : 0) + trophies.length * 4 + (ctx.budget < 0 ? -9 : 0) + (playoff ? (playoff.won ? 2 : -2) : 0));
-    ctx.ownerRating = clamp(ctx.ownerRating + ratingDelta, 0, 100);
+    // Vicino al massimo i meriti contano sempre meno (tetto morbido, RATING_SOFT_SPAN): prima
+    // il gradimento restava fisso a 100 in tre stagioni su quattro a Medio e non diceva nulla.
+    const ratingGain = ratingDelta > 0 ? Math.round(ratingDelta * clamp((100 - ctx.ownerRating) / RATING_SOFT_SPAN, 0.15, 1)) : ratingDelta;
+    ctx.ownerRating = clamp(ctx.ownerRating + ratingGain, 0, 100);
     // ----- destino -----
     let fate = null;
     if (ctx.ownerRating < 25) fate = 'forced';
@@ -3377,7 +3450,7 @@
         // pretende indietro l'iniezione versata con gli interessi, un colpo pesante alle
         // casse ma la dynasty continua.
         investorFailedName = ctx.investorDeal.name;
-        investorFailedPenalty = Math.round(ctx.investorDeal.injection * 1.4 / 1e4) * 1e4;
+        investorFailedPenalty = Math.round(ctx.investorDeal.injection * INVESTOR_FAIL_PENALTY / 1e4) * 1e4;
         ctx.budget -= investorFailedPenalty;
         ctx.sent = clamp(ctx.sent - 8, 0, 100);
         ctx.investorDeal = null;
@@ -3463,7 +3536,7 @@
       pos, exp, promoted, relegated, title, natWon, euroWon, euroCompWon: ctx.euroComp, trophies, fate, playoff, fbDelta, euroQual: qualTier, treble, investorCompleted, investorFailedName, investorFailedPenalty,
       newAchievements: (ctx._newAchievements || []).slice(),
       att, statement,
-      net, sentItems, ratingDelta, worth,
+      net, sentItems, ratingDelta: ratingGain, worth,
       cupPaths: { nat: (ctx.cups.nat && ctx.cups.nat.path) || [], euro: (ctx.cups.euro && ctx.cups.euro.path) || [] },
       // Eventi narrativi auto-risolti in multiplayer (autoResolveNarrativeEvent): non hanno
       // avuto un popup, ma restano qui per non sparire dal resoconto di fine stagione.
@@ -3648,6 +3721,7 @@
     });
   }
 
+  const PROMO_WAGE_RAISE = 0.10;   // aumento di stipendio di tutta la rosa a ogni promozione (era 0.25)
   function advance(ctx = S) {
     if (!isClubCtx(ctx)) ctx = S;
     const local = ctx === S;
@@ -3683,7 +3757,9 @@
     // Spirale degli stipendi: la promozione porta aumenti in tutta la rosa, restare in
     // alto significa inflazione annuale, la retrocessione permette tagli. È il freno che
     // impedisce ai soldi di accumularsi semplicemente una volta stabiliti.
-    if (e.promoted) { ctx.squad.forEach((p) => p.wage = roundWage(p.wage * 1.25)); if (local) toast('Aumenti da promozione: il monte ingaggi della rosa sale del 25%.'); }
+    // Aumento da promozione sceso da +25% a +10% (PROMO_WAGE_RAISE): con il 25% ogni salto di
+    // categoria mangiava i soldi per rinforzarsi e la scalata dalla Promozione si fermava a metà.
+    if (e.promoted) { ctx.squad.forEach((p) => p.wage = roundWage(p.wage * (1 + PROMO_WAGE_RAISE))); if (local) toast('Aumenti da promozione: il monte ingaggi della rosa sale del ' + Math.round(PROMO_WAGE_RAISE * 100) + '%.'); }
     else if (e.relegated) { ctx.squad.forEach((p) => p.wage = roundWage(p.wage * 0.85)); }
     else if (ctx.div === 5) { ctx.squad.forEach((p) => p.wage = roundWage(p.wage * 1.08)); }
     // il contratto sponsor scende (i tre accordi sono indipendenti: ognuno scade per conto suo)
