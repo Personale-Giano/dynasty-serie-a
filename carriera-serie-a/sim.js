@@ -1081,7 +1081,12 @@
   // di "cosa si può permettere un club di quel livello"), poi fra i club di quella fascia
   // pesca preferibilmente i più forti (quindi i più ricchi) quando la cifra è alta — niente
   // più squadre di provincia che offrono cifre da big.
-  function buyerClub(fee, ctx = S) {
+  // `band` (0=fortissimo..3=scarso, opzionale) forza la scelta dentro un quartile di forza
+  // preciso del tier — usato da genOffers per dare varietà a una tornata di più offerte
+  // insieme, così non sono quasi sempre le stesse 2-3 big a farsi avanti. Senza band (gli altri
+  // punti che chiamano buyerClub, es. le voci di mercato) il comportamento resta quello di
+  // sempre: pesato verso i più forti quando la cifra offerta è alta, altrimenti l'intero pool.
+  function buyerClub(fee, ctx = S, band) {
     const CAP = DIVS.map((dv) => dv.premium * 3);
     let tier = CAP.findIndex((cap) => fee <= cap);
     if (tier < 0) tier = 4;
@@ -1092,16 +1097,27 @@
     if (tier === DIVS.length - 1 && Math.random() < 0.35) {
       const euroPool = [].concat(EURO_CLUBS.ucl, EURO_CLUBS.uel, EURO_CLUBS.conf);
       const sorted = euroPool.slice().sort((a, b) => b.s - a.s);
+      if (band != null) return pick(bandSlice(sorted, band)).n;
       const topN = fee > CAP[tier] * 0.6 ? Math.max(2, Math.round(sorted.length * 0.55)) : sorted.length;
       return pick(sorted.slice(0, topN)).n;
     }
     const pool = (POOLS[tier] || POOLS[DIVS.length - 1]).filter((c) => c.n !== ctx.club);
     if (!pool.length) return 'un club più grande';
     const sorted = pool.slice().sort((a, b) => b.s - a.s);
+    if (band != null) return pick(bandSlice(sorted, band)).n;
     // La soglia più alta e la quota più ampia (era il 30% più forte oltre il 45% del tetto)
     // fanno sì che non siano sempre le 2-3 stesse big a farsi avanti per i giocatori più cari.
     const topN = fee > CAP[tier] * 0.6 ? Math.max(2, Math.round(sorted.length * 0.55)) : sorted.length;
     return pick(sorted.slice(0, topN)).n;
+  }
+
+  // Il quartile `band` (0=fortissimo..3=scarso) di una lista già ordinata dal più forte al più
+  // debole. Mai vuoto: ricade sull'intera lista se il quartile richiesto risultasse vuoto (pool
+  // troppo piccoli, es. un tier con pochi club).
+  function bandSlice(sortedDesc, band) {
+    const qSize = Math.max(1, Math.ceil(sortedDesc.length / 4));
+    const slice = sortedDesc.slice(band * qSize, band * qSize + qSize);
+    return slice.length ? slice : sortedDesc;
   }
 
   // I rivali fanno offerte per i tuoi giocatori migliori: quelli chiaramente sopra il
@@ -1123,11 +1139,17 @@
       .filter((p) => p.ovr >= d.avg + 3 || (p.age <= 22 && p.ovr >= d.avg))
       .sort((a, b) => (b.ovr + (b.age <= 22 ? 4 : 0)) - (a.ovr + (a.age <= 22 ? 4 : 0)))
       .slice(0, scoutNetwork ? 4 : 3);
+    // Decide PRIMA quali fasce di forza (0=fortissimo..3=scarso, vedi buyerClub/bandSlice)
+    // compaiono in questa tornata: mescolate e assegnate in ordine crescente man mano che le
+    // offerte si concretizzano, così più offerte nella stessa estate coprono davvero livelli
+    // diversi — un fortissimo, un forte, un medio, uno scarso — invece di risultare quasi
+    // sempre dalle stesse 2-3 big del tier.
+    const bandOrder = shuffle([0, 1, 2, 3]).slice(0, targets.length).sort((a, b) => a - b);
     const offers = [];
     targets.forEach((p, i) => {
       const baseChance = (i === 0 ? 0.95 : i === 1 ? 0.75 : 0.55) + (scoutNetwork ? 0.15 : 0);
       const chance = clamp(baseChance * (ROLE_DEMAND_WEIGHT[p.pos] || 1), 0, 0.98);
-      if (Math.random() < chance) { const fee = offerFee(p, ctx); offers.push({ pid: p.pid, club: buyerClub(fee, ctx), fee }); }
+      if (Math.random() < chance) { const fee = offerFee(p, ctx); offers.push({ pid: p.pid, club: buyerClub(fee, ctx, bandOrder[offers.length]), fee }); }
     });
     return offers;
   }
@@ -1138,7 +1160,10 @@
   // rovinosamente costoso.
   function spinCostNow(premium) {
     const base = premium ? divOf().premium : divOf().spin;
-    const w = base * Math.pow(1.3, S.spinsBought || 0) * diffOf().scoutCostMult;
+    // +12% su ogni spin (normale o di lusso, ogni categoria/difficoltà): un rialzo leggero e
+    // uniforme, non tocca la curva di scalata (Math.pow(1.3, ...)) né i costi base per
+    // categoria in DIVS, un solo punto invece di 6 righe da toccare a mano.
+    const w = base * 1.12 * Math.pow(1.3, S.spinsBought || 0) * diffOf().scoutCostMult;
     if (w >= 1e6) return Math.round(w / 1e5) * 1e5;
     if (w >= 1e5) return Math.round(w / 5e3) * 5e3;
     return Math.round(w / 1e3) * 1e3;
@@ -1340,13 +1365,15 @@
     };
     const steps = ctx.div >= DIVS.length - 2 ? 1 : 2;   // a un passo dalla Serie A l'obiettivo è quella, altrimenti due categorie sopra
     return [
-      // Cauto: un quarto del valore del club subito, un top-up modesto, 5 stagioni per un
-      // solo passo di categoria — il bonus finale da solo vale più di mezzo club.
-      mk(pick(INVESTOR_FUNDS), Math.max(1, steps - 1), 5, 0.25, 0.05, 0.6),
-      // Aggressivo: metà del valore del club subito, un top-up sostanzioso, solo 3 stagioni
-      // per il doppio salto di categoria — il bonus finale può superare il valore attuale
-      // del club: un vero cambio di vita se ce la fai, una vera scommessa se non ci arrivi.
-      mk(pick(INVESTOR_FUNDS), steps, 3, 0.5, 0.09, 1.1),
+      // Cauto: poco meno di un quarto del valore del club subito (ridotto leggermente, era
+      // 0.25), un top-up modesto, 5 stagioni per un solo passo di categoria — il bonus finale
+      // da solo vale più di mezzo club.
+      mk(pick(INVESTOR_FUNDS), Math.max(1, steps - 1), 5, 0.22, 0.05, 0.6),
+      // Aggressivo: poco meno di metà del valore del club subito (ridotto leggermente, era
+      // 0.5), un top-up sostanzioso, solo 3 stagioni per il doppio salto di categoria — il
+      // bonus finale può superare il valore attuale del club: un vero cambio di vita se ce la
+      // fai, una vera scommessa se non ci arrivi.
+      mk(pick(INVESTOR_FUNDS), steps, 3, 0.44, 0.09, 1.1),
     ];
   }
 
@@ -1624,7 +1651,7 @@
     });
   }
 
-  function startDynasty(owner, t, customClub, div, difficulty, seasons, hardcore) {
+  function startDynasty(owner, t, customClub, div, difficulty, seasons, hardcore, region) {
     div = div || 0;
     // Niente clearSave() qui: con gli slot multipli, iniziare una nuova carriera non deve
     // toccare quella (eventualmente) ancora in memoria — resta al suo posto nell'indice
@@ -1656,6 +1683,10 @@
       maxSeasons: [8, 12, 15].includes(seasons) ? seasons : MAX_SEASONS,
       stadiumName: null, stadiumRecordAtt: 0, stadiumRecordSeason: null,
       hardcore: !!hardcore, youthSquad: [], youthSquadSeason: 0,
+      // Solo per Promozione/Eccellenza (le uniche due categorie regionali): quale regione ha
+      // scelto POOLS[0]/POOLS[1] già rimpiazzati sul tavolo (vedi applyStartRegion, ui.js)
+      // prima di chiamare startDynasty. null altrove (Serie D e su restano sempre nazionali).
+      region: region || null,
     };
     normSquad();
     S.peakWorth = computeWorth();

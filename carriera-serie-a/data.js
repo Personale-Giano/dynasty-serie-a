@@ -784,6 +784,68 @@
     ],
   ];
 
+  // Regioni scelte in fase di creazione del club, per le due categorie che il vero sistema
+  // calcistico italiano organizza su base regionale (Promozione ed Eccellenza — Serie D e su
+  // sono invece gironi/campionati nazionali, restano sempre gli stessi qualunque regione si
+  // scelga). Ogni regione ripropone lo STESSO ventaglio di forza (`s`) di POOLS[0]/POOLS[1],
+  // solo con nomi di club diversi: la scelta è identitaria/di ambientazione, non tocca il
+  // bilanciamento. Le prime due voci di ciascuna regione sono clonate da POOLS invece che
+  // duplicate qui a mano, cosicché restino sempre la fonte di verità di riferimento (Lazio) —
+  // regionApplyPool (ui.js) clona sempre da qui prima di scrivere su POOLS, non tiene mai un
+  // riferimento condiviso, altrimenti cambiare regione più volte corromperebbe questi template.
+  const REGIONS = [
+    { key: 'lazio', label: 'Lazio', promozione: POOLS[0].map((c) => ({ ...c })), eccellenza: POOLS[1].map((c) => ({ ...c })) },
+    {
+      key: 'lombardia', label: 'Lombardia',
+      promozione: [
+        { n: 'Legnano', s: 56 }, { n: 'Gallarate', s: 55 }, { n: 'Busto Arsizio', s: 55 }, { n: 'Saronno', s: 54 },
+        { n: 'Rho', s: 54 }, { n: 'Cinisello Balsamo', s: 52 }, { n: 'Sesto San Giovanni', s: 52 }, { n: 'Cologno Monzese', s: 51 },
+        { n: 'Seregno', s: 51 }, { n: 'Desio', s: 50 }, { n: 'Lissone', s: 50 }, { n: 'Vimercate', s: 50 },
+        { n: 'Concorezzo', s: 49 }, { n: 'Arcore', s: 49 }, { n: 'Giussano', s: 48 }, { n: 'Mariano Comense', s: 48 },
+        { n: 'Cantù', s: 48 }, { n: 'Meda', s: 47 }, { n: 'Seveso', s: 47 }, { n: 'Cesano Maderno', s: 45 },
+        { n: 'Bovisio Masciago', s: 45 }, { n: 'Gorla Minore', s: 42 }, { n: 'Fagnano Olona', s: 40 }, { n: 'Marnate', s: 36 },
+      ],
+      eccellenza: [
+        { n: 'Abbiategrasso', s: 64 }, { n: 'Magenta', s: 63 }, { n: 'Vigevano', s: 62 }, { n: 'Voghera', s: 61 },
+        { n: 'Lodi', s: 59 }, { n: 'Crema', s: 59 }, { n: 'Treviglio', s: 58 }, { n: 'Romano di Lombardia', s: 58 },
+        { n: 'Chiari', s: 57 }, { n: 'Palazzolo sull\'Oglio', s: 57 }, { n: 'Gardone Val Trompia', s: 56 }, { n: 'Chiavenna', s: 56 },
+        { n: 'Sondrio', s: 55 }, { n: 'Tirano', s: 55 }, { n: 'Merate', s: 55 }, { n: 'Cassano d\'Adda', s: 54 },
+        { n: 'Melzo', s: 54 }, { n: 'Trezzano sul Naviglio', s: 53 }, { n: 'Corsico', s: 53 }, { n: 'Cesano Boscone', s: 51 },
+        { n: 'Rozzano', s: 51 }, { n: 'Opera', s: 48 }, { n: 'San Donato Milanese', s: 46 }, { n: 'Segrate', s: 43 },
+      ],
+    },
+    {
+      key: 'campania', label: 'Campania',
+      promozione: [
+        { n: 'Portici', s: 56 }, { n: 'Ercolano', s: 55 }, { n: 'Torre del Greco', s: 55 }, { n: 'Torre Annunziata', s: 54 },
+        { n: 'Castellammare di Stabia', s: 54 }, { n: 'Scafati', s: 52 }, { n: 'Angri', s: 52 }, { n: 'Nocera Inferiore', s: 51 },
+        { n: 'Nocera Superiore', s: 51 }, { n: 'Sarno', s: 50 }, { n: 'Cava de\' Tirreni', s: 50 }, { n: 'Battipaglia', s: 50 },
+        { n: 'Eboli', s: 49 }, { n: 'Agropoli', s: 49 }, { n: 'San Giorgio a Cremano', s: 48 }, { n: 'Casoria', s: 48 },
+        { n: 'Afragola', s: 48 }, { n: 'Caivano', s: 47 }, { n: 'Acerra', s: 47 }, { n: 'Marigliano', s: 45 },
+        { n: 'Nola', s: 45 }, { n: 'Palma Campania', s: 42 }, { n: 'Poggiomarino', s: 40 }, { n: 'Boscoreale', s: 36 },
+      ],
+      eccellenza: [
+        { n: 'Pomigliano d\'Arco', s: 64 }, { n: 'Volla', s: 63 }, { n: 'Casalnuovo di Napoli', s: 62 }, { n: 'Arzano', s: 61 },
+        { n: 'Grumo Nevano', s: 59 }, { n: 'Frattamaggiore', s: 59 }, { n: 'Frattaminore', s: 58 }, { n: 'San Giuseppe Vesuviano', s: 58 },
+        { n: 'Ottaviano', s: 57 }, { n: 'Somma Vesuviana', s: 57 }, { n: 'Boscotrecase', s: 56 }, { n: 'Vico Equense', s: 56 },
+        { n: 'Sant\'Antonio Abate', s: 55 }, { n: 'Gragnano', s: 55 }, { n: 'Vallo della Lucania', s: 55 }, { n: 'Capaccio Paestum', s: 54 },
+        { n: 'Roccadaspide', s: 54 }, { n: 'Sala Consilina', s: 53 }, { n: 'Polla', s: 53 }, { n: 'Mercato San Severino', s: 51 },
+        { n: 'Baronissi', s: 51 }, { n: 'Pagani', s: 48 }, { n: 'San Marzano sul Sarno', s: 46 }, { n: 'Striano', s: 43 },
+      ],
+    },
+  ];
+
+  // Derby regionali per Lombardia/Campania, stesso identico criterio delle 4 coppie Lazio
+  // già in DERBIES sopra (comuni confinanti/gemelli, tutti in Promozione in quella regione):
+  // aggiunte alla stessa lista globale invece che a una lista per regione, perché scattano da
+  // sole solo quando ENTRAMBI i nomi sono davvero in gioco — coppie di un'altra regione restano
+  // semplicemente inerti quando quella regione non è quella scelta, senza bisogno di alcuna
+  // logica condizionale in isDerby.
+  DERBIES.push(
+    ['Legnano', 'Busto Arsizio'], ['Seregno', 'Desio'], ['Cinisello Balsamo', 'Sesto San Giovanni'], ['Cesano Maderno', 'Bovisio Masciago'],
+    ['Torre del Greco', 'Torre Annunziata'], ['Portici', 'Ercolano'], ['Nocera Inferiore', 'Nocera Superiore'], ['Scafati', 'Angri'],
+  );
+
   // Rose reali (Serie A/B, club europei), Squadra Icone, allenatori/direttori sportivi
   // reali: SERIE_A_ROSTERS, SERIE_B_ROSTERS, EURO_ROSTERS, ICON_PLAYERS, REAL_MANAGERS,
   // REAL_DS vivono in rosters.js (caricato subito dopo questo file, vedi index.html), non

@@ -1581,6 +1581,15 @@
 
   // Categoria di partenza scelta in fase di creazione (indice in DIVS, 0=Eccellenza).
   let startDiv = 0;
+  // Regione scelta in fase di creazione: ha senso solo per Promozione/Eccellenza (0/1), le
+  // uniche due categorie della piramide che il gioco tratta come regionali — vedi REGIONS
+  // in data.js. Determina sia il cast di rivali (POOLS[0]/POOLS[1], scambiati in place da
+  // applyStartRegion) sia quali coppie di DERBIES possono scattare durante la carriera.
+  let startRegion = REGIONS[0].key;
+  // L'ultimo nome club suggerito in automatico (mai quello scritto a mano dal giocatore):
+  // solo per sapere se ri-suggerire un nome nuovo quando cambia la regione è sicuro, cioè
+  // se il campo contiene ancora esattamente quel suggerimento e non del testo proprio.
+  let lastSuggestedClub = null;
   let startDifficulty = 'medio';
   // Durata della dynasty (solo singolo: le stanze multiplayer restano fisse a MAX_SEASONS,
   // una scelta condivisa da tutto il gruppo non ha senso renderla individuale). 20 resta il
@@ -1610,7 +1619,47 @@
       startDiv = +el.dataset.startdiv;
       grid.querySelectorAll('.ow-div-pick').forEach((x) => x.classList.toggle('on', +x.dataset.startdiv === startDiv));
       takeovers = genTakeovers(startDiv); selTakeover = -1; renderTakeovers();
+      syncRegionPickerVisibility();
     }));
+  }
+
+  // Scambia in place il cast di rivali di Promozione/Eccellenza (POOLS[0]/POOLS[1]) con quello
+  // della regione scelta, sempre CLONANDO dal template REGIONS — mai un riferimento condiviso,
+  // altrimenti scegliere una regione ne muterebbe per sempre il template in data.js (POOLS viene
+  // poi modificato in place stagione dopo stagione da simulatePyramidMovement/evolveRivalStrengths).
+  // Nessun'altra funzione del motore ha bisogno di sapere quale regione è attiva: derby/rivali/
+  // mercato leggono tutti POOLS[div] come sempre, e trovano già il cast giusto.
+  function applyStartRegion(key) {
+    const region = REGIONS.find((r) => r.key === key) || REGIONS[0];
+    [region.promozione, region.eccellenza].forEach((src, i) => {
+      POOLS[i].length = 0;
+      POOLS[i].push(...src.map((c) => ({ ...c })));
+    });
+    const clubInput = $('owClubName');
+    if (clubInput && startDiv <= 1 && (!clubInput.value || clubInput.value === lastSuggestedClub)) {
+      lastSuggestedClub = pick(POOLS[startDiv]).n;
+      clubInput.value = lastSuggestedClub;
+    }
+  }
+
+  function syncRegionPickerVisibility() {
+    const wrap = $('regionPicker'), label = $('regionPickerLabel');
+    const show = startDiv <= 1;
+    if (wrap) wrap.classList.toggle('hidden', !show);
+    if (label) label.classList.toggle('hidden', !show);
+    if (show) applyStartRegion(startRegion);
+  }
+
+  function renderRegionPicker() {
+    const grid = $('regionPicker'); if (!grid) return;
+    grid.innerHTML = REGIONS.map((r) => `<button type="button" class="ow-div-pick ${startRegion === r.key ? 'on' : ''}" data-region="${r.key}">${r.label}</button>`).join('');
+    grid.querySelectorAll('.ow-div-pick').forEach((el) => el.addEventListener('click', () => {
+      startRegion = el.dataset.region;
+      grid.querySelectorAll('.ow-div-pick').forEach((x) => x.classList.toggle('on', x.dataset.region === startRegion));
+      applyStartRegion(startRegion);
+      if (DynSound) DynSound.tap();
+    }));
+    syncRegionPickerVisibility();
   }
 
   function renderDiffPicker() {
@@ -1662,10 +1711,11 @@
 
   function boot() {
     renderDivPicker();
+    renderRegionPicker();
     renderDiffPicker();
     renderSeasonsPicker();
     takeovers = genTakeovers(startDiv); renderTakeovers();
-    if (!$('owClubName').value) $('owClubName').value = pick(POOLS[startDiv]).n;   // suggerimento a caso, modificabile
+    if (!$('owClubName').value) { lastSuggestedClub = pick(POOLS[startDiv]).n; $('owClubName').value = lastSuggestedClub; }   // suggerimento a caso, modificabile
     updateCrestPreview();
     document.querySelectorAll('.ow-crest-shape').forEach((el) => el.addEventListener('click', () => { crestShape = el.dataset.shape; updateCrestPreview(); }));
     const c1 = $('crestColor1'), c2 = $('crestColor2');
@@ -1693,7 +1743,7 @@
         toast('🔥 Hai già una dynasty Hardcore in corso: portala a termine (o abbandonala) prima di iniziarne un\'altra.', 'error');
         return;
       }
-      startDynasty(($('owName').value || '').trim() || 'Il Presidente', takeovers[selTakeover], ($('owClubName').value || '').trim(), startDiv, startDifficulty, startSeasons, startHardcore);
+      startDynasty(($('owName').value || '').trim() || 'Il Presidente', takeovers[selTakeover], ($('owClubName').value || '').trim(), startDiv, startDifficulty, startSeasons, startHardcore, startDiv <= 1 ? startRegion : null);
     });
     $('owHomeBtn').addEventListener('click', () => { saveGame(); location.href = 'index.html'; });
     renderSaveSlots();
@@ -2817,8 +2867,12 @@
       // nulla, coerente con "ogni scelta è definitiva".
       const refund = S.hardcore ? 0 : Math.round(cost * 0.4);
       S.budget += refund;
+      // Se questo spin era a ruolo scelto e il giocatore trovato non convince, passare
+      // "restituisce" anche la scelta del ruolo: non ha senso bruciare l'unico uso stagionale
+      // per un giocatore che poi non si prende — resta comunque un nuovo spin a pagamento.
+      if (role) { if (premium) S.premiumRoleUsed = false; else S.stdRoleUsed = false; }
       S._spin = null; closeOverlay();
-      toast(S.hardcore ? 'Passi. Nessun rimborso in modalità Hardcore.' : 'Passi. Lo scout ti restituisce ' + fmtMoney(refund) + ' (40% dello spin).', 'money');
+      toast(S.hardcore ? 'Passi. Nessun rimborso in modalità Hardcore.' : 'Passi. Lo scout ti restituisce ' + fmtMoney(refund) + ' (40% dello spin).' + (role ? ' Puoi ancora scegliere il ruolo.' : ''), 'money');
       renderBoard(); saveGame();
     };
   }
