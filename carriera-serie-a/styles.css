@@ -1,29 +1,38 @@
 /* ============================================================
-   PRESIDENTE · Serie A — identità grafica originale.
-   Palette "Scudetto": nero caldo, bronzo/oro anziché il verde standard
-   da app sportiva, titoli in serif editoriale (Fraunces) per un taglio
-   da rivista sportiva/salotto dirigenziale, corpo in Inter.
+   PRESIDENTE · Serie A — identità "Colori sociali".
+   Grafica da partita in TV: fondo chiaro, tabellone, scritte strette e maiuscole, e soprattutto
+   i COLORI DEL CLUB (i due dello stemma, --c1/--c2) che colorano barra, bottoni, schede e
+   classifica. Li imposta applyClubTheme() in ui.js: cambiano con ogni carriera.
    ============================================================ */
 :root{
-  --bg:#0b0906;
-  --panel:#18130f;
-  --panel2:#221a13;
-  --line:#3c2c1a;
-  --txt:#f4ebdd;
-  --muted:#a89680;
-  --accent:#ff2d78;
-  --gold:#ffd24a;
-  --good:#28d9a0;
-  --purple:#b06fff;
-  --bad:#ff4d5e;
-  --shadow:0 16px 46px rgba(0,0,0,.55);
-  /* "dyn" resta il nome storico della variabile d'azione: qui è il bronzo dello Scudetto. */
-  --dyn:#c9902f;
-  --coppa:#4f8cff;
-  --dyn-deep:#7a4f16;
-  --dyn-ink:#170e05;
-  --serif:'Fraunces','Georgia',serif;
-  --sans:'Inter',system-ui,sans-serif;
+  /* colori del club: valori di riserva, sovrascritti da applyClubTheme() */
+  --c1:#1f4fb4; --c2:#0d1f4d; --c1-ink:#1f4fb4; --c1-dark:#163a85; --on-c1:#fff; --on-c2:#fff;
+  --bg:#efede7;
+  --panel:#ffffff;
+  --panel2:#f7f5f0;
+  --line:#e1dcd1;
+  --txt:#14161a;
+  --muted:#5e6571;
+  --ink:#14161a;
+  --accent:#d6245f;
+  --gold:#a06f00;
+  --gold-bg:#ffcf4a;
+  --good:#0e8a4c;
+  --purple:#7440c8;
+  --bad:#cf2d3a;
+  --blue:#2459c9;
+  --orange:#c85a12;
+  --draw:#8d8670;
+  --shadow:0 1px 2px rgba(20,22,26,.06), 0 10px 26px -16px rgba(20,22,26,.28);
+  /* "dyn" resta il nome storico della variabile d azione: ora è il colore del club. */
+  --dyn:var(--c1-ink);
+  --coppa:#2459c9;
+  --dyn-deep:var(--c1-dark);
+  --dyn-ink:var(--on-c1);
+  --display:"Anton","Impact","Arial Narrow",sans-serif;
+  --serif:"Barlow Condensed","Arial Narrow",sans-serif;
+  --cond:"Barlow Condensed","Arial Narrow",sans-serif;
+  --sans:"Inter",system-ui,sans-serif;
 }
 *{box-sizing:border-box}
 /* Accessibilità: un anello di focus tematico e ben visibile su sfondo scuro per chi naviga
@@ -40,9 +49,9 @@ body{
   margin:0; min-height:100%;
   font-family:var(--sans); color:var(--txt);
   background:
-    radial-gradient(1200px 650px at 88% -12%, rgba(201,144,47,.20) 0%, transparent 58%),
+    radial-gradient(1200px 650px at 88% -12%, color-mix(in srgb,var(--c1) 20%,transparent) 0%, transparent 58%),
     radial-gradient(950px 620px at -10% 108%, rgba(122,15,38,.22) 0%, transparent 55%),
-    repeating-linear-gradient(127deg, rgba(255,255,255,.014) 0px, rgba(255,255,255,.014) 1px, transparent 1px, transparent 7px),
+    repeating-linear-gradient(127deg, rgba(20,22,26,0.015) 0px, rgba(20,22,26,0.015) 1px, transparent 1px, transparent 7px),
     var(--bg);
 }
 .dyn-screen{ min-height:auto; }
@@ -55,7 +64,7 @@ body{
   font:800 14.5px/1 var(--sans); letter-spacing:.01em; padding:14px 18px; border-radius:12px; cursor:pointer;
   transition:transform .05s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease; width:100%;
 }
-.dyn-btn:hover{ border-color:var(--dyn); box-shadow:0 0 0 1px rgba(201,144,47,.25) inset; }
+.dyn-btn:hover{ border-color:var(--dyn); box-shadow:0 0 0 1px color-mix(in srgb,var(--c1) 25%,transparent) inset; }
 .dyn-btn:active{ transform:translateY(1px); }
 .dyn-btn:disabled{ opacity:.4; cursor:default; box-shadow:none; }
 .ow-eff-hint{ display:block; margin-top:4px; font-size:11px; font-weight:700; opacity:.75; letter-spacing:0; }
@@ -96,9 +105,9 @@ body{
    Un'unica immagine (logo-desktop.webp) su tutti gli schermi; icon.webp resta solo l'icona
    dell'app installata/favicon, per non mostrare due loghi diversi sullo stesso schermo. */
 .dyn-brand{ display:flex; flex-direction:column; align-items:center; gap:8px; margin-bottom:22px; }
-.dyn-brand-mark{ width:160px; height:160px; filter:drop-shadow(0 8px 20px rgba(201,144,47,.35)); }
-.setup-crest{ width:76px; height:88px; margin:0 auto 18px; display:block; filter:drop-shadow(0 8px 18px rgba(201,144,47,.25)); }
-.ow-club-crest-preview{ width:64px; height:74px; filter:drop-shadow(0 6px 14px rgba(201,144,47,.22)); }
+.dyn-brand-mark{ width:160px; height:160px; filter:drop-shadow(0 8px 20px color-mix(in srgb,var(--c1) 35%,transparent)); }
+.setup-crest{ width:76px; height:88px; margin:0 auto 18px; display:block; filter:drop-shadow(0 8px 18px color-mix(in srgb,var(--c1) 25%,transparent)); }
+.ow-club-crest-preview{ width:64px; height:74px; filter:drop-shadow(0 6px 14px color-mix(in srgb,var(--c1) 22%,transparent)); }
 .dyn-kicker{ color:var(--dyn); font-weight:800; letter-spacing:.24em; text-transform:uppercase; font-size:11.5px; }
 .dyn-h1{
   font-family:var(--serif); font-style:italic; font-weight:800; font-size:58px; letter-spacing:-.01em;
@@ -112,7 +121,7 @@ body{
   width:100%; box-sizing:border-box; background:var(--panel); border:1px solid var(--line); color:var(--txt);
   border-radius:11px; padding:13px 14px; font:700 16px var(--sans);
 }
-.dyn-field input:focus{ outline:none; border-color:var(--dyn); box-shadow:0 0 0 3px rgba(201,144,47,.18); }
+.dyn-field input:focus{ outline:none; border-color:var(--dyn); box-shadow:0 0 0 3px color-mix(in srgb,var(--c1) 18%,transparent); }
 .dyn-setup .dyn-btn{ display:block; max-width:340px; margin:6px auto 0; }
 .dyn-back{ display:inline-block; margin-top:22px; color:var(--muted); font-size:13px; font-weight:600; text-decoration:none; }
 .dyn-back:hover{ color:var(--txt); }
@@ -140,7 +149,7 @@ body{
    log partite senza aggiungere una schermata a parte. */
 .ow-scout-card{ background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:9px 12px; margin:0 0 10px; }
 .ow-scout-row{ display:flex; flex-direction:column; gap:2px; font-size:12.5px; font-weight:700; color:var(--txt); }
-.ow-scout-row + .ow-scout-row{ margin-top:6px; padding-top:6px; border-top:1px solid rgba(255,255,255,.06); }
+.ow-scout-row + .ow-scout-row{ margin-top:6px; padding-top:6px; border-top:1px solid rgba(20,22,26,0.066); }
 .ow-scout-row small{ color:var(--muted); font-weight:600; font-size:11px; line-height:1.4; }
 .ow-scout-report span{ color:var(--dyn); }
 .cup-pill{ font-size:11px; font-weight:800; padding:6px 11px; border-radius:999px; border:1px solid var(--line); color:var(--muted); background:var(--panel); }
@@ -158,11 +167,11 @@ body{
 .cup-pill.clickable:active{ transform:scale(.97); }
 /* Tinta di sfondo leggera sulle righe di classifica, oltre al bordo colorato: rende le
    fasce (Champions/Europa/Conference/playoff/retrocessione) leggibili a colpo d'occhio. */
-.dyn-table tr.ucl{ background:rgba(201,144,47,.07); }
+.dyn-table tr.ucl{ background:color-mix(in srgb,var(--c1) 7%,transparent); }
 .dyn-table tr.uel{ background:rgba(255,210,74,.06); }
-.dyn-table tr.conf{ background:rgba(40,217,160,.06); }
+.dyn-table tr.conf{ background:rgba(14,138,76,.06); }
 .dyn-table tr.po{ background:rgba(255,157,77,.06); }
-.dyn-table tr.rel{ background:rgba(255,77,94,.07); }
+.dyn-table tr.rel{ background:rgba(207,45,58,.07); }
 
 .dyn-manage-row{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
 .dyn-mini{ appearance:none; background:var(--panel2); border:1px solid var(--line); color:var(--txt); border-radius:10px; padding:10px; font:800 13px var(--sans); cursor:pointer; transition:border-color .15s ease; }
@@ -170,7 +179,7 @@ body{
 .dyn-mini:active{ transform:translateY(1px); }
 .dyn-log{ display:flex; flex-direction:column; gap:6px; min-height:120px; margin-bottom:14px; }
 .mrow{ background:var(--panel); border:1px solid var(--line); border-left:3px solid transparent; border-radius:12px; padding:10px 12px; display:flex; align-items:center; gap:10px; animation:mrowIn .3s ease; transition:border-color .15s ease, background-color .15s ease, transform .15s ease; }
-.mrow:hover{ transform:translateX(1px); border-color:rgba(255,255,255,.16); }
+.mrow:hover{ transform:translateX(1px); border-color:rgba(20,22,26,0.176); }
 @keyframes mrowIn{ from{ opacity:0; transform:translateY(6px);} to{opacity:1;transform:none;} }
 /* Contenuto della tab attiva nella Dirigenza (#boardTabBody): ricreato da zero ad ogni
    renderBoard(), quindi questa animazione riparte automaticamente ogni volta che cambia tab
@@ -181,7 +190,7 @@ body{
 .mrow-comp-ico{ font-size:12px; line-height:1; }
 .mrow-main{ flex:1; min-width:0; }
 .mrow-fix{ font-size:13px; font-weight:700; }
-.mrow-fix .ha{ color:var(--muted); font-weight:800; font-size:11px; padding:1px 5px; border-radius:5px; background:rgba(255,255,255,.05); }
+.mrow-fix .ha{ color:var(--muted); font-weight:800; font-size:11px; padding:1px 5px; border-radius:5px; background:rgba(20,22,26,0.055); }
 .mrow-fix .ha.home{ color:var(--good); }
 .mrow-derby{ color:var(--bad); font-weight:900; font-size:10.5px; letter-spacing:.03em; }
 .mrow-fix .ha.away{ color:var(--muted); }
@@ -192,41 +201,41 @@ body{
 .mrow-scorers .sc.them{ color:var(--muted); }
 .mrow-res{ font-weight:900; font-size:16px; flex:0 0 auto; width:58px; text-align:center; border-radius:8px; padding:5px 0; animation:mrowResPop .3s ease; }
 @keyframes mrowResPop{ from{ transform:scale(.7); opacity:0; } to{ transform:scale(1); opacity:1; } }
-.mrow-res.W{ color:var(--good); background:rgba(40,217,160,.12); }
-.mrow-res.D{ color:var(--muted); background:rgba(255,255,255,.05); }
-.mrow-res.L{ color:var(--bad); background:rgba(255,84,112,.12); }
+.mrow-res.W{ color:var(--good); background:rgba(14,138,76,.12); }
+.mrow-res.D{ color:var(--muted); background:rgba(20,22,26,0.055); }
+.mrow-res.L{ color:var(--bad); background:rgba(207,45,58,.12); }
 /* Partite di campionato: un filo di colore sul bordo sinistro, coerente con l'esito, per
    distinguerle a colpo d'occhio dalle righe di coppa (che hanno invece il colore della coppa). */
-.mrow.res-W{ border-left-color:rgba(40,217,160,.45); }
-.mrow.res-D{ border-left-color:rgba(255,255,255,.16); }
-.mrow.res-L{ border-left-color:rgba(255,84,112,.45); }
+.mrow.res-W{ border-left-color:rgba(14,138,76,.45); }
+.mrow.res-D{ border-left-color:rgba(20,22,26,0.176); }
+.mrow.res-L{ border-left-color:rgba(207,45,58,.45); }
 /* Ogni coppa mantiene in tabellino lo stesso colore già usato nei pallini sopra il log
    (cup-pill) e in classifica: Coppa Italia blu, Champions bronzo, Europa oro, Conference
    verde — così una riga si riconosce come "che coppa è" ancora prima di leggerla. */
 .mrow.cup{ border-left-color:rgba(255,210,74,.5); }
 .mrow.cup .mrow-mw{ color:var(--gold); }
-.mrow.cup.comp-nat{ border-left-color:var(--coppa); background:linear-gradient(90deg,rgba(79,140,255,.08),transparent 60%); }
+.mrow.cup.comp-nat{ border-left-color:var(--coppa); background:linear-gradient(90deg,rgba(36,89,201,.08),transparent 60%); }
 .mrow.cup.comp-nat .mrow-mw{ color:var(--coppa); }
-.mrow.cup.comp-ucl{ border-left-color:var(--dyn); background:linear-gradient(90deg,rgba(201,144,47,.09),transparent 60%); }
+.mrow.cup.comp-ucl{ border-left-color:var(--dyn); background:linear-gradient(90deg,color-mix(in srgb,var(--c1) 9%,transparent),transparent 60%); }
 .mrow.cup.comp-ucl .mrow-mw{ color:var(--dyn); }
 .mrow.cup.comp-uel{ border-left-color:var(--gold); background:linear-gradient(90deg,rgba(255,210,74,.08),transparent 60%); }
 .mrow.cup.comp-uel .mrow-mw{ color:var(--gold); }
-.mrow.cup.comp-conf{ border-left-color:var(--good); background:linear-gradient(90deg,rgba(40,217,160,.08),transparent 60%); }
+.mrow.cup.comp-conf{ border-left-color:var(--good); background:linear-gradient(90deg,rgba(14,138,76,.08),transparent 60%); }
 .mrow.cup.comp-conf .mrow-mw{ color:var(--good); }
 .dyn-season-actions{ display:flex; flex-direction:column; gap:9px; position:sticky; bottom:10px; }
 
 /* ---------- tabelle (fine stagione + classifiche) ---------- */
 .dyn-table{ width:100%; border-collapse:collapse; font-size:13px; margin:10px 0; }
 .dyn-table th{ text-align:left; color:var(--dyn); font-size:9.5px; text-transform:uppercase; letter-spacing:.08em; font-weight:800; padding:7px 8px; border-bottom:1px solid var(--line); }
-.dyn-table td{ padding:8px; border-bottom:1px solid rgba(255,255,255,.05); }
+.dyn-table td{ padding:8px; border-bottom:1px solid rgba(20,22,26,0.055); }
 .dyn-table td.num, .dyn-table th.num{ text-align:right; font-variant-numeric:tabular-nums; }
-.dyn-table tr.me{ background:rgba(201,144,47,.14); }
+.dyn-table tr.me{ background:color-mix(in srgb,var(--c1) 14%,transparent); }
 .dyn-table tr.me td{ font-weight:800; }
 .dyn-table tr.ucl td:first-child{ border-left:3px solid var(--dyn); }
 .dyn-table tr.uel td:first-child{ border-left:3px solid var(--gold); }
 .dyn-table tr.conf td:first-child{ border-left:3px solid var(--good); }
 .dyn-table tr.rel td:first-child{ border-left:3px solid var(--bad); }
-.dyn-table tr.po td:first-child{ border-left:3px solid #ff9d4d; }
+.dyn-table tr.po td:first-child{ border-left:3px solid var(--orange); }
 
 /* ---------- pannelli fine stagione / riepilogo ---------- */
 .dyn-panel{
@@ -249,7 +258,7 @@ body{
 .pl-card::before{ content:""; position:absolute; top:0; left:18px; right:18px; height:2px; background:linear-gradient(90deg,transparent,var(--dyn),transparent); opacity:.7; }
 
 /* ---------- overlay modale ---------- */
-.dyn-overlay{ position:fixed; inset:0; background:rgba(5,3,1,.86); backdrop-filter:blur(2px); z-index:200; display:flex; align-items:center; justify-content:center; padding:18px; }
+.dyn-overlay{ position:fixed; inset:0; background:rgba(20,22,26,.55); backdrop-filter:blur(2px); z-index:200; display:flex; align-items:center; justify-content:center; padding:18px; }
 .dyn-modal{
   position:relative; overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
   background:linear-gradient(180deg,var(--panel2),var(--panel)); border:1px solid var(--line); border-radius:20px;
@@ -273,7 +282,7 @@ body{
 
 /* ---------- popup evento narrativo: più "pesante" del modale standard ---------- */
 .ow-event-modal{ position:relative; padding-top:6px; animation:eventPop .32s cubic-bezier(.2,1.4,.4,1); }
-.ow-event-icon{ font-size:52px; line-height:1; margin-bottom:6px; filter:drop-shadow(0 6px 14px rgba(0,0,0,.4)); animation:eventIconIn .4s ease-out; }
+.ow-event-icon{ font-size:52px; line-height:1; margin-bottom:6px; filter:drop-shadow(0 6px 14px rgba(20,22,26,0.14)); animation:eventIconIn .4s ease-out; }
 .ow-event-modal h2{ font-size:24px; }
 .ow-event-modal p{ font-size:15px; color:var(--txt); }
 .ow-modal-x{
@@ -291,7 +300,7 @@ body{
 .dyn-toast{
   position:fixed; left:50%; bottom:30px; transform:translateX(-50%); background:var(--dyn-ink); color:var(--txt);
   border:1.5px solid var(--dyn); padding:14px 24px; border-radius:14px; font-weight:800; font-size:15px; line-height:1.4; z-index:300;
-  box-shadow:0 14px 34px rgba(0,0,0,.55), 0 0 0 1px rgba(201,144,47,.25); max-width:min(92vw,460px); text-align:center;
+  box-shadow:0 14px 34px rgba(20,22,26,0.193), 0 0 0 1px color-mix(in srgb,var(--c1) 25%,transparent); max-width:min(92vw,460px); text-align:center;
   animation:toastIn .18s ease;
 }
 .dyn-toast.hidden{ display:none !important; }
@@ -310,7 +319,7 @@ body{
 .ow-saveslot .info small{ color:var(--muted); font-weight:700; font-size:11.5px; }
 .ow-saveslot .act{ display:flex; gap:6px; flex:0 0 auto; }
 .ow-saveslot .act .dyn-mini{ padding:8px 10px; font-size:12px; }
-.ow-danger{ color:var(--bad) !important; border-color:rgba(255,77,94,.35) !important; }
+.ow-danger{ color:var(--bad) !important; border-color:rgba(207,45,58,.35) !important; }
 .ow-import-label{ display:block; text-align:center; cursor:pointer; margin:0 0 14px; }
 .ow-hotseat{ background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:12px; margin:4px 0 14px; text-align:center; }
 .ow-hotseat-order{ margin-top:9px; font-size:11.5px; font-weight:700; color:var(--muted); }
@@ -326,13 +335,13 @@ body{
   cursor:pointer; color:var(--txt); text-align:left; display:flex; flex-direction:column; gap:6px;
   font-family:var(--sans); transition:border-color .12s ease, background .12s ease, transform .1s ease, box-shadow .15s ease;
 }
-.ow-takeover:hover{ border-color:var(--dyn); transform:translateY(-2px); box-shadow:0 10px 22px rgba(0,0,0,.35); }
+.ow-takeover:hover{ border-color:var(--dyn); transform:translateY(-2px); box-shadow:0 10px 22px rgba(20,22,26,0.122); }
 .ow-takeover:active{ transform:translateY(0); }
-.ow-takeover.on{ border-color:var(--dyn); background:rgba(201,144,47,.10); box-shadow:0 0 0 1px var(--dyn) inset; }
+.ow-takeover.on{ border-color:var(--dyn); background:color-mix(in srgb,var(--c1) 10%,transparent); box-shadow:0 0 0 1px var(--dyn) inset; }
 .ow-takeover.on::after{ content:"✓"; position:absolute; top:10px; right:12px; width:20px; height:20px; border-radius:50%; background:var(--dyn); color:var(--dyn-ink); font-size:12px; font-weight:900; display:flex; align-items:center; justify-content:center; }
 .ow-takeover > b{ font-family:var(--serif); font-size:17px; font-weight:700; }
 .ow-takeover > small{ font-size:11px; font-weight:600; color:var(--muted); line-height:1.4; min-height:30px; }
-.ow-tk-row{ display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); font-weight:700; padding-top:2px; border-top:1px dashed rgba(255,255,255,.08); }
+.ow-tk-row{ display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); font-weight:700; padding-top:2px; border-top:1px dashed rgba(20,22,26,0.088); }
 .ow-tk-row:first-of-type{ border-top:none; padding-top:0; }
 .ow-tk-row b{ color:var(--txt); font-weight:900; }
 
@@ -342,8 +351,8 @@ body{
   font-size:10px; font-weight:800; letter-spacing:.03em; color:var(--muted);
   background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:5px 11px; white-space:nowrap;
 }
-.ow-rung.done{ color:var(--dyn); border-color:rgba(201,144,47,.45); }
-.ow-rung.on{ color:var(--dyn-ink); background:linear-gradient(180deg,#e7b559,var(--dyn)); border-color:transparent; font-weight:900; box-shadow:0 4px 12px rgba(201,144,47,.3); }
+.ow-rung.done{ color:var(--dyn); border-color:color-mix(in srgb,var(--c1) 45%,transparent); }
+.ow-rung.on{ color:var(--dyn-ink); background:linear-gradient(180deg,#e7b559,var(--dyn)); border-color:transparent; font-weight:900; box-shadow:0 4px 12px color-mix(in srgb,var(--c1) 30%,transparent); }
 .ow-arrow{ color:var(--muted); font-weight:900; font-size:11px; opacity:.6; }
 
 /* ---------- barra budget fissa (sala del consiglio) ---------- */
@@ -351,9 +360,9 @@ body{
   position:sticky; top:8px; z-index:30;
   display:flex; align-items:center; justify-content:space-between; gap:12px;
   padding:11px 15px; margin:0 0 16px; border-radius:14px;
-  border:1px solid var(--line); background:rgba(14,10,6,.92);
+  border:1px solid var(--line); background:rgba(255,255,255,.94);
   backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-  box-shadow:0 12px 28px rgba(0,0,0,.5);
+  box-shadow:0 12px 28px rgba(20,22,26,0.175);
 }
 .ow-stickybar .cell{ display:flex; flex-direction:column; gap:1px; min-width:0; }
 .ow-stickybar .cell span{ font-size:9px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
@@ -378,7 +387,7 @@ body{
 .ow-sub{ font-size:11.5px; font-weight:700; color:var(--muted); margin:2px 0 8px; }
 .ow-warn{
   margin-top:10px; padding:10px 13px; border-radius:11px; font-size:12px; font-weight:700; line-height:1.45;
-  color:var(--bad); background:rgba(255,84,112,.09); border:1px solid rgba(255,84,112,.3);
+  color:var(--bad); background:rgba(207,45,58,.09); border:1px solid rgba(207,45,58,.3);
 }
 
 /* ---------- fondo d'investimento: patto attivo o offerta, stesso schema a elenco ---------- */
@@ -393,16 +402,16 @@ body{
   font-size:10.5px; font-weight:900; padding:3px 9px; border-radius:999px;
   color:var(--gold); background:rgba(255,210,74,.14); border:1px solid rgba(255,210,74,.35); white-space:nowrap;
 }
-.ow-invdeal-badge.urgent{ color:var(--bad); background:rgba(255,84,112,.14); border-color:rgba(255,84,112,.4); }
+.ow-invdeal-badge.urgent{ color:var(--bad); background:rgba(207,45,58,.14); border-color:rgba(207,45,58,.4); }
 .ow-invdeal-row{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
-  padding:5px 0; font-size:12px; font-weight:700; color:var(--muted); border-bottom:1px solid rgba(255,255,255,.05);
+  padding:5px 0; font-size:12px; font-weight:700; color:var(--muted); border-bottom:1px solid rgba(20,22,26,0.055);
 }
 .ow-invdeal-row:last-of-type{ border-bottom:none; }
 .ow-invdeal-row b{ color:var(--txt); font-weight:900; text-align:right; font-variant-numeric:tabular-nums; }
 .ow-invdeal-row b.good{ color:var(--good); }
 .ow-invdeal-row b.bad{ color:var(--bad); }
-.ow-invdeal-row.bad-row{ border-top:1px solid rgba(255,84,112,.2); margin-top:2px; padding-top:8px; }
+.ow-invdeal-row.bad-row{ border-top:1px solid rgba(207,45,58,.2); margin-top:2px; padding-top:8px; }
 /* Pill sempre visibile in cima alla Dirigenza quando un patto è attivo: l'obiettivo del fondo
    non deve restare nascosto in un sotto-tab per essere "centrale" come richiesto. */
 .ow-invpill{
@@ -410,7 +419,7 @@ body{
   padding:8px 12px; border-radius:999px; color:var(--gold);
   background:rgba(255,210,74,.1); border:1px solid rgba(255,210,74,.3);
 }
-.ow-invpill.urgent{ color:var(--bad); background:rgba(255,84,112,.1); border-color:rgba(255,84,112,.35); }
+.ow-invpill.urgent{ color:var(--bad); background:rgba(207,45,58,.1); border-color:rgba(207,45,58,.35); }
 
 .ow-status{ display:flex; flex-direction:column; gap:10px; }
 .ow-bigmoney{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
@@ -419,19 +428,19 @@ body{
 .ow-bigmoney b.bad{ color:var(--bad); }
 .ow-meter{ display:flex; align-items:center; gap:9px; }
 .ow-meter .lbl{ font-size:11px; font-weight:800; color:var(--muted); width:150px; flex:0 0 auto; }
-.ow-meter .bar{ flex:1; height:9px; border-radius:999px; background:rgba(255,255,255,.07); overflow:hidden; box-shadow:inset 0 1px 3px rgba(0,0,0,.4); }
+.ow-meter .bar{ flex:1; height:9px; border-radius:999px; background:rgba(20,22,26,0.077); overflow:hidden; box-shadow:inset 0 1px 3px rgba(20,22,26,0.14); }
 .ow-meter .fill{ display:block; height:100%; border-radius:999px; min-width:3px; transition:width .3s ease; }
 .ow-meter .val{ font-size:13px; font-weight:900; width:38px; text-align:right; flex:0 0 auto; font-variant-numeric:tabular-nums; }
 
 .ow-fin-row{
   display:flex; justify-content:space-between; align-items:center; gap:10px;
-  padding:7px 0; border-bottom:1px solid rgba(255,255,255,.05); font-size:12.5px; font-weight:700; color:var(--muted);
+  padding:7px 0; border-bottom:1px solid rgba(20,22,26,0.055); font-size:12.5px; font-weight:700; color:var(--muted);
 }
 .ow-fin-row:last-child{ border-bottom:none; }
 .ow-fin-row b{ color:var(--txt); font-weight:900; font-variant-numeric:tabular-nums; white-space:nowrap; }
 .ow-fin-row b.bad, .ow-fin-row.bad b{ color:var(--bad); }
 .ow-fin-row b.good{ color:var(--good); }
-.ow-fin-row.total{ border-top:1px solid rgba(255,255,255,.14); border-bottom:none; margin-top:2px; padding-top:10px; }
+.ow-fin-row.total{ border-top:1px solid rgba(20,22,26,0.154); border-bottom:none; margin-top:2px; padding-top:10px; }
 .ow-fin-row.total b{ color:var(--gold); font-family:var(--serif); font-size:15px; }
 .ow-fin-row.memo b{ color:var(--muted); font-weight:700; font-style:italic; }
 
@@ -441,13 +450,13 @@ body{
 }
 .ow-mgr .ovr{
   width:38px; height:38px; flex:0 0 auto; display:flex; align-items:center; justify-content:center;
-  border-radius:10px; font-weight:900; font-size:15px; background:rgba(201,144,47,.15); color:var(--dyn);
+  border-radius:10px; font-weight:900; font-size:15px; background:color-mix(in srgb,var(--c1) 15%,transparent); color:var(--dyn);
   font-family:var(--serif);
 }
 .ow-mgr .nm{ flex:1; min-width:0; font-size:13.5px; font-weight:900; }
 .ow-mgr .nm small{ display:block; font-size:11px; color:var(--muted); font-weight:700; margin-top:1px; }
-.ow-mgr .tag{ font-size:9.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--dyn); background:rgba(201,144,47,.15); border-radius:999px; padding:4px 10px; }
-.ow-mgr.cand .ovr{ background:rgba(255,255,255,.06); color:var(--txt); }
+.ow-mgr .tag{ font-size:9.5px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--dyn); background:color-mix(in srgb,var(--c1) 15%,transparent); border-radius:999px; padding:4px 10px; }
+.ow-mgr.cand .ovr{ background:rgba(20,22,26,0.066); color:var(--txt); }
 
 .ow-offer{
   display:flex; align-items:center; gap:12px; width:100%; text-align:left; cursor:pointer;
@@ -470,7 +479,7 @@ body{
   color:var(--txt); font-family:var(--sans); text-align:left; transition:border-color .12s ease;
 }
 .ow-ticket:hover{ border-color:var(--dyn); }
-.ow-ticket.on{ border-color:var(--dyn); background:rgba(201,144,47,.13); }
+.ow-ticket.on{ border-color:var(--dyn); background:color-mix(in srgb,var(--c1) 13%,transparent); }
 .ow-ticket b{ font-size:13px; font-weight:900; display:block; }
 .ow-ticket small{ font-size:10.5px; color:var(--muted); font-weight:600; line-height:1.35; display:block; margin-top:2px; }
 .ow-ticket small.ow-ticket-est{ color:var(--gold); font-weight:700; margin-top:4px; }
@@ -479,7 +488,7 @@ body{
 .ow-spins{ display:grid; grid-template-columns:3fr 1fr; gap:8px; margin-bottom:8px; }
 .ow-spins.one{ grid-template-columns:1fr; }
 @media(max-width:460px){ .ow-spins{ grid-template-columns:1fr; } }
-.ow-role-btn{ border-color:rgba(138,92,240,.4); color:#c9a6ff; }
+.ow-role-btn{ border-color:rgba(116,64,200,.4); color:var(--purple); }
 .ow-role-btn:hover{ border-color:#8a5cf0; }
 /* Griglia di scelta ruolo nell'overlay "Scegli ruolo": una card per ruolo, colorata come i
    postag già usati altrove (portiere verde, difensore blu, centrocampo bronzo, attacco arancio). */
@@ -494,14 +503,14 @@ body{
 .ow-role-pick .ow-role-ico{ font-size:26px; line-height:1; }
 .ow-role-pick .ow-role-lbl{ font-size:13px; }
 .ow-role-pick small{ font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; }
-.ow-role-pick.postag-POR{ border-color:rgba(40,217,160,.35); }
-.ow-role-pick.postag-DIF{ border-color:rgba(111,179,255,.35); }
-.ow-role-pick.postag-CEN{ border-color:rgba(201,144,47,.35); }
+.ow-role-pick.postag-POR{ border-color:rgba(14,138,76,.35); }
+.ow-role-pick.postag-DIF{ border-color:rgba(36,89,201,.35); }
+.ow-role-pick.postag-CEN{ border-color:color-mix(in srgb,var(--c1) 35%,transparent); }
 .ow-role-pick.postag-ATT{ border-color:rgba(255,157,106,.35); }
 .ow-role-pick.postag-POR .ow-role-ico{ color:var(--good); }
-.ow-role-pick.postag-DIF .ow-role-ico{ color:#6fb3ff; }
+.ow-role-pick.postag-DIF .ow-role-ico{ color:var(--blue); }
 .ow-role-pick.postag-CEN .ow-role-ico{ color:var(--dyn); }
-.ow-role-pick.postag-ATT .ow-role-ico{ color:#ff9d6a; }
+.ow-role-pick.postag-ATT .ow-role-ico{ color:var(--orange); }
 .ow-investor{ width:100%; margin-bottom:8px; }
 .ow-squad-filters{ display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 8px; }
 .ow-filter-pill{
@@ -509,11 +518,11 @@ body{
   font:800 11.5px/1 var(--sans); padding:7px 12px; border-radius:999px; cursor:pointer; transition:border-color .12s ease;
 }
 .ow-filter-pill:hover{ border-color:var(--dyn); }
-.ow-filter-pill.on{ border-color:var(--dyn); background:rgba(201,144,47,.14); color:var(--txt); }
+.ow-filter-pill.on{ border-color:var(--dyn); background:color-mix(in srgb,var(--c1) 14%,transparent); color:var(--txt); }
 .ow-filter-pill.ow-filter-sort{ margin-left:auto; }
 .ow-squadlist{
   max-height:280px; overflow-y:auto; border:1px solid var(--line); border-radius:13px; padding:4px 8px;
-  background:rgba(0,0,0,.16);
+  background:rgba(20,22,26,0.056);
 }
 .ow-squadlist::-webkit-scrollbar{ width:8px; }
 .ow-squadlist::-webkit-scrollbar-thumb{ background:var(--line); border-radius:999px; }
@@ -525,10 +534,10 @@ body{
    prima si sovrapponevano. */
 .ow-player{
   display:flex; flex-direction:column; gap:5px; padding:7px 2px;
-  border-bottom:1px solid rgba(255,255,255,.05); font-size:12.5px;
+  border-bottom:1px solid rgba(20,22,26,0.055); font-size:12.5px;
   cursor:pointer; border-radius:6px;
 }
-.ow-player:hover{ background:rgba(255,255,255,.04); }
+.ow-player:hover{ background:rgba(20,22,26,0.044); }
 .ow-player:last-child{ border-bottom:none; }
 .ow-player-row1{ display:flex; align-items:center; gap:10px; }
 .ow-player-row2{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding-left:44px; }
@@ -545,7 +554,7 @@ body{
 .ow-player .nm small{ color:var(--muted); font-weight:700; margin-left:6px; }
 
 /* righe delle statistiche (fine stagione): nome su tutta la riga sopra, mai tagliato */
-.ow-stat-row{ padding:8px 2px; border-bottom:1px solid rgba(255,255,255,.05); }
+.ow-stat-row{ padding:8px 2px; border-bottom:1px solid rgba(20,22,26,0.055); }
 .ow-stat-row:last-child{ border-bottom:none; }
 .ow-stat-row-top{ display:flex; align-items:center; gap:9px; font-size:12.5px; }
 .ow-stat-row-top .ovr{
@@ -561,12 +570,12 @@ body{
 }
 .postag{
   flex:0 0 auto; font-size:9px; font-weight:900; letter-spacing:.03em; padding:3px 6px; border-radius:6px;
-  background:rgba(255,255,255,.06); color:var(--muted); border:1px solid var(--line);
+  background:rgba(20,22,26,0.066); color:var(--muted); border:1px solid var(--line);
 }
-.postag-ATT{ color:#ff9d6a; border-color:rgba(255,157,106,.4); background:rgba(255,157,106,.1); }
-.postag-CEN{ color:var(--dyn); border-color:rgba(201,144,47,.4); background:rgba(201,144,47,.1); }
-.postag-DIF{ color:#6fb3ff; border-color:rgba(111,179,255,.4); background:rgba(111,179,255,.1); }
-.postag-POR{ color:var(--good); border-color:rgba(40,217,160,.4); background:rgba(40,217,160,.1); }
+.postag-ATT{ color:var(--orange); border-color:rgba(255,157,106,.4); background:rgba(255,157,106,.1); }
+.postag-CEN{ color:var(--dyn); border-color:color-mix(in srgb,var(--c1) 40%,transparent); background:color-mix(in srgb,var(--c1) 10%,transparent); }
+.postag-DIF{ color:var(--blue); border-color:rgba(36,89,201,.4); background:rgba(36,89,201,.1); }
+.postag-POR{ color:var(--good); border-color:rgba(14,138,76,.4); background:rgba(14,138,76,.1); }
 .ow-player .wg{ flex:0 0 auto; font-weight:900; color:var(--muted); font-size:11.5px; font-variant-numeric:tabular-nums; }
 .ow-x{
   flex:0 0 auto; width:26px; height:26px; border-radius:8px; border:1px solid var(--line); background:transparent;
@@ -578,7 +587,7 @@ body{
 .ow-player .yy.fy{ color:var(--gold); }
 .ow-player .yy.loan{
   font-size:9.5px; font-weight:900; text-transform:uppercase; letter-spacing:.04em;
-  color:#6fb3ff; background:rgba(111,179,255,.12); border:1px solid rgba(111,179,255,.35);
+  color:var(--blue); background:rgba(36,89,201,.12); border:1px solid rgba(36,89,201,.35);
   border-radius:6px; padding:3px 7px; min-width:0;
 }
 .ow-renew{
@@ -593,7 +602,7 @@ body{
    il badge OVR (larghezza fissa, non si restringe) finiva così a sovrapporsi letteralmente ai
    bottoni invece di spostarsi sotto. flex-wrap + un min-width reale su .who fanno sì che sia
    .act a scendere su una riga propria quando manca spazio, mai una sovrapposizione. */
-.ow-bid{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 10px; padding:9px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+.ow-bid{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 10px; padding:9px 0; border-bottom:1px solid rgba(20,22,26,0.066); }
 .ow-bid:last-child{ border-bottom:none; }
 .ow-bid .who{ display:flex; align-items:center; gap:10px; min-width:150px; flex:1 1 150px; }
 .ow-bid .who .ovr{ width:34px; height:30px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; border-radius:8px; font-weight:900; font-size:13px; background:rgba(255,210,74,.16); font-family:var(--serif); }
@@ -602,7 +611,7 @@ body{
 .ow-bid .act{ display:flex; align-items:center; flex-wrap:wrap; gap:6px; flex:0 1 auto; justify-content:flex-end; }
 .ow-bid .fee{ font-weight:900; color:var(--gold); font-size:13px; font-variant-numeric:tabular-nums; margin-right:2px; }
 .ow-bid .dyn-mini{ padding:7px 12px; font-size:12px; }
-.ow-accept{ background:rgba(40,217,160,.14); border-color:rgba(40,217,160,.5); color:#a6f3dc; }
+.ow-accept{ background:rgba(14,138,76,.14); border-color:rgba(14,138,76,.5); color:#a6f3dc; }
 .ow-reject{ color:var(--muted); }
 
 .ow-spin-card{ position:relative; overflow:hidden; text-align:center; padding:8px 0 2px; }
@@ -629,7 +638,7 @@ body{
 /* Le leggende ritirate (Squadra Icone) usano un accento viola invece dell'oro dei
    giocatori reali "contemporanei", per distinguerle a colpo d'occhio. */
 .real-badge.icon-badge{ background:linear-gradient(180deg,#c9a6ff,#8a5cf0); color:#1c0e33; }
-.ow-spin-card.is-real:has(.icon-badge){ border-color:#8a5cf0; background:rgba(138,92,240,.08); box-shadow:0 0 0 1px rgba(138,92,240,.22), 0 10px 22px rgba(138,92,240,.18); }
+.ow-spin-card.is-real:has(.icon-badge){ border-color:#8a5cf0; background:rgba(116,64,200,.08); box-shadow:0 0 0 1px rgba(116,64,200,.22), 0 10px 22px rgba(116,64,200,.18); }
 .ow-jan-card.is-real{
   border:2px solid var(--gold); background:rgba(255,210,74,.06); box-shadow:0 0 0 1px rgba(255,210,74,.18);
 }
@@ -658,7 +667,7 @@ body{
 .ow-div-chip{
   display:flex; align-items:center; font-size:12.5px; font-weight:900; padding:7px 15px; border-radius:12px;
   background:linear-gradient(180deg,#e7b559,var(--dyn)); color:var(--dyn-ink); white-space:nowrap;
-  box-shadow:0 6px 14px rgba(201,144,47,.28);
+  box-shadow:0 6px 14px color-mix(in srgb,var(--c1) 28%,transparent);
 }
 .ow-subcells{ flex:1; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; min-width:0; }
 .ow-subcells .cell{
@@ -676,14 +685,14 @@ body{
 
 /* ---------- stemma procedurale ---------- */
 .ow-crest-picker{ display:flex; flex-direction:column; align-items:center; gap:12px; margin:0 0 18px; }
-.ow-crest-preview{ width:88px; height:101px; display:block; filter:drop-shadow(0 8px 18px rgba(201,144,47,.25)); }
+.ow-crest-preview{ width:88px; height:101px; display:block; filter:drop-shadow(0 8px 18px color-mix(in srgb,var(--c1) 25%,transparent)); }
 .ow-crest-shapes{ display:flex; gap:8px; }
 .ow-crest-shape{
   appearance:none; background:var(--panel2); border:1px solid var(--line); color:var(--muted);
   font:800 11.5px/1 var(--sans); padding:8px 14px; border-radius:999px; cursor:pointer; transition:border-color .12s ease,color .12s ease;
 }
 .ow-crest-shape:hover{ border-color:var(--dyn); }
-.ow-crest-shape.on{ border-color:var(--dyn); background:rgba(201,144,47,.14); color:var(--txt); }
+.ow-crest-shape.on{ border-color:var(--dyn); background:color-mix(in srgb,var(--c1) 14%,transparent); color:var(--txt); }
 .ow-crest-colors{ display:flex; align-items:center; gap:14px; }
 .ow-crest-swatch{ display:flex; flex-direction:column; align-items:center; gap:5px; }
 .ow-crest-swatch span{ font-size:10px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
@@ -697,8 +706,8 @@ body{
   cursor:pointer; text-decoration:underline; text-underline-offset:2px;
 }
 .ow-crest-reroll:hover{ color:var(--txt); }
-.ow-board-crest{ width:50px; height:58px; display:block; margin:0 auto 8px; filter:drop-shadow(0 6px 14px rgba(0,0,0,.4)); }
-.ow-hero-crest{ width:80px; height:92px; display:block; margin:0 auto 14px; filter:drop-shadow(0 8px 18px rgba(0,0,0,.35)); }
+.ow-board-crest{ width:50px; height:58px; display:block; margin:0 auto 8px; filter:drop-shadow(0 6px 14px rgba(20,22,26,0.14)); }
+.ow-hero-crest{ width:80px; height:92px; display:block; margin:0 auto 14px; filter:drop-shadow(0 8px 18px rgba(20,22,26,0.122)); }
 
 /* ---------- tab della sala del consiglio ---------- */
 .ow-tabs{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin:0 0 14px; }
@@ -708,7 +717,7 @@ body{
   transition:border-color .12s ease,color .12s ease,background .12s ease;
 }
 .ow-tab:hover{ border-color:var(--dyn); }
-.ow-tab.on{ border-color:var(--dyn); background:rgba(201,144,47,.14); color:var(--txt); }
+.ow-tab.on{ border-color:var(--dyn); background:color-mix(in srgb,var(--c1) 14%,transparent); color:var(--txt); }
 .ow-tab .dot{
   position:absolute; top:6px; right:8px; width:7px; height:7px; border-radius:50%; background:var(--bad);
   box-shadow:0 0 0 2px var(--panel2);
@@ -716,8 +725,8 @@ body{
 
 /* ---------- infortuni / squalifiche ---------- */
 .stat-tag{ flex:0 0 auto; font-size:10px; font-weight:900; padding:3px 7px; border-radius:7px; white-space:nowrap; }
-.stat-tag.inj{ color:var(--bad); background:rgba(255,84,112,.12); border:1px solid rgba(255,84,112,.35); }
-.stat-tag.susp{ color:var(--muted); background:rgba(255,255,255,.06); border:1px solid var(--line); }
+.stat-tag.inj{ color:var(--bad); background:rgba(207,45,58,.12); border:1px solid rgba(207,45,58,.35); }
+.stat-tag.susp{ color:var(--muted); background:rgba(20,22,26,0.066); border:1px solid var(--line); }
 
 /* ---------- settore giovanile / scouting ---------- */
 .ow-scout-tier{
@@ -737,19 +746,19 @@ body{
 /* ---------- grande momento: un banner per OGNI titolo/coppa vinta (scudetto di
    qualunque categoria, Coppa Italia, Champions/Europa/Conference League, Tripletе) ---------- */
 .ow-trophy-moment{ position:relative; overflow:hidden; text-align:center; margin:12px 0; padding:26px 16px 22px; border-radius:16px; border:1px solid var(--line); background:radial-gradient(120% 140% at 50% 0%, rgba(255,210,74,.18), var(--panel2) 65%); animation:trophyIn .5s cubic-bezier(.2,1.4,.4,1); }
-.ow-trophy-icon{ font-size:52px; line-height:1; animation:trophyBounce 1.4s ease-in-out infinite; filter:drop-shadow(0 6px 14px rgba(0,0,0,.35)); }
-.ow-trophy-title{ margin-top:8px; font-family:var(--serif); font-weight:900; font-size:26px; letter-spacing:.5px; color:var(--gold); text-shadow:0 0 18px rgba(255,210,74,.5); }
+.ow-trophy-icon{ font-size:52px; line-height:1; animation:trophyBounce 1.4s ease-in-out infinite; filter:drop-shadow(0 6px 14px rgba(20,22,26,0.122)); }
+.ow-trophy-title{ margin-top:8px; font-family:var(--serif); font-weight:900; font-size:26px; letter-spacing:.5px; color:var(--gold);  }
 .ow-trophy-sub{ margin-top:4px; font-size:12.5px; font-weight:700; color:var(--muted); }
-.ow-trophy-moment.ucl{ background:radial-gradient(120% 140% at 50% 0%, rgba(120,170,255,.22), var(--panel2) 65%); }
-.ow-trophy-moment.ucl .ow-trophy-title{ color:#9fc4ff; text-shadow:0 0 18px rgba(120,170,255,.5); }
-.ow-trophy-moment.nat{ background:radial-gradient(120% 140% at 50% 0%, rgba(40,217,160,.2), var(--panel2) 65%); }
-.ow-trophy-moment.nat .ow-trophy-title{ color:var(--good); text-shadow:0 0 18px rgba(40,217,160,.45); }
+.ow-trophy-moment.ucl{ background:radial-gradient(120% 140% at 50% 0%, rgba(36,89,201,.22), var(--panel2) 65%); }
+.ow-trophy-moment.ucl .ow-trophy-title{ color:var(--blue);  }
+.ow-trophy-moment.nat{ background:radial-gradient(120% 140% at 50% 0%, rgba(14,138,76,.2), var(--panel2) 65%); }
+.ow-trophy-moment.nat .ow-trophy-title{ color:var(--good);  }
 .ow-trophy-moment.uel{ background:radial-gradient(120% 140% at 50% 0%, rgba(255,150,60,.24), var(--panel2) 65%); }
-.ow-trophy-moment.uel .ow-trophy-title{ color:#ffab5c; text-shadow:0 0 18px rgba(255,150,60,.5); }
+.ow-trophy-moment.uel .ow-trophy-title{ color:var(--orange);  }
 .ow-trophy-moment.conf{ background:radial-gradient(120% 140% at 50% 0%, rgba(90,220,220,.22), var(--panel2) 65%); }
-.ow-trophy-moment.conf .ow-trophy-title{ color:#7fe8e8; text-shadow:0 0 18px rgba(90,220,220,.5); }
-.ow-trophy-moment.treble{ background:radial-gradient(130% 160% at 50% 0%, rgba(255,210,74,.3), rgba(120,170,255,.14) 55%, var(--panel2) 80%); }
-.ow-trophy-moment.treble .ow-trophy-title{ font-size:30px; background:linear-gradient(90deg, var(--gold), #9fc4ff, var(--good), var(--gold)); background-size:300% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:trebleShine 2.4s linear infinite; }
+.ow-trophy-moment.conf .ow-trophy-title{ color:#0f8c8c;  }
+.ow-trophy-moment.treble{ background:radial-gradient(130% 160% at 50% 0%, rgba(255,210,74,.3), rgba(36,89,201,.14) 55%, var(--panel2) 80%); }
+.ow-trophy-moment.treble .ow-trophy-title{ font-size:30px; background:linear-gradient(90deg, var(--gold), var(--blue), var(--good), var(--gold)); background-size:300% 100%; -webkit-background-clip:text; background-clip:text; color:transparent; animation:trebleShine 2.4s linear infinite; }
 @keyframes trophyIn{ from{ opacity:0; transform:translateY(-10px) scale(.94); } to{ opacity:1; transform:none; } }
 @keyframes trophyBounce{ 0%,100%{ transform:translateY(0) rotate(-3deg); } 50%{ transform:translateY(-8px) rotate(3deg); } }
 @keyframes trebleShine{ 0%{ background-position:0% 0; } 100%{ background-position:300% 0; } }
@@ -824,7 +833,7 @@ body{
   font:800 12.5px/1 var(--sans); padding:9px 16px; border-radius:999px; cursor:pointer; transition:border-color .12s ease,color .12s ease,background .12s ease;
 }
 .ow-div-pick:hover{ border-color:var(--dyn); }
-.ow-div-pick.on{ border-color:var(--dyn); background:rgba(201,144,47,.16); color:var(--txt); }
+.ow-div-pick.on{ border-color:var(--dyn); background:color-mix(in srgb,var(--c1) 16%,transparent); color:var(--txt); }
 
 /* ---------- scelta della difficoltà ---------- */
 .ow-diff-picker{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0 0 12px; }
@@ -836,7 +845,7 @@ body{
 .ow-diff-pick:hover{ border-color:var(--dyn); transform:translateY(-1px); }
 .ow-diff-pick > b{ display:block; font-family:var(--serif); font-size:14.5px; font-weight:700; color:var(--txt); margin-bottom:2px; }
 .ow-diff-pick > small{ display:block; font-size:10.5px; font-weight:600; color:var(--muted); line-height:1.35; }
-.ow-diff-pick.on{ border-color:var(--dyn); background:rgba(201,144,47,.14); box-shadow:0 0 0 1px var(--dyn) inset; }
+.ow-diff-pick.on{ border-color:var(--dyn); background:color-mix(in srgb,var(--c1) 14%,transparent); box-shadow:0 0 0 1px var(--dyn) inset; }
 
 /* ---------- interruttore modalità Hardcore ---------- */
 .ow-hardcore-toggle{
@@ -860,7 +869,7 @@ body{
   font:800 11.5px/1 var(--sans); padding:7px 12px; border-radius:999px; cursor:pointer; transition:border-color .12s ease,color .12s ease,background .12s ease;
 }
 .ow-formation-pick:hover{ border-color:var(--dyn); }
-.ow-formation-pick.on{ border-color:var(--dyn); background:rgba(201,144,47,.14); color:var(--txt); }
+.ow-formation-pick.on{ border-color:var(--dyn); background:color-mix(in srgb,var(--c1) 14%,transparent); color:var(--txt); }
 
 /* ============================================================
    Rifiniture d'interfaccia (v2): accessibilità, bersagli al tocco, feedback, coerenza.
@@ -931,7 +940,7 @@ label.ow-sub{ min-height:var(--tap); text-align:left; }
   width:100%; box-sizing:border-box; background:var(--panel); border:1px solid var(--line); color:var(--txt);
   border-radius:11px; padding:12px 14px; font:700 16px var(--sans); min-height:44px;
 }
-.dyn-field select:focus, .ow-text-input:focus{ outline:none; border-color:var(--dyn); box-shadow:0 0 0 3px rgba(201,144,47,.18); }
+.dyn-field select:focus, .ow-text-input:focus{ outline:none; border-color:var(--dyn); box-shadow:0 0 0 3px color-mix(in srgb,var(--c1) 18%,transparent); }
 .dyn-field select option{ background:var(--panel); color:var(--txt); }
 /* Stesso aspetto per i campi sciolti dentro i modali (trattative, chat, controproposta, annuncio
    della stanza): senza, restavano bianchi nativi in mezzo alla lobby scura. */
@@ -940,7 +949,7 @@ label.ow-sub{ min-height:var(--tap); text-align:left; }
   border-radius:11px; padding:10px 12px; font:700 16px var(--sans); min-height:44px; max-width:100%;
 }
 .dyn-modal textarea{ width:100%; resize:vertical; line-height:1.4; }
-.dyn-modal input:focus, .dyn-modal select:focus, .dyn-modal textarea:focus{ outline:none; border-color:var(--dyn); box-shadow:0 0 0 3px rgba(201,144,47,.18); }
+.dyn-modal input:focus, .dyn-modal select:focus, .dyn-modal textarea:focus{ outline:none; border-color:var(--dyn); box-shadow:0 0 0 3px color-mix(in srgb,var(--c1) 18%,transparent); }
 
 /* ---------- modale: altezza reale su mobile, niente scroll della pagina sotto ----------
    100vh su mobile include la barra degli indirizzi: l'ultimo bottone di un modale lungo
@@ -980,7 +989,7 @@ body.ov-open .dyn-toast{ top:calc(env(safe-area-inset-top, 0px) + 10px); bottom:
    non si legga attraverso. Stesso trattamento per i due bottoni della schermata partite. */
 .ow-cta-sticky, .dyn-season-actions{
   position:sticky; bottom:0; z-index:25; margin:0 -16px; padding:14px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-  background:linear-gradient(180deg, rgba(11,9,6,0), rgba(11,9,6,.94) 34%);
+  background:linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,255,255,.94) 34%);
 }
 .ow-cta-sticky{ display:flex; flex-direction:column; gap:8px; }
 /* Schermata partite: i due bottoni stanno SEMPRE sul bordo basso, anche a inizio stagione
@@ -1036,7 +1045,7 @@ body.ov-open .dyn-toast{ top:calc(env(safe-area-inset-top, 0px) + 10px); bottom:
 .ow-guide-title{ font-family:var(--serif); font-weight:700; font-size:15px; }
 .ow-guide-x{ appearance:none; background:none; border:none; color:var(--muted); font:700 11.5px var(--sans); text-decoration:underline; text-underline-offset:2px; cursor:pointer; min-height:var(--tap); padding:0 2px; }
 .ow-guide-step{
-  appearance:none; background:none; border:none; border-top:1px solid rgba(255,255,255,.07); color:var(--txt); width:100%;
+  appearance:none; background:none; border:none; border-top:1px solid rgba(20,22,26,0.077); color:var(--txt); width:100%;
   display:flex; align-items:center; gap:11px; text-align:left; padding:8px 0; min-height:48px; cursor:pointer; font:700 12.5px/1.35 var(--sans);
 }
 .ow-guide-step small{ display:block; color:var(--muted); font-weight:600; font-size:11px; margin-top:1px; }
@@ -1055,11 +1064,11 @@ body.ov-open .dyn-toast{ top:calc(env(safe-area-inset-top, 0px) + 10px); bottom:
 .ow-form-lbl{ font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); flex:0 0 auto; }
 .ow-form-dots{ display:flex; gap:4px; flex:0 0 auto; }
 .ow-form-dot{ width:22px; height:22px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:900; }
-.ow-form-dot.W{ color:var(--good); background:rgba(40,217,160,.14); }
-.ow-form-dot.D{ color:var(--muted); background:rgba(255,255,255,.07); }
-.ow-form-dot.L{ color:var(--bad); background:rgba(255,84,112,.14); }
+.ow-form-dot.W{ color:var(--good); background:rgba(14,138,76,.14); }
+.ow-form-dot.D{ color:var(--muted); background:rgba(20,22,26,0.077); }
+.ow-form-dot.L{ color:var(--bad); background:rgba(207,45,58,.14); }
 .ow-form-dot:last-child{ box-shadow:0 0 0 1.5px currentColor inset; }
-.ow-progress{ flex:1; height:5px; border-radius:999px; background:rgba(255,255,255,.07); overflow:hidden; min-width:40px; }
+.ow-progress{ flex:1; height:5px; border-radius:999px; background:rgba(20,22,26,0.077); overflow:hidden; min-width:40px; }
 .ow-progress > i{ display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--dyn-deep),var(--dyn),var(--gold)); transition:width .3s ease; }
 .ow-progress-lbl{ font-size:10.5px; font-weight:800; color:var(--muted); font-variant-numeric:tabular-nums; flex:0 0 auto; }
 .mrow-mw{ width:44px; }
@@ -1090,7 +1099,7 @@ body.ov-open .dyn-toast{ top:calc(env(safe-area-inset-top, 0px) + 10px); bottom:
 .ow-records-scroll{ max-height:56vh; overflow:auto; margin:10px -6px 12px; padding:0 6px; overscroll-behavior:contain; }
 .ow-rec > span small{ display:block; font-size:11px; font-weight:600; color:var(--muted); margin-top:1px; }
 .ow-rec > b{ color:var(--gold); max-width:55%; white-space:normal; }
-.ow-rec-rank{ display:inline-flex; width:20px; height:20px; align-items:center; justify-content:center; border-radius:50%; background:rgba(201,144,47,.16); color:var(--dyn); font-size:10.5px; font-weight:900; font-family:var(--serif); margin-right:4px; }
+.ow-rec-rank{ display:inline-flex; width:20px; height:20px; align-items:center; justify-content:center; border-radius:50%; background:color-mix(in srgb,var(--c1) 16%,transparent); color:var(--dyn); font-size:10.5px; font-weight:900; font-family:var(--serif); margin-right:4px; }
 .ow-records-new{
   margin:12px 0; padding:12px 14px 6px; border-radius:15px; text-align:left;
   border:1px solid rgba(255,210,74,.4); background:linear-gradient(180deg, rgba(255,210,74,.12), rgba(255,210,74,.03));
@@ -1112,3 +1121,298 @@ body.ov-open .dyn-toast{ top:calc(env(safe-area-inset-top, 0px) + 10px); bottom:
   *, *::before, *::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
   .confetti-wrap{ display:none !important; }
 }
+
+/* ============================================================
+   COLORI SOCIALI — lo strato che dà il carattere.
+   Sta in coda apposta: ridisegna i componenti già esistenti (stessi nomi di classe) nello
+   stile delle grafiche di una partita in TV. Regole fisse:
+   - i colori vengono dal club (--c1 primario, --c2 secondario), mai un oro fisso;
+   - numeri e titoli in Anton / Barlow Condensed, maiuscoli e stretti; il testo lungo in Inter;
+   - schede bianche su fondo carta, angoli contenuti (8-12px), ombre basse;
+   - un solo elemento forte per schermata: la barra a strisce in alto e il bottone d'azione.
+   ============================================================ */
+body{ background:var(--bg); color:var(--txt); }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
+  outline:2.5px solid var(--ink); outline-offset:2px;
+}
+::selection{ background:var(--c1); color:var(--on-c1); }
+
+/* ---------- barra del club: maglia a strisce, stemma, nome ---------- */
+#owTopbar.dyn-topbar{
+  position:relative; max-width:none; margin:0; overflow:hidden;
+  padding:12px max(16px, calc((100% - 640px) / 2 + 16px)) 34px;
+  color:var(--on-c1);
+  background:
+    linear-gradient(180deg, transparent 40%, rgba(0,0,0,.16)),
+    repeating-linear-gradient(90deg, var(--c1) 0 34px, color-mix(in srgb, var(--c1) 76%, var(--c2)) 34px 68px);
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 22px), 0 100%);
+}
+#owTopbar .dyn-home{ background:none; border:0; padding:0; gap:11px; color:inherit; min-width:0; flex:1 1 auto; text-align:left; }
+#owTopbar .dyn-home:hover{ border:0; opacity:.92; }
+#owTopbar .dyn-home-crest{
+  width:44px; height:51px; flex:0 0 auto; display:grid; place-items:center;
+  background:#fff; border-radius:8px; padding:4px; box-shadow:0 4px 12px rgba(0,0,0,.25);
+}
+#owTopbar .dyn-home-crest svg{ width:100%; height:100%; display:block; }
+.dyn-home-txt{ display:flex; flex-direction:column; min-width:0; }
+.dyn-home-txt b{
+  font:400 26px/1 var(--display); text-transform:uppercase; letter-spacing:.01em;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;
+}
+.dyn-home-txt small{
+  font:700 13px/1.25 var(--cond); letter-spacing:.11em; text-transform:uppercase; opacity:.86; margin-top:3px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#owTopbar .dyn-topbar-right{ gap:5px; }
+#owTopbar .dyn-icon-btn{ background:rgba(255,255,255,.18); border:0; color:inherit; }
+#owTopbar .dyn-icon-btn:hover{ background:rgba(255,255,255,.3); }
+.dyn-topbar:not(#owTopbar) .dyn-icon-btn{ background:var(--panel); border:1px solid var(--line); }
+
+/* ---------- tipografia ---------- */
+.dyn-kicker{ color:var(--c1-ink); font:800 13px/1 var(--cond); letter-spacing:.2em; }
+.dyn-h1{
+  font:400 64px/.95 var(--display); font-style:normal; text-transform:uppercase; letter-spacing:0;
+  margin:10px 0 18px; color:var(--ink);
+}
+.dyn-h1 em{
+  font-style:normal; -webkit-text-fill-color:currentColor; color:var(--on-c1);
+  display:inline-block; padding:4px 12px 0; margin-left:4px; transform:skewX(-8deg);
+  background:var(--c1); box-shadow:6px 6px 0 var(--c2);
+}
+.dyn-top{ text-align:left; margin:2px 0 14px; display:flex; align-items:center; gap:10px; }
+.dyn-top-title{ font:400 30px/1 var(--display); text-transform:uppercase; letter-spacing:.01em; }
+.dyn-top-sub{ font-size:12.5px; }
+.dyn-aggr-label, .ow-bench-title, .ow-spark-row .lbl{ font:800 13px/1.2 var(--cond); letter-spacing:.12em; color:var(--muted); }
+.ow-sec-title{
+  display:flex; align-items:center; gap:8px;
+  font:800 17px/1.15 var(--cond); font-style:italic; text-transform:uppercase; letter-spacing:.04em; color:var(--ink);
+  margin:-16px -16px 12px; padding:11px 16px 10px; border-bottom:1px solid var(--line);
+}
+.ow-sec-title::before{ content:""; flex:0 0 auto; width:5px; height:17px; background:var(--c1); transform:skewX(-14deg); box-shadow:3px 0 0 var(--c2); margin-right:4px; }
+.ow-sec .ow-sec-title ~ .ow-sec-title{ margin:14px -16px 10px; border-top:1px solid var(--line); }
+
+/* numeri da tabellone */
+.dyn-hud-cell b, .dyn-stat b, .ow-bigmoney b, .ow-stickybar .cell b, .ow-subcells .cell b,
+.pl-hero .big, .ow-fin-row.total b, .ow-scout-tier .lv, .ow-trophy-title{
+  font-family:var(--display); font-weight:400; letter-spacing:.01em;
+}
+.ow-player .ovr, .ow-stat-row-top .ovr, .ow-mgr .ovr{ font-family:var(--cond); font-weight:800; font-size:15px; }
+
+/* ---------- bottoni ---------- */
+.dyn-btn{
+  background:var(--panel); color:var(--ink); border:2px solid var(--ink); border-radius:8px;
+  font:800 16px/1.1 var(--cond); font-style:italic; text-transform:uppercase; letter-spacing:.04em; box-shadow:none;
+}
+.dyn-btn:hover{ border-color:var(--ink); background:var(--panel2); box-shadow:none; }
+.dyn-btn:active{ transform:translateY(2px); }
+.dyn-btn .ow-eff-hint{ text-transform:none; font-style:normal; font-family:var(--sans); letter-spacing:0; }
+.dyn-btn.dyn-btn-primary{
+  background:var(--c1); color:var(--on-c1); border:0; text-shadow:none;
+  font-size:20px; padding:15px 18px; box-shadow:0 5px 0 var(--c1-dark), 0 12px 22px -12px rgba(20,22,26,.45);
+}
+.dyn-btn.dyn-btn-primary:hover{ background:var(--c1); filter:brightness(1.07); }
+.dyn-btn.dyn-btn-primary:active{ transform:translateY(3px); box-shadow:0 2px 0 var(--c1-dark); }
+.dyn-btn.dyn-btn-primary:disabled{ box-shadow:none; filter:grayscale(.6); }
+.dyn-mini{
+  background:var(--panel); border:1px solid var(--line); color:var(--ink); border-radius:8px;
+  font:800 14px/1.1 var(--cond); text-transform:uppercase; letter-spacing:.05em; box-shadow:0 1px 0 rgba(20,22,26,.06);
+}
+.dyn-mini:hover{ border-color:var(--ink); }
+
+/* ---------- campi ---------- */
+.dyn-field span{ font:800 13px/1 var(--cond); letter-spacing:.12em; }
+.dyn-field input{ background:var(--panel); border:1.5px solid var(--line); border-radius:8px; }
+.dyn-field input:focus{ border-color:var(--c1); box-shadow:0 0 0 3px color-mix(in srgb, var(--c1) 20%, transparent); }
+
+/* ---------- schermata iniziale ---------- */
+.dyn-setup{ padding-top:14px; }
+.dyn-brand-mark{ filter:drop-shadow(0 10px 18px rgba(20,22,26,.22)); }
+.setup-crest, .ow-club-crest-preview, .ow-crest-preview{ filter:drop-shadow(0 8px 14px rgba(20,22,26,.2)); }
+.ow-crest-picker{
+  background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px; max-width:340px; margin:0 auto 18px;
+  border-top:6px solid var(--c1); box-shadow:var(--shadow);
+}
+.ow-crest-shape, .ow-div-pick, .ow-formation-pick, .ow-filter-pill{
+  background:var(--panel); border:1.5px solid var(--line); color:var(--ink);
+  font-family:var(--cond); font-weight:800; font-size:14px; text-transform:uppercase; letter-spacing:.05em; border-radius:6px;
+}
+.ow-crest-shape.on, .ow-div-pick.on, .ow-formation-pick.on, .ow-filter-pill.on{ background:var(--c1); border-color:var(--c1); color:var(--on-c1); }
+.ow-diff-pick, .ow-takeover{ background:var(--panel); border:1.5px solid var(--line); border-radius:10px; box-shadow:0 1px 0 rgba(20,22,26,.05); }
+.ow-diff-pick > b, .ow-takeover > b, .ow-hardcore-text b{ font:400 19px/1.1 var(--display); text-transform:uppercase; letter-spacing:.01em; }
+.ow-diff-pick.on, .ow-takeover.on{ border-color:var(--c1); background:color-mix(in srgb, var(--c1) 7%, var(--panel)); box-shadow:inset 6px 0 0 var(--c1); }
+.ow-takeover.on::after{ background:var(--c1); color:var(--on-c1); }
+.ow-takeover:hover{ box-shadow:0 10px 20px -12px rgba(20,22,26,.4); }
+.ow-tk-row{ border-top-style:solid; border-top-color:var(--line); }
+.ow-hardcore-toggle{ background:var(--panel); }
+.ow-saveslot, .ow-hotseat{ background:var(--panel); border-radius:10px; box-shadow:0 1px 0 rgba(20,22,26,.05); }
+.ow-saveslot{ border-left:5px solid var(--c2); }
+.ow-saveslot .info b{ font:400 18px/1.1 var(--display); text-transform:uppercase; letter-spacing:.01em; }
+
+/* ---------- dirigenza ---------- */
+.ow-board-crest{ display:none; }
+.ow-stickybar{
+  background:var(--ink); color:#fff; border:0; border-radius:8px; padding:0; gap:0; overflow:hidden;
+  box-shadow:0 12px 26px -14px rgba(20,22,26,.6); top:6px;
+}
+.ow-stickybar .cell{ flex:1; padding:9px 12px; border-right:1px solid rgba(255,255,255,.12); }
+.ow-stickybar .cell:last-child{ border-right:0; }
+.ow-stickybar .cell span{ color:rgba(255,255,255,.62); font:800 11px/1.1 var(--cond); letter-spacing:.1em; }
+.ow-stickybar .cell b{ color:#fff; font-size:21px; }
+.ow-stickybar .cell.main{ background:var(--c1); color:var(--on-c1); }
+.ow-stickybar .cell.main span{ color:inherit; opacity:.78; }
+.ow-stickybar .cell.main b{ color:inherit; font-size:24px; }
+.ow-stickybar .cell.free b{ color:var(--gold-bg); }
+.ow-stickybar .cell b.bad{ color:#ff8a8a; }
+.ow-stickybar .cell.main b.bad{ color:inherit; text-decoration:underline wavy #ffb3b3; }
+@media(max-width:430px){
+  .ow-stickybar .cell{ padding:8px 9px; }
+  .ow-stickybar .cell b{ font-size:17px; }
+  .ow-stickybar .cell.main b{ font-size:20px; }
+}
+.ow-ladder{ gap:4px; justify-content:flex-start; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding:2px 2px 4px; }
+.ow-ladder::-webkit-scrollbar{ display:none; }
+.ow-rung{
+  font:800 12.5px/1 var(--cond); text-transform:uppercase; letter-spacing:.05em;
+  background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:7px 10px; transform:skewX(-10deg);
+}
+.ow-rung.done{ color:var(--c1-ink); border-color:color-mix(in srgb, var(--c1) 45%, transparent); }
+.ow-rung.on{ background:var(--c1); color:var(--on-c1); border-color:var(--c1); box-shadow:3px 3px 0 var(--c2); }
+.ow-arrow{ display:none; }
+.ow-tabs{ gap:0; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; padding:0; }
+.ow-tab{
+  background:none; border:0; border-right:1px solid var(--line); border-radius:0; color:var(--muted);
+  font:800 14px/1.1 var(--cond); text-transform:uppercase; letter-spacing:.05em; padding:12px 4px 10px;
+}
+.ow-tab:last-child{ border-right:0; }
+.ow-tab:hover{ border-color:var(--line); color:var(--ink); }
+.ow-tab.on{ background:none; color:var(--c1-ink); border-color:var(--line); box-shadow:inset 0 -4px 0 var(--c1); }
+.ow-tab .dot{ box-shadow:0 0 0 2px var(--panel); }
+
+/* ---------- schede ---------- */
+.ow-sec, .dyn-panel, .pl-card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); }
+.ow-sec::before, .dyn-panel::before, .pl-card::before{ display:none; }
+.dyn-panel{ border-top:6px solid var(--c1); }
+.ow-mgr, .ow-offer, .ow-ticket, .ow-scout-tier, .ow-jan-card, .ow-bench-chip, .ow-scout-card{
+  background:var(--panel2); border:1px solid var(--line); border-radius:8px;
+}
+.ow-offer:hover, .ow-ticket:hover{ border-color:var(--c1); }
+.ow-ticket.on{ border-color:var(--c1); background:color-mix(in srgb, var(--c1) 8%, var(--panel)); box-shadow:inset 4px 0 0 var(--c1); }
+.ow-mgr .tag{ background:var(--c1); color:var(--on-c1); border-radius:3px; font:800 11px/1 var(--cond); letter-spacing:.08em; }
+.ow-bigmoney b{ color:var(--ink); font-size:32px; }
+.ow-bigmoney b.bad{ color:var(--bad); }
+.ow-fin-row.total b{ color:var(--ink); font-size:20px; }
+.ow-meter .bar{ background:rgba(20,22,26,.08); box-shadow:none; border-radius:3px; }
+.ow-meter .fill{ border-radius:3px; }
+.ow-squadlist{ background:var(--panel2); border-radius:8px; }
+.ow-player:hover{ background:color-mix(in srgb, var(--c1) 6%, transparent); }
+.ow-renew{ background:var(--c1); color:var(--on-c1); border-radius:4px; font-family:var(--cond); font-size:13px; text-transform:uppercase; letter-spacing:.04em; }
+.ow-warn{ border-left:5px solid var(--bad); border-radius:6px; }
+.ow-invpill, .ow-euroflag{ border-radius:6px; }
+.ow-target-pill, .cup-pill{ border-radius:4px; font-family:var(--cond); font-size:13.5px; letter-spacing:.04em; text-transform:uppercase; background:var(--panel); }
+.ow-target-pill.vertice{ background:var(--gold-bg); color:var(--ink); border-color:var(--gold-bg); }
+.real-badge{ background:var(--gold-bg); color:var(--ink); box-shadow:none; border-radius:4px; font-family:var(--cond); font-size:13px; text-transform:uppercase; letter-spacing:.06em; }
+.ow-spin-card.is-real{ background:rgba(255,207,74,.12); }
+
+/* ---------- stagione: tabellone ---------- */
+#owSeasonScreen .dyn-wrap, #owBoardScreen .dyn-wrap, #owSeasonEndScreen .dyn-wrap, #owEndScreen .dyn-wrap{ padding-top:0; margin-top:-16px; position:relative; z-index:2; }
+.dyn-hud{ gap:0; background:var(--panel); border-radius:8px; overflow:hidden; margin-bottom:12px; box-shadow:0 14px 28px -16px rgba(20,22,26,.55); }
+.dyn-hud-cell{ background:none; border:0; border-right:1px solid var(--line); border-radius:0; padding:8px 10px 7px; text-align:left; }
+.dyn-hud-cell:last-child{ border-right:0; background:var(--c2); color:var(--on-c2); }
+.dyn-hud-cell span{ font:800 11px/1.1 var(--cond); letter-spacing:.1em; }
+.dyn-hud-cell:last-child span{ color:inherit; opacity:.75; }
+.dyn-hud-cell b{ font-size:27px; line-height:1.05; }
+.ow-div-chip{
+  background:var(--ink); color:#fff; box-shadow:none; border-radius:6px;
+  font:800 15px/1 var(--cond); font-style:italic; text-transform:uppercase; letter-spacing:.06em;
+}
+.ow-subcells .cell{ background:var(--panel); border:0; border-left:5px solid var(--c1); border-radius:8px; padding:7px 10px; box-shadow:0 1px 0 rgba(20,22,26,.05); }
+.ow-subcells .cell:nth-child(2){ border-left-color:var(--ink); }
+.ow-subcells .cell:nth-child(3){ border-left-color:var(--c2); }
+.ow-subcells .cell span{ font:800 10.5px/1.2 var(--cond); letter-spacing:.08em; }
+.ow-subcells .cell b{ font-size:19px; }
+.dyn-manage-row .dyn-mini{ padding:12px 10px; }
+
+/* righe partita: risultato in un riquadro pieno, come in sovrimpressione */
+.mrow{ background:var(--panel); border:0; border-left:5px solid var(--line); border-radius:8px; box-shadow:0 1px 0 rgba(20,22,26,.06); }
+.mrow-mw{ font:800 12px/1.1 var(--cond); letter-spacing:.06em; }
+.mrow-fix .ha{ font-family:var(--cond); font-size:12px; letter-spacing:.05em; border-radius:3px; }
+.mrow-res{ font:400 19px/1 var(--display); letter-spacing:.03em; border-radius:4px; padding:8px 0 7px; }
+.mrow-res.W{ background:var(--good); color:#fff; }
+.mrow-res.D{ background:var(--draw); color:#fff; }
+.mrow-res.L{ background:var(--bad); color:#fff; }
+.mrow.res-W{ border-left-color:var(--good); }
+.mrow.res-D{ border-left-color:var(--draw); }
+.mrow.res-L{ border-left-color:var(--bad); }
+.mrow.cup.comp-nat, .mrow.cup.comp-ucl, .mrow.cup.comp-uel, .mrow.cup.comp-conf{ background:var(--panel); }
+.mrow.cup.comp-ucl{ border-left-color:var(--blue); }
+.mrow.cup.comp-ucl .mrow-mw{ color:var(--blue); }
+
+/* ---------- classifiche ---------- */
+.dyn-table{ background:var(--panel); border-radius:10px; overflow:hidden; box-shadow:var(--shadow); font-size:13.5px; }
+.dyn-table th{ background:var(--ink); color:rgba(255,255,255,.78); font:800 11.5px/1 var(--cond); letter-spacing:.1em; border:0; padding:9px 8px; }
+.dyn-table td{ border-bottom:1px solid var(--line); }
+.dyn-table tr.me{ background:color-mix(in srgb, var(--c1) 13%, var(--panel)); }
+.dyn-table tr.me td:first-child{ box-shadow:inset 6px 0 0 var(--c1); }
+.dyn-table tr.ucl td:first-child{ border-left-color:var(--blue); }
+.dyn-table tr.ucl{ background:rgba(36,89,201,.06); }
+
+/* ---------- modali e avvisi ---------- */
+.dyn-overlay{ background:rgba(20,22,26,.55); backdrop-filter:blur(3px); }
+.dyn-modal{ background:var(--panel); border:0; border-radius:12px; box-shadow:0 30px 60px -20px rgba(20,22,26,.6); padding-top:30px; }
+.dyn-modal::before{ height:8px; background:repeating-linear-gradient(90deg, var(--c1) 0 24px, var(--c2) 24px 48px); }
+.dyn-modal h2{ font:400 28px/1.05 var(--display); text-transform:uppercase; letter-spacing:.01em; }
+.ow-event-modal h2{ font-size:30px; }
+.ow-modal-x{ background:var(--panel); }
+.dyn-toast{
+  background:var(--ink); color:#fff; border:0; border-left:6px solid var(--c1); border-radius:8px;
+  box-shadow:0 18px 36px -14px rgba(20,22,26,.6); font-weight:700;
+}
+.ow-tut-dots span.on{ background:var(--c1); }
+
+/* ---------- fine stagione / trofei ---------- */
+.pl-hero .big{ color:var(--ink); }
+.trophy{ background:var(--gold-bg); color:var(--ink); border:0; border-radius:4px; font-family:var(--cond); font-size:14px; text-transform:uppercase; letter-spacing:.04em; }
+.trophy.none{ background:var(--panel2); color:var(--muted); border:1px solid var(--line); }
+.dyn-stat{ background:var(--panel2); border:0; border-left:5px solid var(--c1); border-radius:8px; }
+.dyn-stat span{ font:800 11px/1.2 var(--cond); letter-spacing:.08em; }
+.dyn-stat b{ font-size:24px; }
+.ow-trophy-moment{ background:var(--ink); color:#fff; border:0; border-radius:12px; }
+.ow-trophy-moment .ow-trophy-title{ color:var(--gold-bg); font-size:32px; text-transform:uppercase; }
+.ow-trophy-moment .ow-trophy-sub{ color:rgba(255,255,255,.7); }
+.ow-trophy-moment.ucl, .ow-trophy-moment.nat, .ow-trophy-moment.uel, .ow-trophy-moment.conf, .ow-trophy-moment.treble{
+  background:radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,.12), transparent 60%), var(--ink);
+}
+.ow-trophy-moment.ucl .ow-trophy-title{ color:#9fc4ff; }
+.ow-trophy-moment.nat .ow-trophy-title{ color:#6fe3a8; }
+.ow-trophy-moment.uel .ow-trophy-title{ color:#ffab5c; }
+.ow-trophy-moment.conf .ow-trophy-title{ color:#7fe8e8; }
+
+/* ---------- ritocchi dopo le prime prove su telefono ---------- */
+.ow-guide{ background:var(--panel); border:1px solid var(--line); border-top:6px solid var(--c1); border-radius:12px; box-shadow:var(--shadow); }
+.ow-guide-title{ font:800 17px/1.1 var(--cond); font-style:italic; text-transform:uppercase; letter-spacing:.04em; }
+.ow-guide-step .ck{ font-family:var(--cond); font-size:13px; }
+.ow-guide-step.done .ck{ color:#fff; }
+.dyn-setup .dyn-aggr-label{ margin-top:22px !important; }
+@media(max-width:520px){
+  #owTopbar .dyn-icon-btn{ width:32px; height:32px; font-size:14px; }
+  #owTopbar .dyn-topbar-right{ gap:3px; }
+  #owTopbar .dyn-home{ gap:9px; }
+  #owTopbar .dyn-home-crest{ width:38px; height:44px; }
+  .dyn-home-txt b{ font-size:22px; }
+  .dyn-home-txt small{ font-size:12px; letter-spacing:.07em; }
+}
+/* forma: pallini pieni come nelle grafiche TV, l'ultima partita con un anello */
+.ow-form-lbl{ font:800 13px/1 var(--cond); letter-spacing:.1em; }
+.ow-form-dot{ width:26px; height:26px; border-radius:50%; color:#fff !important; font:800 14px/1 var(--cond); }
+.ow-form-dot.W{ background:var(--good); }
+.ow-form-dot.D{ background:var(--draw); }
+.ow-form-dot.L{ background:var(--bad); }
+.ow-form-dot:last-child{ box-shadow:0 0 0 2px var(--bg), 0 0 0 4px var(--ink); }
+.ow-progress{ height:8px; border-radius:3px; }
+.ow-progress > i{ border-radius:3px; background:linear-gradient(90deg, var(--c2), var(--c1)); }
+.ow-progress-lbl{ font:400 15px/1 var(--display); color:var(--ink); }
+/* la fine stagione e la fine carriera iniziano con un titolo, non con una barra: niente sovrapposizione */
+#owSeasonEndScreen .dyn-wrap, #owEndScreen .dyn-wrap{ margin-top:0; padding-top:8px; }
+/* icone tonde nella barra: velo del colore del testo, così si vedono anche su un giallo o un bianco */
+#owTopbar .dyn-icon-btn{ background:color-mix(in srgb, currentColor 18%, transparent); }
+#owTopbar .dyn-icon-btn:hover{ background:color-mix(in srgb, currentColor 30%, transparent); }

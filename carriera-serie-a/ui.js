@@ -91,7 +91,7 @@
     let bowl = '';
     for (let i = rings - 1; i >= 0; i--) {
       const rx = 62 + i * 15, ry = 38 + i * 9;
-      bowl += `<ellipse cx="70" cy="72" rx="${rx}" ry="${ry}" fill="none" stroke="rgba(255,255,255,${0.28 - i * 0.05})" stroke-width="9"/>`;
+      bowl += `<ellipse cx="70" cy="72" rx="${rx}" ry="${ry}" fill="none" stroke="var(--c1)" stroke-opacity="${0.5 - i * 0.1}" stroke-width="9"/>`;
     }
     bowl += `<ellipse cx="70" cy="72" rx="40" ry="24" fill="#2a7d3f" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>`;
     bowl += `<line x1="70" y1="48" x2="70" y2="96" stroke="rgba(255,255,255,.5)" stroke-width="1"/>`;
@@ -101,8 +101,8 @@
     const pct = Math.round(clamp(fillPct, 0, 1) * 100);
     const gauge = `
       <g transform="translate(230,72)">
-        <circle r="${r}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="10"/>
-        <circle r="${r}" fill="none" stroke="var(--gold)" stroke-width="10" stroke-dasharray="${filled.toFixed(1)} ${empty.toFixed(1)}" stroke-linecap="round" transform="rotate(-90)"/>
+        <circle r="${r}" fill="none" stroke="rgba(20,22,26,.1)" stroke-width="10"/>
+        <circle r="${r}" fill="none" stroke="var(--c1)" stroke-width="10" stroke-dasharray="${filled.toFixed(1)} ${empty.toFixed(1)}" stroke-linecap="round" transform="rotate(-90)"/>
         <text text-anchor="middle" dy="5" font-size="18" font-weight="900" fill="var(--txt)" font-family="var(--sans)">${pct}%</text>
       </g>
       <text x="230" y="118" text-anchor="middle" font-size="9.5" font-weight="700" fill="var(--muted)" font-family="var(--sans)">affluenza attesa</text>`;
@@ -127,18 +127,63 @@
     const shape = (S && S.crestShape) || CREST_DEFAULT.shape;
     const colors = (S && S.crestColors) || CREST_DEFAULT.colors;
     wrap.innerHTML = crestMarkup(shape, colors, '');
+    const lbl = $('owHomeLabel'); if (lbl) lbl.textContent = (S && S.club) || 'Presidente';
+    const sub = $('owHomeSub'); if (sub) sub.textContent = S ? divOf().name + ' · Stagione ' + S.season + '/' + (S.maxSeasons || MAX_SEASONS) : 'Presidente · Serie A';
+    applyClubTheme(S && S.crestColors);
+  }
+
+  /* ---------------- colori sociali ----------------
+     I due colori dello stemma diventano i colori di tutta l'interfaccia (variabili --c1/--c2 in
+     styles.css). Il presidente può sceglierne qualunque coppia, anche gialla o bianca: da qui
+     escono anche il colore del testo da metterci sopra (--on-c1/--on-c2) e una versione
+     abbastanza scura del primario da usare come testo su fondo chiaro (--c1-ink). */
+  const THEME_FALLBACK = ['#1f4fb4', '#0d1f4d'];
+  function hexRgb(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  const rgbHex = (rgb) => '#' + rgb.map((v) => Math.round(clamp(v, 0, 255)).toString(16).padStart(2, '0')).join('');
+  function relLum(rgb) {
+    const ch = rgb.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+  }
+  const contrastRatio = (a, b) => { const x = relLum(a), y = relLum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const mixRgb = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+  const RGB_WHITE = [255, 255, 255], RGB_INK = [20, 22, 26], RGB_PAPER = [247, 245, 240];
+  const inkOn = (rgb) => (contrastRatio(rgb, RGB_WHITE) >= contrastRatio(rgb, RGB_INK) ? '#ffffff' : '#14161a');
+  // Scurisce il colore finché si legge come testo sul fondo chiaro (contrasto almeno 4.5:1).
+  function readableOnLight(rgb) {
+    let out = rgb;
+    for (let t = 0.05; t <= 1 && contrastRatio(out, RGB_PAPER) < 4.5; t += 0.05) out = mixRgb(rgb, RGB_INK, t);
+    return out;
+  }
+  let lastTheme = '';
+  function applyClubTheme(colors) {
+    const c = colors && colors.length === 2 && hexRgb(colors[0]) && hexRgb(colors[1]) ? colors : THEME_FALLBACK;
+    const key = c.join('|'); if (key === lastTheme) return; lastTheme = key;
+    const c1 = hexRgb(c[0]), c2 = hexRgb(c[1]);
+    const root = document.documentElement.style;
+    root.setProperty('--c1', rgbHex(c1));
+    root.setProperty('--c2', rgbHex(c2));
+    root.setProperty('--on-c1', inkOn(c1));
+    root.setProperty('--on-c2', inkOn(c2));
+    root.setProperty('--c1-ink', rgbHex(readableOnLight(c1)));
+    root.setProperty('--c1-dark', rgbHex(mixRgb(c1, [0, 0, 0], 0.3)));
+    const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute('content', rgbHex(c1));
   }
 
   // Colore del badge overall in base a quanto è alto: scarso (grigio) → discreto
   // (bianco) → buono (azzurro) → ottimo (verde) → fuoriclasse (oro), sulla scala
   // 40-99 usata dal gioco.
   function ovrTier(ovr) {
-    if (ovr > 100) return { c: 'var(--purple)', bg: 'rgba(176,111,255,.16)' };
-    if (ovr >= 85) return { c: 'var(--gold)', bg: 'rgba(255,210,74,.16)' };
-    if (ovr >= 75) return { c: 'var(--good)', bg: 'rgba(40,217,160,.14)' };
-    if (ovr >= 65) return { c: '#6fb3ff', bg: 'rgba(111,179,255,.14)' };
-    if (ovr >= 55) return { c: 'var(--txt)', bg: 'rgba(255,255,255,.07)' };
-    return { c: 'var(--muted)', bg: 'rgba(255,255,255,.04)' };
+    if (ovr > 100) return { c: 'var(--purple)', bg: 'rgba(116,64,200,.13)' };
+    if (ovr >= 85) return { c: 'var(--gold)', bg: 'rgba(255,190,40,.2)' };
+    if (ovr >= 75) return { c: 'var(--good)', bg: 'rgba(14,138,76,.12)' };
+    if (ovr >= 65) return { c: 'var(--blue)', bg: 'rgba(36,89,201,.12)' };
+    if (ovr >= 55) return { c: 'var(--txt)', bg: 'rgba(20,22,26,.08)' };
+    return { c: 'var(--muted)', bg: 'rgba(20,22,26,.045)' };
   }
 
   const ovrBadge = (ovr) => { const t = ovrTier(ovr); return `background:${t.bg};color:${t.c}`; };
@@ -715,8 +760,8 @@
     const tradesHTML = !showTrades ? '' : `
       <div class="ow-sec-title" style="margin-top:10px">🤝 Trattative di mercato</div>
       ${!mySaveActive ? '<div class="ow-sub">Apri la tua carriera (torna in Dirigenza da un\'altra carriera, poi rientra qui) per proporre o rispondere a una trattativa.</div>' : `
-        ${toReceive.length ? toReceive.map((t) => `<div class="ow-fin-row" style="background:rgba(40,217,160,.10);border-radius:8px"><span>📥 ${escapeHtml(t.playerSnapshot.n)} da ${escapeHtml(t.toClub)}${t.offerPlayerName ? ' (in cambio di ' + escapeHtml(t.offerPlayerName) + ')' : ''}, accordo raggiunto</span><button class="dyn-mini" data-recv="${escapeHtml(t.id)}">Ricevi${t.fee > 0 ? ' · ' + fmtMoney(t.fee) : ''}</button></div>`).join('') : ''}
-        ${toFinalizeSale.length ? toFinalizeSale.map((t) => `<div class="ow-fin-row" style="background:rgba(40,217,160,.10);border-radius:8px"><span>💷 Accordo raggiunto con ${escapeHtml(t.fromClub)} per ${escapeHtml(t.playerSnapshot.n)}${t.offerPlayerName ? ' (ricevi anche ' + escapeHtml(t.offerPlayerName) + ')' : ''}</span><button class="dyn-mini" data-finalize="${escapeHtml(t.id)}">Conferma cessione${t.fee > 0 ? ' · +' + fmtMoney(t.fee) : ''}</button></div>`).join('') : ''}
+        ${toReceive.length ? toReceive.map((t) => `<div class="ow-fin-row" style="background:rgba(14,138,76,.1);border-radius:8px"><span>📥 ${escapeHtml(t.playerSnapshot.n)} da ${escapeHtml(t.toClub)}${t.offerPlayerName ? ' (in cambio di ' + escapeHtml(t.offerPlayerName) + ')' : ''}, accordo raggiunto</span><button class="dyn-mini" data-recv="${escapeHtml(t.id)}">Ricevi${t.fee > 0 ? ' · ' + fmtMoney(t.fee) : ''}</button></div>`).join('') : ''}
+        ${toFinalizeSale.length ? toFinalizeSale.map((t) => `<div class="ow-fin-row" style="background:rgba(14,138,76,.1);border-radius:8px"><span>💷 Accordo raggiunto con ${escapeHtml(t.fromClub)} per ${escapeHtml(t.playerSnapshot.n)}${t.offerPlayerName ? ' (ricevi anche ' + escapeHtml(t.offerPlayerName) + ')' : ''}</span><button class="dyn-mini" data-finalize="${escapeHtml(t.id)}">Conferma cessione${t.fee > 0 ? ' · +' + fmtMoney(t.fee) : ''}</button></div>`).join('') : ''}
         ${incoming.map((t) => `<div class="ow-fin-row" style="align-items:flex-start"><span>${escapeHtml(t.fromClub)} offre ${tradeOfferLabel(t, t.fee)} per <b>${escapeHtml(t.playerName)}</b></span><span style="display:flex;gap:4px"><button class="dyn-mini" data-tacc="${escapeHtml(t.id)}">Accetta</button><button class="dyn-mini" data-tcnt="${escapeHtml(t.id)}">🤝</button><button class="dyn-mini ow-reject" data-trej="${escapeHtml(t.id)}">Rifiuta</button></span></div>`).join('')}
         ${counters.map((t) => `<div class="ow-fin-row"><span>Hai già controproposto ${tradeOfferLabel({ ...t, offerPlayerName: null }, t.counterFee)} a ${escapeHtml(t.fromClub)} per ${escapeHtml(t.playerName)}${t.offerPlayerName ? ' (in cambio di ' + escapeHtml(t.offerPlayerName) + ')' : ''}: in attesa</span></div>`).join('')}
         ${myProposals.map((t) => `<div class="ow-fin-row" style="align-items:flex-start"><span>${t.status === 'countered' ? `${escapeHtml(t.toClub)} contropropone ${fmtMoney(t.counterFee)} per ${escapeHtml(t.playerName)}` : `In attesa: ${tradeOfferLabel(t, t.fee)} a ${escapeHtml(t.toClub)} per ${escapeHtml(t.playerName)}`}</span><span style="display:flex;gap:4px">${t.status === 'countered' ? `<button class="dyn-mini" data-tacccnt="${escapeHtml(t.id)}">Accetta</button><button class="dyn-mini ow-reject" data-trej="${escapeHtml(t.id)}">Rifiuta</button>` : `<button class="dyn-mini ow-reject" data-tcancel="${escapeHtml(t.id)}">Annulla</button>`}</span></div>`).join('')}
@@ -1842,6 +1887,7 @@
 
   function updateCrestPreview() {
     const wrap = $('crestPreviewWrap'); if (wrap) wrap.innerHTML = crestMarkup(crestShape, crestColors, 'setup-crest');
+    applyClubTheme(crestColors);
     const c1 = $('crestColor1'), c2 = $('crestColor2');
     if (c1) c1.value = crestColors[0]; if (c2) c2.value = crestColors[1];
     document.querySelectorAll('.ow-crest-shape').forEach((el) => { const on = el.dataset.shape === crestShape; el.classList.toggle('on', on); el.setAttribute('aria-pressed', on); });
@@ -3939,7 +3985,7 @@
     // Podio per i primi 3: il 1° al centro e più grande, come un vero podio, ordinato con
     // CSS `order` (nel markup restano comunque nell'ordine di merito, screen reader inclusi).
     const podium = top10.slice(0, 3).map((e, i) => `
-      <div data-lbpodium="${i}" title="Tocca per i dettagli" style="cursor:pointer;order:${i === 0 ? 2 : i === 1 ? 1 : 3};flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:${i === 0 ? '14px 6px 10px' : '8px 6px'};border-radius:12px;background:${i === 0 ? 'rgba(255,210,74,.14)' : 'rgba(255,255,255,.04)'};border:1px solid ${i === 0 ? 'var(--gold)' : 'var(--line)'}">
+      <div data-lbpodium="${i}" title="Tocca per i dettagli" style="cursor:pointer;order:${i === 0 ? 2 : i === 1 ? 1 : 3};flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:${i === 0 ? '14px 6px 10px' : '8px 6px'};border-radius:12px;background:${i === 0 ? 'rgba(255,190,40,.2)' : 'rgba(20,22,26,.04)'};border:1px solid ${i === 0 ? 'var(--gold)' : 'var(--line)'}">
         <div style="font-size:${i === 0 ? '34px' : '24px'};line-height:1">${medal[i]}</div>
         <div style="font-weight:900;font-size:${i === 0 ? '14px' : '12px'};text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${escapeHtml(e.club)}</div>
         <div style="font-size:10px;color:var(--muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${escapeHtml(e.owner)}</div>
