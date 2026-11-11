@@ -1,0 +1,6 @@
+# Tutto il sito si può indicizzare, tranne i dati privati di Presidente.
+User-agent: *
+Allow: /
+Disallow: /carriera-serie-a/_data/
+
+Sitemap: https://quizotti.altervista.org/sitemap.xml

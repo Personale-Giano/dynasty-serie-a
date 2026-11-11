@@ -27,3 +27,4 @@ jobs:
             **/quizzotti/node_modules/**
             **/carriera-serie-a/server-test/**
             **/carriera-serie-a/test/**
+            server.js

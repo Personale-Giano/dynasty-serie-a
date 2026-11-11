@@ -29,7 +29,6 @@ assets/
   questions-data.js        trivia condiviso (usato da CVEM) + quiz-engine.js
 scripts/
   cache-bust.js            aggiunge ?v=hash agli asset (da lanciare prima di pubblicare)
-  set-domain.js            imposta il dominio reale in sitemap.xml/robots.txt
 tests/                     integrità dei database + coerenza pagine/registro
 ```
 
@@ -63,7 +62,6 @@ tests/                     integrità dei database + coerenza pagine/registro
 
 ```bash
 node scripts/cache-bust.js                       # versione degli asset nei link
-node scripts/set-domain.js https://iltuodominio.it   # sitemap e robots
 ```
 
 ## Privacy

@@ -1,6 +1,0 @@
-User-agent: *
-Allow: /
-
-# ATTENZIONE: aggiorna questo URL con il dominio reale di produzione
-# (vedi anche sitemap.xml). Puoi farlo con: node scripts/set-domain.js https://iltuodominio.it
-Sitemap: https://SOSTITUISCI-CON-IL-TUO-DOMINIO.it/sitemap.xml
