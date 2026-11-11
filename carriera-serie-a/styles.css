@@ -1,6 +1,6 @@
 /* ============================================================
    PRESIDENTE · Serie A — identità "Carbonio" (scelta da Emanuele l'11 nov 2026).
-   Tema scuro: grafite con una leggera trama a fibra di carbonio, un solo accento azzurro acceso (era giallo fino all'11 nov 2026)
+   Tema scuro: grafite con una leggera trama a fibra di carbonio, un solo accento blu elettrico (era giallo fino all'11 nov 2026)
    per azioni, punti e selezioni, scritte strette e corsive da sport, angoli quasi squadrati.
    I colori del club restano nello stemma e in qualche dettaglio (--club1/--club2, impostati da
    applyClubTheme in ui.js); il resto dell'interfaccia usa sempre lo stesso accento.
@@ -8,7 +8,7 @@
    ============================================================ */
 :root{
   --club1:#8c1d2c; --club2:#1d3f8c;
-  --c1:#2ec5ff; --c2:#2ec5ff; --c1-ink:#2ec5ff; --c1-dark:#1683ad; --on-c1:#04141c; --on-c2:#04141c;
+  --c1:#2a85f0; --c2:#2a85f0; --c1-ink:#4a9cff; --c1-dark:#1a5bb0; --on-c1:#0b0c0e; --on-c2:#0b0c0e;
   --bg:#111214;
   --panel:#1b1c20;
   --panel2:#202125;
@@ -1695,7 +1695,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* ============================================================
    CARBONIO — strato finale del tema scuro (11 nov 2026).
-   Grafite con trama a fibra di carbonio, accento azzurro unico (--c1), colori del club solo
+   Grafite con trama a fibra di carbonio, accento blu unico (--c1), colori del club solo
    come dettaglio (--club1/--club2): stemma, filetto della barra, ombra del titolo.
    ============================================================ */
 body{
