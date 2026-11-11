@@ -759,7 +759,9 @@
 
   const scoutTier = () => SCOUT_TIERS[S.scoutLevel || 0];
 
-  const scoutUpgradeCost = (lvl) => Math.round(divOf().spin * [0, 2.0, 4.2, 8.0][lvl] * diffOf().scoutCostMult / 1000) * 1000;
+  // Costi alzati (erano 2.0 / 4.2 / 8.0 spin): il settore giovanile costava troppo poco per
+  // quello che rende in tutta la carriera.
+  const scoutUpgradeCost = (lvl) => Math.round(divOf().spin * [0, 3.4, 7.0, 13.5][lvl] * diffOf().scoutCostMult / 1000) * 1000;
 
   // Una piccola "cerimonia" del vivaio, generata al più una volta a stagione se il dado lo
   // concede: invece di un solo prospetto anonimo, il settore giovanile presenta più candidati
@@ -1170,9 +1172,9 @@
     return slice.length ? slice : sortedDesc;
   }
 
-  // I rivali fanno offerte per i tuoi giocatori migliori: quelli chiaramente sopra il
-  // livello, o i giovani precoci. Zero a due offerte all'estate, pesate perché i veri
-  // gioielli attirino interesse e i giocatori normali no.
+  // I rivali fanno offerte soprattutto per i tuoi giocatori migliori (quelli chiaramente sopra
+  // il livello, o i giovani precoci), ma anche per un giocatore qualsiasi del resto della rosa.
+  // Da zero a tre offerte all'estate.
   // Nessun club rivale sotto Serie A/B/Europa ha una rosa vera da consultare (POOLS tiene
   // solo un nome + una forza aggregata, vedi initMarket): non si può quindi controllare se UN
   // club specifico ha davvero un buco in un ruolo. La domanda di mercato per ruolo (un
@@ -1184,24 +1186,36 @@
     const d = divOf(ctx);
     // Mai per un giocatore che è qui solo in prestito (p.loan): non è nostro da vendere —
     // prima l'offerta arrivava lo stesso e accettarla incassava il cartellino di un altro club.
-    const targets = ctx.squad
-      .filter((p) => !p.loan && (p.ovr >= d.avg + 3 || (p.age <= 22 && p.ovr >= d.avg)))
+    // Né per chi è già in prestito altrove (p.loanedOut).
+    const mine = ctx.squad.filter((p) => !p.loan && !p.loanedOut);
+    // Al massimo DUE offerte per i pezzi pregiati (sopra il livello della categoria o giovani
+    // precoci)...
+    const top = mine
+      .filter((p) => p.ovr >= d.avg + 3 || (p.age <= 22 && p.ovr >= d.avg))
       .sort((a, b) => (b.ovr + (b.age <= 22 ? 4 : 0)) - (a.ovr + (a.age <= 22 ? 4 : 0)))
-      .slice(0, 3);
-    // Decide PRIMA quali fasce di forza (0=fortissimo..3=scarso, vedi buyerClub/bandSlice)
-    // compaiono in questa tornata: mescolate e assegnate in ordine crescente man mano che le
-    // offerte si concretizzano, così più offerte nella stessa estate coprono davvero livelli
-    // diversi — un fortissimo, un forte, un medio, uno scarso — invece di risultare quasi
-    // sempre dalle stesse 2-3 big del tier.
-    const bandOrder = shuffle([0, 1, 2, 3]).slice(0, targets.length).sort((a, b) => a - b);
+      .slice(0, 2);
+    // ...e una per un giocatore qualsiasi del resto della rosa, anche medio o scarso: prima le
+    // offerte arrivavano sempre e solo per i migliori, come se al resto della squadra nessuno
+    // facesse caso. Un club più piccolo cerca un titolare, uno più grande un rincalzo.
+    const rest = mine.filter((p) => !top.includes(p));
+    const other = rest.length ? pick(rest) : null;
+    // Fasce di forza (0=fortissimo..3=scarso, vedi buyerClub/bandSlice) mescolate, così più
+    // offerte nella stessa estate arrivano da club di livello diverso. Il giocatore "qualsiasi"
+    // interessa di solito ai club della metà bassa.
+    const bandOrder = shuffle([0, 1, 2, 3]).slice(0, top.length).sort((a, b) => a - b);
     const offers = [];
-    targets.forEach((p, i) => {
-      const baseChance = (i === 0 ? 0.95 : i === 1 ? 0.75 : 0.55);
+    top.forEach((p, i) => {
+      const baseChance = i === 0 ? 0.9 : 0.65;
       const chance = clamp(baseChance * (ROLE_DEMAND_WEIGHT[p.pos] || 1), 0, 0.98);
-      if (Math.random() < chance) { const fee = offerFee(p, ctx); offers.push({ pid: p.pid, club: buyerClub(fee, ctx, bandOrder[offers.length]), fee }); }
+      if (Math.random() < chance) { const fee = offerFee(p, ctx); offers.push({ pid: p.pid, club: buyerClub(fee, ctx, bandOrder[i]), fee }); }
     });
+    if (other && Math.random() < clamp(0.6 * (ROLE_DEMAND_WEIGHT[other.pos] || 1), 0, 0.9)) {
+      const fee = offerFee(other, ctx);
+      if (fee > 0) offers.push({ pid: other.pid, club: buyerClub(fee, ctx, pick([1, 2, 2, 3])), fee });
+    }
     return offers;
   }
+
 
   // Affaticamento dello scout: ogni spin comprato nella stessa finestra pre-stagione
   // costa il 30% in più dell'ultimo (standard e marquee condividono il contatore). Uno o
@@ -1397,7 +1411,8 @@
   // Penale se l'obiettivo del fondo salta, in multipli dell'iniezione: era 1.4, troppo poco
   // per essere un vero rischio. Ora può mandare la cassa in rosso (e da lì all'amministrazione
   // controllata). Letta anche dal popup di conferma in ui.js.
-  const INVESTOR_FAIL_PENALTY = 2.0;
+  // Alzata a 2.5 (era 2.0) insieme ai tempi più stretti del patto cauto: il fondo era troppo facile.
+  const INVESTOR_FAIL_PENALTY = 2.5;
   function investorDealOffers(ctx = S) {
     if (ctx.div >= DIVS.length - 1) return [];
     // Valore del club SENZA la cassa: computeWorth conta l'80% del contante, quindi più soldi
@@ -1420,7 +1435,8 @@
       // da solo vale più di mezzo club.
       // Quote ridotte (iniezione / top-up annuo / bonus finale erano 0.22 / 0.05 / 0.6): col
       // patto una Promozione a Difficile arrivava in Serie A quasi sempre, senza quasi mai.
-      mk(pick(INVESTOR_FUNDS), Math.max(1, steps - 1), 5, 0.05, 0.01, 0.1),
+      // Tempi più stretti: 4 stagioni invece di 5 per salire di una categoria.
+      mk(pick(INVESTOR_FUNDS), Math.max(1, steps - 1), 4, 0.05, 0.01, 0.1),
       // Aggressivo: poco meno di metà del valore del club subito (ridotto leggermente, era
       // 0.5), un top-up sostanzioso, solo 3 stagioni per il doppio salto di categoria — il
       // bonus finale può superare il valore attuale del club: un vero cambio di vita se ce la

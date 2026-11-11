@@ -6,7 +6,7 @@
    applyClubTheme in ui.js); il resto dell'interfaccia usa sempre lo stesso accento.
    Le variabili --c1/--c2 restano i nomi storici dell'accento, così i componenti non cambiano.
    ============================================================ */
-:root{
+:root{ --role-por:#ff9130; --role-dif:#2fd479; --role-att:#e2647a;
   --club1:#8c1d2c; --club2:#1d3f8c;
   --c1:#2a85f0; --c2:#2a85f0; --c1-ink:#4a9cff; --c1-dark:#1a5bb0; --on-c1:#0b0c0e; --on-c2:#0b0c0e;
   --bg:#111214;
@@ -493,7 +493,7 @@ body{
 .ow-role-btn{ border-color:rgba(116,64,200,.4); color:var(--purple); }
 .ow-role-btn:hover{ border-color:#8a5cf0; }
 /* Griglia di scelta ruolo nell'overlay "Scegli ruolo": una card per ruolo, colorata come i
-   postag già usati altrove (portiere verde, difensore blu, centrocampo bronzo, attacco arancio). */
+   postag già usati altrove (portiere arancione, difensore verde, centrocampo blu, attacco bordeaux). */
 .ow-role-grid{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin:14px 0; }
 .ow-role-pick{
   appearance:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px;
@@ -505,14 +505,14 @@ body{
 .ow-role-pick .ow-role-ico{ font-size:26px; line-height:1; }
 .ow-role-pick .ow-role-lbl{ font-size:13px; }
 .ow-role-pick small{ font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; }
-.ow-role-pick.postag-POR{ border-color:rgba(14,138,76,.35); }
-.ow-role-pick.postag-DIF{ border-color:rgba(36,89,201,.35); }
+.ow-role-pick.postag-POR{ border-color:rgba(255,145,48,.4); }
+.ow-role-pick.postag-DIF{ border-color:rgba(47,212,121,.35); }
 .ow-role-pick.postag-CEN{ border-color:color-mix(in srgb,var(--c1) 35%,transparent); }
-.ow-role-pick.postag-ATT{ border-color:rgba(255,157,106,.35); }
-.ow-role-pick.postag-POR .ow-role-ico{ color:var(--good); }
-.ow-role-pick.postag-DIF .ow-role-ico{ color:var(--blue); }
+.ow-role-pick.postag-ATT{ border-color:rgba(196,52,78,.55); }
+.ow-role-pick.postag-POR .ow-role-ico{ color:var(--role-por); }
+.ow-role-pick.postag-DIF .ow-role-ico{ color:var(--role-dif); }
 .ow-role-pick.postag-CEN .ow-role-ico{ color:var(--dyn); }
-.ow-role-pick.postag-ATT .ow-role-ico{ color:var(--orange); }
+.ow-role-pick.postag-ATT .ow-role-ico{ color:var(--role-att); }
 .ow-investor{ width:100%; margin-bottom:8px; }
 .ow-squad-filters{ display:flex; flex-wrap:wrap; gap:6px; margin:2px 0 8px; }
 .ow-filter-pill{
@@ -574,10 +574,13 @@ body{
   flex:0 0 auto; font-size:9px; font-weight:900; letter-spacing:.03em; padding:3px 6px; border-radius:6px;
   background:rgba(255,255,255,0.059); color:var(--muted); border:1px solid var(--line);
 }
-.postag-ATT{ color:var(--orange); border-color:rgba(255,157,106,.4); background:rgba(255,157,106,.1); }
+/* Colori dei ruoli: portiere arancione, difensore verde, centrocampo blu (l'accento), attacco
+   bordeaux. Il bordeaux pieno su grafite non si leggerebbe: la scritta è una versione più chiara,
+   il fondo e il bordo sono il bordeaux vero. */
+.postag-ATT{ color:var(--role-att); border-color:rgba(196,52,78,.6); background:rgba(140,29,44,.32); }
 .postag-CEN{ color:var(--dyn); border-color:color-mix(in srgb,var(--c1) 40%,transparent); background:color-mix(in srgb,var(--c1) 10%,transparent); }
-.postag-DIF{ color:var(--blue); border-color:rgba(36,89,201,.4); background:rgba(36,89,201,.1); }
-.postag-POR{ color:var(--good); border-color:rgba(14,138,76,.4); background:rgba(14,138,76,.1); }
+.postag-DIF{ color:var(--role-dif); border-color:rgba(47,212,121,.4); background:rgba(47,212,121,.1); }
+.postag-POR{ color:var(--role-por); border-color:rgba(255,145,48,.45); background:rgba(255,145,48,.12); }
 .ow-player .wg{ flex:0 0 auto; font-weight:900; color:var(--muted); font-size:11.5px; font-variant-numeric:tabular-nums; }
 .ow-x{
   flex:0 0 auto; width:26px; height:26px; border-radius:8px; border:1px solid var(--line); background:transparent;
