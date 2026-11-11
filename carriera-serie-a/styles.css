@@ -1788,3 +1788,34 @@ input::placeholder{ color:#6f7277; }
 /* stemmi su fondo chiaro: sul grafite i colori scuri del club sparirebbero */
 .setup-crest, .ow-club-crest-preview, .ow-hero-crest{ background:#f2f2f0; border-radius:14px; padding:8px; box-sizing:content-box; filter:drop-shadow(0 10px 18px rgba(0,0,0,.5)); }
 @media (max-width:1099px){ .ow-setup-form{ background:none; border:0; } }
+
+/* ---------- stemma: anteprima, scelta a caso, editor facoltativo ---------- */
+.ow-crest-setup{ max-width:520px; margin:6px auto 18px; text-align:left; }
+.ow-crest-setup-top{ display:flex; align-items:center; gap:16px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+.ow-crest-setup-top .setup-crest{ width:64px; height:74px; margin:0; flex:0 0 auto; }
+.ow-crest-setup-txt{ flex:1; min-width:0; }
+.ow-crest-details{ margin-top:8px; background:var(--panel); border:1px solid var(--line); border-radius:10px; }
+.ow-crest-details > summary{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px; min-height:46px; padding:10px 14px; font:800 15px/1 var(--cond); font-style:italic; text-transform:uppercase; letter-spacing:.05em; color:var(--txt); }
+.ow-crest-details > summary::-webkit-details-marker{ display:none; }
+.ow-crest-details > summary small{ font:600 12px/1 var(--sans); font-style:normal; text-transform:none; letter-spacing:0; color:var(--muted); }
+.ow-crest-details > summary::after{ content:"+"; margin-left:auto; font:400 22px/1 var(--display); color:var(--c1-ink); }
+.ow-crest-details[open] > summary::after{ content:"–"; }
+.ow-crest-details[open] > summary{ border-bottom:1px solid var(--line); }
+.ow-crest-ed{ padding:6px 14px 14px; }
+.ow-crest-lbl{ margin:12px 0 6px; font:800 12px/1 var(--cond); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.ow-crest-row{ display:grid; grid-template-columns:repeat(auto-fill, minmax(70px, 1fr)); gap:6px; }
+.ow-crest-opt{ appearance:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; padding:7px 4px 6px; background:var(--panel2); border:1.5px solid var(--line); border-radius:8px; color:var(--txt); font:700 11px/1.15 var(--sans); }
+.ow-crest-opt:hover{ border-color:var(--muted); }
+.ow-crest-opt.on{ border-color:var(--c1); background:color-mix(in srgb, var(--c1) 14%, var(--panel2)); color:var(--txt); }
+.ow-crest-opt span{ text-align:center; }
+.ow-crest-mini{ width:36px; height:42px; display:block; }
+.ow-crest-colors2{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px; }
+.ow-crest-colors2 .dyn-mini{ padding:9px 12px; }
+.ow-crest-text{ display:flex; flex-direction:column; gap:5px; flex:1; min-width:140px; }
+.ow-crest-text span{ font:800 10.5px/1 var(--cond); letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.ow-crest-text input{ height:42px; padding:0 12px; border-radius:8px; border:1.5px solid var(--line); background:var(--panel2); color:var(--txt); font:400 20px/1 var(--display); letter-spacing:.12em; text-transform:uppercase; }
+.ow-crest-acts{ display:flex; gap:8px; margin-top:14px; }
+.ow-crest-acts .dyn-mini{ flex:1; }
+.ow-crest-edit-preview{ display:flex; justify-content:center; margin:2px 0 6px; }
+.ow-crest-edit-preview .setup-crest{ width:76px; height:88px; }
+.dyn-modal .ow-crest-ed{ padding:0; text-align:left; }

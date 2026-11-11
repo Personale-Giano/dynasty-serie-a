@@ -66,21 +66,6 @@
   // — l'escaping va fatto qui, in fase di rendering, non troncando il testo a monte.
   const escapeHtml = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-  // I tre "disegni" disponibili: contorno + un piccolo emblema a stella interno, entrambi
-  // riempiti con lo stesso gradiente a 2 colori scelto dal presidente.
-  function crestInner(shape, gradId) {
-    if (shape === 'round') {
-      return `<circle cx="60" cy="63" r="56" fill="url(#${gradId})" fill-opacity=".18" stroke="url(#${gradId})" stroke-width="3.5"/>
-        <path d="M60 33 L67 53 L88 54 L71 67 L77 88 L60 76 L43 88 L49 67 L32 54 L53 53 Z" fill="url(#${gradId})"/>`;
-    }
-    if (shape === 'hex') {
-      return `<path d="M60 4 L108 30 V90 L60 116 L12 90 V30 Z" fill="url(#${gradId})" fill-opacity=".18" stroke="url(#${gradId})" stroke-width="3.5"/>
-        <path d="M60 32 L67 52 L88 53 L71 66 L77 87 L60 75 L43 87 L49 66 L32 53 L53 52 Z" fill="url(#${gradId})"/>`;
-    }
-    return `<path d="M60 4 L112 26 V64 C112 96 90 120 60 134 C30 120 8 96 8 64 V26 Z" fill="url(#${gradId})" fill-opacity=".18" stroke="url(#${gradId})" stroke-width="3.5"/>
-      <path d="M60 40 L67 60 L88 61 L71 74 L77 95 L60 83 L43 95 L49 74 L32 61 L53 60 Z" fill="url(#${gradId})"/>`;
-  }
-
   // Illustrazione dello stadio: la "ciotola" (ellissi concentriche attorno al campo) guadagna
   // un anello ogni 2 livelli di ampliamento (STADIUM in data.js ne ha 9), fino a un tetto di 4
   // — cresce visibilmente con la capienza invece di restare sempre lo stesso disegno. A destra
@@ -109,15 +94,113 @@
     return `<svg viewBox="0 0 300 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;max-height:150px" role="img" aria-label="Stadio, ${rings} anelli, affluenza attesa ${pct}%">${bowl}${gauge}</svg>`;
   }
 
-  function crestMarkup(shape, colors, cls) {
-    const id = 'cg' + (crestUid++);
+  // ---------------- stemma del club ----------------
+  // Disegnato in SVG a partire da cinque scelte: forma, motivo, simbolo, due colori e (facoltative)
+  // le iniziali. Tutto è facoltativo: alla creazione del club ne nasce uno a caso, e chi vuole lo
+  // cambia nell'editor (crestEditorHTML) o più avanti da "Il mio club".
+  const CREST_SHAPES = {
+    shield: { label: 'Scudo', d: 'M60 4 L112 26 V64 C112 96 90 120 60 134 C30 120 8 96 8 64 V26 Z' },
+    classic: { label: 'Classico', d: 'M10 8 H110 V70 C110 104 86 124 60 134 C34 124 10 104 10 70 Z' },
+    round: { label: 'Tondo', d: 'M60 11 A58 58 0 1 1 59.99 11 Z' },
+    hex: { label: 'Esagono', d: 'M60 4 L112 32 V106 L60 134 L8 106 V32 Z' },
+    gothic: { label: 'Ad arco', d: 'M8 16 Q60 -4 112 16 V66 C112 98 88 120 60 134 C32 120 8 98 8 66 Z' },
+    badge: { label: 'Riquadro', d: 'M30 6 H90 Q114 6 114 30 V108 Q114 132 90 132 H30 Q6 132 6 108 V30 Q6 6 30 6 Z' },
+  };
+  const CREST_PATTERNS = {
+    plain: { label: 'Tinta unita', svg: () => '' },
+    stripes: { label: 'Strisce', svg: (c) => [0, 24, 48, 72, 96].map((x) => `<rect x="${x + 6}" y="0" width="12" height="138" fill="${c}"/>`).join('') },
+    hoops: { label: 'Bande', svg: (c) => [10, 42, 74, 106].map((y) => `<rect x="0" y="${y}" width="120" height="16" fill="${c}"/>`).join('') },
+    halves: { label: 'Partito', svg: (c) => `<rect x="60" y="0" width="60" height="138" fill="${c}"/>` },
+    quarters: { label: 'Inquartato', svg: (c) => `<rect x="60" y="0" width="60" height="69" fill="${c}"/><rect x="0" y="69" width="60" height="69" fill="${c}"/>` },
+    sash: { label: 'Banda diagonale', svg: (c) => `<polygon points="0,0 34,0 120,100 120,138 86,138 0,38" fill="${c}"/>` },
+    chevron: { label: 'Scaglione', svg: (c) => `<polygon points="0,52 60,92 120,52 120,84 60,124 0,84" fill="${c}"/>` },
+    cross: { label: 'Croce', svg: (c) => `<rect x="47" y="0" width="26" height="138" fill="${c}"/><rect x="0" y="56" width="120" height="26" fill="${c}"/>` },
+  };
+  const INK = '#0b0c0e';
+  const starPts = (() => { const p = []; for (let i = 0; i < 10; i++) { const r = i % 2 ? 10 : 24, a = -Math.PI / 2 + i * Math.PI / 5; p.push((r * Math.cos(a)).toFixed(1) + ',' + (r * Math.sin(a)).toFixed(1)); } return p.join(' '); })();
+  const pentaPts = (() => { const p = []; for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; p.push((8 * Math.cos(a)).toFixed(1) + ',' + (8 * Math.sin(a)).toFixed(1)); } return p.join(' '); })();
+  const CREST_SYMBOLS = {
+    star: { label: 'Stella', svg: () => `<polygon points="${starPts}" fill="#fff" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` },
+    ball: { label: 'Pallone', svg: () => `<circle r="22" fill="#fff" stroke="${INK}" stroke-width="2.5"/><polygon points="${pentaPts}" fill="${INK}"/>` + [0, 1, 2, 3, 4].map((i) => { const a = -Math.PI / 2 + i * 2 * Math.PI / 5; return `<line x1="${(8 * Math.cos(a)).toFixed(1)}" y1="${(8 * Math.sin(a)).toFixed(1)}" x2="${(21 * Math.cos(a)).toFixed(1)}" y2="${(21 * Math.sin(a)).toFixed(1)}" stroke="${INK}" stroke-width="2"/>`; }).join('') },
+    crown: { label: 'Corona', svg: () => `<path d="M-24 10 L-26 -12 L-12 0 L0 -20 L12 0 L26 -12 L24 10 Z M-24 13 H24 V21 H-24 Z" fill="#fff" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` },
+    tower: { label: 'Torre', svg: () => `<path d="M-17 22 V-6 H-21 V-21 H-13 V-14 H-5 V-21 H5 V-14 H13 V-21 H21 V-6 H17 V22 Z" fill="#fff" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/><path d="M-5 22 V10 A5 5 0 0 1 5 10 V22 Z" fill="${INK}"/>` },
+    bolt: { label: 'Fulmine', svg: () => `<path d="M7 -25 L-15 4 H-1 L-7 25 L15 -6 H1 Z" fill="#fff" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>` },
+    none: { label: 'Nessuno', svg: () => '' },
+  };
+  let crestUidN = 0;
+  const cleanCrestText = (t) => String(t || '').toUpperCase().replace(/[^A-Z0-9ÀÈÉÌÒÙ]/g, '').slice(0, 3);
+  // style: { pattern, symbol, text } — i valori mancanti (carriere vecchie) hanno un ripiego.
+  function crestMarkup(shape, colors, cls, style) {
+    const sh = CREST_SHAPES[shape] || CREST_SHAPES.shield;
     const c = colors && colors.length === 2 ? colors : CREST_DEFAULT.colors;
+    const st = style || {};
+    const pat = CREST_PATTERNS[st.pattern] || CREST_PATTERNS.plain;
+    const sym = CREST_SYMBOLS[st.symbol] || (st.symbol === undefined ? CREST_SYMBOLS.star : CREST_SYMBOLS.none);
+    const text = cleanCrestText(st.text);
+    const id = 'cr' + (crestUidN++);
+    const outline = sh.d;
+    const hasSym = sym !== CREST_SYMBOLS.none;
+    const symY = text && hasSym ? 80 : 68;
+    const textEl = !text ? '' : hasSym
+      ? `<rect x="22" y="22" width="76" height="22" rx="3" fill="${INK}" fill-opacity=".72"/><text x="60" y="39.5" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="17" letter-spacing="1.5" fill="#fff">${text}</text>`
+      : `<text x="60" y="${text.length > 2 ? 84 : 88}" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="${text.length > 2 ? 40 : 50}" fill="#fff" stroke="${INK}" stroke-width="2.5" paint-order="stroke">${text}</text>`;
     return `<svg viewBox="0 0 120 138" xmlns="http://www.w3.org/2000/svg" class="${cls || ''}" aria-hidden="true">
-      <defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="${c[0]}" /><stop offset="1" stop-color="${c[1]}" />
-      </linearGradient></defs>
-      ${crestInner(shape || CREST_DEFAULT.shape, id)}
+      <defs><clipPath id="${id}"><path d="${outline}"/></clipPath>
+        <linearGradient id="${id}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient></defs>
+      <g clip-path="url(#${id})"><rect width="120" height="138" fill="${c[0]}"/>${pat.svg(c[1])}<rect width="120" height="138" fill="url(#${id}g)"/></g>
+      <path d="${outline}" fill="none" stroke="${INK}" stroke-width="7" stroke-linejoin="round"/>
+      <path d="${outline}" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/>
+      ${hasSym ? `<g transform="translate(60 ${symY})">${sym.svg()}</g>` : ''}
+      ${textEl}
     </svg>`;
+  }
+  // Lo stemma di un club (carriera o stanza): tutte le scelte salvate sul ctx.
+  const crestStyleOf = (ctx) => ({ pattern: ctx && ctx.crestPattern, symbol: ctx && ctx.crestSymbol, text: ctx && ctx.crestText });
+  const crestOf = (ctx, cls) => crestMarkup(ctx && ctx.crestShape, ctx && ctx.crestColors, cls, crestStyleOf(ctx));
+  // Uno stemma a caso, coerente: colori casuali, forma, motivo e simbolo pescati fra quelli disponibili.
+  function randomCrest() {
+    return { shape: pick(Object.keys(CREST_SHAPES)), colors: randCrestColors(), pattern: pick(['plain', 'stripes', 'hoops', 'halves', 'quarters', 'sash', 'chevron', 'cross', 'stripes', 'halves']), symbol: pick(['star', 'ball', 'crown', 'tower', 'bolt', 'star', 'ball']), text: '' };
+  }
+
+  // Editor dello stemma, uguale nella creazione del club e in "Il mio club". `st` è lo stato
+  // { shape, colors, pattern, symbol, text }; `onChange` viene chiamata a ogni modifica.
+  function crestEditorHTML(st, pfx) {
+    const mini = (shape, pattern, symbol) => crestMarkup(shape, st.colors, 'ow-crest-mini', { pattern, symbol, text: '' });
+    const pills = (group, items, cur, render) => `<div class="ow-crest-row" role="group" aria-label="${group}">${Object.keys(items).map((k) => `<button type="button" class="ow-crest-opt${k === cur ? ' on' : ''}" aria-pressed="${k === cur}" data-${pfx}-${group}="${k}" title="${items[k].label}">${render(k)}<span>${items[k].label}</span></button>`).join('')}</div>`;
+    return `
+      <div class="ow-crest-ed">
+        <div class="ow-crest-lbl">Forma</div>
+        ${pills('shape', CREST_SHAPES, st.shape, (k) => mini(k, 'plain', 'none'))}
+        <div class="ow-crest-lbl">Motivo</div>
+        ${pills('pattern', CREST_PATTERNS, st.pattern, (k) => mini(st.shape, k, 'none'))}
+        <div class="ow-crest-lbl">Simbolo</div>
+        ${pills('symbol', CREST_SYMBOLS, st.symbol, (k) => mini(st.shape, st.pattern, k))}
+        <div class="ow-crest-lbl">Colori e iniziali</div>
+        <div class="ow-crest-colors2">
+          <label class="ow-crest-swatch"><span>Primario</span><input type="color" data-${pfx}-color="0" value="${st.colors[0]}"></label>
+          <label class="ow-crest-swatch"><span>Secondario</span><input type="color" data-${pfx}-color="1" value="${st.colors[1]}"></label>
+          <button type="button" class="dyn-mini" data-${pfx}-act="swap" title="Scambia i due colori">Inverti</button>
+          <label class="ow-crest-text"><span>Iniziali (facoltative)</span><input type="text" maxlength="3" placeholder="es. TRN" value="${cleanCrestText(st.text)}" data-${pfx}-text></label>
+        </div>
+        <div class="ow-crest-acts">
+          <button type="button" class="dyn-mini" data-${pfx}-act="colors">Colori a caso</button>
+          <button type="button" class="dyn-mini" data-${pfx}-act="all">Stemma a caso</button>
+        </div>
+      </div>`;
+  }
+  function bindCrestEditor(root, st, pfx, onChange) {
+    const redraw = () => { onChange(); };
+    ['shape', 'pattern', 'symbol'].forEach((g) => root.querySelectorAll(`[data-${pfx}-${g}]`).forEach((b) => b.addEventListener('click', () => { st[g] = b.dataset[pfx + g.charAt(0).toUpperCase() + g.slice(1)]; redraw(); })));
+    root.querySelectorAll(`[data-${pfx}-color]`).forEach((inp) => inp.addEventListener('input', () => { st.colors[+inp.dataset[pfx + 'Color']] = inp.value; redraw(); }));
+    const txt = root.querySelector(`[data-${pfx}-text]`);
+    if (txt) txt.addEventListener('input', () => { const v = cleanCrestText(txt.value); st.text = v; if (txt.value !== v) txt.value = v; onChange(true); });
+    root.querySelectorAll(`[data-${pfx}-act]`).forEach((b) => b.addEventListener('click', () => {
+      const a = b.dataset[pfx + 'Act'];
+      if (a === 'swap') st.colors = [st.colors[1], st.colors[0]];
+      else if (a === 'colors') st.colors = randCrestColors();
+      else if (a === 'all') { const r = randomCrest(); Object.assign(st, r, { text: st.text }); }
+      redraw();
+    }));
   }
 
   // Aggiorna lo stemma nella barra home con quello del club attivo (o quello di
@@ -126,7 +209,7 @@
     const wrap = $('owHomeCrestWrap'); if (!wrap) return;
     const shape = (S && S.crestShape) || CREST_DEFAULT.shape;
     const colors = (S && S.crestColors) || CREST_DEFAULT.colors;
-    wrap.innerHTML = crestMarkup(shape, colors, '');
+    wrap.innerHTML = S ? crestOf(S, '') : crestMarkup(shape, colors, '');
     const lbl = $('owHomeLabel'); if (lbl) lbl.textContent = (S && S.club) || 'Presidente';
     const sub = $('owHomeSub'); if (sub) sub.textContent = S ? divOf().name + ' · Stagione ' + S.season + '/' + (S.maxSeasons || MAX_SEASONS) : 'Presidente · Serie A';
     applyClubTheme(S && S.crestColors);
@@ -1615,7 +1698,7 @@
       }, 'image/png');
     };
     try {
-      const svgBlob = new Blob([crestMarkup(S.crestShape, S.crestColors, '')], { type: 'image/svg+xml' });
+      const svgBlob = new Blob([crestOf(S, '')], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(svgBlob);
       const img = new Image();
       img.onload = () => { const cw = 150, ch = 172; ctx.drawImage(img, W / 2 - cw / 2, H - ch - 94, cw, ch); URL.revokeObjectURL(url); finish(); };
@@ -1695,7 +1778,7 @@
       }, 'image/png');
     };
     try {
-      const svgBlob = new Blob([crestMarkup(S.crestShape, S.crestColors, '')], { type: 'image/svg+xml' });
+      const svgBlob = new Blob([crestOf(S, '')], { type: 'image/svg+xml' });
       const url = URL.createObjectURL(svgBlob);
       const img = new Image();
       img.onload = () => { const cw = 150, ch = 172; ctx.drawImage(img, W / 2 - cw / 2, H - ch - 94, cw, ch); URL.revokeObjectURL(url); finish(); };
@@ -1776,8 +1859,9 @@
   // conferma (irreversibili sul colpo) e un badge "🔥 Hardcore" ben visibile in Dirigenza.
   let startHardcore = false;
 
-  // Stato dello stemma in fase di creazione del club (prima che esista S).
-  let crestShape = CREST_DEFAULT.shape, crestColors = randCrestColors();
+  // Stato dello stemma in fase di creazione del club (prima che esista S): nasce a caso,
+  // startDynasty (sim.js) lo copia nella carriera.
+  let crestSetup = randomCrest();
 
   // Filtro/ordinamento della lista rosa in sala del consiglio: solo preferenza di vista,
   // non tocca lo stato di gioco.
@@ -1881,12 +1965,11 @@
     }));
   }
 
-  function updateCrestPreview() {
-    const wrap = $('crestPreviewWrap'); if (wrap) wrap.innerHTML = crestMarkup(crestShape, crestColors, 'setup-crest');
-    applyClubTheme(crestColors);
-    const c1 = $('crestColor1'), c2 = $('crestColor2');
-    if (c1) c1.value = crestColors[0]; if (c2) c2.value = crestColors[1];
-    document.querySelectorAll('.ow-crest-shape').forEach((el) => { const on = el.dataset.shape === crestShape; el.classList.toggle('on', on); el.setAttribute('aria-pressed', on); });
+  function updateCrestPreview(textOnly) {
+    const wrap = $('crestPreviewWrap'); if (wrap) wrap.innerHTML = crestMarkup(crestSetup.shape, crestSetup.colors, 'setup-crest', crestSetup);
+    applyClubTheme(crestSetup.colors);
+    const ed = $('crestEditorWrap');
+    if (ed && !textOnly) { ed.innerHTML = crestEditorHTML(crestSetup, 'ce'); bindCrestEditor(ed, crestSetup, 'ce', updateCrestPreview); }
   }
 
   // Un doppio tocco su "Compra il club" creava due carriere identiche (due slot salvati):
@@ -1901,12 +1984,8 @@
     takeovers = genTakeovers(startDiv); renderTakeovers();
     if (!$('owClubName').value) { lastSuggestedClub = pick(POOLS[startDiv]).n; $('owClubName').value = lastSuggestedClub; }   // suggerimento a caso, modificabile
     updateCrestPreview();
-    document.querySelectorAll('.ow-crest-shape').forEach((el) => el.addEventListener('click', () => { crestShape = el.dataset.shape; updateCrestPreview(); }));
-    const c1 = $('crestColor1'), c2 = $('crestColor2');
-    if (c1) c1.addEventListener('input', (e) => { crestColors[0] = e.target.value; updateCrestPreview(); });
-    if (c2) c2.addEventListener('input', (e) => { crestColors[1] = e.target.value; updateCrestPreview(); });
     const crestReroll = $('crestRerollBtn');
-    if (crestReroll) crestReroll.addEventListener('click', () => { crestColors = randCrestColors(); updateCrestPreview(); });
+    if (crestReroll) crestReroll.addEventListener('click', () => { crestSetup = Object.assign(randomCrest(), { text: crestSetup.text }); updateCrestPreview(); if (DynSound) DynSound.tap(); });
     $('owRerollBtn').addEventListener('click', () => { takeovers = genTakeovers(startDiv); selTakeover = -1; renderTakeovers(); toast('Nuove condizioni di partenza sul tavolo.'); });
     // Con gli slot multipli, comprare un nuovo club non minaccia mai le carriere già
     // salvate (restano nell'elenco "Le tue carriere" qui sotto): nessuna conferma di
@@ -2982,7 +3061,7 @@
         <div class="cell"><span>Costo d'avvio</span><b>${fmtMoney(bill)}</b></div>
         <div class="cell free"><span>Libero da spendere</span><b class="${free < 0 ? 'bad' : ''}">${fmtMoney(free)}</b></div>
       </div>
-      ${crestMarkup(S.crestShape, S.crestColors, 'ow-board-crest')}
+      ${crestOf(S, 'ow-board-crest')}
       <div class="dyn-top"><div class="dyn-top-title">Dirigenza${S.hardcore ? ' <span class="ow-invpill" style="display:inline-block;vertical-align:middle;font-size:11px;padding:2px 8px" title="Cessioni immediate, spin senza rimborso, niente rilancio sulle offerte, niente scorciatoie sulla cassa, +25% rischio infortuni, imprevisti negativi più pesanti, buonuscita staff al 50%">🔥 Hardcore</span>' : ''}</div><div class="dyn-top-sub">${S.owner} · ${S.club} · Stagione ${S.season} di ${S.maxSeasons || MAX_SEASONS}</div></div>
       ${ladderHTML()}
       ${S.investorDeal ? (() => { const left = S.investorDeal.deadlineSeason - S.season; return `<div class="ow-invpill${left <= 1 ? ' urgent' : ''}" title="Fondo d'investimento: ${S.investorDeal.name}">🏦 Obiettivo fondo: ${DIVS[S.investorDeal.targetDiv].name} entro la stagione ${S.investorDeal.deadlineSeason} (${left <= 0 ? 'ultima chiamata' : 'mancano ' + left + ' stagion' + (left === 1 ? 'e' : 'i')})</div>`; })() : ''}
@@ -3794,7 +3873,7 @@
       .sort((a, b) => (b.goals + b.assists) - (a.goals + a.assists) || b.apps - a.apps)
       .slice(0, 5);
     body.innerHTML = `
-      <div class="dyn-top">${crestMarkup(S.crestShape, S.crestColors, 'ow-hero-crest')}<div class="dyn-top-title">${h[0]}</div><div class="dyn-top-sub">${h[1]}</div></div>
+      <div class="dyn-top">${crestOf(S, 'ow-hero-crest')}<div class="dyn-top-title">${h[0]}</div><div class="dyn-top-sub">${h[1]}</div></div>
       <div class="dyn-panel">
         <div class="pl-hero"><div class="big" style="font-size:56px">${fmtMoney(how === 'sold' ? S._sale : worth)}</div><div class="cap">${how === 'sold' ? 'PREZZO DI VENDITA' : 'VALORE FINALE DEL CLUB'}</div></div>
         <div class="dyn-trophies">${honours.length ? honours.map((x) => `<span class="trophy">🏆 ${x}</span>`).join('') : '<span class="trophy none">Nessun trofeo</span>'}</div>
@@ -4642,7 +4721,7 @@
     const worth = computeWorth();
     overlay(`
       <h2>${escapeHtml(S.club)}</h2>
-      <div style="display:flex;justify-content:center;margin:2px 0 10px">${crestMarkup(S.crestShape, S.crestColors, 'ow-club-crest-preview')}</div>
+      <div style="display:flex;justify-content:center;margin:2px 0 10px">${crestOf(S, 'ow-club-crest-preview')}</div>
       <div class="ow-fin-row"><span>Budget</span><b>${fmtMoney(S.budget)}</b></div>
       <div class="ow-fin-row"><span>Valore del club</span><b>${fmtMoney(worth)}</b></div>
       <div class="ow-fin-row"><span>Stadio</span><b>${capOf().toLocaleString('it-IT')} posti</b></div>
@@ -4663,43 +4742,31 @@
   // Riapre lo stesso editor visto in fase di creazione (forma + due colori), ma per il
   // club già in carriera: prima non c'era modo di rivedere lo stemma dopo averlo scelto.
   function showCrestEditor() {
-    let shape = S.crestShape, colors = S.crestColors.slice();
-    const syncPreview = () => {
-      const wrap = $('editCrestPreview'); if (wrap) wrap.innerHTML = crestMarkup(shape, colors, 'setup-crest');
-      $('owOverlayModal').querySelectorAll('.ow-crest-shape').forEach((el) => el.classList.toggle('on', el.dataset.shape === shape));
+    const st = { shape: S.crestShape, colors: S.crestColors.slice(), pattern: S.crestPattern || 'plain', symbol: S.crestSymbol || 'star', text: S.crestText || '' };
+    const draw = (textOnly) => {
+      const pv = $('editCrestPreview'); if (pv) pv.innerHTML = crestMarkup(st.shape, st.colors, 'setup-crest', st);
+      const ed = $('editCrestEditor');
+      if (ed && !textOnly) { ed.innerHTML = crestEditorHTML(st, 'ced'); bindCrestEditor(ed, st, 'ced', draw); }
     };
     overlay(`
-      <h2>Modifica stemma</h2>
-      <span id="editCrestPreview" style="display:flex;justify-content:center;margin:2px 0 14px">${crestMarkup(shape, colors, 'setup-crest')}</span>
-      <div class="ow-crest-picker">
-        <div class="ow-crest-shapes">
-          <button type="button" class="ow-crest-shape" data-shape="shield">Scudo</button>
-          <button type="button" class="ow-crest-shape" data-shape="round">Tondo</button>
-          <button type="button" class="ow-crest-shape" data-shape="hex">Esagono</button>
-        </div>
-        <div class="ow-crest-colors">
-          <label class="ow-crest-swatch"><span>Primario</span><input type="color" id="editCrestColor1" value="${colors[0]}" /></label>
-          <label class="ow-crest-swatch"><span>Secondario</span><input type="color" id="editCrestColor2" value="${colors[1]}" /></label>
-        </div>
-        <button type="button" class="ow-crest-reroll" id="editCrestReroll">🎲 Colori casuali</button>
-      </div>
+      <h2>Stemma del club</h2>
+      <span id="editCrestPreview" class="ow-crest-edit-preview"></span>
+      <div id="editCrestEditor"></div>
       <div class="dyn-modal-actions" style="margin-top:12px">
         <button class="dyn-btn dyn-btn-primary" id="ovCrestSave">Salva</button>
         <button class="dyn-btn" id="ovCrestCancel" data-esc>Annulla</button>
       </div>`);
-    syncPreview();
-    $('owOverlayModal').querySelectorAll('.ow-crest-shape').forEach((el) => el.addEventListener('click', () => { shape = el.dataset.shape; syncPreview(); }));
-    $('editCrestColor1').addEventListener('input', (e) => { colors[0] = e.target.value; syncPreview(); });
-    $('editCrestColor2').addEventListener('input', (e) => { colors[1] = e.target.value; syncPreview(); });
-    $('editCrestReroll').addEventListener('click', () => { colors = randCrestColors(); $('editCrestColor1').value = colors[0]; $('editCrestColor2').value = colors[1]; syncPreview(); });
-    $('ovCrestSave').onclick = () => { S.crestShape = shape; S.crestColors = colors; closeOverlay(); syncHomeCrest();
-      // "Il mio club" si apre anche dalla schermata partite: renderBoard() qui riportava in
-      // Dirigenza a campionato in corso (con "Inizia Stagione" di nuovo premibile). Si
-      // ridisegna la board solo se è davvero la schermata in cui ci si trova.
+    draw();
+    $('ovCrestSave').onclick = () => {
+      S.crestShape = st.shape; S.crestColors = st.colors.slice(); S.crestPattern = st.pattern; S.crestSymbol = st.symbol; S.crestText = cleanCrestText(st.text);
+      closeOverlay(); syncHomeCrest();
+      // da "Il mio club" si può arrivare anche a stagione in corso: la Dirigenza si ridisegna solo se è aperta
       if (S._screen === 'owBoardScreen') renderBoard();
-      saveGame(); toast('Nuovo stemma salvato.', 'success'); };
+      saveGame(); toast('Stemma aggiornato.', 'success');
+    };
     $('ovCrestCancel').onclick = showClub;
   }
+
 
   /* ---------------- overlay / toast ---------------- */
   // Selettore dei soli elementi che possono ricevere il focus da tastiera, usato sia per il

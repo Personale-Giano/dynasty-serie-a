@@ -1041,6 +1041,10 @@
     }
     if (!S.crestColors) S.crestColors = randCrestColors();
     if (!S.crestShape) S.crestShape = CREST_DEFAULT.shape;
+    // stemmi delle carriere nate prima del nuovo editor: motivo e simbolo come allora (stella su tinta unita)
+    if (!S.crestPattern) S.crestPattern = 'plain';
+    if (!S.crestSymbol) S.crestSymbol = 'star';
+    if (typeof S.crestText !== 'string') S.crestText = '';
     if (S.scoutLevel == null) S.scoutLevel = 0;
     if (S.autoInvestor == null) S.autoInvestor = false;
     if (!S.derbyRecord) S.derbyRecord = {};
@@ -1949,7 +1953,7 @@
       history: [], over: false, peakWorth: 0,
       achievements: [], startDiv: div, noRelegStreak: 0, sportingDirector: null, fitnessCoach: null, story: {}, cast: {},
       pidNext: 1, offers: [], alumni: [],
-      crestShape: crestShape, crestColors: crestColors.slice(),
+      crestShape: crestSetup.shape, crestColors: crestSetup.colors.slice(), crestPattern: crestSetup.pattern, crestSymbol: crestSetup.symbol, crestText: String(crestSetup.text || '').toUpperCase().replace(/[^A-Z0-9ÀÈÉÌÒÙ]/g, '').slice(0, 3),
       scoutLevel: 0, scoutProspects: [], scoutProspectSeason: 0,
       market: null, marketSeenB: div >= 4, marketSeenA: div >= 5,
       formation: '433', tacticStyle: { ...DEFAULT_TACTIC_STYLE }, turboMode: false,

@@ -747,6 +747,9 @@ const TEST_BODY = `
 
   /* ---------------- richieste dell\\'interfaccia: classifica, motivi, registro gare, spin in sospeso ---------------- */
   __section('dati per l\\'interfaccia', function () {
+    // stemma: le scelte dell'editor arrivano nella carriera (iniziali ripulite e maiuscole)
+    __newCareer(0, 'medio');
+    __assert(S.crestShape === 'shield' && S.crestPattern === 'stripes' && S.crestSymbol === 'ball' && S.crestText === 'TRN', 'stemma: forma, motivo, simbolo e iniziali salvati nella carriera');
     __seed(61);
     __newCareer(4, 'medio'); __prepare();
     S.budget = kickoffBill() - 1;
@@ -840,7 +843,7 @@ const sandbox = {
   navigator: { onLine: true },
   DynSound: null,
   // Stato del selettore stemma di ui.js, letto da startDynasty.
-  crestShape: 'shield', crestColors: ['#f0c869', '#7a4f16'],
+  crestSetup: { shape: 'shield', colors: ['#f0c869', '#7a4f16'], pattern: 'stripes', symbol: 'ball', text: 'trn' },
 };
 // Le funzioni di ui.js che il motore chiama a fine azione: qui non fanno nulla.
 ['toast', 'show', 'renderBoard', 'renderHud', 'renderCups', 'renderSeasonTarget', 'renderScouting', 'renderSeasonEnd', 'renderEnd',

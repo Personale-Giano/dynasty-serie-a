@@ -21,7 +21,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800;1,900&family=Inter:wght@400;500;600;700;800;900&display=swap" />
-<link rel="stylesheet" href="styles.css?v=40" />
+<link rel="stylesheet" href="styles.css?v=41" />
 <script src="errors.js?v=67"></script>
 </head>
 <body class="dyn">
@@ -80,19 +80,20 @@
       <span>Nome del club</span>
       <input id="owClubName" type="text" maxlength="24" placeholder="Nome del club" autocomplete="off" />
     </label>
-    <span id="crestPreviewWrap"></span>
-    <div class="dyn-aggr-label" style="text-align:center;margin:6px 0 8px">Disegna lo stemma del club</div>
-    <div class="ow-crest-picker">
-      <div class="ow-crest-shapes" id="crestShapes" role="group" aria-label="Forma dello stemma">
-        <button type="button" class="ow-crest-shape" data-shape="shield">Scudo</button>
-        <button type="button" class="ow-crest-shape" data-shape="round">Tondo</button>
-        <button type="button" class="ow-crest-shape" data-shape="hex">Esagono</button>
+    <!-- Stemma: nasce già a caso; personalizzarlo è facoltativo (editor chiuso, crestEditorHTML in ui.js). -->
+    <div class="ow-crest-setup">
+      <div class="ow-crest-setup-top">
+        <span id="crestPreviewWrap"></span>
+        <div class="ow-crest-setup-txt">
+          <div class="dyn-aggr-label" style="margin:0 0 4px">Stemma del club</div>
+          <div class="ow-sub" style="margin:0 0 8px">Ne abbiamo disegnato uno a caso. Puoi tenerlo, pescarne un altro o personalizzarlo.</div>
+          <button type="button" class="dyn-mini" id="crestRerollBtn">Un altro a caso</button>
+        </div>
       </div>
-      <div class="ow-crest-colors">
-        <label class="ow-crest-swatch"><span>Primario</span><input type="color" id="crestColor1" /></label>
-        <label class="ow-crest-swatch"><span>Secondario</span><input type="color" id="crestColor2" /></label>
-      </div>
-      <button type="button" class="ow-crest-reroll" id="crestRerollBtn">🎲 Colori casuali</button>
+      <details class="ow-crest-details" id="crestDetails">
+        <summary>Personalizza lo stemma <small>facoltativo</small></summary>
+        <div id="crestEditorWrap"></div>
+      </details>
     </div>
     <div class="dyn-aggr-label" style="text-align:center;margin:6px 0 8px">Scegli la categoria di partenza</div>
     <div id="divPicker" class="ow-div-picker" role="group" aria-label="Categoria di partenza"></div>
@@ -192,11 +193,11 @@
 <div id="owToast" class="dyn-toast hidden" role="status" aria-live="polite" aria-atomic="true"></div>
 <div id="owLive" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-<script src="sfx.js?v=89"></script>
-<script src="data.js?v=89"></script>
-<script src="rosters.js?v=89"></script>
-<script src="sim.js?v=89"></script>
-<script src="ui.js?v=89"></script>
+<script src="sfx.js?v=90"></script>
+<script src="data.js?v=90"></script>
+<script src="rosters.js?v=90"></script>
+<script src="sim.js?v=90"></script>
+<script src="ui.js?v=90"></script>
 <script>
   // Service worker: rende il gioco installabile ("aggiungi a Home") e disponibile offline
   // dopo la prima visita. Nessun impatto sul deploy: index.html resta sempre network-first.
