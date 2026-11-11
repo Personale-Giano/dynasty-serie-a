@@ -1,6 +1,6 @@
 /* ============================================================
    PRESIDENTE · Serie A — identità "Carbonio" (scelta da Emanuele l'11 nov 2026).
-   Tema scuro: grafite con una leggera trama a fibra di carbonio, un solo accento giallo acceso
+   Tema scuro: grafite con una leggera trama a fibra di carbonio, un solo accento azzurro acceso (era giallo fino all'11 nov 2026)
    per azioni, punti e selezioni, scritte strette e corsive da sport, angoli quasi squadrati.
    I colori del club restano nello stemma e in qualche dettaglio (--club1/--club2, impostati da
    applyClubTheme in ui.js); il resto dell'interfaccia usa sempre lo stesso accento.
@@ -8,7 +8,7 @@
    ============================================================ */
 :root{
   --club1:#8c1d2c; --club2:#1d3f8c;
-  --c1:#ffd000; --c2:#ffd000; --c1-ink:#ffd000; --c1-dark:#a88a00; --on-c1:#111214; --on-c2:#111214;
+  --c1:#2ec5ff; --c2:#2ec5ff; --c1-ink:#2ec5ff; --c1-dark:#1683ad; --on-c1:#04141c; --on-c2:#04141c;
   --bg:#111214;
   --panel:#1b1c20;
   --panel2:#202125;
@@ -1311,8 +1311,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .ow-warn{ border-left:5px solid var(--bad); border-radius:6px; }
 .ow-invpill, .ow-euroflag{ border-radius:6px; }
 .ow-target-pill, .cup-pill{ border-radius:4px; font-family:var(--cond); font-size:13.5px; letter-spacing:.04em; text-transform:uppercase; background:var(--panel); }
-.ow-target-pill.vertice{ background:var(--gold-bg); color:var(--ink); border-color:var(--gold-bg); }
-.real-badge{ background:var(--gold-bg); color:var(--ink); box-shadow:none; border-radius:4px; font-family:var(--cond); font-size:13px; text-transform:uppercase; letter-spacing:.06em; }
+.ow-target-pill.vertice{ background:var(--gold-bg); color:#111214; border-color:var(--gold-bg); }
+.real-badge{ background:var(--gold-bg); color:#111214; box-shadow:none; border-radius:4px; font-family:var(--cond); font-size:13px; text-transform:uppercase; letter-spacing:.06em; }
 .ow-spin-card.is-real{ background:rgba(255,207,74,.12); }
 
 /* ---------- stagione: tabellone ---------- */
@@ -1373,7 +1373,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* ---------- fine stagione / trofei ---------- */
 .pl-hero .big{ color:var(--ink); }
-.trophy{ background:var(--gold-bg); color:var(--ink); border:0; border-radius:4px; font-family:var(--cond); font-size:14px; text-transform:uppercase; letter-spacing:.04em; }
+.trophy{ background:var(--gold-bg); color:#111214; border:0; border-radius:4px; font-family:var(--cond); font-size:14px; text-transform:uppercase; letter-spacing:.04em; }
 .trophy.none{ background:var(--panel2); color:var(--muted); border:1px solid var(--line); }
 .dyn-stat{ background:var(--panel2); border:0; border-left:5px solid var(--c1); border-radius:8px; }
 .dyn-stat span{ font:800 11px/1.2 var(--cond); letter-spacing:.08em; }
@@ -1695,7 +1695,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 
 /* ============================================================
    CARBONIO — strato finale del tema scuro (11 nov 2026).
-   Grafite con trama a fibra di carbonio, accento giallo unico (--c1), colori del club solo
+   Grafite con trama a fibra di carbonio, accento azzurro unico (--c1), colori del club solo
    come dettaglio (--club1/--club2): stemma, filetto della barra, ombra del titolo.
    ============================================================ */
 body{
