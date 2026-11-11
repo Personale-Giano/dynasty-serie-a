@@ -101,7 +101,7 @@
     const pct = Math.round(clamp(fillPct, 0, 1) * 100);
     const gauge = `
       <g transform="translate(230,72)">
-        <circle r="${r}" fill="none" stroke="rgba(20,22,26,.1)" stroke-width="10"/>
+        <circle r="${r}" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="10"/>
         <circle r="${r}" fill="none" stroke="var(--c1)" stroke-width="10" stroke-dasharray="${filled.toFixed(1)} ${empty.toFixed(1)}" stroke-linecap="round" transform="rotate(-90)"/>
         <text text-anchor="middle" dy="5" font-size="18" font-weight="900" fill="var(--txt)" font-family="var(--sans)">${pct}%</text>
       </g>
@@ -165,13 +165,11 @@
     const key = c.join('|'); if (key === lastTheme) return; lastTheme = key;
     const c1 = hexRgb(c[0]), c2 = hexRgb(c[1]);
     const root = document.documentElement.style;
-    root.setProperty('--c1', rgbHex(c1));
-    root.setProperty('--c2', rgbHex(c2));
-    root.setProperty('--on-c1', inkOn(c1));
-    root.setProperty('--on-c2', inkOn(c2));
-    root.setProperty('--c1-ink', rgbHex(readableOnLight(c1)));
-    root.setProperty('--c1-dark', rgbHex(mixRgb(c1, [0, 0, 0], 0.3)));
-    const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute('content', rgbHex(c1));
+    // Tema Carbonio: l'accento dell'interfaccia è sempre il giallo; i colori del club finiscono
+    // nello stemma e in qualche dettaglio (--club1/--club2, vedi styles.css).
+    root.setProperty('--club1', rgbHex(c1));
+    root.setProperty('--club2', rgbHex(c2));
+    root.setProperty('--on-club1', inkOn(c1));
   }
 
   // Colore del badge overall in base a quanto è alto: scarso (grigio) → discreto
@@ -182,8 +180,8 @@
     if (ovr >= 85) return { c: 'var(--gold)', bg: 'rgba(255,190,40,.2)' };
     if (ovr >= 75) return { c: 'var(--good)', bg: 'rgba(14,138,76,.12)' };
     if (ovr >= 65) return { c: 'var(--blue)', bg: 'rgba(36,89,201,.12)' };
-    if (ovr >= 55) return { c: 'var(--txt)', bg: 'rgba(20,22,26,.08)' };
-    return { c: 'var(--muted)', bg: 'rgba(20,22,26,.045)' };
+    if (ovr >= 55) return { c: 'var(--txt)', bg: 'rgba(255,255,255,.08)' };
+    return { c: 'var(--muted)', bg: 'rgba(255,255,255,.045)' };
   }
 
   const ovrBadge = (ovr) => { const t = ovrTier(ovr); return `background:${t.bg};color:${t.c}`; };
@@ -3943,7 +3941,7 @@
     // Podio per i primi 3: il 1° al centro e più grande, come un vero podio, ordinato con
     // CSS `order` (nel markup restano comunque nell'ordine di merito, screen reader inclusi).
     const podium = top10.slice(0, 3).map((e, i) => `
-      <div data-lbpodium="${i}" title="Tocca per i dettagli" style="cursor:pointer;order:${i === 0 ? 2 : i === 1 ? 1 : 3};flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:${i === 0 ? '14px 6px 10px' : '8px 6px'};border-radius:12px;background:${i === 0 ? 'rgba(255,190,40,.2)' : 'rgba(20,22,26,.04)'};border:1px solid ${i === 0 ? 'var(--gold)' : 'var(--line)'}">
+      <div data-lbpodium="${i}" title="Tocca per i dettagli" style="cursor:pointer;order:${i === 0 ? 2 : i === 1 ? 1 : 3};flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;padding:${i === 0 ? '14px 6px 10px' : '8px 6px'};border-radius:12px;background:${i === 0 ? 'rgba(255,208,0,.16)' : 'rgba(255,255,255,.04)'};border:1px solid ${i === 0 ? 'var(--gold)' : 'var(--line)'}">
         <div style="font-size:${i === 0 ? '34px' : '24px'};line-height:1">${medal[i]}</div>
         <div style="font-weight:900;font-size:${i === 0 ? '14px' : '12px'};text-align:center;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${escapeHtml(e.club)}</div>
         <div style="font-size:10px;color:var(--muted);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">${escapeHtml(e.owner)}</div>
