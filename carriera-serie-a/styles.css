@@ -1822,3 +1822,31 @@ input::placeholder{ color:#6f7277; }
 .ow-crest-edit-preview{ display:flex; justify-content:center; margin:2px 0 6px; }
 .ow-crest-edit-preview .setup-crest{ width:76px; height:88px; }
 .dyn-modal .ow-crest-ed{ padding:0; text-align:left; }
+
+/* ---------- schermata partite: bottoni FISSI sul bordo basso ----------
+   Prima erano "sticky" dentro la colonna delle partite: restavano in basso solo finché quella
+   colonna era sullo schermo, e scorrendo (forma, notizie, classifica) sparivano. Ora sono
+   fissati allo schermo, sempre visibili; la pagina ha in fondo lo spazio per non coprire
+   l'ultima riga. */
+#owSeasonScreen .dyn-season-actions{
+  position:fixed; left:0; right:0; bottom:0; z-index:45; margin:0;
+  padding:16px max(16px, calc((100vw - 640px) / 2 + 16px)) calc(12px + env(safe-area-inset-bottom, 0px));
+}
+#owSeasonScreen .dyn-wrap{ padding-bottom:150px; }
+@media (min-width:1100px){
+  #owSeasonScreen .dyn-season-actions{
+    display:grid; grid-template-columns:2fr 1fr; gap:10px;
+    padding:18px max(var(--pad), calc((100vw - 900px) / 2)) 16px;
+  }
+  body:has(#owTopbar:not(.hidden)) #owSeasonScreen .dyn-season-actions{
+    left:var(--side);
+    padding-left:max(var(--pad), calc((100vw - var(--side) - 900px) / 2));
+    padding-right:max(var(--pad), calc((100vw - var(--side) - 900px) / 2));
+  }
+  #owSeasonScreen .dyn-season-actions .dyn-btn{ min-height:58px; }
+  #owSeasonScreen .dyn-wrap{ padding-bottom:120px; }
+}
+@media (min-width:1500px){
+  /* la classifica laterale finisce sopra la barra dei bottoni, non sotto */
+  #owSeasonScreen .ow-col-table{ max-height:calc(100vh - 32px - 110px); }
+}
