@@ -2,6 +2,7 @@
    QUIZZOTTI — Database: Mr.White (nomi calciatori)
    Solo calciatori famosi, che un gruppo di tifosi "normali" sa descrivere
    senza difficolta' (club, nazionale, ruolo, soprannome, momenti iconici).
+   522 calciatori (revisione del 15 nov 2026).
    ========================================================================== */
 
 const wordsList = [
@@ -13,14 +14,23 @@ const wordsList = [
   "Antonio Cassano", "Luca Toni", "Marco Materazzi", "Fabio Grosso", "Antonio Di Natale", "Gianluca Zambrotta",
   "Mauro Camoranesi", "Alberto Gilardino", "Claudio Marchisio", "Mario Balotelli", "Ciro Immobile", "Lorenzo Insigne",
   "Marco Verratti", "Stephan El Shaarawy", "Andrea Belotti", "Domenico Berardi", "Salvatore Schillaci", "Roberto Bettega",
-  "Javier Zanetti", "Simone Perrotta", "Gianluca Pagliuca", "Massimo Ambrosini",
+  "Simone Perrotta", "Gianluca Pagliuca", "Massimo Ambrosini", "Alessandro Florenzi", "Giacinto Facchetti", "Sandro Mazzola",
+  "Giuseppe Meazza", "Silvio Piola", "Gaetano Scirea", "Claudio Gentile", "Marco Tardelli", "Bruno Conti",
+  "Antonio Cabrini", "Alessandro Altobelli", "Giancarlo Antognoni", "Giuseppe Signori", "Attilio Lombardo", "Demetrio Albertini",
+  "Ciro Ferrara", "Fabrizio Ravanelli", "Vincenzo Montella", "Christian Panucci", "Angelo Peruzzi", "Francesco Toldo",
+  "Dario Hübner", "Giuseppe Giannini", "Roberto Donadoni", "Mauro Tassotti", "Alessandro Costacurta", "Sebastian Giovinco",
+  "Graziano Pellè", "Antonio Candreva", "Andrea Barzagli", "Simone Inzaghi", "Marco Di Vaio", "Stefano Tacconi",
+  "Francesco Graziani", "Roberto Boninsegna", "Gabriele Oriali", "Massimo Oddo", "Enrico Chiesa", "Angelo Di Livio",
+  "Riccardo Montolivo", "Emanuele Giaccherini", "Pierluigi Casiraghi", "Aldo Serena",
 
   // --- Italiani di oggi ---
   "Gianluigi Donnarumma", "Nicolò Barella", "Federico Chiesa", "Sandro Tonali", "Alessandro Bastoni", "Federico Dimarco",
   "Giovanni Di Lorenzo", "Davide Frattesi", "Moise Kean", "Mateo Retegui", "Giacomo Raspadori", "Manuel Locatelli",
   "Riccardo Calafiori", "Gianluca Scamacca", "Lorenzo Pellegrini", "Bryan Cristante", "Matteo Politano", "Jorginho",
   "Nicolò Zaniolo", "Federico Bernardeschi", "Leonardo Spinazzola", "Alex Meret", "Riccardo Orsolini", "Francesco Acerbi",
-  "Destiny Udogie", "Andrea Cambiaso", "Guglielmo Vicario", "Alessandro Buongiorno", "Samuele Ricci",
+  "Destiny Udogie", "Andrea Cambiaso", "Guglielmo Vicario", "Alessandro Buongiorno", "Samuele Ricci", "Mattia Zaccagni",
+  "Matteo Darmian", "Davide Calabria", "Gianluca Mancini", "Nicolò Rovella", "Wilfried Gnonto",
+  "Francesco Pio Esposito", "Giorgio Scalvini", "Emerson Palmieri", "Federico Gatti",
 
   // --- Stranieri che hanno fatto la storia della Serie A ---
   "Diego Maradona", "Michel Platini", "Marco van Basten", "Ruud Gullit", "Frank Rijkaard", "Gabriel Batistuta",
@@ -33,13 +43,28 @@ const wordsList = [
   "Mauro Icardi", "Ivan Perišić", "Romelu Lukaku", "Josip Iličić", "Papu Gómez", "Duván Zapata",
   "Sergej Milinković-Savić", "Luis Alberto", "Cristiano Ronaldo", "Olivier Giroud", "Hakan Çalhanoğlu", "Milan Škriniar",
   "Fabio Quagliarella", "Hernanes", "Miroslav Klose", "Radja Nainggolan", "Kevin-Prince Boateng", "Dejan Stanković",
+  "Javier Zanetti", "Mohamed Salah", "Omar Sívori", "John Charles", "José Altafini", "Karl-Heinz Rummenigge",
+  "Andreas Brehme", "Zico", "Paulo Roberto Falcão", "Careca", "Sócrates", "Michael Laudrup",
+  "Jürgen Kohler", "Rudi Völler", "Dejan Savićević", "Zvonimir Boban", "Marcel Desailly", "Oliver Bierhoff",
+  "Patrick Vieira", "Iván Zamorano", "Álvaro Recoba", "Youri Djorkaeff", "Marcelo Salas", "Alen Bokšić",
+  "Siniša Mihajlović", "Diego Simeone", "Claudio Caniggia", "Abel Balbo", "Jaap Stam", "Walter Samuel",
+  "Iván Córdoba", "Esteban Cambiasso", "Júlio César", "Maicon", "Lúcio", "Aldair",
+  "Vincent Candela", "Ezequiel Lavezzi", "José Callejón", "Pepe Reina", "Kostas Manolas", "Medhi Benatia",
+  "Blaise Matuidi", "Sami Khedira", "Alex Sandro", "Stephan Lichtsteiner", "Douglas Costa", "Robinho",
+  "Mark van Bommel", "Krzysztof Piątek", "Franck Kessié", "Ismaël Bennacer", "Fikayo Tomori", "Simon Kjær",
+  "Luis Muriel", "Kim Min-jae", "Hirving Lozano", "Arkadiusz Milik", "Chris Smalling", "Tammy Abraham",
+  "Felipe Anderson", "Lucas Leiva", "Stefan de Vrij", "Marcelo Brozović", "Christian Eriksen", "Hidetoshi Nakata",
+  "Keisuke Honda", "Enzo Francescoli", "Cristian Chivu", "Thiago Motta", "Alexis Sánchez", "Philippe Coutinho",
+  "Rodrigo Bentancur",
 
   // --- Protagonisti recenti della Serie A ---
   "Lautaro Martínez", "Marcus Thuram", "Khvicha Kvaratskhelia", "Victor Osimhen", "Rafael Leão", "Theo Hernández",
   "Mike Maignan", "Christian Pulisic", "Dušan Vlahović", "Kenan Yıldız", "Scott McTominay", "Kevin De Bruyne",
   "Luka Modrić", "Ademola Lookman", "Teun Koopmeiners", "Tijjani Reijnders", "Rasmus Højlund", "Denzel Dumfries",
-  "Henrikh Mkhitaryan", "Stanislav Lobotka", "Yann Sommer", "Nico Paz", "Artem Dovbyk",
-  "Matías Soulé", "Mohamed Salah", "Alisson Becker", "Antonio Rüdiger", "Achraf Hakimi",
+  "Henrikh Mkhitaryan", "Stanislav Lobotka", "Yann Sommer", "Nico Paz", "Artem Dovbyk", "Matías Soulé",
+  "Jamie Vardy", "David de Gea", "Jonathan David", "Kyle Walker", "Weston McKennie", "Charles De Ketelaere",
+  "Francisco Conceição", "Ruben Loftus-Cheek", "Alexis Saelemaekers", "Santiago Giménez", "Piotr Zieliński",
+  "Gleison Bremer",
 
   // --- Leggende mondiali ---
   "Pelé", "Johan Cruijff", "Franz Beckenbauer", "Alfredo Di Stéfano", "Ferenc Puskás", "Eusébio",
@@ -51,6 +76,15 @@ const wordsList = [
   "Franck Ribéry", "Robin van Persie", "Ruud van Nistelrooy", "Carlos Tevez", "Juan Román Riquelme", "Diego Forlán",
   "Mesut Özil", "Javier Mascherano", "Gerard Piqué", "Sergio Busquets", "Dani Alves", "Marcelo",
   "Gareth Bale", "Eden Hazard", "Sergio Agüero", "Luis Suárez", "Radamel Falcao", "James Rodríguez",
+  "Bobby Charlton", "Bobby Moore", "Gerd Müller", "Lev Yashin", "Garrincha", "Hristo Stoichkov",
+  "Gheorghe Hagi", "Bebeto", "Kenny Dalglish", "Ian Rush", "Kevin Keegan", "Gary Lineker",
+  "Alan Shearer", "Paul Gascoigne", "Patrick Kluivert", "Edwin van der Sar", "Ronald Koeman", "Fabien Barthez",
+  "Robert Pirès", "Claude Makélélé", "Laurent Blanc", "Jean-Pierre Papin", "Didier Deschamps", "Deco",
+  "Fernando Hierro", "Fernando Morientes", "David Silva", "Cesc Fàbregas", "Xabi Alonso", "Yaya Touré",
+  "Michael Essien", "Jay-Jay Okocha", "Roger Milla", "Park Ji-sung", "Hugo Sánchez", "Rafael Márquez",
+  "Carlos Valderrama", "René Higuita", "Davor Šuker", "Nemanja Vidić", "Rio Ferdinand", "John Terry",
+  "Ashley Cole", "Jamie Carragher", "Vincent Kompany", "Michael Ballack", "Lukas Podolski", "Dimitar Berbatov",
+  "Klaas-Jan Huntelaar", "Dirk Kuyt",
 
   // --- Stelle di oggi e di ieri l'altro ---
   "Lionel Messi", "Neymar", "Kylian Mbappé", "Erling Haaland", "Sergio Ramos", "Toni Kroos",
@@ -64,7 +98,16 @@ const wordsList = [
   "Nico Williams", "Dani Olmo", "Álvaro Morata", "Trent Alexander-Arnold", "Marcus Rashford", "Jack Grealish",
   "Raheem Sterling", "Riyad Mahrez", "Marquinhos", "Raphaël Varane", "Kingsley Coman", "Leroy Sané",
   "Mario Götze", "Marco Reus", "Ilkay Gündoğan", "Frenkie de Jong", "Matthijs de Ligt", "Viktor Gyökeres",
-  "Alexander Isak", "Michael Olise", "Désiré Doué", "Vitinha", "João Neves", "Alessandro Florenzi",
+  "Alexander Isak", "Michael Olise", "Désiré Doué", "Vitinha", "João Neves", "Alisson Becker",
+  "Antonio Rüdiger", "Achraf Hakimi", "Joško Gvardiol", "Dominik Szoboszlai", "Arda Güler", "Rodrigo De Paul",
+  "Nicolás Otamendi", "Lisandro Martínez", "Cristian Romero", "Darwin Núñez", "Ronald Araújo", "Gabriel Martinelli",
+  "Bruno Guimarães", "Endrick", "Éder Militão", "Gabriel Jesus", "Richarlison", "João Félix",
+  "Rúben Dias", "João Cancelo", "Nuno Mendes", "Martín Zubimendi", "Aurélien Tchouaméni", "Eduardo Camavinga",
+  "William Saliba", "Kai Havertz", "Leon Goretzka", "Serge Gnabry", "Luis Díaz", "Cody Gakpo",
+  "Xavi Simons", "Jordan Pickford", "John Stones", "Jordan Henderson", "Mason Mount", "Andrew Robertson",
+  "Dejan Kulusevski", "Yassine Bounou", "Hakim Ziyech", "Pierre-Emerick Aubameyang", "Granit Xhaka",
+  "Xherdan Shaqiri", "Jordi Alba", "Ivan Rakitić", "Memphis Depay", "Georginio Wijnaldum", "Mats Hummels",
+  "Jérôme Boateng", "Javier Hernández", "Pepe",
 ];
 
 const playerImages = {};

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   QUIZZOTTI — Cruciverba: le schede fisse (N° 1 ... N° 10)
+   QUIZZOTTI — Cruciverba: le schede fisse (N° 1 ... N° 15)
    FILE GENERATO da scripts/build-cruciverba.js a partire da
    assets/db-cruciverba.js: non modificarlo a mano, rilancia lo script.
    tema: nazionale | champions | mondiali | bandiere | mercato | bar | stadi.
@@ -245,6 +245,125 @@ const cruciverbaSchede = [
       { answer: "MEDIANO", clue: "Ligabue gli ha dedicato una canzone", row: 6, col: 7, dir: "D", num: 10 },
       { answer: "REDS", clue: "Il Liverpool, per i suoi tifosi", row: 8, col: 3, dir: "D", num: 13 },
       { answer: "HEYSEL", clue: "La tragedia di Bruxelles del 1985", row: 8, col: 12, dir: "D", num: 14 }
+    ]
+  },
+  {
+    n: 11, tema: "mondiali", title: "Coppa del Mondo",
+    sottotitolo: "Finali, bomber e stadi da Uruguay 1930 in poi", w: 14, h: 15,
+    words: [
+      { answer: "MESSICO", clue: "Il Tri, ospite di tre Mondiali", row: 1, col: 7, dir: "A", num: 3 },
+      { answer: "CROAZIA", clue: "A scacchi biancorossi, finale mondiale 2018", row: 2, col: 0, dir: "A", num: 5 },
+      { answer: "VUVUZELA", clue: "La trombetta assordante di Sudafrica 2010", row: 4, col: 0, dir: "A", num: 6 },
+      { answer: "IBRA", clue: "Zlatan, in quattro lettere", row: 5, col: 8, dir: "A", num: 7 },
+      { answer: "PETIT", clue: "Emmanuel, terzo gol francese nella finale mondiale del 1998", row: 7, col: 0, dir: "A", num: 11 },
+      { answer: "QATAR", clue: "Il paese del Mondiale invernale del 2022", row: 7, col: 6, dir: "A", num: 12 },
+      { answer: "BULGARIA", clue: "La nazionale di Stoichkov, semifinale a USA '94", row: 9, col: 3, dir: "A", num: 14 },
+      { answer: "VIGO", clue: "La città dei tre pareggi azzurri nel 1982", row: 10, col: 0, dir: "A", num: 15 },
+      { answer: "MOORE", clue: "Bobby, capitano inglese campione del mondo 1966", row: 11, col: 5, dir: "A", num: 16 },
+      { answer: "YOKOHAMA", clue: "Città della finale mondiale del 2002", row: 13, col: 2, dir: "A", num: 17 },
+      { answer: "ZAIRE", clue: "Nazionale africana del calcio alla barriera nel 1974", row: 0, col: 5, dir: "D", num: 1 },
+      { answer: "MATUIDI", clue: "Blaise, campione del mondo 2018 quando era alla Juve", row: 1, col: 3, dir: "D", num: 2 },
+      { answer: "SUKER", clue: "Davor, capocannoniere croato di Francia '98", row: 1, col: 10, dir: "D", num: 4 },
+      { answer: "BRASILE", clue: "Cinque stelle sulla maglia verdeoro", row: 5, col: 9, dir: "D", num: 8 },
+      { answer: "PERTINI", clue: "Sandro, il presidente che esultava al Bernabeu", row: 6, col: 1, dir: "D", num: 9 },
+      { answer: "MARADONA", clue: "La mano de Dios", row: 6, col: 7, dir: "D", num: 10 },
+      { answer: "ALEMAO", clue: "Brasiliano del Napoli colpito da una monetina a Bergamo", row: 8, col: 5, dir: "D", num: 13 },
+      { answer: "BOSTON", clue: "Lì Baggio salvò l'Italia con la Nigeria a USA '94", row: 9, col: 3, dir: "D", num: 14 }
+    ]
+  },
+  {
+    n: 12, tema: "estero", title: "Oltre confine",
+    sottotitolo: "Bundesliga, Ligue 1, Eredivisie e campioni lontani dall'Italia", w: 13, h: 15,
+    words: [
+      { answer: "GLAZER", clue: "Famiglia americana proprietaria dello United", row: 0, col: 6, dir: "A", num: 2 },
+      { answer: "IRIBAR", clue: "Jose Angel, portiere una vita all'Athletic Bilbao", row: 1, col: 0, dir: "A", num: 5 },
+      { answer: "BARCA", clue: "Blaugrana catalani, in breve", row: 3, col: 3, dir: "A", num: 7 },
+      { answer: "BOXINGDAY", clue: "In Premier si gioca anche il 26 dicembre", row: 5, col: 0, dir: "A", num: 9 },
+      { answer: "HOOLIGAN", clue: "Tifoso violento, all'inglese", row: 8, col: 2, dir: "A", num: 13 },
+      { answer: "GALACTICOS", clue: "Il Real delle stelle voluto da Florentino", row: 10, col: 0, dir: "A", num: 14 },
+      { answer: "LEEDS", clue: "Club dello Yorkshire riportato in Premier da Bielsa", row: 12, col: 1, dir: "A", num: 16 },
+      { answer: "AJAX", clue: "I Lancieri di Amsterdam", row: 12, col: 8, dir: "A", num: 17 },
+      { answer: "PUSKAS", clue: "Ferenc, il Maggiore Galoppante magiaro del Real", row: 14, col: 7, dir: "A", num: 18 },
+      { answer: "HILLSBOROUGH", clue: "La tragedia di Sheffield del 1989", row: 0, col: 0, dir: "D", num: 1 },
+      { answer: "LEGA", clue: "L'ente che organizza la Serie A", row: 0, col: 7, dir: "D", num: 3 },
+      { answer: "ETIHAD", clue: "Lo stadio del City", row: 0, col: 10, dir: "D", num: 4 },
+      { answer: "BVB", clue: "Il Borussia giallonero, in sigla", row: 1, col: 3, dir: "D", num: 6 },
+      { answer: "CUDICINI", clue: "Fabio, portiere del Milan di Rocco, papà di Carlo", row: 3, col: 6, dir: "D", num: 8 },
+      { answer: "CHELSEA", clue: "I Blues di Londra", row: 7, col: 2, dir: "D", num: 10 },
+      { answer: "TORCIDA", clue: "Il tifo organizzato, in Brasile", row: 7, col: 4, dir: "D", num: 11 },
+      { answer: "ZAMORA", clue: "Trofeo al portiere meno battuto della Liga", row: 7, col: 8, dir: "D", num: 12 },
+      { answer: "PAOK", clue: "Il club bianconero di Salonicco", row: 11, col: 10, dir: "D", num: 15 }
+    ]
+  },
+  {
+    n: 13, tema: "stadi", title: "Cattedrali del pallone",
+    sottotitolo: "Stadi storici, curve e campi di provincia", w: 15, h: 15,
+    words: [
+      { answer: "BARRABRAVA", clue: "Gli ultrà, in Argentina", row: 2, col: 0, dir: "A", num: 5 },
+      { answer: "CORO", clue: "Lo intona la curva", row: 4, col: 1, dir: "A", num: 6 },
+      { answer: "KOSTIC", clue: "Filip, esterno serbo della Juve", row: 4, col: 9, dir: "A", num: 9 },
+      { answer: "CUGINI", clue: "I rivali della stessa città, nel gergo da derby", row: 6, col: 1, dir: "A", num: 11 },
+      { answer: "PULLMAN", clue: "Ci viaggiano squadre e tifosi in trasferta", row: 7, col: 6, dir: "A", num: 12 },
+      { answer: "MITO", clue: "Leggenda del calcio, idolo di generazioni", row: 8, col: 3, dir: "A", num: 14 },
+      { answer: "DECO", clue: "Regista di Porto e Barça, brasiliano naturalizzato portoghese", row: 9, col: 0, dir: "A", num: 15 },
+      { answer: "LUZHNIKI", clue: "Lo stadio moscovita della finale 2018", row: 9, col: 6, dir: "A", num: 16 },
+      { answer: "TIFOSERIA", clue: "L'insieme dei sostenitori di un club", row: 11, col: 3, dir: "A", num: 17 },
+      { answer: "SANMAMES", clue: "La Catedral dell'Athletic Bilbao", row: 14, col: 6, dir: "A", num: 18 },
+      { answer: "BIANCOCELESTI", clue: "La Lazio, per i colori", row: 0, col: 1, dir: "D", num: 1 },
+      { answer: "BOATO", clue: "Esplode in curva al gol", row: 0, col: 4, dir: "D", num: 2 },
+      { answer: "PARK", clue: "Ji-sung, coreano dai tre polmoni dello United", row: 1, col: 9, dir: "D", num: 3 },
+      { answer: "TESSERA", clue: "... del tifoso, contestata dagli ultrà", row: 1, col: 11, dir: "D", num: 4 },
+      { answer: "RIGAMONTI", clue: "Lo stadio del Brescia", row: 4, col: 3, dir: "D", num: 7 },
+      { answer: "UNIPOLDOMUS", clue: "Lo stadio provvisorio del Cagliari, per sponsor", row: 4, col: 6, dir: "D", num: 8 },
+      { answer: "DALUZ", clue: "Estadio da ..., la casa del Benfica", row: 5, col: 8, dir: "D", num: 10 },
+      { answer: "MENTI", clue: "Romeo, lo stadio del Vicenza", row: 7, col: 10, dir: "D", num: 13 }
+    ]
+  },
+  {
+    n: 14, tema: "mister", title: "Lavagna tattica",
+    sottotitolo: "Allenatori, moduli e panchine celebri", w: 12, h: 13,
+    words: [
+      { answer: "BUSBY", clue: "Matt, sopravvissuto a Monaco e campione d'Europa nel 1968", row: 0, col: 2, dir: "A", num: 1 },
+      { answer: "BOEMO", clue: "Zeman, per tutti", row: 1, col: 7, dir: "A", num: 4 },
+      { answer: "ZAGALLO", clue: "Mario, campione del mondo col Brasile da giocatore e da CT", row: 2, col: 0, dir: "A", num: 5 },
+      { answer: "MOU", clue: "Lo Special One, per gli amici", row: 3, col: 9, dir: "A", num: 6 },
+      { answer: "CONFERENZA", clue: "Quella stampa del mister, prima e dopo la gara", row: 4, col: 0, dir: "A", num: 7 },
+      { answer: "DELBOSQUE", clue: "Vicente, CT baffuto della Spagna campione del mondo 2010", row: 6, col: 1, dir: "A", num: 9 },
+      { answer: "PIPA", clue: "La fumava Bearzot, giocando a carte con Pertini", row: 9, col: 6, dir: "A", num: 12 },
+      { answer: "QUINTO", clue: "L'esterno di centrocampo con la difesa a tre, in gergo", row: 10, col: 0, dir: "A", num: 13 },
+      { answer: "CATENACCIO", clue: "Tutti dietro e poi in contropiede: marchio italiano", row: 12, col: 0, dir: "A", num: 14 },
+      { answer: "BIGON", clue: "Albertino, scudetto col Napoli nel 1990", row: 0, col: 2, dir: "D", num: 1 },
+      { answer: "BILARDO", clue: "Carlos, CT dell'Argentina campione nell'86", row: 0, col: 5, dir: "D", num: 2 },
+      { answer: "MODULO", clue: "Il 4-3-3 o il 3-5-2, per esempio", row: 0, col: 11, dir: "D", num: 3 },
+      { answer: "ZAC", clue: "Alberto, il tecnico del Milan 1999, in breve", row: 2, col: 0, dir: "D", num: 5 },
+      { answer: "MARESCA", clue: "Enzo, Mondiale per club col Chelsea nel 2025", row: 3, col: 9, dir: "D", num: 6 },
+      { answer: "FILTRANTE", clue: "Passaggio che taglia in due la difesa", row: 4, col: 3, dir: "D", num: 8 },
+      { answer: "STOP", clue: "Controllo del pallone al primo tocco", row: 6, col: 6, dir: "D", num: 10 },
+      { answer: "TUTA", clue: "La indossa Sarri in panchina", row: 9, col: 1, dir: "D", num: 11 }
+    ]
+  },
+  {
+    n: 15, tema: "anni90", title: "Album di figurine",
+    sottotitolo: "Campioni e meteore della Serie A tra anni '80 e '90", w: 14, h: 15,
+    words: [
+      { answer: "TUTTOILCALCIO", clue: "... minuto per minuto, storica trasmissione radio", row: 0, col: 0, dir: "A", num: 1 },
+      { answer: "NOVANTESIMO", clue: "Minuto finale e storico programma Rai", row: 3, col: 2, dir: "A", num: 5 },
+      { answer: "BISCARDI", clue: "Aldo, conduttore del Processo del lunedì", row: 5, col: 0, dir: "A", num: 6 },
+      { answer: "ZEBRA", clue: "Animale a strisce simbolo della Juve", row: 6, col: 9, dir: "A", num: 7 },
+      { answer: "ASPRILLA", clue: "Tino, colombiano del Parma dalle capriole", row: 7, col: 2, dir: "A", num: 9 },
+      { answer: "BALBO", clue: "Abel, argentino di Udinese, Roma e Parma", row: 9, col: 3, dir: "A", num: 12 },
+      { answer: "RIEDLE", clue: "Karl-Heinz, doppietta alla Juve nella finale di Champions 1997", row: 11, col: 7, dir: "A", num: 14 },
+      { answer: "TANZI", clue: "Calisto, il Parmalat dietro al Parma dei miracoli", row: 12, col: 3, dir: "A", num: 15 },
+      { answer: "ZOLA", clue: "Magic Box sardo, idolo del Chelsea", row: 14, col: 6, dir: "A", num: 16 },
+      { answer: "TRIO", clue: "Tre giocatori in sintonia, come la BBC bianconera", row: 0, col: 3, dir: "D", num: 2 },
+      { answer: "CIOTTI", clue: "Sandro, la voce roca della radio", row: 0, col: 7, dir: "D", num: 3 },
+      { answer: "BAMBAM", clue: "Zamorano, per i suoi colpi di testa", row: 2, col: 0, dir: "D", num: 4 },
+      { answer: "NESTA", clue: "Alessandro, elegante difensore di Lazio e Milan", row: 3, col: 2, dir: "D", num: 5 },
+      { answer: "ZACCHERIA", clue: "Pino, lo stadio di Zemanlandia", row: 6, col: 9, dir: "D", num: 7 },
+      { answer: "RAVANELLI", clue: "Fabrizio, Penna Bianca della Juve", row: 6, col: 12, dir: "D", num: 8 },
+      { answer: "SUBBUTEO", clue: "Il calcio in punta di dito con le miniature", row: 7, col: 3, dir: "D", num: 10 },
+      { answer: "RELEONE", clue: "Batistuta, per i tifosi viola", row: 7, col: 5, dir: "D", num: 11 },
+      { answer: "ORRICO", clue: "Corrado, la gabbia dell'Inter 1991", row: 9, col: 7, dir: "D", num: 13 }
     ]
   }
 ];

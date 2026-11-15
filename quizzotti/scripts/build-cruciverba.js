@@ -39,7 +39,12 @@ const PLAN = [
     { n: 7, tema: 'stadi', title: 'Tutti in curva', sottotitolo: 'Stadi, cori, derby e tifo dagli spalti', diff2: 0.50, diff3: [2, 4] },
     { n: 8, tema: 'anni90', title: 'Le sette sorelle', sottotitolo: 'La Serie A degli anni Novanta, tra scudetti e 90° minuto', diff2: 0.45, diff3: [2, 4] },
     { n: 9, tema: 'mister', title: 'Parola al mister', sottotitolo: 'Panchine, esoneri e frasi celebri degli allenatori', diff2: 0.45, diff3: [2, 4] },
-    { n: 10, tema: 'estero', title: 'Il pallone nel mondo', sottotitolo: 'Premier, Liga, Bundesliga e Sudamerica: club, stadi e rivalità', diff2: 0.45, diff3: [2, 4] }
+    { n: 10, tema: 'estero', title: 'Il pallone nel mondo', sottotitolo: 'Premier, Liga, Bundesliga e Sudamerica: club, stadi e rivalità', diff2: 0.45, diff3: [2, 4] },
+    { n: 11, tema: 'mondiali', title: 'Coppa del Mondo', sottotitolo: 'Finali, bomber e stadi da Uruguay 1930 in poi', diff2: 0.50, diff3: [2, 4] },
+    { n: 12, tema: 'estero', title: 'Oltre confine', sottotitolo: "Bundesliga, Ligue 1, Eredivisie e campioni lontani dall'Italia", diff2: 0.50, diff3: [2, 4] },
+    { n: 13, tema: 'stadi', title: 'Cattedrali del pallone', sottotitolo: 'Stadi storici, curve e campi di provincia', diff2: 0.50, diff3: [2, 4] },
+    { n: 14, tema: 'mister', title: 'Lavagna tattica', sottotitolo: 'Allenatori, moduli e panchine celebri', diff2: 0.50, diff3: [2, 4] },
+    { n: 15, tema: 'anni90', title: 'Album di figurine', sottotitolo: "Campioni e meteore della Serie A tra anni '80 e '90", diff2: 0.50, diff3: [2, 4] }
 ];
 const MIN_THEMED = 9;
 const WORDS = { min: 16, max: 18 };

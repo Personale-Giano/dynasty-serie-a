@@ -2,6 +2,7 @@
    QUIZZOTTI — Database: Chi l'ha detto (citazioni)
    Solo frasi celebri con attribuzione certa (le frasi straniere sono
    tradotte in italiano). Nessuna citazione ripetuta.
+   155 citazioni (revisione del 15 nov 2026).
    ========================================================================== */
 
 const quotes = [
@@ -12,21 +13,21 @@ const quotes = [
             { quote: "A me non piace la prostituzione intellettuale, a me piace l'onestà intellettuale.", correct: "José Mourinho", options: ["José Mourinho", "Antonio Conte", "Massimiliano Allegri", "Arrigo Sacchi"] },
             { quote: "Io conosco il monaco del Tibet, il Principato di Monaco... Se questo Lo Monaco vuole essere conosciuto, mi deve pagare.", correct: "José Mourinho", options: ["José Mourinho", "Massimiliano Allegri", "Giovanni Trapattoni", "Walter Mazzarri"] },
             { quote: "Chi sa solo di calcio non sa niente di calcio.", correct: "José Mourinho", options: ["José Mourinho", "Johan Cruijff", "Pep Guardiola", "Arrigo Sacchi"] },
-            { quote: "Solo uno su ventuno non voleva darmi la laurea honoris causa, ma neanche Gesù piaceva a tutti.", correct: "José Mourinho", options: ["José Mourinho", "Pep Guardiola", "Carlo Ancelotti", "Alex Ferguson"] },
+            { quote: "Nemmeno Gesù piaceva a tutti, figuriamoci io.", correct: "José Mourinho", options: ["José Mourinho", "Pep Guardiola", "Carlo Ancelotti", "Alex Ferguson"] },
             { quote: "Se avessi voluto un lavoro facile sarei rimasto al Porto: una bella sedia blu, la Champions League, Dio, e dopo Dio, io.", correct: "José Mourinho", options: ["José Mourinho", "Pep Guardiola", "Jürgen Klopp", "Diego Simeone"] },
             { quote: "Hanno parcheggiato il pullman davanti alla porta.", correct: "José Mourinho", options: ["José Mourinho", "Arsène Wenger", "Pep Guardiola", "Jürgen Klopp"] },
             { quote: "Ha quasi 70 anni, ha vinto una Supercoppa e un'altra coppetta: è troppo vecchio per cambiare mentalità.", correct: "José Mourinho", options: ["José Mourinho", "Massimiliano Allegri", "Antonio Conte", "Fabio Capello"] },
             { quote: "Wenger è uno specialista del fallimento.", correct: "José Mourinho", options: ["José Mourinho", "Alex Ferguson", "Antonio Conte", "Jürgen Klopp"] },
             { quote: "Ognuno pensa di avere la moglie più bella a casa.", correct: "Arsène Wenger", options: ["Arsène Wenger", "José Mourinho", "Alex Ferguson", "Carlo Ancelotti"] },
             { quote: "In questa sala stampa lui è il fottuto capo, il fottuto padrone. Non posso competere con lui.", correct: "Pep Guardiola", options: ["Pep Guardiola", "Arsène Wenger", "Jürgen Klopp", "Rafa Benítez"] },
-            { quote: "Non sono un genio, sono un ragazzo normale della Foresta Nera. Sono il Normal One.", correct: "Jürgen Klopp", options: ["Jürgen Klopp", "Thomas Tuchel", "Julian Nagelsmann", "Pep Guardiola"] },
-            { quote: "A lui piace tenere la palla, è come un'orchestra, ma è una canzone silenziosa. Io preferisco l'heavy metal.", correct: "Jürgen Klopp", options: ["Jürgen Klopp", "Pep Guardiola", "José Mourinho", "Diego Simeone"] },
+            { quote: "Sono un ragazzo normale della Foresta Nera. Sono il Normal One.", correct: "Jürgen Klopp", options: ["Jürgen Klopp", "Thomas Tuchel", "Julian Nagelsmann", "Pep Guardiola"] },
+            { quote: "A Wenger piace tenere la palla e passarla: è come un'orchestra, ma è una canzone silenziosa. Io preferisco l'heavy metal.", correct: "Jürgen Klopp", options: ["Jürgen Klopp", "Pep Guardiola", "José Mourinho", "Diego Simeone"] },
             { quote: "Quel ragazzo dev'essere nato in fuorigioco.", correct: "Alex Ferguson", options: ["Alex Ferguson", "Arsène Wenger", "José Mourinho", "Arrigo Sacchi"] },
             { quote: "Il calcio... maledizione!", correct: "Alex Ferguson", options: ["Alex Ferguson", "Bobby Robson", "Kevin Keegan", "Bill Shankly"] },
             { quote: "La mia sfida più grande era buttare giù il Liverpool dal suo piedistallo.", correct: "Alex Ferguson", options: ["Alex Ferguson", "José Mourinho", "Pep Guardiola", "Arsène Wenger"] },
             { quote: "Mi piacerebbe tanto se li battessimo. Mi piacerebbe tanto!", correct: "Kevin Keegan", options: ["Kevin Keegan", "Alex Ferguson", "Bobby Robson", "Harry Redknapp"] },
             { quote: "Alcuni pensano che il calcio sia una questione di vita o di morte. Vi assicuro che è molto, molto di più.", correct: "Bill Shankly", options: ["Bill Shankly", "Alex Ferguson", "Jürgen Klopp", "Bob Paisley"] },
-            { quote: "Se sei primo, sei primo. Se sei secondo, non sei niente.", correct: "Bill Shankly", options: ["Bill Shankly", "Giampiero Boniperti", "Vince Lombardi", "Alex Ferguson"] },
+            { quote: "Se sei primo, sei primo. Se sei secondo, non sei niente.", correct: "Bill Shankly", options: ["Bill Shankly", "Giampiero Boniperti", "Bob Paisley", "Alex Ferguson"] },
             { quote: "In città ci sono due grandi squadre: il Liverpool e le riserve del Liverpool.", correct: "Bill Shankly", options: ["Bill Shankly", "Bob Paisley", "Kenny Dalglish", "Jürgen Klopp"] },
             { quote: "Se sei in area e non sai cosa fare con il pallone, buttalo dentro: delle alternative parleremo dopo.", correct: "Bob Paisley", options: ["Bob Paisley", "Bill Shankly", "Alex Ferguson", "Brian Clough"] },
             { quote: "Non direi di essere il miglior allenatore del mondo, ma di sicuro sono nella top one.", correct: "Brian Clough", options: ["Brian Clough", "Alex Ferguson", "Bill Shankly", "José Mourinho"] },
@@ -37,6 +38,32 @@ const quotes = [
             { quote: "Partita dopo partita.", correct: "Diego Simeone", options: ["Diego Simeone", "Marcelo Bielsa", "Carlo Ancelotti", "Mauricio Pochettino"] },
             { quote: "Dilly ding, dilly dong!", correct: "Claudio Ranieri", options: ["Claudio Ranieri", "Carlo Ancelotti", "Antonio Conte", "Roberto Mancini"] },
             { quote: "Abbiamo rimesso la chiesa al centro del villaggio.", correct: "Rudi Garcia", options: ["Rudi Garcia", "Luis Enrique", "Zdeněk Zeman", "Luciano Spalletti"] },
+            { quote: "Tre a zero: tre Premier League. Ne ho vinte più io da solo che gli altri diciannove allenatori messi insieme.", correct: "José Mourinho", options: ["José Mourinho", "Pep Guardiola", "Antonio Conte", "Jürgen Klopp"] },
+            { quote: "Se parlo, finisco in guai seri.", correct: "José Mourinho", options: ["José Mourinho", "Antonio Conte", "Massimiliano Allegri", "Alex Ferguson"] },
+            { quote: "Ranieri è in Inghilterra da cinque anni e fa ancora fatica a dire buongiorno e buonasera.", correct: "José Mourinho", options: ["José Mourinho", "Alex Ferguson", "Arsène Wenger", "Fabio Capello"] },
+            { quote: "Adesso sono quello felice: l'Happy One.", correct: "José Mourinho", options: ["José Mourinho", "Jürgen Klopp", "Carlo Ancelotti", "Claudio Ranieri"] },
+            { quote: "Wenger è uno di quei guardoni: gli piace guardare gli altri.", correct: "José Mourinho", options: ["José Mourinho", "Alex Ferguson", "Antonio Conte", "Rafa Benítez"] },
+            { quote: "Il gegenpressing è il miglior regista del mondo.", correct: "Jürgen Klopp", options: ["Jürgen Klopp", "Pep Guardiola", "Julian Nagelsmann", "Ralf Rangnick"] },
+            { quote: "Dobbiamo trasformarci da dubbiosi in credenti.", correct: "Jürgen Klopp", options: ["Jürgen Klopp", "Diego Simeone", "Pep Guardiola", "Carlo Ancelotti"] },
+            { quote: "Odio il tiki-taka: passarsi la palla tanto per farlo, senza un'intenzione chiara.", correct: "Pep Guardiola", options: ["Pep Guardiola", "Johan Cruijff", "Luis Enrique", "Xavi"] },
+            { quote: "Adesso arriva il momento in cui il sedere scricchiola sulla sedia.", correct: "Alex Ferguson", options: ["Alex Ferguson", "Arsène Wenger", "Kevin Keegan", "Harry Redknapp"] },
+            { quote: "Da quando alleno, è la squadra migliore che abbiamo mai affrontato.", correct: "Alex Ferguson", options: ["Alex Ferguson", "Arsène Wenger", "José Mourinho", "Carlo Ancelotti"] },
+            { quote: "A quella gente non venderei nemmeno un virus.", correct: "Alex Ferguson", options: ["Alex Ferguson", "José Mourinho", "Arsène Wenger", "Brian Clough"] },
+            { quote: "Se mangi caviale tutti i giorni, è difficile tornare alle salsicce.", correct: "Arsène Wenger", options: ["Arsène Wenger", "Alex Ferguson", "Carlo Ancelotti", "Claudio Ranieri"] },
+            { quote: "Non voglio fare giochi psicologici, ma voglio parlare di fatti.", correct: "Rafa Benítez", options: ["Rafa Benítez", "José Mourinho", "Arsène Wenger", "Alex Ferguson"] },
+            { quote: "Il calcio è un gioco semplice, reso complicato da gente che dovrebbe saperne di più.", correct: "Bill Shankly", options: ["Bill Shankly", "Brian Clough", "Bob Paisley", "Johan Cruijff"] },
+            { quote: "Se l'Everton giocasse in fondo al mio giardino, chiuderei le tende.", correct: "Bill Shankly", options: ["Bill Shankly", "Bob Paisley", "Kenny Dalglish", "Alex Ferguson"] },
+            { quote: "La pressione è lavorare giù in miniera. La pressione è non avere lavoro.", correct: "Bill Shankly", options: ["Bill Shankly", "Alex Ferguson", "Brian Clough", "Bobby Robson"] },
+            { quote: "Se Dio avesse voluto che giocassimo a calcio tra le nuvole, avrebbe messo l'erba lassù.", correct: "Brian Clough", options: ["Brian Clough", "Bill Shankly", "Alex Ferguson", "Arsène Wenger"] },
+            { quote: "Se abbiamo noi il pallone, gli avversari non possono segnare.", correct: "Johan Cruijff", options: ["Johan Cruijff", "Pep Guardiola", "Rinus Michels", "Louis van Gaal"] },
+            { quote: "Prima di commettere un errore, io quell'errore non lo commetto.", correct: "Johan Cruijff", options: ["Johan Cruijff", "Louis van Gaal", "Rinus Michels", "Ruud Gullit"] },
+            { quote: "Il calcio si gioca con il cervello.", correct: "Johan Cruijff", options: ["Johan Cruijff", "Arrigo Sacchi", "Pep Guardiola", "Xavi"] },
+            { quote: "Gli italiani non possono batterti, ma tu puoi perdere contro di loro.", correct: "Johan Cruijff", options: ["Johan Cruijff", "Franz Beckenbauer", "Arsène Wenger", "Rinus Michels"] },
+            { quote: "La qualità senza risultati non serve a niente. I risultati senza qualità sono noiosi.", correct: "Johan Cruijff", options: ["Johan Cruijff", "Arrigo Sacchi", "Pep Guardiola", "Arsène Wenger"] },
+            { quote: "Il calcio è guerra.", correct: "Rinus Michels", options: ["Rinus Michels", "Johan Cruijff", "Louis van Gaal", "Ernst Happel"] },
+            { quote: "La palla è rotonda e la partita dura novanta minuti.", correct: "Sepp Herberger", options: ["Sepp Herberger", "Franz Beckenbauer", "Helmut Schön", "Udo Lattek"] },
+            { quote: "Dopo la partita è prima della partita.", correct: "Sepp Herberger", options: ["Sepp Herberger", "Helmut Schön", "Otto Rehhagel", "Ottmar Hitzfeld"] },
+            { quote: "Dovrete ingoiarmi!", correct: "Mário Zagallo", options: ["Mário Zagallo", "Luiz Felipe Scolari", "Carlos Alberto Parreira", "Tite"] },
 
             // ===== ALLENATORI ITALIANI E DI SERIE A =====
             { quote: "Nei cavalli si vince anche di corto muso.", correct: "Massimiliano Allegri", options: ["Massimiliano Allegri", "José Mourinho", "Fabio Capello", "Marcello Lippi"] },
@@ -63,6 +90,9 @@ const quotes = [
             { quote: "Taca la bala!", correct: "Helenio Herrera", options: ["Helenio Herrera", "Nereo Rocco", "Nils Liedholm", "Vujadin Boškov"] },
             { quote: "Chi non dà tutto non dà niente.", correct: "Helenio Herrera", options: ["Helenio Herrera", "Antonio Conte", "Arrigo Sacchi", "Diego Simeone"] },
             { quote: "Il modulo? Giocheremo con il 5-5-5.", correct: "Oronzo Canà", options: ["Oronzo Canà", "Zdeněk Zeman", "Giovanni Trapattoni", "Nereo Rocco"] },
+            { quote: "Grande giocatore vede autostrada dove altri vedono solo sentiero.", correct: "Vujadin Boškov", options: ["Vujadin Boškov", "Nils Liedholm", "Giovanni Trapattoni", "Sven-Göran Eriksson"] },
+            { quote: "Meglio perdere una partita sei a zero che sei partite uno a zero.", correct: "Vujadin Boškov", options: ["Vujadin Boškov", "Zdeněk Zeman", "Nils Liedholm", "Nereo Rocco"] },
+            { quote: "Lo scudetto l'abbiamo perso in albergo.", correct: "Maurizio Sarri", options: ["Maurizio Sarri", "Luciano Spalletti", "Rafa Benítez", "Carlo Ancelotti"] },
 
             // ===== CALCIATORI ITALIANI =====
             { quote: "Un cavaliere non lascia mai una signora.", correct: "Alessandro Del Piero", options: ["Alessandro Del Piero", "Gianluigi Buffon", "Pavel Nedvěd", "David Trezeguet"] },
@@ -74,10 +104,12 @@ const quotes = [
             { quote: "Quando vedo giocare Pirlo, mi chiedo se posso essere considerato davvero un calciatore.", correct: "Gennaro Gattuso", options: ["Gennaro Gattuso", "Massimo Ambrosini", "Clarence Seedorf", "Daniele De Rossi"] },
             { quote: "Un essere umano non può fischiare una cosa del genere dopo un episodio dubbio: al posto del cuore hai un bidone della spazzatura.", correct: "Gianluigi Buffon", options: ["Gianluigi Buffon", "Massimiliano Allegri", "Giorgio Chiellini", "Andrea Pirlo"] },
             { quote: "Devi avere la sensibilità del momento, altrimenti te ne stai in tribuna a mangiare le patatine.", correct: "Gianluigi Buffon", options: ["Gianluigi Buffon", "Leonardo Bonucci", "Giorgio Chiellini", "Massimiliano Allegri"] },
-            { quote: "Sono l'unico calciatore che ha scritto più libri di quanti ne abbia letti.", correct: "Antonio Cassano", options: ["Antonio Cassano", "Francesco Totti", "Mario Balotelli", "Zlatan Ibrahimović"] },
+            { quote: "Ho scritto più libri di quanti ne abbia letti.", correct: "Antonio Cassano", options: ["Antonio Cassano", "Francesco Totti", "Mario Balotelli", "Zlatan Ibrahimović"] },
             { quote: "Why always me?", correct: "Mario Balotelli", options: ["Mario Balotelli", "Zlatan Ibrahimović", "Cristiano Ronaldo", "Antonio Cassano"] },
             { quote: "Kiricocho!", correct: "Giorgio Chiellini", options: ["Giorgio Chiellini", "Leonardo Bonucci", "Gianluigi Donnarumma", "Federico Bernardeschi"] },
             { quote: "Ne dovete mangiare ancora tanta di pastasciutta!", correct: "Leonardo Bonucci", options: ["Leonardo Bonucci", "Giorgio Chiellini", "Lorenzo Insigne", "Ciro Immobile"] },
+            { quote: "Vi ho purgato ancora.", correct: "Francesco Totti", options: ["Francesco Totti", "Daniele De Rossi", "Vincenzo Montella", "Antonio Cassano"] },
+            { quote: "Penso quindi gioco.", correct: "Andrea Pirlo", options: ["Andrea Pirlo", "Francesco Totti", "Roberto Baggio", "Gianluigi Buffon"] },
 
             // ===== CALCIATORI STRANIERI =====
             { quote: "Hai comprato una Ferrari, ma la guidi come una Fiat.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Samuel Eto'o", "Thierry Henry", "Gerard Piqué"] },
@@ -98,6 +130,20 @@ const quotes = [
             { quote: "Nel 1969 ho smesso con le donne e l'alcol: sono stati i venti minuti peggiori della mia vita.", correct: "George Best", options: ["George Best", "Diego Maradona", "Paul Gascoigne", "Eric Cantona"] },
             { quote: "Il calcio è un gioco semplice: 22 uomini rincorrono un pallone per 90 minuti e alla fine vince la Germania.", correct: "Gary Lineker", options: ["Gary Lineker", "Alan Shearer", "Michael Owen", "Wayne Rooney"] },
             { quote: "Prima non abbiamo avuto fortuna, e poi ci si è messa anche la sfortuna.", correct: "Jürgen Wegmann", options: ["Jürgen Wegmann", "Lothar Matthäus", "Jürgen Klinsmann", "Karl-Heinz Rummenigge"] },
+            { quote: "Ho visto il mio erede nel calcio argentino: si chiama Messi.", correct: "Diego Maradona", options: ["Diego Maradona", "Pelé", "Gabriel Batistuta", "Juan Román Riquelme"] },
+            { quote: "Preferisco vincere titoli con la squadra piuttosto che premi individuali.", correct: "Lionel Messi", options: ["Lionel Messi", "Cristiano Ronaldo", "Kylian Mbappé", "Luka Modrić"] },
+            { quote: "Che guardi, scemo? Vai di là.", correct: "Lionel Messi", options: ["Lionel Messi", "Ángel Di María", "Emiliano Martínez", "Rodrigo De Paul"] },
+            { quote: "Che regalo ho fatto a mia moglie? Niente: lei ha già Zlatan.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Cristiano Ronaldo", "Mario Balotelli", "Neymar"] },
+            { quote: "Una cosa è sicura: un Mondiale senza di me non vale la pena di guardarlo.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Cristiano Ronaldo", "Neymar", "Karim Benzema"] },
+            { quote: "Questa adesso non ci scivola via!", correct: "Steven Gerrard", options: ["Steven Gerrard", "Wayne Rooney", "Frank Lampard", "John Terry"] },
+            { quote: "Ho tanti bei ricordi, ma quello che preferisco è quando ho preso a calci quel teppista.", correct: "Eric Cantona", options: ["Eric Cantona", "Roy Keane", "Paul Gascoigne", "Vinnie Jones"] },
+            { quote: "Più è difficile la vittoria, più grande è la gioia di vincere.", correct: "Pelé", options: ["Pelé", "Diego Maradona", "Zico", "Ronaldo Nazário"] },
+            { quote: "Quando sono nato, Dio mi ha indicato e ha detto: ecco il ragazzo.", correct: "Romário", options: ["Romário", "Ronaldinho", "Neymar", "Bebeto"] },
+            { quote: "Io appartengo a Gesù.", correct: "Kaká", options: ["Kaká", "Ronaldinho", "Neymar", "Cafu"] },
+            { quote: "Che giocatore sono? Un Raumdeuter, un interprete degli spazi.", correct: "Thomas Müller", options: ["Thomas Müller", "Toni Kroos", "Joshua Kimmich", "Robert Lewandowski"] },
+            { quote: "Uova! Ci vogliono le uova!", correct: "Oliver Kahn", options: ["Oliver Kahn", "Lothar Matthäus", "Stefan Effenberg", "Bastian Schweinsteiger"] },
+            { quote: "Non faccio mai previsioni e non le farò mai.", correct: "Paul Gascoigne", options: ["Paul Gascoigne", "George Best", "Gary Lineker", "Alan Shearer"] },
+            { quote: "Nessun giocatore è bravo quanto tutti insieme.", correct: "Alfredo Di Stéfano", options: ["Alfredo Di Stéfano", "Ferenc Puskás", "Francisco Gento", "Raymond Kopa"] },
 
             // ===== PRESIDENTI, DIRIGENTI E FONDATORI =====
             { quote: "Vincere non è importante, è l'unica cosa che conta.", correct: "Giampiero Boniperti", options: ["Giampiero Boniperti", "Giovanni Trapattoni", "Marcello Lippi", "Antonio Conte"] },
@@ -108,10 +154,11 @@ const quotes = [
             { quote: "Baggio? Un coniglio bagnato.", correct: "Gianni Agnelli", options: ["Gianni Agnelli", "Arrigo Sacchi", "Giovanni Trapattoni", "Silvio Berlusconi"] },
             { quote: "Quando stringo la mano a un milanista me la lavo, quando la stringo a uno juventino mi conto le dita.", correct: "Peppino Prisco", options: ["Peppino Prisco", "Giacinto Facchetti", "Sandro Mazzola", "Massimo Moratti"] },
             { quote: "Sono contro ogni forma di razzismo, ma mia figlia in sposa a un milanista non la darei mai.", correct: "Peppino Prisco", options: ["Peppino Prisco", "Giacinto Facchetti", "Sandro Mazzola", "Massimo Moratti"] },
+            { quote: "Zidane? Più divertente che utile.", correct: "Gianni Agnelli", options: ["Gianni Agnelli", "Silvio Berlusconi", "Luciano Moggi", "Massimo Moratti"] },
 
             // ===== TELECRONISTI =====
             { quote: "Campioni del mondo! Campioni del mondo! Campioni del mondo!", correct: "Nando Martellini", options: ["Nando Martellini", "Bruno Pizzul", "Fabio Caressa", "Nicolò Carosio"] },
-            { quote: "Il cielo è azzurro sopra Berlino!", correct: "Fabio Caressa", options: ["Fabio Caressa", "Marco Civoli", "Bruno Pizzul", "Sandro Piccinini"] },
+            { quote: "Il cielo è azzurro sopra Berlino!", correct: "Marco Civoli", options: ["Marco Civoli", "Fabio Caressa", "Bruno Pizzul", "Sandro Piccinini"] },
             { quote: "Andiamo a Berlino!", correct: "Fabio Caressa", options: ["Fabio Caressa", "Bruno Pizzul", "Marco Civoli", "Sandro Piccinini"] },
             { quote: "Abbracciamoci forte e vogliamoci tanto bene!", correct: "Fabio Caressa", options: ["Fabio Caressa", "Bruno Pizzul", "Riccardo Trevisani", "Sandro Piccinini"] },
             { quote: "Tutto molto bello.", correct: "Bruno Pizzul", options: ["Bruno Pizzul", "Nando Martellini", "Fabio Caressa", "Sandro Piccinini"] },
@@ -121,6 +168,12 @@ const quotes = [
             { quote: "Il football è un regno della lealtà umana esercitata all'aria aperta.", correct: "Antonio Gramsci", options: ["Antonio Gramsci", "Pier Paolo Pasolini", "Umberto Eco", "Gianni Brera"] },
             { quote: "Il calcio è l'ultima rappresentazione sacra del nostro tempo.", correct: "Pier Paolo Pasolini", options: ["Pier Paolo Pasolini", "Antonio Gramsci", "Umberto Eco", "Italo Calvino"] },
             { quote: "Tutto quello che so di più sicuro sulla morale e sugli obblighi degli uomini, lo devo al calcio.", correct: "Albert Camus", options: ["Albert Camus", "Jean-Paul Sartre", "Ernest Hemingway", "Pier Paolo Pasolini"] },
+            { quote: "La partita perfetta finisce zero a zero.", correct: "Gianni Brera", options: ["Gianni Brera", "Pier Paolo Pasolini", "Umberto Eco", "Gianni Mura"] },
+            { quote: "Il gol è l'orgasmo del calcio.", correct: "Eduardo Galeano", options: ["Eduardo Galeano", "Jorge Luis Borges", "Osvaldo Soriano", "Gabriel García Márquez"] },
+            { quote: "Vado per il mondo col cappello in mano e negli stadi supplico: una bella giocata, per l'amor di Dio.", correct: "Eduardo Galeano", options: ["Eduardo Galeano", "Osvaldo Soriano", "Jorge Luis Borges", "Pier Paolo Pasolini"] },
+            { quote: "Il calcio è popolare perché la stupidità è popolare.", correct: "Jorge Luis Borges", options: ["Jorge Luis Borges", "Eduardo Galeano", "Umberto Eco", "Oscar Wilde"] },
+            { quote: "Il capocannoniere di un campionato è sempre il miglior poeta dell'anno.", correct: "Pier Paolo Pasolini", options: ["Pier Paolo Pasolini", "Gianni Brera", "Umberto Saba", "Eugenio Montale"] },
+            { quote: "Il football è un sistema di segni, cioè un linguaggio.", correct: "Pier Paolo Pasolini", options: ["Pier Paolo Pasolini", "Umberto Eco", "Antonio Gramsci", "Italo Calvino"] },
 ];
 
 if (typeof module !== "undefined" && module.exports) { module.exports = { quotes }; }

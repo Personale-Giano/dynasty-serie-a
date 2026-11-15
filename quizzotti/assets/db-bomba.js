@@ -1,7 +1,8 @@
 /* ==========================================================================
    QUIZZOTTI — Database: Bomba (categorie a tempo)
-   22 categorie, 315 argomenti totali. Ogni argomento deve avere MOLTE
-   risposte possibili (i giocatori nominano un elemento a turno).
+   24 categorie, 491 argomenti totali (revisione del 15 nov 2026).
+   Ogni argomento deve avere MOLTE risposte possibili (i giocatori nominano
+   un elemento a turno): niente elenchi chiusi con meno di una decina di voci.
    Ogni voce ha un campo "categoria" esplicito per la selezione per tema.
    ========================================================================== */
 
@@ -54,6 +55,29 @@ const topics = [
   { categoria: "Squadre", topic: "Giocatori del Palmeiras" },
   { categoria: "Squadre", topic: "Giocatori del San Paolo" },
   { categoria: "Squadre", topic: "Giocatori della Nazionale italiana" },
+  { categoria: "Squadre", topic: "Giocatori dell'Udinese" },
+  { categoria: "Squadre", topic: "Giocatori del Sassuolo" },
+  { categoria: "Squadre", topic: "Giocatori dell'Empoli" },
+  { categoria: "Squadre", topic: "Giocatori del Lecce" },
+  { categoria: "Squadre", topic: "Giocatori del Palermo" },
+  { categoria: "Squadre", topic: "Giocatori del Brescia" },
+  { categoria: "Squadre", topic: "Giocatori del Bari" },
+  { categoria: "Squadre", topic: "Giocatori del Como" },
+  { categoria: "Squadre", topic: "Giocatori del Monza" },
+  { categoria: "Squadre", topic: "Giocatori del Chievo Verona" },
+  { categoria: "Squadre", topic: "Giocatori del Perugia" },
+  { categoria: "Squadre", topic: "Giocatori del Valencia" },
+  { categoria: "Squadre", topic: "Giocatori del Villarreal" },
+  { categoria: "Squadre", topic: "Giocatori dell'Athletic Bilbao" },
+  { categoria: "Squadre", topic: "Giocatori del Real Betis" },
+  { categoria: "Squadre", topic: "Giocatori dello Schalke 04" },
+  { categoria: "Squadre", topic: "Giocatori del Monaco" },
+  { categoria: "Squadre", topic: "Giocatori del Galatasaray" },
+  { categoria: "Squadre", topic: "Giocatori del Fenerbahçe" },
+  { categoria: "Squadre", topic: "Giocatori dell'Aston Villa" },
+  { categoria: "Squadre", topic: "Giocatori dell'Everton" },
+  { categoria: "Squadre", topic: "Giocatori del West Ham" },
+  { categoria: "Squadre", topic: "Giocatori del Leicester" },
 
   // ========== NAZIONALITÀ ==========
   { categoria: "Nazionalità", topic: "Calciatori messicani" },
@@ -92,6 +116,22 @@ const topics = [
   { categoria: "Nazionalità", topic: "Calciatori ghanesi" },
   { categoria: "Nazionalità", topic: "Calciatori scozzesi" },
   { categoria: "Nazionalità", topic: "Calciatori norvegesi" },
+  { categoria: "Nazionalità", topic: "Calciatori greci" },
+  { categoria: "Nazionalità", topic: "Calciatori cechi" },
+  { categoria: "Nazionalità", topic: "Calciatori rumeni" },
+  { categoria: "Nazionalità", topic: "Calciatori bulgari" },
+  { categoria: "Nazionalità", topic: "Calciatori russi" },
+  { categoria: "Nazionalità", topic: "Calciatori irlandesi" },
+  { categoria: "Nazionalità", topic: "Calciatori gallesi" },
+  { categoria: "Nazionalità", topic: "Calciatori ungheresi" },
+  { categoria: "Nazionalità", topic: "Calciatori australiani" },
+  { categoria: "Nazionalità", topic: "Calciatori paraguaiani" },
+  { categoria: "Nazionalità", topic: "Calciatori peruviani" },
+  { categoria: "Nazionalità", topic: "Calciatori ecuadoriani" },
+  { categoria: "Nazionalità", topic: "Calciatori slovacchi" },
+  { categoria: "Nazionalità", topic: "Calciatori sloveni" },
+  { categoria: "Nazionalità", topic: "Calciatori bosniaci" },
+  { categoria: "Nazionalità", topic: "Calciatori albanesi" },
 
   // ========== NUMERO DI MAGLIA ==========
   { categoria: "Numero di Maglia", topic: "Calciatori che hanno indossato la numero 10" },
@@ -108,6 +148,11 @@ const topics = [
   { categoria: "Numero di Maglia", topic: "Calciatori che hanno indossato la numero 14" },
   { categoria: "Numero di Maglia", topic: "Calciatori che hanno indossato la numero 21" },
   { categoria: "Numero di Maglia", topic: "Calciatori che hanno indossato la numero 22" },
+  { categoria: "Numero di Maglia", topic: "Calciatori che hanno indossato la numero 17" },
+  { categoria: "Numero di Maglia", topic: "Calciatori che hanno indossato la numero 18" },
+  { categoria: "Numero di Maglia", topic: "Calciatori che hanno indossato la numero 19" },
+  { categoria: "Numero di Maglia", topic: "Calciatori che hanno indossato la numero 20" },
+  { categoria: "Numero di Maglia", topic: "Calciatori che hanno indossato la numero 23" },
 
   // ========== RECORD E STATISTICHE ==========
   { categoria: "Record e Statistiche", topic: "Calciatori con più di 100 presenze in Nazionale" },
@@ -116,6 +161,14 @@ const topics = [
   { categoria: "Record e Statistiche", topic: "Calciatori che hanno segnato in una finale di Champions League" },
   { categoria: "Record e Statistiche", topic: "Calciatori che hanno segnato in una finale dei Mondiali" },
   { categoria: "Record e Statistiche", topic: "Calciatori con almeno 20 gol in una stagione di Serie A" },
+  { categoria: "Record e Statistiche", topic: "Calciatori con almeno 100 presenze in Champions League" },
+  { categoria: "Record e Statistiche", topic: "Calciatori che hanno segnato una tripletta in Serie A" },
+  { categoria: "Record e Statistiche", topic: "Calciatori che hanno segnato con la Nazionale italiana" },
+  { categoria: "Record e Statistiche", topic: "Calciatori che hanno giocato almeno tre Mondiali" },
+  { categoria: "Record e Statistiche", topic: "Calciatori che hanno segnato in Champions League con una squadra italiana" },
+  { categoria: "Record e Statistiche", topic: "Calciatori che hanno segnato in un derby di Milano" },
+  { categoria: "Record e Statistiche", topic: "Calciatori con almeno 200 gol in carriera" },
+  { categoria: "Record e Statistiche", topic: "Calciatori che hanno giocato dopo i 40 anni" },
 
   // ========== ALLENATORI ==========
   { categoria: "Allenatori", topic: "Allenatori italiani" },
@@ -127,11 +180,24 @@ const topics = [
   { categoria: "Allenatori", topic: "Allenatori che hanno allenato la Roma" },
   { categoria: "Allenatori", topic: "Allenatori che hanno allenato il Napoli" },
   { categoria: "Allenatori", topic: "Allenatori che hanno vinto lo scudetto" },
-  { categoria: "Allenatori", topic: "Allenatori che hanno vinto la Premier League" },
+  { categoria: "Allenatori", topic: "Allenatori che hanno allenato in Premier League" },
   { categoria: "Allenatori", topic: "Allenatori che hanno vinto la Liga" },
   { categoria: "Allenatori", topic: "Allenatori che hanno vinto la Bundesliga" },
-  { categoria: "Allenatori", topic: "Allenatori che sono stati anche calciatori" },
+  { categoria: "Allenatori", topic: "Allenatori che hanno allenato la Lazio" },
   { categoria: "Allenatori", topic: "Allenatori che hanno allenato una Nazionale" },
+  { categoria: "Allenatori", topic: "Commissari tecnici della Nazionale italiana" },
+  { categoria: "Allenatori", topic: "Allenatori portoghesi" },
+  { categoria: "Allenatori", topic: "Allenatori spagnoli" },
+  { categoria: "Allenatori", topic: "Allenatori argentini" },
+  { categoria: "Allenatori", topic: "Allenatori olandesi" },
+  { categoria: "Allenatori", topic: "Allenatori tedeschi" },
+  { categoria: "Allenatori", topic: "Allenatori che hanno vinto la Coppa Italia" },
+  { categoria: "Allenatori", topic: "Allenatori che hanno allenato la Fiorentina" },
+  { categoria: "Allenatori", topic: "Allenatori che hanno allenato il Real Madrid" },
+  { categoria: "Allenatori", topic: "Allenatori che hanno allenato il Barcellona" },
+  { categoria: "Allenatori", topic: "Allenatori che hanno allenato il Chelsea" },
+  { categoria: "Allenatori", topic: "Allenatori che hanno vinto la Coppa UEFA o l'Europa League" },
+  { categoria: "Allenatori", topic: "Allenatori che hanno allenato l'Atalanta" },
 
   // ========== STADI ==========
   { categoria: "Stadi", topic: "Stadi italiani" },
@@ -147,6 +213,13 @@ const topics = [
   { categoria: "Stadi", topic: "Stadi commerciali (con nome dello sponsor)" },
   { categoria: "Stadi", topic: "Stadi che hanno ospitato una finale di Champions" },
   { categoria: "Stadi", topic: "Stadi demoliti che hanno fatto la storia" },
+  { categoria: "Stadi", topic: "Stadi della Serie B" },
+  { categoria: "Stadi", topic: "Stadi con più di 50.000 posti" },
+  { categoria: "Stadi", topic: "Stadi con la pista d'atletica" },
+  { categoria: "Stadi", topic: "Soprannomi di stadi (la Scala del calcio, il Teatro dei Sogni...)" },
+  { categoria: "Stadi", topic: "Stadi europei famosi" },
+  { categoria: "Stadi", topic: "Stadi di Londra" },
+  { categoria: "Stadi", topic: "Stadi della Serie A di oggi" },
 
   // ========== PREMI E RICONOSCIMENTI ==========
   { categoria: "Premi e Riconoscimenti", topic: "Calciatori che hanno vinto il Pallone d'Oro" },
@@ -163,6 +236,15 @@ const topics = [
   { categoria: "Premi e Riconoscimenti", topic: "Calciatori che hanno vinto un Europeo" },
   { categoria: "Premi e Riconoscimenti", topic: "Calciatori che hanno vinto l'oro olimpico" },
   { categoria: "Premi e Riconoscimenti", topic: "Calciatori che hanno vinto la Copa Libertadores" },
+  { categoria: "Premi e Riconoscimenti", topic: "Calciatori che hanno vinto la Champions League" },
+  { categoria: "Premi e Riconoscimenti", topic: "Calciatori che hanno vinto la Coppa UEFA o l'Europa League" },
+  { categoria: "Premi e Riconoscimenti", topic: "Calciatori che hanno vinto la Coppa d'Africa" },
+  { categoria: "Premi e Riconoscimenti", topic: "Calciatori che hanno vinto lo scudetto con il Napoli" },
+  { categoria: "Premi e Riconoscimenti", topic: "Calciatori che hanno vinto il FIFA World Player o il The Best" },
+  { categoria: "Premi e Riconoscimenti", topic: "Capocannonieri dei Mondiali" },
+  { categoria: "Premi e Riconoscimenti", topic: "Capocannonieri della Champions League" },
+  { categoria: "Premi e Riconoscimenti", topic: "Calciatori che hanno vinto la Premier League" },
+  { categoria: "Premi e Riconoscimenti", topic: "Calciatori che hanno vinto la Liga" },
 
   // ========== RUOLI E POSIZIONI ==========
   { categoria: "Ruoli e Posizioni", topic: "Portieri famosi" },
@@ -181,8 +263,14 @@ const topics = [
   { categoria: "Ruoli e Posizioni", topic: "Mezzali" },
   { categoria: "Ruoli e Posizioni", topic: "Esterni a tutta fascia" },
   { categoria: "Ruoli e Posizioni", topic: "Difensori goleador" },
-  { categoria: "Ruoli e Posizioni", topic: "Portieri che hanno segnato un gol" },
+  { categoria: "Ruoli e Posizioni", topic: "Portieri della Nazionale italiana" },
   { categoria: "Ruoli e Posizioni", topic: "Portieri famosi per parare i rigori" },
+  { categoria: "Ruoli e Posizioni", topic: "Portieri stranieri della Serie A" },
+  { categoria: "Ruoli e Posizioni", topic: "Difensori italiani" },
+  { categoria: "Ruoli e Posizioni", topic: "Centrocampisti italiani" },
+  { categoria: "Ruoli e Posizioni", topic: "Attaccanti italiani" },
+  { categoria: "Ruoli e Posizioni", topic: "Portieri sudamericani" },
+  { categoria: "Ruoli e Posizioni", topic: "Centravanti di peso (prime punte fisiche)" },
 
   // ========== AZIONI E GESTI TECNICI ==========
   { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori famosi per i dribbling" },
@@ -198,32 +286,41 @@ const topics = [
   { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori famosi per i tackle" },
   { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori famosi per le rovesciate e le acrobazie" },
   { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori famosi per gli assist" },
-  { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori che hanno segnato un rigore a cucchiaio" },
+  { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori famosi per un'esultanza particolare" },
+  { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori mancini famosi" },
+  { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori famosi per la forza fisica" },
+  { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori famosi per i colpi di tacco" },
+  { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori famosi per i lanci lunghi" },
+  { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori famosi per la bassa statura" },
+  { categoria: "Azioni e Gesti Tecnici", topic: "Calciatori altissimi" },
 
   // ========== TROFEI E STORIA ==========
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Champions League" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto l'Europa League" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Coppa delle Coppe" },
-  { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto il Mondiale per club" },
+  { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Coppa Intercontinentale o il Mondiale per club" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Supercoppa Europea" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto il campionato italiano" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Coppa Italia" },
-  { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Supercoppa Italiana" },
-  { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Premier League" },
+  { categoria: "Trofei e Storia", topic: "Squadre che hanno giocato una finale di Coppa Italia" },
+  { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto il campionato inglese (anche prima della Premier)" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la FA Cup" },
-  { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Liga" },
+  { categoria: "Trofei e Storia", topic: "Squadre che hanno giocato una finale europea (Champions, Coppa UEFA, Coppa delle Coppe...)" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Copa del Rey" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Bundesliga" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Ligue 1" },
-  { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Coppa Intercontinentale" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Copa Libertadores" },
-  { categoria: "Trofei e Storia", topic: "Squadre che hanno fatto il Triplete (campionato, coppa nazionale e Champions)" },
+  { categoria: "Trofei e Storia", topic: "Squadre che hanno fatto il \"double\" (campionato e coppa nazionale nella stessa stagione)" },
   { categoria: "Trofei e Storia", topic: "Squadre scomparse o fallite e rifondate" },
+  { categoria: "Trofei e Storia", topic: "Squadre che hanno giocato una finale di Champions League" },
+  { categoria: "Trofei e Storia", topic: "Squadre italiane che hanno vinto una coppa europea" },
+  { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Serie B" },
+  { categoria: "Trofei e Storia", topic: "Squadre retrocesse dalla Serie A negli ultimi vent'anni" },
 
   // ========== MAGLIE, SPONSOR E COLORI ==========
-  { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con la maglia a strisce verticali bianconere" },
-  { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con la maglia a strisce verticali nerazzurre" },
-  { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con la maglia a strisce verticali rossonere" },
+  { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con la maglia a strisce verticali" },
+  { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con il bianco e il nero tra i colori sociali" },
+  { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con il rosso e il nero tra i colori sociali" },
   { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con la maglia completamente rossa" },
   { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con la maglia completamente bianca" },
   { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con la maglia azzurra o blu" },
@@ -231,6 +328,11 @@ const topics = [
   { categoria: "Maglie, Sponsor e Colori", topic: "Sponsor storici sulle maglie (Pirelli, Opel, Barilla...)" },
   { categoria: "Maglie, Sponsor e Colori", topic: "Marchi di abbigliamento sportivo (sponsor tecnici)" },
   { categoria: "Maglie, Sponsor e Colori", topic: "Squadre che hanno ritirato un numero di maglia" },
+  { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con il giallo tra i colori sociali" },
+  { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con il verde tra i colori sociali" },
+  { categoria: "Maglie, Sponsor e Colori", topic: "Squadre biancocelesti o biancazzurre" },
+  { categoria: "Maglie, Sponsor e Colori", topic: "Squadre con la maglia granata, amaranto o bordeaux" },
+  { categoria: "Maglie, Sponsor e Colori", topic: "Sponsor di maglia delle squadre di Serie A di oggi" },
 
   // ========== MOMENTI STORICI ==========
   { categoria: "Momenti Storici", topic: "Partite leggendarie della storia del calcio" },
@@ -250,6 +352,12 @@ const topics = [
   { categoria: "Momenti Storici", topic: "Derby cittadini stranieri" },
   { categoria: "Momenti Storici", topic: "Sfide europee epiche" },
   { categoria: "Momenti Storici", topic: "Scandali arbitrali storici" },
+  { categoria: "Momenti Storici", topic: "Gol decisivi nei minuti di recupero" },
+  { categoria: "Momenti Storici", topic: "Goleade storiche" },
+  { categoria: "Momenti Storici", topic: "Partite dell'Italia ai Mondiali" },
+  { categoria: "Momenti Storici", topic: "Partite famose finite ai rigori" },
+  { categoria: "Momenti Storici", topic: "Edizioni dei Mondiali (anno e paese ospitante)" },
+  { categoria: "Momenti Storici", topic: "Edizioni degli Europei (anno e paese ospitante)" },
 
   // ========== CURIOSITÀ PERSONALI ==========
   { categoria: "Curiosità Personali", topic: "Soprannomi di calciatori" },
@@ -261,6 +369,15 @@ const topics = [
   { categoria: "Curiosità Personali", topic: "Calciatori che sono diventati dirigenti" },
   { categoria: "Curiosità Personali", topic: "Calciatori che sono diventati commentatori TV" },
   { categoria: "Curiosità Personali", topic: "Calciatori a cui è stata dedicata una statua" },
+  { categoria: "Curiosità Personali", topic: "Calciatori che hanno giocato in MLS" },
+  { categoria: "Curiosità Personali", topic: "Calciatori che hanno giocato in Arabia Saudita" },
+  { categoria: "Curiosità Personali", topic: "Calciatori che hanno giocato in Cina" },
+  { categoria: "Curiosità Personali", topic: "Oriundi e naturalizzati della Nazionale italiana" },
+  { categoria: "Curiosità Personali", topic: "Calciatori con i capelli lunghi" },
+  { categoria: "Curiosità Personali", topic: "Calciatori calvi o rasati" },
+  { categoria: "Curiosità Personali", topic: "Calciatori che hanno scritto un'autobiografia" },
+  { categoria: "Curiosità Personali", topic: "Calciatori con tatuaggi famosi" },
+  { categoria: "Curiosità Personali", topic: "Calciatori italiani che hanno giocato all'estero" },
 
   // ========== CALCIO FEMMINILE ==========
   { categoria: "Calcio Femminile", topic: "Calciatrici italiane famose" },
@@ -268,6 +385,8 @@ const topics = [
   { categoria: "Calcio Femminile", topic: "Squadre di calcio femminile italiane" },
   { categoria: "Calcio Femminile", topic: "Squadre di calcio femminile straniere" },
   { categoria: "Calcio Femminile", topic: "Nazionali di calcio femminile" },
+  { categoria: "Calcio Femminile", topic: "Calciatrici della Juventus Women" },
+  { categoria: "Calcio Femminile", topic: "Calciatrici che hanno giocato un Mondiale femminile" },
 
   // ========== MISTI E GENERALI ==========
   { categoria: "Misti e Generali", topic: "Nomi di trofei e coppe" },
@@ -282,6 +401,11 @@ const topics = [
   { categoria: "Misti e Generali", topic: "Inni ufficiali delle squadre" },
   { categoria: "Misti e Generali", topic: "Mascotte dei Mondiali di calcio" },
   { categoria: "Misti e Generali", topic: "Termini tecnici del calcio" },
+  { categoria: "Misti e Generali", topic: "Arbitri della Serie A di oggi" },
+  { categoria: "Misti e Generali", topic: "Presidenti di club di Serie A di oggi" },
+  { categoria: "Misti e Generali", topic: "Oggetti dell'attrezzatura di un calciatore" },
+  { categoria: "Misti e Generali", topic: "Falli e infrazioni punibili dall'arbitro" },
+  { categoria: "Misti e Generali", topic: "Figure dello staff di una squadra (preparatore, magazziniere...)" },
 
   // ========== CALCIOMERCATO ==========
   { categoria: "Calciomercato", topic: "Trasferimenti record della storia del calcio" },
@@ -289,15 +413,23 @@ const topics = [
   { categoria: "Calciomercato", topic: "Trasferimenti tra squadre rivali" },
   { categoria: "Calciomercato", topic: "Giovani promesse mai esplose" },
   { categoria: "Calciomercato", topic: "Calciatori tornati nel club che li aveva venduti" },
+  { categoria: "Calciomercato", topic: "Acquisti più costosi della storia della Serie A" },
+  { categoria: "Calciomercato", topic: "Bidoni del calciomercato in Serie A" },
+  { categoria: "Calciomercato", topic: "Calciatori arrivati in Serie A dalla Premier League" },
+  { categoria: "Calciomercato", topic: "Calciatori italiani passati in Premier League" },
+  { categoria: "Calciomercato", topic: "Calciatori passati dalla Serie A al Real Madrid o al Barcellona" },
 
   // ========== LOGHI E STEMMI ==========
   { categoria: "Loghi e Stemmi", topic: "Stemmi di squadre con un animale" },
   { categoria: "Loghi e Stemmi", topic: "Stemmi di squadre con una corona" },
   { categoria: "Loghi e Stemmi", topic: "Squadre con la stella sulla maglia" },
   { categoria: "Loghi e Stemmi", topic: "Squadre con lo stemma a forma di scudo" },
-  { categoria: "Loghi e Stemmi", topic: "Squadre con colori sociali giallo e rosso" },
   { categoria: "Loghi e Stemmi", topic: "Loghi ispirati alla città di appartenenza" },
   { categoria: "Loghi e Stemmi", topic: "Mascotte ufficiali dei club" },
+  { categoria: "Loghi e Stemmi", topic: "Animali simbolo delle squadre (lupa, zebra, biscione...)" },
+  { categoria: "Loghi e Stemmi", topic: "Soprannomi delle squadre italiane (Vecchia Signora, Diavolo...)" },
+  { categoria: "Loghi e Stemmi", topic: "Soprannomi delle squadre straniere (Blancos, Red Devils...)" },
+  { categoria: "Loghi e Stemmi", topic: "Stemmi con le iniziali del club" },
 
   // ========== DERBY E RIVALITÀ ==========
   { categoria: "Derby e Rivalità", topic: "Calciatori che hanno giocato sia nel Milan sia nell'Inter" },
@@ -307,8 +439,14 @@ const topics = [
   { categoria: "Derby e Rivalità", topic: "Calciatori che hanno giocato sia nella Juventus sia nel Milan" },
   { categoria: "Derby e Rivalità", topic: "Calciatori che hanno giocato sia nella Juventus sia nel Napoli" },
   { categoria: "Derby e Rivalità", topic: "Calciatori che hanno giocato sia nella Roma sia nella Juventus" },
-  { categoria: "Derby e Rivalità", topic: "Calciatori che hanno giocato sia nel Napoli sia nell'Inter" },
+  { categoria: "Derby e Rivalità", topic: "Calciatori che hanno giocato sia nell'Inter sia nella Roma" },
   { categoria: "Derby e Rivalità", topic: "Derby in giro per il mondo (nomi dei derby)" },
+  { categoria: "Derby e Rivalità", topic: "Calciatori che hanno giocato sia nel Milan sia nella Roma" },
+  { categoria: "Derby e Rivalità", topic: "Calciatori che hanno giocato sia nella Lazio sia nell'Inter" },
+  { categoria: "Derby e Rivalità", topic: "Calciatori che hanno giocato sia nel Barcellona sia nell'Inter" },
+  { categoria: "Derby e Rivalità", topic: "Calciatori che hanno giocato sia nel Napoli sia nella Roma" },
+  { categoria: "Derby e Rivalità", topic: "Rivalità famose tra calciatori" },
+  { categoria: "Derby e Rivalità", topic: "Calciatori che hanno giocato sia nell'Arsenal sia nel Chelsea" },
 
   // ========== COPPE INTERNAZIONALI PER NAZIONALI ==========
   { categoria: "Coppe Internazionali per Nazionali", topic: "Nazionali che hanno vinto la Coppa d'Africa" },
@@ -322,6 +460,11 @@ const topics = [
   { categoria: "Coppe Internazionali per Nazionali", topic: "Nazionali africane" },
   { categoria: "Coppe Internazionali per Nazionali", topic: "Nazionali sudamericane e centroamericane" },
   { categoria: "Coppe Internazionali per Nazionali", topic: "Città che hanno ospitato partite dei Mondiali" },
+  { categoria: "Coppe Internazionali per Nazionali", topic: "Nazionali che hanno vinto la Copa América" },
+  { categoria: "Coppe Internazionali per Nazionali", topic: "Nazionali che hanno vinto gli Europei" },
+  { categoria: "Coppe Internazionali per Nazionali", topic: "Nazionali asiatiche e oceaniche" },
+  { categoria: "Coppe Internazionali per Nazionali", topic: "Paesi che hanno ospitato un Mondiale" },
+  { categoria: "Coppe Internazionali per Nazionali", topic: "Nazionali che hanno giocato una finale dei Mondiali" },
 
   // ========== NUOVE GENERAZIONI ==========
   { categoria: "Nuove Generazioni", topic: "Giovani talenti emergenti del calcio europeo" },
@@ -332,6 +475,8 @@ const topics = [
   { categoria: "Nuove Generazioni", topic: "Astri nascenti della Serie A" },
   { categoria: "Nuove Generazioni", topic: "Baby fenomeni del calcio sudamericano" },
   { categoria: "Nuove Generazioni", topic: "Giovani talenti del calcio africano" },
+  { categoria: "Nuove Generazioni", topic: "Calciatori famosi nati dopo il 2000" },
+  { categoria: "Nuove Generazioni", topic: "Giovani italiani titolari in Serie A" },
 
   // ========== CLUB NEL MONDO ==========
   { categoria: "Club nel Mondo", topic: "Squadre che hanno giocato almeno una stagione in Serie A" },
@@ -347,6 +492,13 @@ const topics = [
   { categoria: "Club nel Mondo", topic: "Squadre turche" },
   { categoria: "Club nel Mondo", topic: "Squadre scozzesi" },
   { categoria: "Club nel Mondo", topic: "Squadre che hanno giocato la Champions League" },
+  { categoria: "Club nel Mondo", topic: "Squadre belghe" },
+  { categoria: "Club nel Mondo", topic: "Squadre greche" },
+  { categoria: "Club nel Mondo", topic: "Squadre della MLS" },
+  { categoria: "Club nel Mondo", topic: "Squadre di Londra" },
+  { categoria: "Club nel Mondo", topic: "Squadre della Serie A di oggi" },
+  { categoria: "Club nel Mondo", topic: "Squadre italiane che hanno giocato in Serie C" },
+  { categoria: "Club nel Mondo", topic: "Squadre con \"United\" nel nome" },
 
   // ========== LETTERE E NOMI ==========
   { categoria: "Lettere e Nomi", topic: "Calciatori il cui cognome inizia per B" },
@@ -364,6 +516,35 @@ const topics = [
   { categoria: "Lettere e Nomi", topic: "Calciatori di nome Daniele" },
   { categoria: "Lettere e Nomi", topic: "Calciatori di nome Federico" },
   { categoria: "Lettere e Nomi", topic: "Calciatori conosciuti con un solo nome (Pelé, Kaká...)" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori il cui cognome inizia per A" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori il cui cognome inizia per F" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori il cui cognome inizia per G" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori il cui cognome inizia per L" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori il cui cognome inizia per T" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori il cui cognome inizia per V" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori il cui cognome finisce in -ić" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori il cui nome finisce in -inho (Ronaldinho, Jorginho...)" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori di nome Francesco" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori di nome Andrea" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori di nome Antonio" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori di nome Roberto" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori di nome Paolo" },
+  { categoria: "Lettere e Nomi", topic: "Calciatori di nome Giuseppe" },
+
+  // ========== CINEMA, TV E VIDEOGIOCHI ==========
+  { categoria: "Cinema, TV e Videogiochi", topic: "Film sul calcio" },
+  { categoria: "Cinema, TV e Videogiochi", topic: "Programmi TV sul calcio" },
+  { categoria: "Cinema, TV e Videogiochi", topic: "Videogiochi di calcio" },
+  { categoria: "Cinema, TV e Videogiochi", topic: "Canzoni sul calcio e inni dei tornei" },
+  { categoria: "Cinema, TV e Videogiochi", topic: "Calciatori protagonisti di pubblicità famose" },
+  { categoria: "Cinema, TV e Videogiochi", topic: "Calciatori che hanno recitato in un film o in una serie" },
+
+  // ========== FANTACALCIO ==========
+  { categoria: "Fantacalcio", topic: "Termini del fantacalcio (bonus, malus, asta...)" },
+  { categoria: "Fantacalcio", topic: "Rigoristi della Serie A" },
+  { categoria: "Fantacalcio", topic: "Portieri titolari della Serie A di oggi" },
+  { categoria: "Fantacalcio", topic: "Attaccanti della Serie A di oggi" },
+  { categoria: "Fantacalcio", topic: "Centrocampisti che segnano tanto (da bonus)" },
 ];
 
 if (typeof module !== "undefined" && module.exports) { module.exports = { topics }; }
