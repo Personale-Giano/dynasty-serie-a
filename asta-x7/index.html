@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Pagina segreta: non è collegata da nessuna parte, non è nella sitemap e chiede ai motori
+     di non indicizzarla. Si apre solo conoscendo l'indirizzo. -->
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="theme-color" content="#0e0f13">
+<title>L'Asta dei Personaggi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800;900&family=Saira+Semi+Condensed:wght@700;800&display=swap">
+<style>
+:root{
+  --bg:#0e0f13; --panel:#181a20; --panel2:#20232b; --line:#2d313b; --txt:#f3f2ee; --muted:#9a9ea8;
+  --acc:#ffb547; --acc-ink:#1a1206; --good:#36d887; --bad:#ff5a5a;
+  --c0:#ff7a59; --c1:#5ab0ff; --c2:#ffd34d; --c3:#b48cff;
+  --cond:'Saira Semi Condensed', 'Archivo', sans-serif;
+}
+*{ box-sizing:border-box; }
+html,body{ margin:0; background:var(--bg); color:var(--txt); font-family:Archivo, system-ui, sans-serif; -webkit-tap-highlight-color:transparent; }
+body{ min-height:100vh; min-height:100dvh; }
+button, input, textarea, select{ font:inherit; color:inherit; }
+button{ cursor:pointer; }
+.wrap{ max-width:1100px; margin:0 auto; padding:18px 16px 40px; }
+.hidden{ display:none !important; }
+h1{ font:800 34px/1 var(--cond); text-transform:uppercase; letter-spacing:.02em; margin:6px 0 4px; }
+h1 span{ color:var(--acc); }
+h2{ font:800 20px/1.1 var(--cond); text-transform:uppercase; letter-spacing:.04em; margin:0 0 10px; }
+.sub{ color:var(--muted); margin:0 0 18px; line-height:1.45; }
+.card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; }
+.row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.grid4{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+@media (max-width:620px){ .grid4{ grid-template-columns:1fr 1fr; } }
+label.f{ display:flex; flex-direction:column; gap:5px; font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+input[type=text], input[type=number], textarea, select{
+  background:var(--panel2); border:1px solid var(--line); border-radius:8px; padding:10px 11px; font-size:15px; width:100%; outline:none;
+}
+input:focus, textarea:focus, select:focus{ border-color:var(--acc); }
+textarea{ min-height:260px; font-family:ui-monospace, Consolas, monospace; font-size:13px; line-height:1.5; resize:vertical; }
+.btn{ border:1px solid var(--line); background:var(--panel2); border-radius:9px; padding:11px 16px; font-weight:800; font-size:14px; }
+.btn:hover{ border-color:#454a57; }
+.btn:disabled{ opacity:.35; cursor:not-allowed; }
+.btn-p{ background:var(--acc); border-color:var(--acc); color:var(--acc-ink); }
+.btn-p:hover{ border-color:#ffd08a; }
+.btn-xl{ font:800 19px/1 var(--cond); text-transform:uppercase; letter-spacing:.05em; padding:16px 22px; width:100%; }
+.btn-s{ padding:7px 11px; font-size:13px; }
+.btn-ghost{ background:transparent; }
+.btn-bad{ color:var(--bad); }
+.plist{ display:flex; flex-direction:column; gap:8px; margin-bottom:10px; }
+.plist .row{ flex-wrap:nowrap; }
+.dot{ width:12px; height:12px; border-radius:50%; flex:0 0 auto; }
+.muted{ color:var(--muted); }
+.small{ font-size:12.5px; }
+.err{ color:var(--bad); font-weight:700; font-size:13px; margin-top:8px; }
+
+/* ---------- asta ---------- */
+.top{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+.top .t{ font:800 22px/1 var(--cond); text-transform:uppercase; }
+.top .t span{ color:var(--acc); }
+.tabs{ display:flex; gap:6px; }
+.tab{ border:1px solid var(--line); background:transparent; border-radius:999px; padding:7px 14px; font-weight:800; font-size:13px; color:var(--muted); }
+.tab.on{ background:var(--acc); border-color:var(--acc); color:var(--acc-ink); }
+.auction{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.1fr); gap:14px; align-items:start; }
+@media (max-width:860px){ .auction{ grid-template-columns:1fr; } }
+.pcard{ background:linear-gradient(160deg, #23262f, #15171c); border:1px solid var(--line); border-radius:16px; padding:20px; position:relative; overflow:hidden; }
+.pcard::after{ content:""; position:absolute; right:-60px; top:-60px; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle, rgba(255,181,71,.18), transparent 70%); }
+.pnum{ font:800 13px/1 var(--cond); color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+.pname{ font:800 34px/1.02 var(--cond); text-transform:uppercase; margin:8px 0 6px; }
+.pdesc{ color:var(--muted); font-size:14.5px; line-height:1.45; margin:0 0 16px; min-height:20px; }
+.stat{ display:grid; grid-template-columns:110px 1fr 30px; align-items:center; gap:10px; margin:9px 0; font-weight:700; font-size:14px; }
+.bar{ height:10px; background:#2a2d36; border-radius:6px; overflow:hidden; }
+.bar i{ display:block; height:100%; border-radius:6px; }
+.stat b{ text-align:right; font:800 18px/1 var(--cond); }
+.ptot{ display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--line); margin-top:14px; padding-top:12px; font-weight:800; }
+.ptot b{ font:800 26px/1 var(--cond); color:var(--acc); }
+.price{ display:flex; align-items:center; gap:16px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; }
+.price .amt{ font:800 52px/1 var(--cond); color:var(--acc); min-width:90px; }
+.price .who{ flex:1; min-width:0; }
+.price .who small{ display:block; color:var(--muted); font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.price .who b{ font-size:20px; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.timer{ width:62px; height:62px; position:relative; flex:0 0 auto; }
+.timer svg{ transform:rotate(-90deg); }
+.timer span{ position:absolute; inset:0; display:grid; place-items:center; font:800 22px/1 var(--cond); }
+.timer.low span{ color:var(--bad); }
+.bidders{ display:flex; flex-direction:column; gap:8px; }
+.bidder{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:11px; padding:10px 12px; }
+.bidder.lead{ border-color:var(--acc); box-shadow:inset 4px 0 0 var(--acc); }
+.bidder.out{ opacity:.45; }
+.bidder .nm{ font-weight:800; display:flex; align-items:center; gap:8px; min-width:0; }
+.bidder .nm span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.bidder .meta{ font-size:12px; color:var(--muted); margin-top:3px; }
+.bidder .bb{ display:flex; gap:5px; }
+.bidder .bb .btn{ padding:9px 10px; min-width:44px; }
+.controls{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px; }
+.controls .btn-p{ grid-column:1 / -1; }
+.log{ font-size:13px; color:var(--muted); margin-top:10px; max-height:120px; overflow:auto; }
+.log div{ padding:3px 0; border-bottom:1px dashed #262931; }
+
+/* ---------- rose e classifica ---------- */
+.teams{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; }
+.team h3{ margin:0 0 4px; font:800 19px/1.1 var(--cond); text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+.team .tm{ color:var(--muted); font-size:12.5px; margin-bottom:10px; }
+.team ul{ list-style:none; margin:0; padding:0; }
+.team li{ display:flex; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--line); font-size:14px; }
+.team li .x{ background:none; border:0; color:var(--muted); padding:0 0 0 6px; font-size:13px; }
+.team li .x:hover{ color:var(--bad); }
+.team li.empty{ color:#555a66; font-style:italic; }
+.team .cats{ display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-top:10px; font-size:11px; text-align:center; color:var(--muted); }
+.team .cats b{ display:block; font:800 17px/1.1 var(--cond); color:var(--txt); }
+.rank{ display:flex; flex-direction:column; gap:10px; }
+.rk{ display:grid; grid-template-columns:52px 1fr auto; gap:12px; align-items:center; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+.rk .pos{ font:800 34px/1 var(--cond); color:var(--muted); text-align:center; }
+.rk:first-child{ border-color:var(--acc); background:linear-gradient(90deg, rgba(255,181,71,.14), var(--panel)); }
+.rk:first-child .pos{ color:var(--acc); }
+.rk .n{ font-weight:800; font-size:18px; }
+.rk .d{ font-size:12.5px; color:var(--muted); margin-top:3px; }
+.rk .s{ font:800 30px/1 var(--cond); }
+.awards{ display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:10px; margin-top:14px; }
+.award{ background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px; }
+.award small{ color:var(--muted); font-weight:800; font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+.award b{ display:block; font-size:16px; margin-top:4px; }
+.pool{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:8px; }
+.pool .it{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; gap:8px; align-items:center; }
+.pool .it button{ padding:6px 10px; }
+.pool .it .s{ font-size:12px; color:var(--muted); }
+.toast{ position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:#262a33; border:1px solid var(--line); border-left:5px solid var(--acc); padding:12px 16px; border-radius:10px; font-weight:700; z-index:50; box-shadow:0 10px 30px rgba(0,0,0,.5); max-width:calc(100vw - 32px); }
+.sold{ position:fixed; inset:0; display:grid; place-items:center; background:rgba(8,9,12,.78); z-index:40; }
+.sold div{ text-align:center; animation:pop .35s ease; }
+.sold small{ display:block; font:800 16px/1 var(--cond); letter-spacing:.2em; color:var(--muted); text-transform:uppercase; }
+.sold b{ display:block; font:800 56px/1 var(--cond); color:var(--acc); text-transform:uppercase; margin:10px 0; }
+.sold span{ font-size:20px; font-weight:800; }
+@keyframes pop{ from{ transform:scale(.8); opacity:0; } to{ transform:none; opacity:1; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ================= PREPARAZIONE ================= -->
+<section id="scSetup">
+  <h1>L'Asta dei <span>Personaggi</span></h1>
+  <p class="sub">Come l'asta del fantacalcio, ma con personaggi inventati. Ognuno ha un budget di crediti e deve riempire la sua rosa; vince chi mette insieme la squadra con il punteggio più alto nelle quattro caratteristiche.</p>
+
+  <div class="card hidden" id="resumeCard">
+    <h2>C'è un'asta in corso</h2>
+    <p class="sub" id="resumeInfo" style="margin-bottom:12px"></p>
+    <div class="row"><button class="btn btn-p" id="resumeBtn">Riprendi l'asta</button><button class="btn btn-bad" id="discardBtn">Cancellala e ricomincia</button></div>
+  </div>
+
+  <div class="card">
+    <h2>Partecipanti</h2>
+    <div class="plist" id="plist"></div>
+    <button class="btn btn-s" id="addP">+ Aggiungi partecipante</button>
+  </div>
+
+  <div class="card">
+    <h2>Regole</h2>
+    <div class="grid2">
+      <label class="f">Crediti a testa<input type="number" id="optBudget" min="10" max="10000" value="500"></label>
+      <label class="f">Personaggi per rosa<input type="number" id="optSlots" min="1" max="30" value="5"></label>
+      <label class="f">Timer per ogni offerta (secondi, 0 = senza)<input type="number" id="optTimer" min="0" max="120" value="15"></label>
+      <label class="f">Ordine di chiamata<select id="optOrder"><option value="random">Casuale</option><option value="alpha">Alfabetico</option><option value="free">Scelgo io ogni volta</option></select></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Le quattro caratteristiche</h2>
+    <p class="sub small" style="margin-bottom:10px">Voti da 1 a 10. Puoi cambiare il nome di ogni caratteristica.</p>
+    <div class="grid4" id="catInputs"></div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:6px">
+      <h2 style="margin:0">Personaggi <span class="muted" id="poolCount"></span></h2>
+      <div class="row"><button class="btn btn-s" id="editPool">Modifica l'elenco</button><button class="btn btn-s btn-ghost" id="resetPool">Rimetti quelli di base</button></div>
+    </div>
+    <div id="poolEditor" class="hidden" style="margin-top:10px">
+      <p class="sub small" style="margin-bottom:8px">Un personaggio per riga: <b>Nome; voto 1; voto 2; voto 3; voto 4; descrizione</b> (la descrizione si può lasciare vuota). I voti vanno da 1 a 10, nell'ordine delle caratteristiche qui sopra.</p>
+      <textarea id="poolText" spellcheck="false"></textarea>
+      <div class="err hidden" id="poolErr"></div>
+      <div class="row" style="margin-top:10px"><button class="btn btn-p btn-s" id="savePool">Salva l'elenco</button><button class="btn btn-s" id="cancelPool">Annulla</button></div>
+    </div>
+    <div id="poolPreview" class="small muted" style="margin-top:8px;line-height:1.6"></div>
+  </div>
+
+  <div class="err hidden" id="setupErr"></div>
+  <button class="btn btn-p btn-xl" id="startBtn">Inizia l'asta</button>
+</section>
+
+<!-- ================= ASTA ================= -->
+<section id="scGame" class="hidden">
+  <div class="top">
+    <div class="t">L'Asta dei <span>Personaggi</span></div>
+    <div class="tabs">
+      <button class="tab on" data-tab="auction">Asta</button>
+      <button class="tab" data-tab="teams">Rose</button>
+      <button class="tab" data-tab="pool">Da chiamare</button>
+    </div>
+  </div>
+
+  <div id="tabAuction">
+    <div id="pickBox" class="card hidden">
+      <h2>Chi chiamiamo?</h2>
+      <p class="sub small" style="margin-bottom:10px">Tocca un personaggio per metterlo all'asta.</p>
+      <div class="pool" id="pickList"></div>
+    </div>
+    <div class="auction" id="auctionBox">
+      <div>
+        <div class="pcard">
+          <div class="pnum" id="pNum"></div>
+          <div class="pname" id="pName"></div>
+          <p class="pdesc" id="pDesc"></p>
+          <div id="pStats"></div>
+          <div class="ptot"><span>Totale</span><b id="pTot"></b></div>
+        </div>
+        <div class="log" id="log"></div>
+      </div>
+      <div>
+        <div class="price">
+          <div class="amt" id="curPrice">0</div>
+          <div class="who"><small>Offerta più alta</small><b id="curLeader">Nessuna offerta</b></div>
+          <div class="timer" id="timer"><svg width="62" height="62"><circle cx="31" cy="31" r="27" stroke="#2a2d36" stroke-width="6" fill="none"/><circle id="timerArc" cx="31" cy="31" r="27" stroke="var(--acc)" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="169.6" stroke-dashoffset="0"/></svg><span id="timerTxt"></span></div>
+        </div>
+        <div class="bidders" id="bidders"></div>
+        <div class="controls">
+          <button class="btn btn-p btn-xl" id="sellBtn">Aggiudica</button>
+          <button class="btn" id="undoBidBtn">Annulla ultima offerta</button>
+          <button class="btn" id="skipBtn">Nessuno lo vuole</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tabTeams" class="hidden">
+    <div class="teams" id="teams"></div>
+    <div class="row" style="margin-top:14px"><button class="btn" id="endNowBtn">Chiudi l'asta e vai alla classifica</button><button class="btn btn-ghost btn-bad" id="quitBtn">Esci e torna alla preparazione</button></div>
+  </div>
+
+  <div id="tabPool" class="hidden">
+    <p class="sub small">Personaggi non ancora assegnati, nell'ordine in cui verranno chiamati. Quelli che nessuno ha voluto tornano in fondo alla fila.</p>
+    <div class="pool" id="poolList"></div>
+  </div>
+</section>
+
+<!-- ================= CLASSIFICA ================= -->
+<section id="scEnd" class="hidden">
+  <h1>La <span>classifica</span></h1>
+  <p class="sub">Punteggio = somma delle quattro caratteristiche di tutti i personaggi della rosa, più 5 punti bonus per ogni caratteristica in cui una squadra è la migliore. A parità vince chi ha speso meno.</p>
+  <div class="rank" id="rank"></div>
+  <div class="awards" id="awards"></div>
+  <h2 style="margin-top:22px">Le rose</h2>
+  <div class="teams" id="endTeams"></div>
+  <div class="row" style="margin-top:18px"><button class="btn" id="backToGame">Torna all'asta</button><button class="btn btn-p" id="newGame">Nuova asta</button></div>
+</section>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const KEY = 'asta-personaggi-v1';
+  const SETUP_KEY = 'asta-personaggi-setup-v1';
+  const COLORS = ['#ff7a59', '#5ab0ff', '#ffd34d', '#36d887', '#b48cff', '#ff6fae', '#4fe0d6', '#ff9f40', '#9fd356', '#e0e0e0', '#c78b5c', '#7d8cff'];
+  const CAT_COLORS = ['var(--c0)', 'var(--c1)', 'var(--c2)', 'var(--c3)'];
+  const DEFAULT_CATS = ['Carisma', 'Intelligenza', 'Simpatia', 'Carattere'];
+
+  // Personaggi inventati di base: Nome; carisma; intelligenza; simpatia; carattere; descrizione.
+  const DEFAULT_POOL = `Contessa Ludovica Spinetta; 9; 7; 4; 8; Nobile decaduta, gioca a scacchi per soldi e non perde mai un'occasione per ricordartelo
+Capitan Ottavio Remolo; 8; 5; 7; 9; Ex marinaio, racconta tempeste che nessuno ha mai visto
+Zia Pina dei Tortellini; 6; 6; 10; 7; Sa tutto di tutti nel quartiere e ti rimpinza finché non scoppi
+Dottor Anselmo Quaglia; 5; 10; 4; 6; Scienziato distratto, ha brevettato un ombrello che piove dentro
+Mirella Vortice; 10; 6; 6; 7; Influencer di provincia con quattro milioni di follower e un gatto famoso
+Bruno "Mattone" Ferraris; 6; 3; 8; 9; Muratore filosofo, cita Seneca mentre impasta il cemento
+Professoressa Ada Lumino; 7; 10; 5; 8; Insegna matematica e ha già capito che stai copiando
+Gigi Sparviero; 8; 6; 9; 4; Venditore di auto usate, ti convince anche a comprare la tua
+Suor Celeste Mancuso; 5; 8; 8; 10; Allena la squadra di pallavolo dell'oratorio come fosse la nazionale
+Rocco Tempesta; 9; 4; 6; 8; Cantante neomelodico, ogni concerto finisce in rissa d'amore
+Elvira Marmotta; 3; 7; 9; 5; Dorme sedici ore al giorno ma quando è sveglia è la migliore amica che puoi avere
+Barone Rinaldo Cipolla; 7; 6; 3; 9; Possiede mezza collina e litiga con l'altra metà
+Nonna Eufrasia; 6; 8; 10; 9; Ha visto due guerre, tre papi e non ha mai sbagliato un sugo
+Ivo Lampadina; 4; 9; 7; 4; Inventore di garage, ogni sua idea esplode almeno una volta
+Lady Morgana Stelvio; 10; 8; 3; 7; Scrittrice di gialli, sospettano che i delitti li abbia commessi davvero
+Tonino Ciambella; 5; 4; 10; 6; Barista di paese, sa il tuo ordine prima che tu entri
+Generale Augusta Ferro; 8; 7; 2; 10; In pensione, ma organizza ancora il condominio come una caserma
+Lulù Farfalla; 7; 5; 9; 3; Ballerina di tip tap, cambia idea ogni cinque minuti
+Mago Severino; 8; 7; 6; 5; Illusionista, l'unico trucco che non gli riesce è arrivare puntuale
+Ermenegildo Pace; 3; 8; 8; 8; Bibliotecario silenzioso, ha letto tutti i libri e ricorda le multe di tutti
+Vanessa Turbo; 9; 6; 7; 8; Pilota di rally, parcheggia in retromarcia anche al supermercato
+Padre Fulgenzio; 6; 7; 9; 7; Parroco tifosissimo, le prediche durano quanto un tempo supplementare
+Olimpia Ghiaccio; 8; 9; 2; 9; Campionessa di curling, sorride una volta l'anno a Natale
+Fausto Bonaventura; 7; 5; 8; 6; Animatore di villaggio, ha inventato tredici balli di gruppo
+Marchesa Fiamma Doria; 9; 7; 5; 6; Organizza feste in villa dove succede sempre qualcosa di strano
+Pietro "Calcolatrice" Neri; 4; 10; 5; 7; Commercialista, risolve un sudoku mentre ti spiega l'IVA
+Rosina Peperoncino; 7; 6; 8; 9; Cuoca di trattoria, se lasci qualcosa nel piatto se ne ricorda per anni
+Teodoro Nebbia; 6; 8; 4; 6; Detective privato, segue piste che esistono solo nella sua testa
+Clarissa Vento; 8; 7; 7; 5; Velista solitaria, è stata ovunque tranne che a casa sua
+Ugo Lumaca; 2; 6; 9; 6; Il più lento del mondo, ma non ha mai dimenticato un compleanno
+Sergente Mirko Dinamite; 7; 4; 5; 10; Istruttore di palestra, il riscaldamento dura due ore
+Beatrice Arcobaleno; 8; 6; 10; 5; Pittrice di murales, ha colorato mezza città senza permesso
+Lord Archibaldo Fumo; 9; 8; 4; 7; Collezionista di pipe e di segreti altrui
+Gemma Saetta; 6; 9; 6; 8; Hacker diciottenne, ha già bucato il sito del comune per sistemare gli orari del bus
+Nando Sbadiglio; 4; 5; 8; 3; Guardiano notturno, in vent'anni non ha mai visto nulla
+Regina Cleofe; 10; 7; 4; 9; Proprietaria di una catena di parrucchieri, governa come un impero
+Augusto Prezzemolo; 7; 6; 7; 6; Presenzialista, è in tutte le foto di tutte le feste
+Viola Tramonto; 6; 8; 8; 7; Astronoma, ti spiega le stelle e poi si perde tornando alla macchina
+Cesare Mezzanotte; 8; 6; 5; 8; Proprietario di una discoteca, non ha mai visto la luce del giorno
+Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pretendenti`;
+
+  const state = {
+    setup: null,   // { players:[{name,color}], budget, slots, timer, order, cats:[4], pool:[{id,n,d,v:[4]}] }
+    game: null,
+  };
+
+  /* ---------------- elenco personaggi ---------------- */
+  function parsePool(text) {
+    const out = [], errors = [];
+    text.split(/\r?\n/).forEach((line, i) => {
+      const raw = line.trim(); if (!raw) return;
+      const parts = raw.split(';').map((s) => s.trim());
+      const n = parts[0];
+      const v = parts.slice(1, 5).map((x) => parseInt(x, 10));
+      if (!n || v.length < 4 || v.some((x) => !Number.isFinite(x) || x < 1 || x > 10)) { errors.push('Riga ' + (i + 1) + ': servono un nome e 4 voti da 1 a 10.'); return; }
+      out.push({ id: 'p' + out.length + '_' + n.replace(/\W+/g, '').slice(0, 10), n, v, d: parts.slice(5).join('; ') });
+    });
+    return { out, errors };
+  }
+  const poolToText = (pool) => pool.map((p) => [p.n].concat(p.v).join('; ') + (p.d ? '; ' + p.d : '')).join('\n');
+  const tot = (p) => p.v.reduce((a, b) => a + b, 0);
+
+  /* ---------------- salvataggio ---------------- */
+  function load(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
+  function save() {
+    try {
+      localStorage.setItem(SETUP_KEY, JSON.stringify(state.setup));
+      if (state.game) localStorage.setItem(KEY, JSON.stringify(state.game)); else localStorage.removeItem(KEY);
+    } catch (e) { /* senza memoria si gioca lo stesso */ }
+  }
+
+  function toast(msg) {
+    const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2600);
+  }
+  function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function show(id) { ['scSetup', 'scGame', 'scEnd'].forEach((s) => $(s).classList.toggle('hidden', s !== id)); window.scrollTo(0, 0); }
+
+  /* ================= PREPARAZIONE ================= */
+  function defaultSetup() {
+    return {
+      players: [1, 2, 3, 4].map((i) => ({ name: 'Giocatore ' + i, color: COLORS[i - 1] })),
+      budget: 500, slots: 5, timer: 15, order: 'random', cats: DEFAULT_CATS.slice(),
+      pool: parsePool(DEFAULT_POOL).out,
+    };
+  }
+
+  function renderSetup() {
+    const s = state.setup;
+    $('plist').innerHTML = s.players.map((p, i) => `<div class="row"><span class="dot" style="background:${p.color}"></span><input type="text" maxlength="20" data-pname="${i}" value="${esc(p.name)}"><button class="btn btn-s btn-ghost" data-pdel="${i}" ${s.players.length <= 2 ? 'disabled' : ''} aria-label="Togli">✕</button></div>`).join('');
+    $('addP').disabled = s.players.length >= 12;
+    $('optBudget').value = s.budget; $('optSlots').value = s.slots; $('optTimer').value = s.timer; $('optOrder').value = s.order;
+    $('catInputs').innerHTML = s.cats.map((c, i) => `<label class="f"><span style="color:${CAT_COLORS[i]}">Caratteristica ${i + 1}</span><input type="text" maxlength="16" data-cat="${i}" value="${esc(c)}"></label>`).join('');
+    $('poolCount').textContent = '(' + s.pool.length + ')';
+    $('poolPreview').textContent = s.pool.map((p) => p.n).join(' · ');
+    const g = load(KEY);
+    if (g && !g.over) {
+      $('resumeCard').classList.remove('hidden');
+      const sold = g.teams.reduce((a, t) => a + t.roster.length, 0);
+      $('resumeInfo').textContent = g.players.map((p) => p.name).join(', ') + ' · ' + sold + ' personaggi già assegnati.';
+    } else $('resumeCard').classList.add('hidden');
+  }
+
+  function readSetupInputs() {
+    const s = state.setup;
+    document.querySelectorAll('[data-pname]').forEach((el) => { s.players[+el.dataset.pname].name = el.value; });
+    document.querySelectorAll('[data-cat]').forEach((el) => { s.cats[+el.dataset.cat] = el.value.trim() || DEFAULT_CATS[+el.dataset.cat]; });
+    s.budget = Math.max(10, Math.min(10000, parseInt($('optBudget').value, 10) || 500));
+    s.slots = Math.max(1, Math.min(30, parseInt($('optSlots').value, 10) || 5));
+    s.timer = Math.max(0, Math.min(120, parseInt($('optTimer').value, 10) || 0));
+    s.order = $('optOrder').value;
+  }
+
+  $('scSetup').addEventListener('input', (e) => { if (e.target.matches('[data-pname], [data-cat], input[type=number], select')) { readSetupInputs(); save(); } });
+  $('scSetup').addEventListener('change', () => { readSetupInputs(); save(); });
+  $('plist').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pdel]'); if (!b) return;
+    readSetupInputs(); state.setup.players.splice(+b.dataset.pdel, 1); renderSetup(); save();
+  });
+  $('addP').onclick = () => {
+    readSetupInputs();
+    const used = state.setup.players.map((p) => p.color);
+    state.setup.players.push({ name: 'Giocatore ' + (state.setup.players.length + 1), color: COLORS.find((c) => !used.includes(c)) || COLORS[0] });
+    renderSetup(); save();
+    const inputs = document.querySelectorAll('[data-pname]'); inputs[inputs.length - 1].select();
+  };
+  $('editPool').onclick = () => { $('poolText').value = poolToText(state.setup.pool); $('poolEditor').classList.remove('hidden'); $('poolErr').classList.add('hidden'); $('poolText').focus(); };
+  $('cancelPool').onclick = () => $('poolEditor').classList.add('hidden');
+  $('savePool').onclick = () => {
+    const r = parsePool($('poolText').value);
+    if (r.errors.length) { $('poolErr').textContent = r.errors.slice(0, 4).join(' ') + (r.errors.length > 4 ? ' (e altre ' + (r.errors.length - 4) + ')' : ''); $('poolErr').classList.remove('hidden'); return; }
+    if (!r.out.length) { $('poolErr').textContent = 'L\'elenco è vuoto.'; $('poolErr').classList.remove('hidden'); return; }
+    state.setup.pool = r.out; $('poolEditor').classList.add('hidden'); renderSetup(); save(); toast(r.out.length + ' personaggi salvati.');
+  };
+  $('resetPool').onclick = () => { if (!confirm('Rimettere l\'elenco di base? Quello attuale si perde.')) return; state.setup.pool = parsePool(DEFAULT_POOL).out; renderSetup(); save(); };
+
+  $('startBtn').onclick = () => {
+    readSetupInputs();
+    const s = state.setup, err = $('setupErr');
+    const names = s.players.map((p) => p.name.trim());
+    let msg = '';
+    if (names.some((n) => !n)) msg = 'Ogni partecipante deve avere un nome.';
+    else if (new Set(names.map((n) => n.toLowerCase())).size !== names.length) msg = 'Due partecipanti hanno lo stesso nome.';
+    else if (s.pool.length < s.players.length * s.slots) msg = 'Servono almeno ' + (s.players.length * s.slots) + ' personaggi per riempire tutte le rose (ce ne sono ' + s.pool.length + '). Aggiungine o riduci i posti per rosa.';
+    else if (s.budget < s.slots) msg = 'I crediti devono essere almeno quanti i posti in rosa (1 credito a personaggio).';
+    if (msg) { err.textContent = msg; err.classList.remove('hidden'); return; }
+    err.classList.add('hidden');
+    if (load(KEY) && !load(KEY).over && !confirm('C\'è già un\'asta in corso: ricominciare da capo?')) return;
+    s.players.forEach((p) => { p.name = p.name.trim(); });
+    newGame();
+  };
+  $('resumeBtn').onclick = () => { state.game = load(KEY); if (state.game) startGameScreen(); };
+  $('discardBtn').onclick = () => { if (!confirm('Cancellare l\'asta in corso?')) return; state.game = null; save(); renderSetup(); };
+
+  /* ================= ASTA ================= */
+  function newGame() {
+    const s = state.setup;
+    const queue = s.pool.map((p) => p.id);
+    if (s.order === 'random') shuffle(queue);
+    else if (s.order === 'alpha') queue.sort((a, b) => byId(a, s.pool).n.localeCompare(byId(b, s.pool).n, 'it'));
+    state.game = {
+      players: s.players.map((p) => ({ name: p.name, color: p.color })),
+      budget: s.budget, slots: s.slots, timer: s.timer, order: s.order, cats: s.cats.slice(),
+      pool: JSON.parse(JSON.stringify(s.pool)),
+      teams: s.players.map(() => ({ credits: s.budget, roster: [] })),
+      queue, current: null, bids: [], called: 0, log: [], over: false,
+    };
+    if (s.order !== 'free') nextCharacter(); else state.game.current = null;
+    save(); startGameScreen();
+  }
+  const byId = (id, pool) => (pool || state.game.pool).find((p) => p.id === id);
+  const G = () => state.game;
+
+  function maxBid(i) {
+    const g = G(), t = g.teams[i];
+    const left = g.slots - t.roster.length;
+    if (left <= 0) return 0;
+    return t.credits - (left - 1);   // deve restare almeno 1 credito per ogni posto ancora vuoto
+  }
+  const curPrice = () => (G().bids.length ? G().bids[G().bids.length - 1].amt : 0);
+  const curLeader = () => (G().bids.length ? G().bids[G().bids.length - 1].who : null);
+  const allFull = () => G().teams.every((t) => t.roster.length >= G().slots);
+
+  function nextCharacter() {
+    const g = G();
+    g.bids = []; g.current = null;
+    if (allFull() || !g.queue.length) { finish(); return; }
+    if (g.order === 'free') return;   // si sceglie dalla lista
+    g.current = g.queue.shift(); g.called++;
+    resetTimer();
+  }
+
+  function startGameScreen() {
+    show('scGame'); setTab('auction');
+    if (G().over) { renderEnd(); show('scEnd'); return; }
+    renderGame(); resetTimer(true);
+  }
+
+  function setTab(name) {
+    document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.dataset.tab === name));
+    $('tabAuction').classList.toggle('hidden', name !== 'auction');
+    $('tabTeams').classList.toggle('hidden', name !== 'teams');
+    $('tabPool').classList.toggle('hidden', name !== 'pool');
+    if (name === 'teams') renderTeams($('teams'), true);
+    if (name === 'pool') renderPool();
+  }
+  document.querySelectorAll('.tab').forEach((t) => (t.onclick = () => setTab(t.dataset.tab)));
+
+  function statsHTML(p, cats) {
+    return p.v.map((v, i) => `<div class="stat"><span>${esc(cats[i])}</span><div class="bar"><i style="width:${v * 10}%;background:${CAT_COLORS[i]}"></i></div><b>${v}</b></div>`).join('');
+  }
+
+  function renderGame() {
+    const g = G();
+    const free = g.order === 'free' && !g.current;
+    $('pickBox').classList.toggle('hidden', !free);
+    $('auctionBox').classList.toggle('hidden', free);
+    if (free) {
+      $('pickList').innerHTML = g.queue.map((id) => { const p = byId(id); return `<div class="it"><div><b>${esc(p.n)}</b><div class="s">${p.v.join(' · ')} — totale ${tot(p)}</div></div><button class="btn btn-s btn-p" data-pick="${id}">Chiama</button></div>`; }).join('');
+      return;
+    }
+    const p = byId(g.current);
+    const assigned = g.teams.reduce((a, t) => a + t.roster.length, 0);
+    $('pNum').textContent = 'Chiamata n. ' + g.called + ' · assegnati ' + assigned + ' su ' + (g.players.length * g.slots);
+    $('pName').textContent = p.n;
+    $('pDesc').textContent = p.d || '';
+    $('pStats').innerHTML = statsHTML(p, g.cats);
+    $('pTot').textContent = tot(p);
+    const price = curPrice(), lead = curLeader();
+    $('curPrice').textContent = price;
+    $('curLeader').textContent = lead == null ? 'Nessuna offerta' : g.players[lead].name;
+    $('curLeader').style.color = lead == null ? 'var(--muted)' : g.players[lead].color;
+    $('bidders').innerHTML = g.players.map((pl, i) => {
+      const t = g.teams[i], mb = maxBid(i), full = t.roster.length >= g.slots;
+      const steps = [1, 5, 10].map((st) => `<button class="btn" data-bid="${i}" data-step="${st}" ${full || price + st > mb || lead === i ? 'disabled' : ''}>+${st}</button>`).join('');
+      return `<div class="bidder ${lead === i ? 'lead' : ''} ${full ? 'out' : ''}">
+        <div><div class="nm"><span class="dot" style="background:${pl.color}"></span><span>${esc(pl.name)}</span></div>
+        <div class="meta">${t.credits} crediti · rosa ${t.roster.length}/${g.slots}${full ? ' · completa' : ' · max ' + mb}</div></div>
+        <div class="bb">${steps}<button class="btn" data-bidcustom="${i}" ${full || price + 1 > mb || lead === i ? 'disabled' : ''} title="Offerta libera">…</button></div>
+      </div>`;
+    }).join('');
+    $('sellBtn').disabled = lead == null;
+    $('undoBidBtn').disabled = !g.bids.length;
+    $('log').innerHTML = g.log.slice(-30).reverse().map((l) => `<div>${esc(l)}</div>`).join('');
+  }
+
+  function bid(i, amt) {
+    const g = G();
+    if (amt <= curPrice() || amt > maxBid(i) || curLeader() === i) return;
+    g.bids.push({ who: i, amt });
+    save(); renderGame(); resetTimer();
+  }
+  $('bidders').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-bid]');
+    if (b) { bid(+b.dataset.bid, curPrice() + +b.dataset.step); return; }
+    const c = e.target.closest('[data-bidcustom]');
+    if (c) {
+      const i = +c.dataset.bidcustom, mb = maxBid(i);
+      const v = parseInt(prompt(G().players[i].name + ': quanto offri? (da ' + (curPrice() + 1) + ' a ' + mb + ')', String(curPrice() + 1)), 10);
+      if (!Number.isFinite(v)) return;
+      if (v <= curPrice() || v > mb) { toast('Offerta non valida: deve stare fra ' + (curPrice() + 1) + ' e ' + mb + '.'); return; }
+      bid(i, v);
+    }
+  });
+  $('pickList').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pick]'); if (!b) return;
+    const g = G(); g.queue = g.queue.filter((id) => id !== b.dataset.pick); g.current = b.dataset.pick; g.called++; g.bids = [];
+    save(); renderGame(); resetTimer();
+  });
+
+  let selling = false;
+  function sell() {
+    const g = G(), lead = curLeader(); if (selling || lead == null || !g.current) return;
+    selling = true;
+    const p = byId(g.current), price = curPrice();
+    g.teams[lead].credits -= price;
+    g.teams[lead].roster.push({ id: p.id, price });
+    g.log.push(p.n + ' → ' + g.players[lead].name + ' per ' + price);
+    stopTimer();
+    const ov = document.createElement('div'); ov.className = 'sold';
+    ov.innerHTML = `<div><small>Aggiudicato</small><b>${esc(p.n)}</b><span style="color:${g.players[lead].color}">${esc(g.players[lead].name)} · ${price} crediti</span></div>`;
+    document.body.appendChild(ov);
+    setTimeout(() => { ov.remove(); selling = false; nextCharacter(); save(); if (!g.over) renderGame(); }, 1500);
+  }
+  $('sellBtn').onclick = sell;
+  $('undoBidBtn').onclick = () => { G().bids.pop(); save(); renderGame(); resetTimer(); };
+  $('skipBtn').onclick = () => {
+    const g = G(); if (!g.current) return;
+    if (g.bids.length && !confirm('C\'è già un\'offerta: rimettere comunque il personaggio in fondo alla fila?')) return;
+    g.log.push(byId(g.current).n + ': nessuno lo vuole, torna in fondo');
+    g.queue.push(g.current); nextCharacter(); save(); if (!g.over) renderGame();
+  };
+
+  /* ---------------- timer ---------------- */
+  let timerId = null, timeLeft = 0;
+  function stopTimer() { if (timerId) clearInterval(timerId); timerId = null; }
+  function drawTimer() {
+    const g = G(), total = g ? g.timer : 0;
+    $('timer').classList.toggle('hidden', !total);
+    if (!total) return;
+    $('timerTxt').textContent = timeLeft;
+    $('timerArc').style.strokeDashoffset = String(169.6 * (1 - timeLeft / total));
+    $('timer').classList.toggle('low', timeLeft <= 3);
+  }
+  function resetTimer() {
+    stopTimer();
+    const g = G(); if (!g || !g.timer || !g.current || g.over) { drawTimer(); return; }
+    timeLeft = g.timer; drawTimer();
+    timerId = setInterval(() => {
+      timeLeft--; drawTimer();
+      if (timeLeft <= 0) {
+        stopTimer();
+        if (curLeader() != null) sell();
+        else { timeLeft = 0; drawTimer(); toast('Tempo scaduto senza offerte: aggiudica, aspetta o passa al prossimo.'); }
+      }
+    }, 1000);
+  }
+
+  /* ---------------- rose ---------------- */
+  function teamCats(t) {
+    const c = [0, 0, 0, 0];
+    t.roster.forEach((r) => { const p = byId(r.id); p.v.forEach((v, i) => { c[i] += v; }); });
+    return c;
+  }
+  function renderTeams(el, editable) {
+    const g = G();
+    el.innerHTML = g.players.map((pl, i) => {
+      const t = g.teams[i], c = teamCats(t);
+      const items = t.roster.map((r, k) => { const p = byId(r.id); return `<li><span>${esc(p.n)} <span class="muted small">(${tot(p)})</span></span><span>${r.price}${editable ? ` <button class="x" data-unsell="${i}:${k}" title="Annulla l'acquisto">✕</button>` : ''}</span></li>`; });
+      for (let k = t.roster.length; k < g.slots; k++) items.push('<li class="empty"><span>posto libero</span><span></span></li>');
+      return `<div class="card team"><h3><span class="dot" style="background:${pl.color}"></span>${esc(pl.name)}</h3>
+        <div class="tm">${t.credits} crediti rimasti · speso ${g.budget - t.credits}</div>
+        <ul>${items.join('')}</ul>
+        <div class="cats">${g.cats.map((n, j) => `<div><b style="color:${CAT_COLORS[j]}">${c[j]}</b>${esc(n)}</div>`).join('')}</div></div>`;
+    }).join('');
+  }
+  $('teams').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-unsell]'); if (!b) return;
+    const [i, k] = b.dataset.unsell.split(':').map(Number), g = G(), r = g.teams[i].roster[k], p = byId(r.id);
+    if (!confirm('Annullare l\'acquisto di ' + p.n + '? Tornano ' + r.price + ' crediti a ' + g.players[i].name + ' e il personaggio torna in cima alla fila.')) return;
+    g.teams[i].roster.splice(k, 1); g.teams[i].credits += r.price;
+    if (g.current) g.queue.unshift(g.current);
+    g.queue.unshift(r.id); g.current = null; g.bids = [];
+    if (g.order !== 'free') { g.current = g.queue.shift(); }
+    g.log.push('Annullato: ' + p.n + ' torna all\'asta');
+    save(); renderTeams($('teams'), true); renderGame(); resetTimer();
+  });
+  function renderPool() {
+    const g = G();
+    const list = (g.current ? [g.current] : []).concat(g.queue);
+    $('poolList').innerHTML = list.length ? list.map((id, k) => { const p = byId(id); return `<div class="it"><div><b>${k === 0 && g.current ? '▶ ' : ''}${esc(p.n)}</b><div class="s">${p.v.join(' · ')} — totale ${tot(p)}</div></div></div>`; }).join('') : '<p class="muted">Nessun personaggio rimasto.</p>';
+  }
+  $('endNowBtn').onclick = () => { if (confirm('Chiudere l\'asta adesso? Le rose restano come sono.')) finish(); };
+  $('quitBtn').onclick = () => { stopTimer(); show('scSetup'); renderSetup(); };
+
+  /* ================= CLASSIFICA ================= */
+  function scores() {
+    const g = G();
+    const cats = g.teams.map(teamCats);
+    const bonus = g.teams.map(() => 0), awards = [];
+    for (let j = 0; j < 4; j++) {
+      const best = Math.max(...cats.map((c) => c[j]));
+      if (best <= 0) continue;
+      const winners = cats.map((c, i) => (c[j] === best ? i : -1)).filter((i) => i >= 0);
+      winners.forEach((i) => { bonus[i] += 5; });
+      awards.push({ cat: g.cats[j], color: CAT_COLORS[j], who: winners.map((i) => g.players[i].name).join(' e '), v: best });
+    }
+    const rows = g.players.map((pl, i) => {
+      const base = cats[i].reduce((a, b) => a + b, 0);
+      return { i, name: pl.name, color: pl.color, base, bonus: bonus[i], total: base + bonus[i], spent: g.budget - g.teams[i].credits, n: g.teams[i].roster.length };
+    }).sort((a, b) => b.total - a.total || a.spent - b.spent);
+    // l'acquisto migliore: più punti per credito speso
+    let steal = null;
+    g.teams.forEach((t, i) => t.roster.forEach((r) => { const p = byId(r.id), ratio = tot(p) / Math.max(1, r.price); if (!steal || ratio > steal.ratio) steal = { ratio, p, price: r.price, who: g.players[i].name }; }));
+    let pricey = null;
+    g.teams.forEach((t, i) => t.roster.forEach((r) => { if (!pricey || r.price > pricey.price) pricey = { p: byId(r.id), price: r.price, who: g.players[i].name }; }));
+    return { rows, awards, steal, pricey };
+  }
+  function finish() {
+    const g = G(); if (g.current) g.queue.unshift(g.current); g.over = true; g.current = null; g.bids = []; stopTimer(); save();
+    renderEnd(); show('scEnd');
+  }
+  function renderEnd() {
+    const r = scores();
+    $('rank').innerHTML = r.rows.map((x, k) => `<div class="rk"><div class="pos">${k + 1}</div><div><div class="n" style="color:${x.color}">${esc(x.name)}</div><div class="d">${x.n} personaggi · ${x.base} punti${x.bonus ? ' + ' + x.bonus + ' bonus' : ''} · spesi ${x.spent} crediti</div></div><div class="s">${x.total}</div></div>`).join('');
+    const aw = r.awards.map((a) => `<div class="award"><small style="color:${a.color}">Il re di: ${esc(a.cat)}</small><b>${esc(a.who)}</b><span class="muted small">${a.v} punti</span></div>`);
+    if (r.steal) aw.push(`<div class="award"><small>L'affare dell'asta</small><b>${esc(r.steal.p.n)}</b><span class="muted small">${esc(r.steal.who)}, solo ${r.steal.price} crediti</span></div>`);
+    if (r.pricey) aw.push(`<div class="award"><small>Il più pagato</small><b>${esc(r.pricey.p.n)}</b><span class="muted small">${esc(r.pricey.who)}, ${r.pricey.price} crediti</span></div>`);
+    $('awards').innerHTML = aw.join('');
+    renderTeams($('endTeams'), false);
+  }
+  $('backToGame').onclick = () => {
+    const g = G(); g.over = false;
+    if (!allFull() && (g.queue.length)) { nextCharacter(); save(); startGameScreen(); }
+    else { g.over = true; toast('Non c\'è più niente da assegnare.'); }
+  };
+  $('newGame').onclick = () => { if (!confirm('Iniziare una nuova asta? Questa viene cancellata.')) return; state.game = null; save(); show('scSetup'); renderSetup(); };
+
+  /* ================= AVVIO ================= */
+  state.setup = load(SETUP_KEY) || defaultSetup();
+  if (!state.setup.pool || !state.setup.pool.length) state.setup.pool = parsePool(DEFAULT_POOL).out;
+  if (!Array.isArray(state.setup.cats) || state.setup.cats.length !== 4) state.setup.cats = DEFAULT_CATS.slice();
+  renderSetup();
+})();
+</script>
+</body>
+</html>
