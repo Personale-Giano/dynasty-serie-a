@@ -132,6 +132,17 @@ textarea{ min-height:260px; font-family:ui-monospace, Consolas, monospace; font-
 .sold small{ display:block; font:800 16px/1 var(--cond); letter-spacing:.2em; color:var(--muted); text-transform:uppercase; }
 .sold b{ display:block; font:800 56px/1 var(--cond); color:var(--acc); text-transform:uppercase; margin:10px 0; }
 .sold span{ font-size:20px; font-weight:800; }
+.vgrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.vgrid label.f{ font-size:10.5px; min-width:0; }
+.vgrid label.f span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.vgrid input{ text-align:center; font:800 18px/1 var(--cond); padding:9px 4px; }
+input.bad{ border-color:var(--bad) !important; }
+.vteam{ margin:0 0 6px; font:800 19px/1.1 var(--cond); text-transform:uppercase; display:flex; align-items:center; gap:8px; }
+.vrow{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.6fr); gap:12px; align-items:end; padding:10px 0; border-bottom:1px solid var(--line); }
+.vrow:last-child{ border-bottom:0; }
+.vname{ font-weight:800; font-size:16px; padding-bottom:10px; }
+@media (max-width:620px){ .vrow{ grid-template-columns:1fr; gap:6px; } .vname{ padding-bottom:0; } .vgrid{ grid-template-columns:1fr 1fr; } }
+.pool .it{ min-height:46px; }
 @keyframes pop{ from{ transform:scale(.8); opacity:0; } to{ transform:none; opacity:1; } }
 </style>
 </head>
@@ -141,7 +152,7 @@ textarea{ min-height:260px; font-family:ui-monospace, Consolas, monospace; font-
 <!-- ================= PREPARAZIONE ================= -->
 <section id="scSetup">
   <h1>L'Asta dei <span>Personaggi</span></h1>
-  <p class="sub">Come l'asta del fantacalcio, ma con personaggi inventati. Ognuno ha un budget di crediti e deve riempire la sua rosa; vince chi mette insieme la squadra con il punteggio più alto nelle quattro caratteristiche.</p>
+  <p class="sub">Come l'asta del fantacalcio, ma con personaggi inventati. Ognuno ha un budget di crediti e deve riempire la sua rosa. Le quattro caratteristiche le scegliete voi ogni volta e i voti li date voi: vince la rosa che totalizza di più.</p>
 
   <div class="card hidden" id="resumeCard">
     <h2>C'è un'asta in corso</h2>
@@ -162,13 +173,15 @@ textarea{ min-height:260px; font-family:ui-monospace, Consolas, monospace; font-
       <label class="f">Personaggi per rosa<input type="number" id="optSlots" min="1" max="30" value="5"></label>
       <label class="f">Timer per ogni offerta (secondi, 0 = senza)<input type="number" id="optTimer" min="0" max="120" value="15"></label>
       <label class="f">Ordine di chiamata<select id="optOrder"><option value="random">Casuale</option><option value="alpha">Alfabetico</option><option value="free">Scelgo io ogni volta</option></select></label>
+      <label class="f" style="grid-column:1 / -1">Quando si danno i voti<select id="optVotes"><option value="end">Alla fine, su tutte le rose (all'asta conta solo il nome)</option><option value="call">Appena chiamato, prima delle offerte</option></select></label>
     </div>
   </div>
 
   <div class="card">
     <h2>Le quattro caratteristiche</h2>
-    <p class="sub small" style="margin-bottom:10px">Voti da 1 a 10. Puoi cambiare il nome di ogni caratteristica.</p>
+    <p class="sub small" style="margin-bottom:10px">Inventatele voi a ogni partita, come a Nomi, cose, città. Ogni personaggio prende da voi un voto da 1 a 10 in ognuna.</p>
     <div class="grid4" id="catInputs"></div>
+    <div class="row" style="margin-top:10px"><button class="btn btn-s" id="randCats">Pescane 4 a caso</button><button class="btn btn-s btn-ghost" id="clearCats">Svuota</button></div>
   </div>
 
   <div class="card">
@@ -177,7 +190,7 @@ textarea{ min-height:260px; font-family:ui-monospace, Consolas, monospace; font-
       <div class="row"><button class="btn btn-s" id="editPool">Modifica l'elenco</button><button class="btn btn-s btn-ghost" id="resetPool">Rimetti quelli di base</button></div>
     </div>
     <div id="poolEditor" class="hidden" style="margin-top:10px">
-      <p class="sub small" style="margin-bottom:8px">Un personaggio per riga: <b>Nome; voto 1; voto 2; voto 3; voto 4; descrizione</b> (la descrizione si può lasciare vuota). I voti vanno da 1 a 10, nell'ordine delle caratteristiche qui sopra.</p>
+      <p class="sub small" style="margin-bottom:8px">Un personaggio per riga, solo il nome.</p>
       <textarea id="poolText" spellcheck="false"></textarea>
       <div class="err hidden" id="poolErr"></div>
       <div class="row" style="margin-top:10px"><button class="btn btn-p btn-s" id="savePool">Salva l'elenco</button><button class="btn btn-s" id="cancelPool">Annulla</button></div>
@@ -211,9 +224,8 @@ textarea{ min-height:260px; font-family:ui-monospace, Consolas, monospace; font-
         <div class="pcard">
           <div class="pnum" id="pNum"></div>
           <div class="pname" id="pName"></div>
-          <p class="pdesc" id="pDesc"></p>
           <div id="pStats"></div>
-          <div class="ptot"><span>Totale</span><b id="pTot"></b></div>
+          <div class="ptot" id="pTotRow"><span>Totale</span><b id="pTot"></b></div>
         </div>
         <div class="log" id="log"></div>
       </div>
@@ -244,15 +256,25 @@ textarea{ min-height:260px; font-family:ui-monospace, Consolas, monospace; font-
   </div>
 </section>
 
+<!-- ================= VOTI FINALI ================= -->
+<section id="scVote" class="hidden">
+  <h1>I <span>voti</span></h1>
+  <p class="sub">L'asta è chiusa. Decidete insieme un voto da 1 a 10 per ogni personaggio in ogni caratteristica: <span id="voteCats"></span>. I voti si salvano mentre li scrivete.</p>
+  <div id="voteList"></div>
+  <p class="muted small" id="voteProgress" style="text-align:center"></p>
+  <button class="btn btn-p btn-xl" id="calcBtn">Calcola la classifica</button>
+  <div class="row" style="margin-top:12px"><button class="btn" id="voteBack">Torna all'asta</button></div>
+</section>
+
 <!-- ================= CLASSIFICA ================= -->
 <section id="scEnd" class="hidden">
   <h1>La <span>classifica</span></h1>
-  <p class="sub">Punteggio = somma delle quattro caratteristiche di tutti i personaggi della rosa, più 5 punti bonus per ogni caratteristica in cui una squadra è la migliore. A parità vince chi ha speso meno.</p>
+  <p class="sub">Punteggio = somma dei voti di tutti i personaggi della rosa, più 5 punti bonus per ogni caratteristica in cui una squadra è la migliore. A parità vince chi ha speso meno.</p>
   <div class="rank" id="rank"></div>
   <div class="awards" id="awards"></div>
   <h2 style="margin-top:22px">Le rose</h2>
   <div class="teams" id="endTeams"></div>
-  <div class="row" style="margin-top:18px"><button class="btn" id="backToGame">Torna all'asta</button><button class="btn btn-p" id="newGame">Nuova asta</button></div>
+  <div class="row" style="margin-top:18px"><button class="btn" id="backToGame">Torna all'asta</button><button class="btn" id="editVotes">Cambia i voti</button><button class="btn btn-p" id="newGame">Nuova asta</button></div>
 </section>
 
 </div>
@@ -262,74 +284,75 @@ textarea{ min-height:260px; font-family:ui-monospace, Consolas, monospace; font-
   'use strict';
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const KEY = 'asta-personaggi-v1';
-  const SETUP_KEY = 'asta-personaggi-setup-v1';
+  const KEY = 'asta-personaggi-v2';
+  const SETUP_KEY = 'asta-personaggi-setup-v2';
   const COLORS = ['#ff7a59', '#5ab0ff', '#ffd34d', '#36d887', '#b48cff', '#ff6fae', '#4fe0d6', '#ff9f40', '#9fd356', '#e0e0e0', '#c78b5c', '#7d8cff'];
   const CAT_COLORS = ['var(--c0)', 'var(--c1)', 'var(--c2)', 'var(--c3)'];
-  const DEFAULT_CATS = ['Carisma', 'Intelligenza', 'Simpatia', 'Carattere'];
+  const CAT_PLACEHOLDERS = ['es. Il più elegante', 'es. Nome da cattivo', 'es. Suona bene', 'es. Da film'];
+  // Spunti per chi non ha voglia di inventarle: "Pescane 4 a caso" ne prende quattro diverse.
+  const CAT_IDEAS = ['Suona bene', 'Nome da cattivo', 'Nome da eroe', 'Da film', 'Da telenovela', 'Da cantante', 'Da calciatore', 'Elegante',
+    'Ridicolo', 'Nobile', 'Misterioso', 'Da nonna', 'Da influencer', 'Da presentatore', 'Da pirata', 'Da politico', 'Da avvocato',
+    'Da supereroe', 'Da poeta', 'Da chef', 'Da mago', 'Da spia', 'Da rapper', 'Da principessa', 'Da dottore', 'Da villain Disney',
+    'Si ricorda subito', 'Impossibile da scrivere', 'Da insegnante severo', 'Da fantasy', 'Da cartone animato', 'Da romanzo giallo',
+    'Da pilota', 'Da vip della TV', 'Da santo', 'Simpatia a pelle'];
+  const DEFAULT_POOL = `Contessa Ludovica Spinetta
+Capitan Ottavio Remolo
+Zia Pina dei Tortellini
+Dottor Anselmo Quaglia
+Mirella Vortice
+Bruno "Mattone" Ferraris
+Professoressa Ada Lumino
+Gigi Sparviero
+Suor Celeste Mancuso
+Rocco Tempesta
+Elvira Marmotta
+Barone Rinaldo Cipolla
+Nonna Eufrasia
+Ivo Lampadina
+Lady Morgana Stelvio
+Tonino Ciambella
+Generale Augusta Ferro
+Lulù Farfalla
+Mago Severino
+Ermenegildo Pace
+Vanessa Turbo
+Padre Fulgenzio
+Olimpia Ghiaccio
+Fausto Bonaventura
+Marchesa Fiamma Doria
+Pietro "Calcolatrice" Neri
+Rosina Peperoncino
+Teodoro Nebbia
+Clarissa Vento
+Ugo Lumaca
+Sergente Mirko Dinamite
+Beatrice Arcobaleno
+Lord Archibaldo Fumo
+Gemma Saetta
+Nando Sbadiglio
+Regina Cleofe
+Augusto Prezzemolo
+Viola Tramonto
+Cesare Mezzanotte
+Dora Pantofola`;
 
-  // Personaggi inventati di base: Nome; carisma; intelligenza; simpatia; carattere; descrizione.
-  const DEFAULT_POOL = `Contessa Ludovica Spinetta; 9; 7; 4; 8; Nobile decaduta, gioca a scacchi per soldi e non perde mai un'occasione per ricordartelo
-Capitan Ottavio Remolo; 8; 5; 7; 9; Ex marinaio, racconta tempeste che nessuno ha mai visto
-Zia Pina dei Tortellini; 6; 6; 10; 7; Sa tutto di tutti nel quartiere e ti rimpinza finché non scoppi
-Dottor Anselmo Quaglia; 5; 10; 4; 6; Scienziato distratto, ha brevettato un ombrello che piove dentro
-Mirella Vortice; 10; 6; 6; 7; Influencer di provincia con quattro milioni di follower e un gatto famoso
-Bruno "Mattone" Ferraris; 6; 3; 8; 9; Muratore filosofo, cita Seneca mentre impasta il cemento
-Professoressa Ada Lumino; 7; 10; 5; 8; Insegna matematica e ha già capito che stai copiando
-Gigi Sparviero; 8; 6; 9; 4; Venditore di auto usate, ti convince anche a comprare la tua
-Suor Celeste Mancuso; 5; 8; 8; 10; Allena la squadra di pallavolo dell'oratorio come fosse la nazionale
-Rocco Tempesta; 9; 4; 6; 8; Cantante neomelodico, ogni concerto finisce in rissa d'amore
-Elvira Marmotta; 3; 7; 9; 5; Dorme sedici ore al giorno ma quando è sveglia è la migliore amica che puoi avere
-Barone Rinaldo Cipolla; 7; 6; 3; 9; Possiede mezza collina e litiga con l'altra metà
-Nonna Eufrasia; 6; 8; 10; 9; Ha visto due guerre, tre papi e non ha mai sbagliato un sugo
-Ivo Lampadina; 4; 9; 7; 4; Inventore di garage, ogni sua idea esplode almeno una volta
-Lady Morgana Stelvio; 10; 8; 3; 7; Scrittrice di gialli, sospettano che i delitti li abbia commessi davvero
-Tonino Ciambella; 5; 4; 10; 6; Barista di paese, sa il tuo ordine prima che tu entri
-Generale Augusta Ferro; 8; 7; 2; 10; In pensione, ma organizza ancora il condominio come una caserma
-Lulù Farfalla; 7; 5; 9; 3; Ballerina di tip tap, cambia idea ogni cinque minuti
-Mago Severino; 8; 7; 6; 5; Illusionista, l'unico trucco che non gli riesce è arrivare puntuale
-Ermenegildo Pace; 3; 8; 8; 8; Bibliotecario silenzioso, ha letto tutti i libri e ricorda le multe di tutti
-Vanessa Turbo; 9; 6; 7; 8; Pilota di rally, parcheggia in retromarcia anche al supermercato
-Padre Fulgenzio; 6; 7; 9; 7; Parroco tifosissimo, le prediche durano quanto un tempo supplementare
-Olimpia Ghiaccio; 8; 9; 2; 9; Campionessa di curling, sorride una volta l'anno a Natale
-Fausto Bonaventura; 7; 5; 8; 6; Animatore di villaggio, ha inventato tredici balli di gruppo
-Marchesa Fiamma Doria; 9; 7; 5; 6; Organizza feste in villa dove succede sempre qualcosa di strano
-Pietro "Calcolatrice" Neri; 4; 10; 5; 7; Commercialista, risolve un sudoku mentre ti spiega l'IVA
-Rosina Peperoncino; 7; 6; 8; 9; Cuoca di trattoria, se lasci qualcosa nel piatto se ne ricorda per anni
-Teodoro Nebbia; 6; 8; 4; 6; Detective privato, segue piste che esistono solo nella sua testa
-Clarissa Vento; 8; 7; 7; 5; Velista solitaria, è stata ovunque tranne che a casa sua
-Ugo Lumaca; 2; 6; 9; 6; Il più lento del mondo, ma non ha mai dimenticato un compleanno
-Sergente Mirko Dinamite; 7; 4; 5; 10; Istruttore di palestra, il riscaldamento dura due ore
-Beatrice Arcobaleno; 8; 6; 10; 5; Pittrice di murales, ha colorato mezza città senza permesso
-Lord Archibaldo Fumo; 9; 8; 4; 7; Collezionista di pipe e di segreti altrui
-Gemma Saetta; 6; 9; 6; 8; Hacker diciottenne, ha già bucato il sito del comune per sistemare gli orari del bus
-Nando Sbadiglio; 4; 5; 8; 3; Guardiano notturno, in vent'anni non ha mai visto nulla
-Regina Cleofe; 10; 7; 4; 9; Proprietaria di una catena di parrucchieri, governa come un impero
-Augusto Prezzemolo; 7; 6; 7; 6; Presenzialista, è in tutte le foto di tutte le feste
-Viola Tramonto; 6; 8; 8; 7; Astronoma, ti spiega le stelle e poi si perde tornando alla macchina
-Cesare Mezzanotte; 8; 6; 5; 8; Proprietario di una discoteca, non ha mai visto la luce del giorno
-Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pretendenti`;
+  const state = { setup: null, game: null };
 
-  const state = {
-    setup: null,   // { players:[{name,color}], budget, slots, timer, order, cats:[4], pool:[{id,n,d,v:[4]}] }
-    game: null,
-  };
-
-  /* ---------------- elenco personaggi ---------------- */
+  /* ---------------- elenco personaggi: solo nomi ---------------- */
   function parsePool(text) {
-    const out = [], errors = [];
-    text.split(/\r?\n/).forEach((line, i) => {
-      const raw = line.trim(); if (!raw) return;
-      const parts = raw.split(';').map((s) => s.trim());
-      const n = parts[0];
-      const v = parts.slice(1, 5).map((x) => parseInt(x, 10));
-      if (!n || v.length < 4 || v.some((x) => !Number.isFinite(x) || x < 1 || x > 10)) { errors.push('Riga ' + (i + 1) + ': servono un nome e 4 voti da 1 a 10.'); return; }
-      out.push({ id: 'p' + out.length + '_' + n.replace(/\W+/g, '').slice(0, 10), n, v, d: parts.slice(5).join('; ') });
+    const out = [];
+    text.split(/\r?\n/).forEach((line) => {
+      const n = line.split(';')[0].trim().slice(0, 40);
+      if (n) out.push({ id: 'p' + out.length + '_' + n.replace(/\W+/g, '').slice(0, 10), n });
     });
-    return { out, errors };
+    return out;
   }
-  const poolToText = (pool) => pool.map((p) => [p.n].concat(p.v).join('; ') + (p.d ? '; ' + p.d : '')).join('\n');
-  const tot = (p) => p.v.reduce((a, b) => a + b, 0);
+  const poolToText = (pool) => pool.map((p) => p.n).join('\n');
+
+  /* ---------------- voti ---------------- */
+  const votesOf = (id) => (state.game && state.game.votes[id]) || null;
+  const voted = (id) => { const v = votesOf(id); return !!v && v.length === 4 && v.every((x) => Number.isInteger(x) && x >= 1 && x <= 10); };
+  const sum = (id) => (votesOf(id) || []).reduce((a, b) => a + (b || 0), 0);
 
   /* ---------------- salvataggio ---------------- */
   function load(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
@@ -345,14 +368,14 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
     setTimeout(() => t.remove(), 2600);
   }
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-  function show(id) { ['scSetup', 'scGame', 'scEnd'].forEach((s) => $(s).classList.toggle('hidden', s !== id)); window.scrollTo(0, 0); }
+  function show(id) { ['scSetup', 'scGame', 'scVote', 'scEnd'].forEach((s) => $(s).classList.toggle('hidden', s !== id)); window.scrollTo(0, 0); }
 
   /* ================= PREPARAZIONE ================= */
   function defaultSetup() {
     return {
       players: [1, 2, 3, 4].map((i) => ({ name: 'Giocatore ' + i, color: COLORS[i - 1] })),
-      budget: 500, slots: 5, timer: 15, order: 'random', cats: DEFAULT_CATS.slice(),
-      pool: parsePool(DEFAULT_POOL).out,
+      budget: 500, slots: 5, timer: 15, order: 'random', voteMode: 'end', cats: ['', '', '', ''],
+      pool: parsePool(DEFAULT_POOL),
     };
   }
 
@@ -360,26 +383,27 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
     const s = state.setup;
     $('plist').innerHTML = s.players.map((p, i) => `<div class="row"><span class="dot" style="background:${p.color}"></span><input type="text" maxlength="20" data-pname="${i}" value="${esc(p.name)}"><button class="btn btn-s btn-ghost" data-pdel="${i}" ${s.players.length <= 2 ? 'disabled' : ''} aria-label="Togli">✕</button></div>`).join('');
     $('addP').disabled = s.players.length >= 12;
-    $('optBudget').value = s.budget; $('optSlots').value = s.slots; $('optTimer').value = s.timer; $('optOrder').value = s.order;
-    $('catInputs').innerHTML = s.cats.map((c, i) => `<label class="f"><span style="color:${CAT_COLORS[i]}">Caratteristica ${i + 1}</span><input type="text" maxlength="16" data-cat="${i}" value="${esc(c)}"></label>`).join('');
+    $('optBudget').value = s.budget; $('optSlots').value = s.slots; $('optTimer').value = s.timer; $('optOrder').value = s.order; $('optVotes').value = s.voteMode;
+    $('catInputs').innerHTML = s.cats.map((c, i) => `<label class="f"><span style="color:${CAT_COLORS[i]}">Caratteristica ${i + 1}</span><input type="text" maxlength="24" data-cat="${i}" value="${esc(c)}" placeholder="${CAT_PLACEHOLDERS[i]}"></label>`).join('');
     $('poolCount').textContent = '(' + s.pool.length + ')';
     $('poolPreview').textContent = s.pool.map((p) => p.n).join(' · ');
     const g = load(KEY);
-    if (g && !g.over) {
+    if (g && !g.done) {
       $('resumeCard').classList.remove('hidden');
       const sold = g.teams.reduce((a, t) => a + t.roster.length, 0);
-      $('resumeInfo').textContent = g.players.map((p) => p.name).join(', ') + ' · ' + sold + ' personaggi già assegnati.';
+      $('resumeInfo').textContent = g.players.map((p) => p.name).join(', ') + ' · ' + sold + ' personaggi già assegnati · caratteristiche: ' + g.cats.join(', ') + '.';
     } else $('resumeCard').classList.add('hidden');
   }
 
   function readSetupInputs() {
     const s = state.setup;
     document.querySelectorAll('[data-pname]').forEach((el) => { s.players[+el.dataset.pname].name = el.value; });
-    document.querySelectorAll('[data-cat]').forEach((el) => { s.cats[+el.dataset.cat] = el.value.trim() || DEFAULT_CATS[+el.dataset.cat]; });
+    document.querySelectorAll('[data-cat]').forEach((el) => { s.cats[+el.dataset.cat] = el.value.trim(); });
     s.budget = Math.max(10, Math.min(10000, parseInt($('optBudget').value, 10) || 500));
     s.slots = Math.max(1, Math.min(30, parseInt($('optSlots').value, 10) || 5));
     s.timer = Math.max(0, Math.min(120, parseInt($('optTimer').value, 10) || 0));
     s.order = $('optOrder').value;
+    s.voteMode = $('optVotes').value;
   }
 
   $('scSetup').addEventListener('input', (e) => { if (e.target.matches('[data-pname], [data-cat], input[type=number], select')) { readSetupInputs(); save(); } });
@@ -395,15 +419,16 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
     renderSetup(); save();
     const inputs = document.querySelectorAll('[data-pname]'); inputs[inputs.length - 1].select();
   };
+  $('randCats').onclick = () => { readSetupInputs(); state.setup.cats = shuffle(CAT_IDEAS.slice()).slice(0, 4); renderSetup(); save(); };
+  $('clearCats').onclick = () => { readSetupInputs(); state.setup.cats = ['', '', '', '']; renderSetup(); save(); document.querySelector('[data-cat="0"]').focus(); };
   $('editPool').onclick = () => { $('poolText').value = poolToText(state.setup.pool); $('poolEditor').classList.remove('hidden'); $('poolErr').classList.add('hidden'); $('poolText').focus(); };
   $('cancelPool').onclick = () => $('poolEditor').classList.add('hidden');
   $('savePool').onclick = () => {
-    const r = parsePool($('poolText').value);
-    if (r.errors.length) { $('poolErr').textContent = r.errors.slice(0, 4).join(' ') + (r.errors.length > 4 ? ' (e altre ' + (r.errors.length - 4) + ')' : ''); $('poolErr').classList.remove('hidden'); return; }
-    if (!r.out.length) { $('poolErr').textContent = 'L\'elenco è vuoto.'; $('poolErr').classList.remove('hidden'); return; }
-    state.setup.pool = r.out; $('poolEditor').classList.add('hidden'); renderSetup(); save(); toast(r.out.length + ' personaggi salvati.');
+    const out = parsePool($('poolText').value);
+    if (!out.length) { $('poolErr').textContent = 'L\'elenco è vuoto.'; $('poolErr').classList.remove('hidden'); return; }
+    state.setup.pool = out; $('poolEditor').classList.add('hidden'); renderSetup(); save(); toast(out.length + ' personaggi salvati.');
   };
-  $('resetPool').onclick = () => { if (!confirm('Rimettere l\'elenco di base? Quello attuale si perde.')) return; state.setup.pool = parsePool(DEFAULT_POOL).out; renderSetup(); save(); };
+  $('resetPool').onclick = () => { if (!confirm('Rimettere l\'elenco di base? Quello attuale si perde.')) return; state.setup.pool = parsePool(DEFAULT_POOL); renderSetup(); save(); };
 
   $('startBtn').onclick = () => {
     readSetupInputs();
@@ -412,11 +437,14 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
     let msg = '';
     if (names.some((n) => !n)) msg = 'Ogni partecipante deve avere un nome.';
     else if (new Set(names.map((n) => n.toLowerCase())).size !== names.length) msg = 'Due partecipanti hanno lo stesso nome.';
+    else if (s.cats.some((c) => !c)) msg = 'Scrivete tutte e quattro le caratteristiche (o pescatele a caso).';
+    else if (new Set(s.cats.map((c) => c.toLowerCase())).size !== 4) msg = 'Le quattro caratteristiche devono essere diverse.';
     else if (s.pool.length < s.players.length * s.slots) msg = 'Servono almeno ' + (s.players.length * s.slots) + ' personaggi per riempire tutte le rose (ce ne sono ' + s.pool.length + '). Aggiungine o riduci i posti per rosa.';
     else if (s.budget < s.slots) msg = 'I crediti devono essere almeno quanti i posti in rosa (1 credito a personaggio).';
-    if (msg) { err.textContent = msg; err.classList.remove('hidden'); return; }
+    if (msg) { err.textContent = msg; err.classList.remove('hidden'); err.scrollIntoView({ block: 'center' }); return; }
     err.classList.add('hidden');
-    if (load(KEY) && !load(KEY).over && !confirm('C\'è già un\'asta in corso: ricominciare da capo?')) return;
+    const old = load(KEY);
+    if (old && !old.done && !confirm('C\'è già un\'asta in corso: ricominciare da capo?')) return;
     s.players.forEach((p) => { p.name = p.name.trim(); });
     newGame();
   };
@@ -431,16 +459,17 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
     else if (s.order === 'alpha') queue.sort((a, b) => byId(a, s.pool).n.localeCompare(byId(b, s.pool).n, 'it'));
     state.game = {
       players: s.players.map((p) => ({ name: p.name, color: p.color })),
-      budget: s.budget, slots: s.slots, timer: s.timer, order: s.order, cats: s.cats.slice(),
-      pool: JSON.parse(JSON.stringify(s.pool)),
+      budget: s.budget, slots: s.slots, timer: s.timer, order: s.order, voteMode: s.voteMode, cats: s.cats.slice(),
+      pool: JSON.parse(JSON.stringify(s.pool)), votes: {},
       teams: s.players.map(() => ({ credits: s.budget, roster: [] })),
-      queue, current: null, bids: [], called: 0, log: [], over: false,
+      queue, current: null, bids: [], called: 0, log: [], over: false, done: false,
     };
-    if (s.order !== 'free') nextCharacter(); else state.game.current = null;
+    if (s.order !== 'free') nextCharacter();
     save(); startGameScreen();
   }
   const byId = (id, pool) => (pool || state.game.pool).find((p) => p.id === id);
   const G = () => state.game;
+  const needsVoteFirst = () => G().voteMode === 'call' && G().current && !voted(G().current);
 
   function maxBid(i) {
     const g = G(), t = g.teams[i];
@@ -462,9 +491,10 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
   }
 
   function startGameScreen() {
+    const g = G();
+    if (g.over) { goAfterAuction(); return; }
     show('scGame'); setTab('auction');
-    if (G().over) { renderEnd(); show('scEnd'); return; }
-    renderGame(); resetTimer(true);
+    renderGame(); resetTimer();
   }
 
   function setTab(name) {
@@ -477,8 +507,12 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
   }
   document.querySelectorAll('.tab').forEach((t) => (t.onclick = () => setTab(t.dataset.tab)));
 
-  function statsHTML(p, cats) {
-    return p.v.map((v, i) => `<div class="stat"><span>${esc(cats[i])}</span><div class="bar"><i style="width:${v * 10}%;background:${CAT_COLORS[i]}"></i></div><b>${v}</b></div>`).join('');
+  function statsHTML(v, cats) {
+    return v.map((x, i) => `<div class="stat"><span>${esc(cats[i])}</span><div class="bar"><i style="width:${x * 10}%;background:${CAT_COLORS[i]}"></i></div><b>${x}</b></div>`).join('');
+  }
+  function voteInputs(id, cats, prefix) {
+    const v = votesOf(id) || [];
+    return `<div class="vgrid">${cats.map((c, j) => `<label class="f"><span style="color:${CAT_COLORS[j]}">${esc(c)}</span><input type="number" inputmode="numeric" min="1" max="10" data-vote="${id}" data-j="${j}" ${prefix ? 'data-pre="1"' : ''} value="${v[j] != null ? v[j] : ''}" placeholder="1-10"></label>`).join('')}</div>`;
   }
 
   function renderGame() {
@@ -487,37 +521,66 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
     $('pickBox').classList.toggle('hidden', !free);
     $('auctionBox').classList.toggle('hidden', free);
     if (free) {
-      $('pickList').innerHTML = g.queue.map((id) => { const p = byId(id); return `<div class="it"><div><b>${esc(p.n)}</b><div class="s">${p.v.join(' · ')} — totale ${tot(p)}</div></div><button class="btn btn-s btn-p" data-pick="${id}">Chiama</button></div>`; }).join('');
+      $('pickList').innerHTML = g.queue.map((id) => `<div class="it"><b>${esc(byId(id).n)}</b><button class="btn btn-s btn-p" data-pick="${id}">Chiama</button></div>`).join('');
       return;
     }
     const p = byId(g.current);
     const assigned = g.teams.reduce((a, t) => a + t.roster.length, 0);
+    const voteFirst = needsVoteFirst();
     $('pNum').textContent = 'Chiamata n. ' + g.called + ' · assegnati ' + assigned + ' su ' + (g.players.length * g.slots);
     $('pName').textContent = p.n;
-    $('pDesc').textContent = p.d || '';
-    $('pStats').innerHTML = statsHTML(p, g.cats);
-    $('pTot').textContent = tot(p);
+    if (voteFirst) {
+      $('pStats').innerHTML = `<p class="pdesc">Prima i voti: decidete insieme quanto vale in ogni caratteristica, poi si parte con le offerte.</p>${voteInputs(p.id, g.cats, true)}<button class="btn btn-p" id="confirmVotes" style="width:100%;margin-top:12px">Conferma i voti e apri l'asta</button>`;
+      $('pTotRow').classList.add('hidden');
+    } else if (voted(p.id)) {
+      $('pStats').innerHTML = statsHTML(votesOf(p.id), g.cats);
+      $('pTot').textContent = sum(p.id); $('pTotRow').classList.remove('hidden');
+    } else {
+      $('pStats').innerHTML = `<p class="pdesc">I voti si danno alla fine, su tutte le rose. Adesso conta solo il nome: ${g.cats.map((c, j) => `<b style="color:${CAT_COLORS[j]}">${esc(c)}</b>`).join(', ')}.</p>`;
+      $('pTotRow').classList.add('hidden');
+    }
     const price = curPrice(), lead = curLeader();
     $('curPrice').textContent = price;
-    $('curLeader').textContent = lead == null ? 'Nessuna offerta' : g.players[lead].name;
+    $('curLeader').textContent = lead == null ? (voteFirst ? 'Prima i voti' : 'Nessuna offerta') : g.players[lead].name;
     $('curLeader').style.color = lead == null ? 'var(--muted)' : g.players[lead].color;
     $('bidders').innerHTML = g.players.map((pl, i) => {
       const t = g.teams[i], mb = maxBid(i), full = t.roster.length >= g.slots;
-      const steps = [1, 5, 10].map((st) => `<button class="btn" data-bid="${i}" data-step="${st}" ${full || price + st > mb || lead === i ? 'disabled' : ''}>+${st}</button>`).join('');
+      const off = voteFirst || full || lead === i;
+      const steps = [1, 5, 10].map((st) => `<button class="btn" data-bid="${i}" data-step="${st}" ${off || price + st > mb ? 'disabled' : ''}>+${st}</button>`).join('');
       return `<div class="bidder ${lead === i ? 'lead' : ''} ${full ? 'out' : ''}">
         <div><div class="nm"><span class="dot" style="background:${pl.color}"></span><span>${esc(pl.name)}</span></div>
         <div class="meta">${t.credits} crediti · rosa ${t.roster.length}/${g.slots}${full ? ' · completa' : ' · max ' + mb}</div></div>
-        <div class="bb">${steps}<button class="btn" data-bidcustom="${i}" ${full || price + 1 > mb || lead === i ? 'disabled' : ''} title="Offerta libera">…</button></div>
+        <div class="bb">${steps}<button class="btn" data-bidcustom="${i}" ${off || price + 1 > mb ? 'disabled' : ''} title="Offerta libera">…</button></div>
       </div>`;
     }).join('');
     $('sellBtn').disabled = lead == null;
     $('undoBidBtn').disabled = !g.bids.length;
+    $('skipBtn').disabled = false;
     $('log').innerHTML = g.log.slice(-30).reverse().map((l) => `<div>${esc(l)}</div>`).join('');
   }
 
+  // Voti scritti in un qualsiasi campo (prima dell'asta o nella schermata finale): salvati subito.
+  document.addEventListener('input', (e) => {
+    const el = e.target.closest('[data-vote]'); if (!el) return;
+    const g = G(); if (!g) return;
+    const id = el.dataset.vote, j = +el.dataset.j;
+    const v = g.votes[id] || [null, null, null, null];
+    const n = parseInt(el.value, 10);
+    v[j] = Number.isInteger(n) && n >= 1 && n <= 10 ? n : null;
+    el.classList.toggle('bad', el.value !== '' && v[j] == null);
+    g.votes[id] = v; save();
+    if (!$('scVote').classList.contains('hidden')) updateVoteProgress();
+  });
+  $('pStats').addEventListener('click', (e) => {
+    if (!e.target.closest('#confirmVotes')) return;
+    const g = G();
+    if (!voted(g.current)) { toast('Mancano dei voti: ogni caratteristica vuole un numero da 1 a 10.'); return; }
+    save(); renderGame(); resetTimer();
+  });
+
   function bid(i, amt) {
     const g = G();
-    if (amt <= curPrice() || amt > maxBid(i) || curLeader() === i) return;
+    if (needsVoteFirst() || amt <= curPrice() || amt > maxBid(i) || curLeader() === i) return;
     g.bids.push({ who: i, amt });
     save(); renderGame(); resetTimer();
   }
@@ -575,14 +638,15 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
   }
   function resetTimer() {
     stopTimer();
-    const g = G(); if (!g || !g.timer || !g.current || g.over) { drawTimer(); return; }
+    const g = G();
+    if (!g || !g.timer || !g.current || g.over || needsVoteFirst()) { timeLeft = g ? g.timer : 0; drawTimer(); return; }
     timeLeft = g.timer; drawTimer();
     timerId = setInterval(() => {
       timeLeft--; drawTimer();
       if (timeLeft <= 0) {
         stopTimer();
         if (curLeader() != null) sell();
-        else { timeLeft = 0; drawTimer(); toast('Tempo scaduto senza offerte: aggiudica, aspetta o passa al prossimo.'); }
+        else { timeLeft = 0; drawTimer(); toast('Tempo scaduto senza offerte: aspetta, aggiudica o passa al prossimo.'); }
       }
     }, 1000);
   }
@@ -590,19 +654,20 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
   /* ---------------- rose ---------------- */
   function teamCats(t) {
     const c = [0, 0, 0, 0];
-    t.roster.forEach((r) => { const p = byId(r.id); p.v.forEach((v, i) => { c[i] += v; }); });
+    t.roster.forEach((r) => { (votesOf(r.id) || []).forEach((v, i) => { c[i] += v || 0; }); });
     return c;
   }
   function renderTeams(el, editable) {
     const g = G();
     el.innerHTML = g.players.map((pl, i) => {
       const t = g.teams[i], c = teamCats(t);
-      const items = t.roster.map((r, k) => { const p = byId(r.id); return `<li><span>${esc(p.n)} <span class="muted small">(${tot(p)})</span></span><span>${r.price}${editable ? ` <button class="x" data-unsell="${i}:${k}" title="Annulla l'acquisto">✕</button>` : ''}</span></li>`; });
+      const items = t.roster.map((r, k) => { const p = byId(r.id); return `<li><span>${esc(p.n)}${voted(r.id) ? ` <span class="muted small">(${sum(r.id)})</span>` : ''}</span><span>${r.price}${editable ? ` <button class="x" data-unsell="${i}:${k}" title="Annulla l'acquisto">✕</button>` : ''}</span></li>`; });
       for (let k = t.roster.length; k < g.slots; k++) items.push('<li class="empty"><span>posto libero</span><span></span></li>');
+      const anyVotes = t.roster.some((r) => votesOf(r.id));
       return `<div class="card team"><h3><span class="dot" style="background:${pl.color}"></span>${esc(pl.name)}</h3>
         <div class="tm">${t.credits} crediti rimasti · speso ${g.budget - t.credits}</div>
         <ul>${items.join('')}</ul>
-        <div class="cats">${g.cats.map((n, j) => `<div><b style="color:${CAT_COLORS[j]}">${c[j]}</b>${esc(n)}</div>`).join('')}</div></div>`;
+        ${anyVotes ? `<div class="cats">${g.cats.map((n, j) => `<div><b style="color:${CAT_COLORS[j]}">${c[j]}</b>${esc(n)}</div>`).join('')}</div>` : ''}</div>`;
     }).join('');
   }
   $('teams').addEventListener('click', (e) => {
@@ -619,10 +684,41 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
   function renderPool() {
     const g = G();
     const list = (g.current ? [g.current] : []).concat(g.queue);
-    $('poolList').innerHTML = list.length ? list.map((id, k) => { const p = byId(id); return `<div class="it"><div><b>${k === 0 && g.current ? '▶ ' : ''}${esc(p.n)}</b><div class="s">${p.v.join(' · ')} — totale ${tot(p)}</div></div></div>`; }).join('') : '<p class="muted">Nessun personaggio rimasto.</p>';
+    $('poolList').innerHTML = list.length ? list.map((id, k) => `<div class="it"><b>${k === 0 && g.current ? '▶ ' : ''}${esc(byId(id).n)}</b></div>`).join('') : '<p class="muted">Nessun personaggio rimasto.</p>';
   }
   $('endNowBtn').onclick = () => { if (confirm('Chiudere l\'asta adesso? Le rose restano come sono.')) finish(); };
   $('quitBtn').onclick = () => { stopTimer(); show('scSetup'); renderSetup(); };
+
+  /* ================= VOTI FINALI ================= */
+  const assignedIds = () => [].concat(...G().teams.map((t) => t.roster.map((r) => r.id)));
+  function finish() {
+    const g = G(); if (g.current) g.queue.unshift(g.current);
+    g.over = true; g.current = null; g.bids = []; stopTimer(); save();
+    goAfterAuction();
+  }
+  function goAfterAuction() {
+    if (assignedIds().every(voted)) { G().done = true; save(); renderEnd(); show('scEnd'); return; }
+    renderVote(); show('scVote');
+  }
+  function renderVote() {
+    const g = G();
+    $('voteCats').innerHTML = g.cats.map((c, j) => `<span style="color:${CAT_COLORS[j]}">${esc(c)}</span>`).join(' · ');
+    $('voteList').innerHTML = g.players.map((pl, i) => {
+      const t = g.teams[i]; if (!t.roster.length) return '';
+      return `<div class="card"><h3 class="vteam"><span class="dot" style="background:${pl.color}"></span>${esc(pl.name)}</h3>${t.roster.map((r) => `<div class="vrow"><div class="vname">${esc(byId(r.id).n)}</div>${voteInputs(r.id, g.cats, false)}</div>`).join('')}</div>`;
+    }).join('');
+    updateVoteProgress();
+  }
+  function updateVoteProgress() {
+    const ids = assignedIds(), ok = ids.filter(voted).length;
+    $('voteProgress').textContent = ok + ' su ' + ids.length + ' personaggi votati';
+    $('calcBtn').disabled = ok < ids.length;
+  }
+  $('calcBtn').onclick = () => {
+    if (!assignedIds().every(voted)) { toast('Mancano ancora dei voti.'); return; }
+    G().done = true; save(); renderEnd(); show('scEnd');
+  };
+  $('voteBack').onclick = backToAuction;
 
   /* ================= CLASSIFICA ================= */
   function scores() {
@@ -640,37 +736,39 @@ Dora Pantofola; 5; 7; 9; 8; Portinaia leggendaria, filtra pacchi, notizie e pret
       const base = cats[i].reduce((a, b) => a + b, 0);
       return { i, name: pl.name, color: pl.color, base, bonus: bonus[i], total: base + bonus[i], spent: g.budget - g.teams[i].credits, n: g.teams[i].roster.length };
     }).sort((a, b) => b.total - a.total || a.spent - b.spent);
-    // l'acquisto migliore: più punti per credito speso
-    let steal = null;
-    g.teams.forEach((t, i) => t.roster.forEach((r) => { const p = byId(r.id), ratio = tot(p) / Math.max(1, r.price); if (!steal || ratio > steal.ratio) steal = { ratio, p, price: r.price, who: g.players[i].name }; }));
-    let pricey = null;
-    g.teams.forEach((t, i) => t.roster.forEach((r) => { if (!pricey || r.price > pricey.price) pricey = { p: byId(r.id), price: r.price, who: g.players[i].name }; }));
-    return { rows, awards, steal, pricey };
-  }
-  function finish() {
-    const g = G(); if (g.current) g.queue.unshift(g.current); g.over = true; g.current = null; g.bids = []; stopTimer(); save();
-    renderEnd(); show('scEnd');
+    let steal = null, pricey = null, best = null;
+    g.teams.forEach((t, i) => t.roster.forEach((r) => {
+      const p = byId(r.id), s = sum(r.id), ratio = s / Math.max(1, r.price);
+      if (!steal || ratio > steal.ratio) steal = { ratio, p, price: r.price, who: g.players[i].name };
+      if (!pricey || r.price > pricey.price) pricey = { p, price: r.price, who: g.players[i].name };
+      if (!best || s > best.s) best = { p, s, who: g.players[i].name };
+    }));
+    return { rows, awards, steal, pricey, best };
   }
   function renderEnd() {
     const r = scores();
     $('rank').innerHTML = r.rows.map((x, k) => `<div class="rk"><div class="pos">${k + 1}</div><div><div class="n" style="color:${x.color}">${esc(x.name)}</div><div class="d">${x.n} personaggi · ${x.base} punti${x.bonus ? ' + ' + x.bonus + ' bonus' : ''} · spesi ${x.spent} crediti</div></div><div class="s">${x.total}</div></div>`).join('');
     const aw = r.awards.map((a) => `<div class="award"><small style="color:${a.color}">Il re di: ${esc(a.cat)}</small><b>${esc(a.who)}</b><span class="muted small">${a.v} punti</span></div>`);
+    if (r.best) aw.push(`<div class="award"><small>Il più votato</small><b>${esc(r.best.p.n)}</b><span class="muted small">${esc(r.best.who)}, ${r.best.s} punti</span></div>`);
     if (r.steal) aw.push(`<div class="award"><small>L'affare dell'asta</small><b>${esc(r.steal.p.n)}</b><span class="muted small">${esc(r.steal.who)}, solo ${r.steal.price} crediti</span></div>`);
     if (r.pricey) aw.push(`<div class="award"><small>Il più pagato</small><b>${esc(r.pricey.p.n)}</b><span class="muted small">${esc(r.pricey.who)}, ${r.pricey.price} crediti</span></div>`);
     $('awards').innerHTML = aw.join('');
     renderTeams($('endTeams'), false);
   }
-  $('backToGame').onclick = () => {
-    const g = G(); g.over = false;
-    if (!allFull() && (g.queue.length)) { nextCharacter(); save(); startGameScreen(); }
-    else { g.over = true; toast('Non c\'è più niente da assegnare.'); }
-  };
+  function backToAuction() {
+    const g = G();
+    if (allFull() || !g.queue.length) { toast('Non c\'è più niente da assegnare: tutte le rose sono piene.'); return; }
+    g.over = false; g.done = false; nextCharacter(); save(); startGameScreen();
+  }
+  $('backToGame').onclick = backToAuction;
+  $('editVotes').onclick = () => { G().done = false; save(); renderVote(); show('scVote'); };
   $('newGame').onclick = () => { if (!confirm('Iniziare una nuova asta? Questa viene cancellata.')) return; state.game = null; save(); show('scSetup'); renderSetup(); };
 
   /* ================= AVVIO ================= */
   state.setup = load(SETUP_KEY) || defaultSetup();
-  if (!state.setup.pool || !state.setup.pool.length) state.setup.pool = parsePool(DEFAULT_POOL).out;
-  if (!Array.isArray(state.setup.cats) || state.setup.cats.length !== 4) state.setup.cats = DEFAULT_CATS.slice();
+  if (!state.setup.pool || !state.setup.pool.length) state.setup.pool = parsePool(DEFAULT_POOL);
+  if (!Array.isArray(state.setup.cats) || state.setup.cats.length !== 4) state.setup.cats = ['', '', '', ''];
+  if (!state.setup.voteMode) state.setup.voteMode = 'end';
   renderSetup();
 })();
 </script>
