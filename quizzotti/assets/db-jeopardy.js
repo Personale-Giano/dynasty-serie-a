@@ -1,10 +1,10 @@
 /* ==========================================================================
-   QUIZZOTTI — Database: Jeopardy (9 categorie x 75 domande: 8 a tema calcio
-   e una di "Altri sport"; 15 domande per ciascun valore da 100 a 500).
-   Estratto da Jeopardy.html per separare i dati dalla logica di gioco.
-   Revisione contenuti: novembre 2026 (ampliato da 50 a 75 domande per
-   categoria). I fatti che possono cambiare nel tempo sono ancorati a un anno
-   o a una stagione.
+   QUIZZOTTI — Database: Jeopardy (9 categorie x 90 domande: 8 a tema calcio
+   e una di "Altri sport"; 18 domande per ciascun valore da 100 a 500).
+   Revisione contenuti: novembre 2026 (stagione 2025-26, Mondiale 2026 e
+   Pallone d'Oro 2026 compresi; ampliato da 75 a 90 domande per categoria).
+   I fatti che possono cambiare nel tempo sono ancorati a un anno o a una
+   stagione.
    ========================================================================== */
 
 const jeopardyData = [
@@ -28,6 +28,9 @@ const jeopardyData = [
       { value: 100, question: "Come si decide una partita a eliminazione diretta ancora in parità dopo i tempi supplementari?", answer: "Con i calci di rigore" },
       { value: 100, question: "Come si chiama chi dirige la partita in campo con il fischietto?", answer: "L'arbitro" },
       { value: 100, question: "Come si chiama il gol che un giocatore segna nella propria porta?", answer: "Autogol (autorete)" },
+      { value: 100, question: "Di che colore è il cartellino dell'ammonizione?", answer: "Giallo" },
+      { value: 100, question: "Come si chiama la ripresa del gioco quando l'attaccante manda il pallone oltre la linea di fondo avversaria?", answer: "Rimessa dal fondo (calcio di rinvio)" },
+      { value: 100, question: "Come si chiama il legno orizzontale che unisce i due pali della porta?", answer: "La traversa" },
       // 200
       { value: 200, question: "Chi ha trasformato il rigore decisivo nella finale dei Mondiali 2006 contro la Francia?", answer: "Fabio Grosso" },
       { value: 200, question: "In quale nazione si è svolto il Mondiale 2022?", answer: "Qatar" },
@@ -43,7 +46,10 @@ const jeopardyData = [
       { value: 200, question: "Chi ha vinto il Pallone d'Oro 2016?", answer: "Cristiano Ronaldo" },
       { value: 200, question: "Quali due nazioni hanno ospitato insieme l'Europeo 2012?", answer: "Polonia e Ucraina" },
       { value: 200, question: "Quale squadra argentina gioca allo stadio Monumental di Buenos Aires?", answer: "River Plate" },
-      { value: 200, question: "Quanti minuti dura l'intervallo tra il primo e il secondo tempo?", answer: "15 minuti" },
+      { value: 200, question: "Al massimo quanti minuti può durare l'intervallo tra il primo e il secondo tempo?", answer: "15 minuti" },
+      { value: 200, question: "Quale attaccante inglese ha vinto il Pallone d'Oro 2026, nella cerimonia di Londra?", answer: "Harry Kane" },
+      { value: 200, question: "Quante sostituzioni può fare ogni squadra nei tempi regolamentari di una partita ufficiale?", answer: "5 (in non più di tre interruzioni, più l'intervallo)" },
+      { value: 200, question: "Come si chiama il premio di France Football per il miglior giovane under 21?", answer: "Trofeo Kopa" },
       // 300
       { value: 300, question: "Chi allenava il Barcellona del Triplete 2008-09?", answer: "Pep Guardiola" },
       { value: 300, question: "Chi ha vinto il Pallone d'Oro nel 2006?", answer: "Fabio Cannavaro" },
@@ -60,6 +66,9 @@ const jeopardyData = [
       { value: 300, question: "Come si chiama la terza competizione UEFA per club, nata nella stagione 2021-22?", answer: "UEFA Conference League" },
       { value: 300, question: "Qual è il numero minimo di giocatori che una squadra deve avere in campo perché la partita possa continuare?", answer: "7" },
       { value: 300, question: "A quale distanza minima dal pallone deve stare la barriera su un calcio di punizione?", answer: "9,15 metri (10 yard)" },
+      { value: 300, question: "Quale talento del Barcellona è stato eletto miglior under 21 del Pallone d'Oro tre anni di fila, dal 2024 al 2026?", answer: "Lamine Yamal" },
+      { value: 300, question: "Come si chiama l'ufficiale di gara che a bordo campo gestisce sostituzioni e recupero?", answer: "Il quarto uomo (quarto ufficiale)" },
+      { value: 300, question: "Quale tecnologia, in Serie A dal 2015-16, avvisa l'arbitro sull'orologio quando il pallone supera la linea di porta?", answer: "Goal-line technology (Hawk-Eye)" },
       // 400
       { value: 400, question: "Chi è stato il primo calciatore della Nazionale italiana a vincere il Pallone d'Oro?", answer: "Omar Sívori (1961)" },
       { value: 400, question: "In quale stadio si è giocata la finale dei Mondiali 2018?", answer: "Stadio Lužniki di Mosca" },
@@ -76,6 +85,9 @@ const jeopardyData = [
       { value: 400, question: "Come si chiama la finta a rientrare resa celebre da un fuoriclasse olandese al Mondiale 1974?", answer: "Cruijff turn (la giravolta di Cruijff)" },
       { value: 400, question: "Quale attaccante inglese del Liverpool vinse il Pallone d'Oro 2001?", answer: "Michael Owen" },
       { value: 400, question: "Chi è stata, nel 2022, la prima donna ad arbitrare una partita di Serie A?", answer: "Maria Sole Ferrieri Caputi" },
+      { value: 400, question: "Quale squadra ha vinto il primo Mondiale per club FIFA a 32 squadre, nel 2025 negli Stati Uniti?", answer: "Chelsea (3-0 al PSG in finale)" },
+      { value: 400, question: "Quale squadra brasiliana vinse la prima edizione del Mondiale per club FIFA, nel 2000?", answer: "Corinthians" },
+      { value: 400, question: "Quanto è alta una porta da calcio regolamentare, dal terreno alla traversa?", answer: "2,44 metri (8 piedi)" },
       // 500
       { value: 500, question: "Chi fondò il Milan nel 1899?", answer: "Herbert Kilpin (insieme ad Alfred Edwards)" },
       { value: 500, question: "Quale calciatore giocò la finale del Mondiale con due nazionali diverse, l'Argentina nel 1930 e l'Italia nel 1934?", answer: "Luis Monti" },
@@ -91,7 +103,10 @@ const jeopardyData = [
       { value: 500, question: "Quale club, fondato nel 1867, è il più antico della Scozia?", answer: "Queen's Park" },
       { value: 500, question: "In che anno il calcio di rigore entrò nel regolamento, su proposta dell'irlandese William McCrum?", answer: "1891" },
       { value: 500, question: "In quale edizione dei Mondiali furono ammesse per la prima volta le sostituzioni?", answer: "Messico 1970" },
-      { value: 500, question: "Chi segnò il primo gol nella storia dei Mondiali, nel 1930?", answer: "Lucien Laurent (Francia)" }
+      { value: 500, question: "Chi segnò il primo gol nella storia dei Mondiali, nel 1930?", answer: "Lucien Laurent (Francia)" },
+      { value: 500, question: "Quale scultore italiano disegnò il trofeo della Coppa del Mondo in uso dal 1974?", answer: "Silvio Gazzaniga" },
+      { value: 500, question: "In quale stadio di Sheffield si giocò nel 1878 la prima partita di calcio con l'illuminazione artificiale?", answer: "Bramall Lane" },
+      { value: 500, question: "Con quale edizione i Mondiali passarono da 24 a 32 squadre?", answer: "Francia 1998" }
     ]
   },
   // ==================== SERIE A ====================
@@ -114,6 +129,9 @@ const jeopardyData = [
       { value: 100, question: "Come si chiama la coppa nazionale del calcio italiano, che si gioca a eliminazione diretta?", answer: "Coppa Italia" },
       { value: 100, question: "In quale città gioca la Fiorentina?", answer: "Firenze" },
       { value: 100, question: "Quanti punti si ottengono per un pareggio in Serie A?", answer: "1" },
+      { value: 100, question: "Quale squadra ha vinto lo scudetto 2025-26?", answer: "Inter" },
+      { value: 100, question: "Quante giornate dura un campionato di Serie A a 20 squadre?", answer: "38" },
+      { value: 100, question: "Quali sono i colori sociali dell'Inter?", answer: "Nero e azzurro (nerazzurro)" },
       // 200
       { value: 200, question: "Quale squadra ha vinto 9 scudetti consecutivi, dal 2011-12 al 2019-20?", answer: "Juventus" },
       { value: 200, question: "In che anno il Napoli di Maradona ha vinto il suo primo scudetto?", answer: "1987 (stagione 1986-87)" },
@@ -130,6 +148,9 @@ const jeopardyData = [
       { value: 200, question: "Quale squadra è soprannominata 'i Blucerchiati'?", answer: "Sampdoria" },
       { value: 200, question: "Chi è il miglior marcatore di sempre della Lazio?", answer: "Ciro Immobile" },
       { value: 200, question: "Quale squadra di Milano è soprannominata 'il Diavolo'?", answer: "Milan" },
+      { value: 200, question: "Quale ex difensore romeno del Triplete ha vinto lo scudetto 2025-26 al primo anno da allenatore dell'Inter?", answer: "Cristian Chivu" },
+      { value: 200, question: "Quale squadra ha vinto la Coppa Italia 2025-26, battendo la Lazio 2-0 in finale?", answer: "Inter" },
+      { value: 200, question: "Quale squadra gioca le partite in casa al Gewiss Stadium di Bergamo?", answer: "Atalanta" },
       // 300
       { value: 300, question: "In quale stagione la Serie A ha introdotto i 3 punti per la vittoria al posto dei 2?", answer: "1994-95" },
       { value: 300, question: "Quale squadra vinse lo scudetto 1990-91 con Vialli e Mancini?", answer: "Sampdoria" },
@@ -146,6 +167,9 @@ const jeopardyData = [
       { value: 300, question: "Chi fu il capocannoniere della Serie A 2023-24, con l'Inter campione?", answer: "Lautaro Martínez (24 gol)" },
       { value: 300, question: "Quale squadra vinse lo scudetto 1989-90, il secondo della sua storia?", answer: "Napoli" },
       { value: 300, question: "Quanti scudetti aveva vinto la Juventus fino al 2025?", answer: "36" },
+      { value: 300, question: "Chi è stato il capocannoniere della Serie A 2025-26?", answer: "Lautaro Martínez (17 gol)" },
+      { value: 300, question: "Quale squadra vinse lo scudetto 1994-95, al primo anno di Marcello Lippi in panchina?", answer: "Juventus" },
+      { value: 300, question: "Quanti scudetti aveva vinto il Napoli dopo il titolo 2024-25?", answer: "4 (1987, 1990, 2023, 2025)" },
       // 400
       { value: 400, question: "Chi detiene il record di gol in una singola stagione di Serie A?", answer: "Gonzalo Higuaín (2015-16) e Ciro Immobile (2019-20), 36 gol" },
       { value: 400, question: "Quale squadra vinse il 'Quinquennio d'oro', cinque scudetti consecutivi dal 1930-31 al 1934-35?", answer: "Juventus" },
@@ -162,6 +186,9 @@ const jeopardyData = [
       { value: 400, question: "Quale squadra vinse lo scudetto 1987-88, il primo con Arrigo Sacchi in panchina?", answer: "Milan" },
       { value: 400, question: "Quanti scudetti aveva vinto il Milan fino al 2025?", answer: "19" },
       { value: 400, question: "Chi allenava la Lazio campione d'Italia nel 1999-2000?", answer: "Sven-Göran Eriksson" },
+      { value: 400, question: "Quali due attaccanti vinsero a pari merito la classifica marcatori della Serie A 2017-18, con 29 gol?", answer: "Mauro Icardi e Ciro Immobile" },
+      { value: 400, question: "Quanti scudetti ha vinto l'Inter con il titolo 2025-26?", answer: "21" },
+      { value: 400, question: "Quale portiere stabilì nel 2015-16 il record di imbattibilità in Serie A, 974 minuti?", answer: "Gianluigi Buffon" },
       // 500
       { value: 500, question: "Qual è il record di punti in una Serie A a 20 squadre, e quale squadra lo ha stabilito?", answer: "102 punti, Juventus 2013-14" },
       { value: 500, question: "Quale squadra vinse il primo campionato di Serie A a girone unico, nel 1929-30?", answer: "Ambrosiana (l'attuale Inter)" },
@@ -177,7 +204,10 @@ const jeopardyData = [
       { value: 500, question: "Quale squadra vinse lo scudetto 1991-92 senza perdere nemmeno una partita, con Fabio Capello?", answer: "Milan" },
       { value: 500, question: "Quante squadre partecipavano alla prima Serie A a girone unico, nel 1929-30?", answer: "18" },
       { value: 500, question: "Da quale stagione la Serie A si gioca stabilmente con 20 squadre?", answer: "2004-05" },
-      { value: 500, question: "Quale squadra vinse lo scudetto 1941-42, il primo della sua storia?", answer: "Roma" }
+      { value: 500, question: "Quale squadra vinse lo scudetto 1941-42, il primo della sua storia?", answer: "Roma" },
+      { value: 500, question: "In quale stadio il Milan perse lo scudetto all'ultima giornata del 1972-73, nella 'fatal Verona'?", answer: "Bentegodi (5-3 per l'Hellas Verona)" },
+      { value: 500, question: "A quale squadra fu assegnato a tavolino, a guerra finita, il campionato 1914-15 interrotto per la Grande Guerra?", answer: "Genoa" },
+      { value: 500, question: "Chi allenava il Cagliari campione d'Italia nel 1969-70?", answer: "Manlio Scopigno" }
     ]
   },
   // ==================== CHAMPIONS LEAGUE ====================
@@ -200,6 +230,9 @@ const jeopardyData = [
       { value: 100, question: "Chi ha vinto la Champions League 2014, nel derby di Lisbona contro l'Atlético Madrid?", answer: "Real Madrid" },
       { value: 100, question: "Quale squadra inglese vinse la Champions League 2008 ai rigori contro il Chelsea, a Mosca?", answer: "Manchester United" },
       { value: 100, question: "Con quale soprannome è nota la coppa della Champions League, per la forma dei suoi manici?", answer: "La Coppa dalle grandi orecchie" },
+      { value: 100, question: "Quale squadra ha vinto la Champions League 2026, battendo l'Arsenal ai rigori?", answer: "Paris Saint-Germain" },
+      { value: 100, question: "Chi ha vinto la Champions League 2018 a Kiev, contro il Liverpool?", answer: "Real Madrid" },
+      { value: 100, question: "Quale squadra ha vinto la Champions League 2013 a Wembley, nella finale tutta tedesca?", answer: "Bayern Monaco" },
       // 200
       { value: 200, question: "Quale squadra ha vinto la Champions League 2020, nella 'final eight' di Lisbona?", answer: "Bayern Monaco" },
       { value: 200, question: "In che anno il Milan ha vinto la sua settima Champions League, ad Atene contro il Liverpool?", answer: "2007" },
@@ -216,6 +249,9 @@ const jeopardyData = [
       { value: 200, question: "In quale stadio italiano si giocò la finale di Champions League 2016 tra Real e Atlético Madrid?", answer: "San Siro (Milano)" },
       { value: 200, question: "Come si chiama la prima fase della Champions League dal 2024-25, con un girone unico di 36 squadre?", answer: "Fase campionato (league phase)" },
       { value: 200, question: "Quale squadra batté la Juventus nella finale di Champions League 1998 ad Amsterdam?", answer: "Real Madrid" },
+      { value: 200, question: "In quale città si è giocata la finale di Champions League 2026?", answer: "Budapest (Puskás Aréna)" },
+      { value: 200, question: "Quale squadra vinse la Champions League 2009 a Roma, battendo il Manchester United?", answer: "Barcellona" },
+      { value: 200, question: "Chi segnò la doppietta del Milan nella finale di Champions League 2007 contro il Liverpool?", answer: "Filippo Inzaghi" },
       // 300
       { value: 300, question: "Quale squadra fu la prima britannica a vincere la Coppa dei Campioni, nel 1967?", answer: "Celtic" },
       { value: 300, question: "Quante Coppe dei Campioni consecutive vinse il Real Madrid dal 1956 al 1960?", answer: "5" },
@@ -232,6 +268,9 @@ const jeopardyData = [
       { value: 300, question: "Chi allenava il Liverpool campione d'Europa nel 2019?", answer: "Jürgen Klopp" },
       { value: 300, question: "Chi allenava il Chelsea campione d'Europa nel 2021?", answer: "Thomas Tuchel" },
       { value: 300, question: "Chi allenava il Paris Saint-Germain campione d'Europa nel 2025?", answer: "Luis Enrique" },
+      { value: 300, question: "Quale portiere polacco del Liverpool fu decisivo ai rigori nella finale di Istanbul 2005?", answer: "Jerzy Dudek" },
+      { value: 300, question: "Chi segnò al 93' il pareggio del Real Madrid nella finale di Champions League 2014 contro l'Atlético?", answer: "Sergio Ramos" },
+      { value: 300, question: "Quale squadra vinse la Champions League 2000, nella prima finale tra due club dello stesso paese?", answer: "Real Madrid (contro il Valencia)" },
       // 400
       { value: 400, question: "Quale squadra olandese vinse tre Coppe dei Campioni consecutive dal 1971 al 1973, trascinata da Cruijff?", answer: "Ajax" },
       { value: 400, question: "Quale squadra vinse ai rigori la finale tutta italiana di Champions League 2003?", answer: "Milan (contro la Juventus)" },
@@ -248,6 +287,9 @@ const jeopardyData = [
       { value: 400, question: "Quale squadra portoghese vinse due Coppe dei Campioni consecutive, nel 1961 e nel 1962?", answer: "Benfica" },
       { value: 400, question: "Quale squadra fu battuta 4-0 dal Milan nella finale di Champions League 1994 ad Atene?", answer: "Barcellona" },
       { value: 400, question: "Chi segnò il gol decisivo del Real Madrid nella finale di Champions League 2022?", answer: "Vinícius Júnior" },
+      { value: 400, question: "Chi segnò il gol decisivo del Chelsea nella finale di Champions League 2021 contro il Manchester City?", answer: "Kai Havertz" },
+      { value: 400, question: "Chi trasformò il rigore decisivo del Chelsea nella finale di Champions League 2012 a Monaco?", answer: "Didier Drogba" },
+      { value: 400, question: "Quale tecnico olandese guidava il Barcellona che vinse la Champions League 2006 a Parigi?", answer: "Frank Rijkaard" },
       // 500
       { value: 500, question: "Quale squadra rumena vinse la Coppa dei Campioni 1986 ai rigori contro il Barcellona, con quattro rigori parati da Duckadam?", answer: "Steaua Bucarest" },
       { value: 500, question: "In quale città si giocò la prima finale di Coppa dei Campioni, nel 1956?", answer: "Parigi (Parco dei Principi)" },
@@ -263,7 +305,10 @@ const jeopardyData = [
       { value: 500, question: "Contro quale squadra l'Inter vinse la sua prima Coppa dei Campioni, nel 1964 a Vienna?", answer: "Real Madrid" },
       { value: 500, question: "Quale squadra inglese vinse la Coppa dei Campioni 1968 a Wembley, battendo il Benfica?", answer: "Manchester United" },
       { value: 500, question: "Quale squadra olandese vinse la Coppa dei Campioni 1988 ai rigori contro il Benfica?", answer: "PSV Eindhoven" },
-      { value: 500, question: "Quale squadra inglese vinse la Coppa dei Campioni 1982 a Rotterdam, battendo il Bayern Monaco?", answer: "Aston Villa" }
+      { value: 500, question: "Quale squadra inglese vinse la Coppa dei Campioni 1982 a Rotterdam, battendo il Bayern Monaco?", answer: "Aston Villa" },
+      { value: 500, question: "Quale squadra vinse la Coppa dei Campioni 1984 ai rigori, all'Olimpico, contro la Roma?", answer: "Liverpool" },
+      { value: 500, question: "Quale squadra vinse la Coppa dei Campioni 1987 contro il Bayern, con il colpo di tacco di Madjer?", answer: "Porto" },
+      { value: 500, question: "Quale squadra vinse a Wembley l'ultima Coppa dei Campioni con quel nome, nel 1992, contro la Sampdoria?", answer: "Barcellona" }
     ]
   },
   // ==================== NAZIONALI E MONDIALI ====================
@@ -286,6 +331,9 @@ const jeopardyData = [
       { value: 100, question: "Con quale soprannome è nota la nazionale inglese, per i leoni del suo stemma?", answer: "Three Lions" },
       { value: 100, question: "Quale nazionale vinse il Mondiale 1986, trascinata da Maradona?", answer: "Argentina" },
       { value: 100, question: "Quale nazionale vinse il Mondiale 1994 negli Stati Uniti, battendo l'Italia ai rigori?", answer: "Brasile" },
+      { value: 100, question: "Quale nazionale ha alzato la Coppa del Mondo nel 2026, la seconda della sua storia?", answer: "Spagna" },
+      { value: 100, question: "Quale nazionale campione in carica ha perso ai supplementari la finale del Mondiale 2026?", answer: "Argentina" },
+      { value: 100, question: "Quale nazionale vinse l'Europeo giocato nel 2021, battendo l'Inghilterra ai rigori a Wembley?", answer: "Italia" },
       // 200
       { value: 200, question: "In che anno l'Italia ha vinto il suo quarto Mondiale?", answer: "2006" },
       { value: 200, question: "Quale nazione ospitò e vinse il primo Mondiale, nel 1930?", answer: "Uruguay" },
@@ -302,6 +350,9 @@ const jeopardyData = [
       { value: 200, question: "Quale nazionale perse la finale del Mondiale 2018 contro la Francia?", answer: "Croazia" },
       { value: 200, question: "Quale nazionale ha vinto l'Europeo 2008?", answer: "Spagna" },
       { value: 200, question: "Quale nazionale vinse l'Europeo 2000 battendo l'Italia al golden gol?", answer: "Francia" },
+      { value: 200, question: "Quale attaccante spagnolo ha segnato al 106' il gol che ha deciso la finale del Mondiale 2026?", answer: "Ferran Torres" },
+      { value: 200, question: "Quante nazionali hanno partecipato al Mondiale 2026, il primo con il formato allargato?", answer: "48" },
+      { value: 200, question: "Quale nazionale ha eliminato l'Italia nella finale dei playoff per il Mondiale 2026?", answer: "Bosnia ed Erzegovina (ai rigori)" },
       // 300
       { value: 300, question: "In quale stadio si è giocata la finale del Mondiale 2022?", answer: "Lusail Stadium (Stadio di Lusail)" },
       { value: 300, question: "In che anno l'Italia ha vinto il suo primo Mondiale?", answer: "1934" },
@@ -318,6 +369,9 @@ const jeopardyData = [
       { value: 300, question: "Chi segnò il gol decisivo della Spagna nella finale del Mondiale 2010?", answer: "Andrés Iniesta" },
       { value: 300, question: "Quale nazionale vinse la prima edizione della Nations League UEFA, nel 2019?", answer: "Portogallo" },
       { value: 300, question: "Quale nazionale eliminò l'Italia dal Mondiale 2002 con il golden gol di Ahn Jung-hwan?", answer: "Corea del Sud" },
+      { value: 300, question: "Chi era il commissario tecnico della Spagna campione del mondo nel 2026?", answer: "Luis de la Fuente" },
+      { value: 300, question: "Chi era il commissario tecnico dell'Italia nei playoff persi per il Mondiale 2026?", answer: "Gennaro Gattuso" },
+      { value: 300, question: "Quale francese è diventato nel 2026 il miglior marcatore di sempre nella storia dei Mondiali?", answer: "Kylian Mbappé" },
       // 400
       { value: 400, question: "Quanti Mondiali aveva vinto la Germania (Germania Ovest compresa) fino al 2022?", answer: "4" },
       { value: 400, question: "In quale stadio si è giocata la finale del Mondiale 2014?", answer: "Maracanã (Rio de Janeiro)" },
@@ -334,6 +388,9 @@ const jeopardyData = [
       { value: 400, question: "Quale nazionale eliminò l'Italia nei playoff di qualificazione al Mondiale 2022?", answer: "Macedonia del Nord" },
       { value: 400, question: "Chi fu il capocannoniere del Mondiale 2022, con 8 gol?", answer: "Kylian Mbappé" },
       { value: 400, question: "Chi era il commissario tecnico della Francia campione del mondo nel 2018?", answer: "Didier Deschamps" },
+      { value: 400, question: "Quale nazionale vinse la Nations League 2025, battendo la Spagna ai rigori in finale?", answer: "Portogallo" },
+      { value: 400, question: "Contro quale nazionale l'Italia vinse la finale del Mondiale 1938?", answer: "Ungheria (4-2)" },
+      { value: 400, question: "Contro quale nazionale l'Italia perse ai rigori la semifinale di Italia '90, a Napoli?", answer: "Argentina" },
       // 500
       { value: 500, question: "Quale stadio ospitò la finale del primo Mondiale, nel 1930?", answer: "Estadio Centenario, Montevideo" },
       { value: 500, question: "Chi deteneva nel 2025 il record mondiale di presenze con una nazionale maschile?", answer: "Cristiano Ronaldo" },
@@ -349,7 +406,10 @@ const jeopardyData = [
       { value: 500, question: "Chi era il commissario tecnico del Brasile campione del mondo nel 1970?", answer: "Mário Zagallo" },
       { value: 500, question: "Quale nazionale vinse il Mondiale 1954 battendo l'Ungheria nel 'Miracolo di Berna'?", answer: "Germania Ovest" },
       { value: 500, question: "Quale nazionale vinse l'Europeo 1988, con la celebre volée di van Basten in finale?", answer: "Olanda (Paesi Bassi)" },
-      { value: 500, question: "In quale città si giocò la finale del Mondiale 1934?", answer: "Roma" }
+      { value: 500, question: "In quale città si giocò la finale del Mondiale 1934?", answer: "Roma" },
+      { value: 500, question: "Quale nazionale si aggiudicò la Coppa d'Africa alla prima edizione, in Sudan nel 1957?", answer: "Egitto" },
+      { value: 500, question: "Come si chiama lo stadio del New Jersey che ha ospitato la finale del Mondiale 2026?", answer: "MetLife Stadium (East Rutherford)" },
+      { value: 500, question: "Quale nazionale fu nel 1990 la prima africana a raggiungere i quarti di finale di un Mondiale?", answer: "Camerun" }
     ]
   },
   // ==================== CALCIOMERCATO ====================
@@ -368,10 +428,13 @@ const jeopardyData = [
       { value: 100, question: "Che cosa significa che un calciatore si trasferisce 'a parametro zero'?", answer: "Che arriva a contratto scaduto, senza che il nuovo club paghi il cartellino" },
       { value: 100, question: "Da quale squadra arrivò Cristiano Ronaldo al Real Madrid nel 2009?", answer: "Manchester United" },
       { value: 100, question: "Per quale club Lionel Messi ha lasciato il Barcellona nel 2021?", answer: "Paris Saint-Germain" },
-      { value: 100, question: "In quale squadra statunitense gioca Lionel Messi dal 2023?", answer: "Inter Miami" },
+      { value: 100, question: "Con quale squadra statunitense ha firmato Lionel Messi nel 2023, dopo il PSG?", answer: "Inter Miami" },
       { value: 100, question: "Come si chiama la cifra fissata nel contratto che, se pagata, libera un giocatore dal suo club?", answer: "Clausola rescissoria" },
       { value: 100, question: "Come viene chiamata in Italia la sessione invernale di calciomercato?", answer: "Mercato di gennaio (di riparazione)" },
       { value: 100, question: "Per quale squadra Cristiano Ronaldo lasciò la Juventus nel 2021?", answer: "Manchester United" },
+      { value: 100, question: "Per quale squadra italiana ha firmato Luka Modrić nel 2025, dopo tredici stagioni al Real Madrid?", answer: "Milan" },
+      { value: 100, question: "Per quale squadra italiana ha firmato Kevin De Bruyne nel 2025, lasciando il Manchester City?", answer: "Napoli" },
+      { value: 100, question: "Per quale squadra Trent Alexander-Arnold ha lasciato il Liverpool nel 2025?", answer: "Real Madrid" },
       // 200
       { value: 200, question: "Circa quanto pagò il Real Madrid per Cristiano Ronaldo nel 2009, record dell'epoca?", answer: "Circa 94 milioni di euro (80 milioni di sterline)" },
       { value: 200, question: "Circa quanto pagò il Manchester United per riportare Paul Pogba dalla Juventus nel 2016?", answer: "Circa 105 milioni di euro" },
@@ -388,6 +451,9 @@ const jeopardyData = [
       { value: 200, question: "Da quale squadra il Barcellona acquistò Robert Lewandowski nel 2022?", answer: "Bayern Monaco" },
       { value: 200, question: "Per quale squadra Khvicha Kvaratskhelia ha lasciato il Napoli nel gennaio 2025?", answer: "Paris Saint-Germain" },
       { value: 200, question: "Con quale club turco ha giocato Victor Osimhen nella stagione 2024-25?", answer: "Galatasaray" },
+      { value: 200, question: "Da quale squadra tedesca il Liverpool ha acquistato Florian Wirtz nel 2025?", answer: "Bayer Leverkusen" },
+      { value: 200, question: "Quale attaccante svedese il Liverpool ha acquistato dal Newcastle nel settembre 2025, record del mercato inglese?", answer: "Alexander Isak" },
+      { value: 200, question: "Da quale squadra portoghese l'Arsenal ha acquistato Viktor Gyökeres nel 2025?", answer: "Sporting CP (Sporting Lisbona)" },
       // 300
       { value: 300, question: "Circa quanto pagò il Real Madrid alla Juventus per Zinedine Zidane nel 2001, record mondiale dell'epoca?", answer: "Circa 77,5 milioni di euro (150 miliardi di lire)" },
       { value: 300, question: "In che anno Zinedine Zidane arrivò alla Juventus dal Bordeaux?", answer: "1996" },
@@ -404,6 +470,9 @@ const jeopardyData = [
       { value: 300, question: "Da quale squadra italiana il Liverpool acquistò Mohamed Salah nel 2017?", answer: "Roma" },
       { value: 300, question: "Da quale squadra il Real Madrid acquistò Luka Modrić nel 2012?", answer: "Tottenham" },
       { value: 300, question: "Per quale squadra Paulo Dybala lasciò la Juventus a parametro zero nel 2022?", answer: "Roma" },
+      { value: 300, question: "Per quale club saudita Theo Hernández ha lasciato il Milan nel 2025?", answer: "Al-Hilal" },
+      { value: 300, question: "Quale centrocampista olandese è passato dal Milan al Manchester City nel 2025?", answer: "Tijjani Reijnders" },
+      { value: 300, question: "Da quale squadra tedesca il Manchester United ha acquistato Benjamin Šeško nel 2025?", answer: "RB Lipsia" },
       // 400
       { value: 400, question: "Quale calciatore fu protagonista del trasferimento più costoso della storia dal 2013 al 2016, fino al ritorno di Pogba allo United?", answer: "Gareth Bale (dal Tottenham al Real Madrid)" },
       { value: 400, question: "Quale attaccante passò dal Barcellona all'Inter nel 2009, come contropartita nell'affare Ibrahimović?", answer: "Samuel Eto'o" },
@@ -420,6 +489,9 @@ const jeopardyData = [
       { value: 400, question: "Da quale squadra il Napoli acquistò Edinson Cavani nel 2010?", answer: "Palermo" },
       { value: 400, question: "Da quale squadra l'Inter acquistò Wesley Sneijder nel 2009?", answer: "Real Madrid" },
       { value: 400, question: "Da quale squadra il Milan acquistò Andriy Shevchenko nel 1999?", answer: "Dinamo Kiev" },
+      { value: 400, question: "Da quale squadra il Napoli acquistò Gonzalo Higuaín nel 2013?", answer: "Real Madrid" },
+      { value: 400, question: "Da quale squadra la Juventus acquistò Paulo Dybala nel 2015?", answer: "Palermo" },
+      { value: 400, question: "Da quale squadra brasiliana il Milan acquistò Kaká nel 2003?", answer: "San Paolo (São Paulo FC)" },
       // 500
       { value: 500, question: "In che anno Diego Maradona si trasferì dal Boca Juniors al Barcellona?", answer: "1982" },
       { value: 500, question: "Quale ala del Torino passò al Milan nel 1992 per una cifra record mondiale?", answer: "Gianluigi Lentini" },
@@ -435,7 +507,10 @@ const jeopardyData = [
       { value: 500, question: "In che anno il Milan acquistò Marco van Basten dall'Ajax?", answer: "1987" },
       { value: 500, question: "Quale squadra acquistò Ronaldo 'il Fenomeno' dal PSV Eindhoven nel 1996?", answer: "Barcellona" },
       { value: 500, question: "Da quale squadra la Juventus acquistò Pavel Nedvěd nel 2001?", answer: "Lazio" },
-      { value: 500, question: "Da quale squadra la Lazio acquistò Christian Vieri nel 1998?", answer: "Atlético Madrid" }
+      { value: 500, question: "Da quale squadra la Lazio acquistò Christian Vieri nel 1998?", answer: "Atlético Madrid" },
+      { value: 500, question: "Da quale squadra la Juventus acquistò Gianluigi Buffon nel 2001, per la cifra più alta mai pagata per un portiere fino al 2018?", answer: "Parma" },
+      { value: 500, question: "In che anno Hernán Crespo passò dal Parma alla Lazio per una cifra record mondiale?", answer: "2000" },
+      { value: 500, question: "Da quale squadra l'Inter acquistò Christian Vieri nel 1999, per una cifra record mondiale?", answer: "Lazio" }
     ]
   },
   // ==================== LEGGENDE DEL CALCIO ====================
@@ -452,15 +527,18 @@ const jeopardyData = [
       { value: 100, question: "Con quale squadra Lionel Messi ha giocato dal 2004 al 2021?", answer: "Barcellona" },
       { value: 100, question: "Chi è soprannominato 'il Divin Codino'?", answer: "Roberto Baggio" },
       { value: 100, question: "Quale portiere della Juventus era il numero 1 dell'Italia campione del mondo nel 2006?", answer: "Gianluigi Buffon" },
-      { value: 100, question: "Quale difensore ha giocato tutta la carriera nel Milan ed è stato capitano della Nazionale?", answer: "Paolo Maldini" },
+      { value: 100, question: "Quale difensore, figlio di Cesare, ha giocato tutta la carriera nel Milan ed è stato capitano della Nazionale?", answer: "Paolo Maldini" },
       { value: 100, question: "Quale fuoriclasse portoghese è noto con la sigla 'CR7'?", answer: "Cristiano Ronaldo" },
       { value: 100, question: "Quale fuoriclasse argentino è soprannominato 'la Pulce'?", answer: "Lionel Messi" },
       { value: 100, question: "Quale attaccante del Milan e della Nazionale era soprannominato 'Super Pippo'?", answer: "Filippo Inzaghi" },
       { value: 100, question: "Quale fuoriclasse francese è soprannominato 'Zizou'?", answer: "Zinedine Zidane" },
       { value: 100, question: "Quale centrocampista inglese, celebre per le punizioni, indossava la maglia numero 7 del Manchester United?", answer: "David Beckham" },
+      { value: 100, question: "Quale attaccante francese del Manchester United, dal colletto sempre alzato, era chiamato 'King Eric'?", answer: "Eric Cantona" },
+      { value: 100, question: "Quale attaccante siciliano, eroe delle 'Notti magiche' di Italia '90, era soprannominato 'Totò'?", answer: "Salvatore Schillaci" },
+      { value: 100, question: "Quale attaccante egiziano del Liverpool, ex Roma, è soprannominato 'il Faraone'?", answer: "Mohamed Salah" },
       // 200
       { value: 200, question: "Quale calciatore olandese fu l'interprete simbolo del 'calcio totale' di Ajax e Olanda negli anni '70?", answer: "Johan Cruijff" },
-      { value: 200, question: "Chi è l'unico calciatore africano ad aver vinto il Pallone d'Oro, nel 1995?", answer: "George Weah" },
+      { value: 200, question: "Chi è l'unico calciatore di una nazionale africana ad aver vinto il Pallone d'Oro, nel 1995 con il Milan?", answer: "George Weah (Liberia)" },
       { value: 200, question: "Quale fuoriclasse francese, campione del mondo nel 1998, fu espulso per una testata nella finale del 2006?", answer: "Zinedine Zidane" },
       { value: 200, question: "Chi è il miglior marcatore di sempre della Roma?", answer: "Francesco Totti" },
       { value: 200, question: "Quale capitano dell'Inter alzò la Champions League 2010 e detiene il record di presenze con il club?", answer: "Javier Zanetti" },
@@ -474,6 +552,9 @@ const jeopardyData = [
       { value: 200, question: "Quale attaccante argentino, ex Napoli e Juventus, è soprannominato 'el Pipita'?", answer: "Gonzalo Higuaín" },
       { value: 200, question: "Quale portiere spagnolo, soprannominato 'San Iker', alzò da capitano la Coppa del Mondo 2010?", answer: "Iker Casillas" },
       { value: 200, question: "Quale attaccante francese, simbolo dell'Arsenal, è soprannominato 'Titi'?", answer: "Thierry Henry" },
+      { value: 200, question: "Chi è il miglior marcatore nella storia del Manchester United?", answer: "Wayne Rooney" },
+      { value: 200, question: "Quale regista tedesco del Real Madrid si è ritirato nel 2024, dopo l'Europeo giocato in casa?", answer: "Toni Kroos" },
+      { value: 200, question: "Quale portiere tedesco del Bayern ha reso celebre il ruolo del 'portiere-libero'?", answer: "Manuel Neuer" },
       // 300
       { value: 300, question: "Quale fuoriclasse ungherese della 'Grande Ungheria' vinse tre Coppe dei Campioni con il Real Madrid?", answer: "Ferenc Puskás" },
       { value: 300, question: "Chi vinse tre Palloni d'Oro consecutivi, dal 1983 al 1985?", answer: "Michel Platini" },
@@ -490,6 +571,9 @@ const jeopardyData = [
       { value: 300, question: "Quale capitano del Liverpool, bandiera del club, fu protagonista della rimonta di Istanbul nel 2005?", answer: "Steven Gerrard" },
       { value: 300, question: "Quale regista del Barcellona, compagno di Iniesta, è diventato poi allenatore del club?", answer: "Xavi Hernández" },
       { value: 300, question: "Quale terzino brasiliano segnò una celebre punizione a effetto contro la Francia nel 1997?", answer: "Roberto Carlos" },
+      { value: 300, question: "Quale attaccante uruguaiano fu eletto miglior giocatore del Mondiale 2010?", answer: "Diego Forlán" },
+      { value: 300, question: "Quale bomber del Bayern detiene il record di 365 gol in Bundesliga?", answer: "Gerd Müller" },
+      { value: 300, question: "Quale difensore capitano del Barcellona segnò di testa il gol che portò la Spagna in finale al Mondiale 2010?", answer: "Carles Puyol" },
       // 400
       { value: 400, question: "Chi ha vinto il primo Pallone d'Oro della storia, nel 1956?", answer: "Stanley Matthews" },
       { value: 400, question: "Quale attaccante ungherese, soprannominato 'Testina d'oro', fu il bomber della Grande Ungheria degli anni '50?", answer: "Sándor Kocsis" },
@@ -506,6 +590,9 @@ const jeopardyData = [
       { value: 400, question: "Chi è il calciatore con più presenze nella storia del Real Madrid?", answer: "Raúl" },
       { value: 400, question: "Chi vinse il primo FIFA World Player of the Year, nel 1991?", answer: "Lothar Matthäus" },
       { value: 400, question: "Quale attaccante inglese è famoso per non essere mai stato ammonito né espulso in carriera?", answer: "Gary Lineker" },
+      { value: 400, question: "Quale attaccante bulgaro del Barcellona vinse il Pallone d'Oro 1994?", answer: "Hristo Stoičkov" },
+      { value: 400, question: "Quale libero tedesco del Borussia Dortmund vinse il Pallone d'Oro 1996?", answer: "Matthias Sammer" },
+      { value: 400, question: "Quale attaccante francese dell'Olympique Marsiglia vinse il Pallone d'Oro 1991?", answer: "Jean-Pierre Papin" },
       // 500
       { value: 500, question: "Quale spagnolo vinse il Pallone d'Oro 1960 con il Barcellona, prima di passare all'Inter di Herrera?", answer: "Luis Suárez (Miramontes)" },
       { value: 500, question: "Chi era il capitano del Celtic campione d'Europa nel 1967?", answer: "Billy McNeill" },
@@ -521,7 +608,10 @@ const jeopardyData = [
       { value: 500, question: "Quale danese vinse il Pallone d'Oro 1977 con il Borussia Mönchengladbach?", answer: "Allan Simonsen" },
       { value: 500, question: "Chi era il capitano del Grande Torino, morto nella tragedia di Superga del 1949?", answer: "Valentino Mazzola" },
       { value: 500, question: "Quale ala brasiliana, campione del mondo nel 1958 e nel 1962, era soprannominata 'la Gioia del popolo'?", answer: "Garrincha" },
-      { value: 500, question: "Quale attaccante gallese della Juventus degli anni '50 era soprannominato 'il Gigante buono'?", answer: "John Charles" }
+      { value: 500, question: "Quale attaccante gallese della Juventus degli anni '50 era soprannominato 'il Gigante buono'?", answer: "John Charles" },
+      { value: 500, question: "Quale attaccante tedesco del Bayern vinse due Palloni d'Oro consecutivi, nel 1980 e nel 1981?", answer: "Karl-Heinz Rummenigge" },
+      { value: 500, question: "Quale attaccante inglese dell'Amburgo vinse i Palloni d'Oro 1978 e 1979?", answer: "Kevin Keegan" },
+      { value: 500, question: "Quale attaccante della Dinamo Kiev vinse il Pallone d'Oro 1975?", answer: "Oleg Blochin" }
     ]
   },
   // ==================== CALCIO EUROPEO ====================
@@ -544,6 +634,9 @@ const jeopardyData = [
       { value: 100, question: "Quale squadra inglese è soprannominata 'The Reds' e gioca ad Anfield?", answer: "Liverpool" },
       { value: 100, question: "Quale squadra ha vinto la Bundesliga 2022-23?", answer: "Bayern Monaco" },
       { value: 100, question: "Come si chiama il massimo campionato di calcio inglese?", answer: "Premier League" },
+      { value: 100, question: "Quale squadra ha vinto la Premier League 2025-26?", answer: "Arsenal" },
+      { value: 100, question: "Quale squadra ha vinto la Liga spagnola 2025-26?", answer: "Barcellona" },
+      { value: 100, question: "Quale squadra ha vinto la Bundesliga 2025-26?", answer: "Bayern Monaco" },
       // 200
       { value: 200, question: "Quale club ha vinto più titoli della Liga spagnola?", answer: "Real Madrid" },
       { value: 200, question: "Quale squadra ha interrotto la serie di 11 titoli consecutivi del Bayern vincendo la Bundesliga 2023-24?", answer: "Bayer Leverkusen" },
@@ -560,6 +653,9 @@ const jeopardyData = [
       { value: 200, question: "Quale squadra olandese gioca alla Johan Cruijff ArenA di Amsterdam?", answer: "Ajax" },
       { value: 200, question: "Quale squadra portoghese gioca allo stadio do Dragão?", answer: "Porto" },
       { value: 200, question: "In quale stadio gioca l'Arsenal dal 2006?", answer: "Emirates Stadium" },
+      { value: 200, question: "Quale squadra inglese ha vinto l'Europa League 2026, battendo il Friburgo a Istanbul?", answer: "Aston Villa" },
+      { value: 200, question: "Quale allenatore spagnolo ha riportato l'Arsenal sul tetto d'Inghilterra nel 2025-26?", answer: "Mikel Arteta" },
+      { value: 200, question: "Quale squadra ha vinto la Ligue 1 2025-26?", answer: "Paris Saint-Germain" },
       // 300
       { value: 300, question: "Quale squadra vinse la Premier League 2019-20, primo titolo inglese del club dopo 30 anni?", answer: "Liverpool" },
       { value: 300, question: "Quale squadra tedesca vinse Bundesliga e Coppa di Germania nel 2011-12 con Jürgen Klopp?", answer: "Borussia Dortmund" },
@@ -576,6 +672,9 @@ const jeopardyData = [
       { value: 300, question: "Quale squadra inglese è soprannominata 'The Toffees'?", answer: "Everton" },
       { value: 300, question: "Quale squadra vinse la Premier League 2011-12 con il gol di Agüero al 93' dell'ultima giornata?", answer: "Manchester City" },
       { value: 300, question: "Quale squadra spagnola gioca allo stadio Mestalla?", answer: "Valencia" },
+      { value: 300, question: "Quale allenatore spagnolo ha vinto nel 2026 la sua quinta Europa League, record della competizione?", answer: "Unai Emery" },
+      { value: 300, question: "Quale squadra inglese vinse l'Europa League 2025, battendo il Manchester United a Bilbao?", answer: "Tottenham Hotspur" },
+      { value: 300, question: "Quale squadra inglese vinse la Conference League 2025, battendo il Betis in finale?", answer: "Chelsea" },
       // 400
       { value: 400, question: "Quale squadra inglese è ricordata come 'The Invincibles' per la Premier League 2003-04 vinta senza sconfitte?", answer: "Arsenal" },
       { value: 400, question: "Quale squadra spagnola vinse la Liga 2013-14 davanti a Real Madrid e Barcellona, con Diego Simeone?", answer: "Atlético Madrid" },
@@ -592,6 +691,9 @@ const jeopardyData = [
       { value: 400, question: "Quale club di Lisbona, rivale del Benfica, è soprannominato 'i Leoni'?", answer: "Sporting CP (Sporting Lisbona)" },
       { value: 400, question: "Quale squadra scozzese vinse nove campionati consecutivi dal 1965-66 al 1973-74 con Jock Stein?", answer: "Celtic" },
       { value: 400, question: "Quale squadra aveva vinto più campionati greci fino al 2025?", answer: "Olympiakos" },
+      { value: 400, question: "Quante Europa League, Coppe UEFA comprese, ha vinto il Siviglia, record della competizione?", answer: "7" },
+      { value: 400, question: "Quale squadra greca vinse la Conference League 2024, battendo la Fiorentina ad Atene?", answer: "Olympiakos" },
+      { value: 400, question: "Quale squadra vinse l'Eredivisie 2022-23 con Arne Slot in panchina?", answer: "Feyenoord" },
       // 500
       { value: 500, question: "Quale squadra vinse la prima edizione della Bundesliga, nel 1963-64?", answer: "1. FC Köln (Colonia)" },
       { value: 500, question: "Quale squadra vinse cinque Liga consecutive, dal 1985-86 al 1989-90, con la 'Quinta del Buitre'?", answer: "Real Madrid" },
@@ -607,7 +709,10 @@ const jeopardyData = [
       { value: 500, question: "Quale squadra vinse la prima edizione della Coppa UEFA, nel 1972, in una finale tutta inglese?", answer: "Tottenham Hotspur" },
       { value: 500, question: "Quale squadra vinse la Bundesliga 2003-04 con Thomas Schaaf in panchina?", answer: "Werder Brema" },
       { value: 500, question: "Quale squadra italiana vinse la prima edizione della Coppa delle Coppe, nel 1961?", answer: "Fiorentina" },
-      { value: 500, question: "Quale squadra vinse l'Europa League 2022 battendo i Rangers ai rigori?", answer: "Eintracht Francoforte" }
+      { value: 500, question: "Quale squadra vinse l'Europa League 2022 battendo i Rangers ai rigori?", answer: "Eintracht Francoforte" },
+      { value: 500, question: "Quale squadra italiana vinse la Coppa UEFA 1989 battendo lo Stoccarda, con Maradona in campo?", answer: "Napoli" },
+      { value: 500, question: "Quale squadra italiana vinse la Coppa UEFA 1999 battendo il Marsiglia a Mosca?", answer: "Parma" },
+      { value: 500, question: "Contro quale squadra inglese il Parma perse la finale di Coppa delle Coppe 1994 a Copenaghen?", answer: "Arsenal" }
     ]
   },
   // ==================== RECORD E CURIOSITÀ ====================
@@ -630,6 +735,9 @@ const jeopardyData = [
       { value: 100, question: "Come si chiama la giocata in cui il pallone passa tra le gambe dell'avversario?", answer: "Tunnel" },
       { value: 100, question: "Come si chiama il tiro acrobatico all'indietro, con il corpo sospeso in aria?", answer: "Rovesciata" },
       { value: 100, question: "Di che colore è la maglia casalinga della nazionale spagnola?", answer: "Rossa" },
+      { value: 100, question: "Di che colore è la maglia della Nazionale italiana?", answer: "Azzurra" },
+      { value: 100, question: "Quale animale campeggia sullo stemma del Torino?", answer: "Il toro" },
+      { value: 100, question: "Che cosa indica la fascia al braccio di un giocatore?", answer: "Che è il capitano" },
       // 200
       { value: 200, question: "Come si chiama il derby argentino tra Boca Juniors e River Plate?", answer: "Superclásico" },
       { value: 200, question: "Quale rivista francese assegna il Pallone d'Oro?", answer: "France Football" },
@@ -646,6 +754,9 @@ const jeopardyData = [
       { value: 200, question: "Quale squadra di Londra è soprannominata 'The Hammers'?", answer: "West Ham United" },
       { value: 200, question: "Come si chiama la vittoria di campionato, coppa nazionale e Champions League nella stessa stagione?", answer: "Triplete" },
       { value: 200, question: "Che cosa significa, per un portiere, chiudere una partita con un 'clean sheet'?", answer: "Non subire gol (porta inviolata)" },
+      { value: 200, question: "Quale squadra inglese è soprannominata 'The Spurs'?", answer: "Tottenham Hotspur" },
+      { value: 200, question: "Quale squadra di Serie A gioca allo stadio Renato Dall'Ara?", answer: "Bologna" },
+      { value: 200, question: "Come si chiamava lo stadio del Napoli prima di essere intitolato a Maradona nel 2020?", answer: "San Paolo" },
       // 300
       { value: 300, question: "Chi segnò 91 gol nell'anno solare 2012, tra club e nazionale?", answer: "Lionel Messi" },
       { value: 300, question: "In quale edizione dei Mondiali è stato utilizzato per la prima volta il VAR?", answer: "Russia 2018" },
@@ -662,6 +773,9 @@ const jeopardyData = [
       { value: 300, question: "Come si chiama il premio FIFA per il gol più bello dell'anno?", answer: "Premio Puskás" },
       { value: 300, question: "Quale nazionale ha partecipato a tutte le edizioni dei Mondiali?", answer: "Brasile" },
       { value: 300, question: "Quale squadra inglese è soprannominata 'The Saints'?", answer: "Southampton" },
+      { value: 300, question: "Quale nazionale ha vinto più Mondiali femminili, quattro?", answer: "Stati Uniti" },
+      { value: 300, question: "Quale squadra inglese è soprannominata 'The Villans'?", answer: "Aston Villa" },
+      { value: 300, question: "Come si chiama la finta in cui si passa il piede sopra il pallone senza toccarlo?", answer: "Doppio passo (step-over)" },
       // 400
       { value: 400, question: "Quale attaccante segnò 5 gol in 9 minuti in Bundesliga contro il Wolfsburg nel 2015?", answer: "Robert Lewandowski" },
       { value: 400, question: "Quanti gol segnò Erling Haaland nella sua prima Premier League con il City (2022-23), record per una stagione?", answer: "36" },
@@ -678,6 +792,9 @@ const jeopardyData = [
       { value: 400, question: "Chi segnò 50 gol nella Liga 2011-12, record per una singola stagione?", answer: "Lionel Messi" },
       { value: 400, question: "Chi è il miglior marcatore di sempre della Premier League, con 260 gol?", answer: "Alan Shearer" },
       { value: 400, question: "Quale squadra brasiliana gioca le partite in casa allo stadio Morumbi?", answer: "San Paolo (São Paulo FC)" },
+      { value: 400, question: "Quanti punti fece il Liverpool nella Premier League 2019-20, vinta dopo trent'anni?", answer: "99" },
+      { value: 400, question: "Quale squadra aveva vinto più FA Cup fino al 2025?", answer: "Arsenal (14)" },
+      { value: 400, question: "Quale squadra londinese è soprannominata 'The Cottagers'?", answer: "Fulham" },
       // 500
       { value: 500, question: "Quale tragedia del 1989 portò alla ristrutturazione degli stadi inglesi con il Rapporto Taylor?", answer: "Disastro di Hillsborough" },
       { value: 500, question: "Quale organismo, fondato a Londra nel 1863, codificò le prime regole del calcio moderno?", answer: "The Football Association (FA)" },
@@ -693,7 +810,10 @@ const jeopardyData = [
       { value: 500, question: "Come si chiamava il pallone ufficiale del Mondiale 2010, criticato per le sue traiettorie?", answer: "Jabulani" },
       { value: 500, question: "Quale portiere paraguaiano era famoso per battere rigori e punizioni?", answer: "José Luis Chilavert" },
       { value: 500, question: "Quale arbitro inglese ammonì tre volte lo stesso giocatore, il croato Šimunić, al Mondiale 2006?", answer: "Graham Poll" },
-      { value: 500, question: "Come si chiamava la mascotte dei Mondiali di Italia '90?", answer: "Ciao" }
+      { value: 500, question: "Come si chiamava la mascotte dei Mondiali di Italia '90?", answer: "Ciao" },
+      { value: 500, question: "Chi fu il primo calciatore espulso in una finale dei Mondiali, nel 1990?", answer: "Pedro Monzón (Argentina)" },
+      { value: 500, question: "Quale animale era World Cup Willie, la prima mascotte della storia dei Mondiali, a Inghilterra 1966?", answer: "Un leone" },
+      { value: 500, question: "Come si chiamava il pallone ufficiale del Mondiale 2022 in Qatar?", answer: "Al Rihla" }
     ]
   },
   // ==================== ALTRI SPORT ====================
@@ -716,6 +836,9 @@ const jeopardyData = [
       { value: 100, question: "Come si chiama il circuito di Formula 1 vicino a Milano, detto 'Tempio della velocità'?", answer: "Monza" },
       { value: 100, question: "In quale sport si corre il Tour de France?", answer: "Ciclismo" },
       { value: 100, question: "Quale sport pratica LeBron James?", answer: "Basket (pallacanestro)" },
+      { value: 100, question: "Quanti punti vale un tiro libero nel basket?", answer: "1" },
+      { value: 100, question: "In quale sport si gioca su un 'diamante', con mazza e guantone?", answer: "Baseball" },
+      { value: 100, question: "In quale sport gareggia Federica Brignone?", answer: "Sci alpino" },
       // 200
       { value: 200, question: "Come si chiama la lotta tradizionale giapponese tra atleti pesantissimi, dentro un cerchio?", answer: "Sumo" },
       { value: 200, question: "Chi ha corso i 100 metri in 9,58 secondi ai Mondiali di Berlino 2009?", answer: "Usain Bolt" },
@@ -732,6 +855,9 @@ const jeopardyData = [
       { value: 200, question: "Quale Gran Premio di Formula 1 si corre sulle strade del Principato più famoso d'Europa?", answer: "Gran Premio di Monaco (Monte Carlo)" },
       { value: 200, question: "Quale pilota ha vinto quattro Mondiali consecutivi di Formula 1, dal 2021 al 2024?", answer: "Max Verstappen" },
       { value: 200, question: "In quale sport si disputa la Ryder Cup, tra Europa e Stati Uniti?", answer: "Golf" },
+      { value: 200, question: "Quale ciclista danese ha vinto il Giro d'Italia 2026?", answer: "Jonas Vingegaard" },
+      { value: 200, question: "Quale tennista spagnolo ha vinto Roland Garros e US Open nel 2025?", answer: "Carlos Alcaraz" },
+      { value: 200, question: "Quante buche ha un percorso da golf regolamentare?", answer: "18" },
       // 300
       { value: 300, question: "In che anno si sono tenute le prime Olimpiadi moderne, ad Atene?", answer: "1896" },
       { value: 300, question: "Come si chiama il tappeto su cui si pratica il judo?", answer: "Tatami" },
@@ -748,6 +874,9 @@ const jeopardyData = [
       { value: 300, question: "Quale tennista spagnolo ha vinto 14 volte il Roland Garros?", answer: "Rafael Nadal" },
       { value: 300, question: "Quale sciatrice italiana vinse l'oro olimpico in discesa libera a PyeongChang 2018?", answer: "Sofia Goggia" },
       { value: 300, question: "Quale nuotatore italiano vinse l'oro olimpico nei 1500 stile libero a Rio 2016?", answer: "Gregorio Paltrinieri" },
+      { value: 300, question: "Quale ciclista sloveno ha vinto nel 2026 il suo quinto Tour de France?", answer: "Tadej Pogačar" },
+      { value: 300, question: "Quale squadra ha vinto il titolo NBA 2026, battendo i San Antonio Spurs?", answer: "New York Knicks" },
+      { value: 300, question: "Quante medaglie ha vinto l'Italia alle Olimpiadi invernali di Milano Cortina 2026, record di sempre?", answer: "30 (10 ori)" },
       // 400
       { value: 400, question: "Chi è stato il primo tennista italiano a vincere Wimbledon in singolare?", answer: "Jannik Sinner (2025)" },
       { value: 400, question: "Quanti giocatori compongono una squadra di cricket in campo?", answer: "11" },
@@ -764,6 +893,9 @@ const jeopardyData = [
       { value: 400, question: "Quale italiano vinse l'oro nel salto in alto a Tokyo 2020, a pari merito con Barshim?", answer: "Gianmarco Tamberi" },
       { value: 400, question: "Quale ciclista sloveno vinse Giro d'Italia e Tour de France nello stesso anno, nel 2024?", answer: "Tadej Pogačar" },
       { value: 400, question: "Quale nazione aveva vinto più Coppe Davis fino al 2025?", answer: "Stati Uniti" },
+      { value: 400, question: "Quale pilota spagnolo ha vinto il Mondiale MotoGP 2025 con la Ducati?", answer: "Marc Márquez" },
+      { value: 400, question: "Quale nazione ha vinto tre Coppe Davis consecutive, dal 2023 al 2025?", answer: "Italia" },
+      { value: 400, question: "Quale nuotatore italiano ha vinto l'oro olimpico nei 100 dorso a Parigi 2024?", answer: "Thomas Ceccon" },
       // 500
       { value: 500, question: "Chi è il più giovane vincitore di un torneo del Grande Slam maschile, al Roland Garros 1989?", answer: "Michael Chang" },
       { value: 500, question: "Quale ciclista italiano vinse Giro e Tour nello stesso anno, nel 1998?", answer: "Marco Pantani" },
@@ -779,7 +911,10 @@ const jeopardyData = [
       { value: 500, question: "Quale pilota aveva vinto più Gran Premi di Formula 1 nella storia, fino al 2025?", answer: "Lewis Hamilton" },
       { value: 500, question: "Quale maratoneta etiope vinse l'oro olimpico a Roma 1960 correndo a piedi nudi?", answer: "Abebe Bikila" },
       { value: 500, question: "Chi è stato, fino al 2025, l'ultimo ciclista italiano a vincere il Tour de France, nel 2014?", answer: "Vincenzo Nibali" },
-      { value: 500, question: "Quale squadra aveva vinto più scudetti del basket italiano fino al 2025?", answer: "Olimpia Milano" }
+      { value: 500, question: "Quale squadra aveva vinto più scudetti del basket italiano fino al 2025?", answer: "Olimpia Milano" },
+      { value: 500, question: "Quale tennista italiano vinse il Roland Garros nel 1959 e nel 1960?", answer: "Nicola Pietrangeli" },
+      { value: 500, question: "Quale cestista italiano fu la prima scelta assoluta del draft NBA 2006?", answer: "Andrea Bargnani" },
+      { value: 500, question: "In quale località si svolsero le prime Olimpiadi invernali in Italia, nel 1956?", answer: "Cortina d'Ampezzo" }
     ]
   },
 ];

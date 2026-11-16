@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Taboo · Quizzotti</title>
-<meta name="description" content="Taboo a tema calcio: fai indovinare calciatori, squadre, stadi e trofei ai compagni senza dire le parole vietate. Oltre 2.700 carte, gratis su Quizzotti.">
+<meta name="description" content="Taboo a tema calcio: fai indovinare calciatori, squadre, stadi e trofei ai compagni senza dire le parole vietate. Oltre 2.800 carte, gratis su Quizzotti.">
 <link rel="canonical" href="https://quizotti.altervista.org/quizzotti/Taboo.html">
 <meta property="og:url" content="https://quizotti.altervista.org/quizzotti/Taboo.html">
 <meta name="theme-color" content="#07090b">
@@ -12,7 +12,7 @@
 <meta property="og:site_name" content="Quizzotti">
 <meta property="og:locale" content="it_IT">
 <meta property="og:title" content="Taboo · Quizzotti">
-<meta property="og:description" content="Fai indovinare la parola senza dire quelle vietate: oltre 2.700 carte a tema calcio.">
+<meta property="og:description" content="Fai indovinare la parola senza dire quelle vietate: oltre 2.800 carte a tema calcio.">
 <meta property="og:image" content="https://quizotti.altervista.org/quizzotti/logo2.png">
 <meta name="twitter:card" content="summary">
 <link rel="icon" href="logo1.webp" type="image/webp">
@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   /* ---------- Impostazioni ---------- */
   .tb-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 34px; }
@@ -44,6 +44,12 @@
   .tb-group[aria-pressed="true"] .tb-group__lamp { background: var(--led); border-color: var(--led); box-shadow: 0 0 8px rgba(255, 182, 39, .55); }
   .tb-group.is-drawn .tb-group__lamp { animation: qz-led-on .3s linear both; }
 
+  /* la partita lasciata a meta' si riprende dalla copertina */
+  .tb-resume { min-height: 56px; text-align: left; }
+  .tb-resume[hidden] { display: none; }
+  .tb-resume > span { display: grid; gap: 2px; }
+  .tb-resume small { font-size: 13px; font-weight: 600; color: var(--text-2); }
+
   /* ---------- In campo ---------- */
   .tb-play { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 600px; margin: 0 auto; }
 
@@ -54,6 +60,8 @@
     transition: border-color .15s;
   }
   .tb-card__cat { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tb-card .bigword.is-long { font-size: clamp(28px, 8vw, 50px); }
+  .tb-card .bigword.is-xlong { font-size: clamp(24px, 6.6vw, 42px); }
   .tb-card .bigword { flex: 1; display: grid; place-items: center; min-height: 120px; padding: 4px; font-size: clamp(38px, 11vw, 66px); }
   .tb-forbid { background: #000; border: 1px solid var(--line-2); border-radius: var(--r); box-shadow: none; }
   .tb-forbid__head { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 10px 6px; border-bottom: 1px solid var(--line); font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #8d969c; }
@@ -147,9 +155,10 @@
       <div data-stagger>
         <span class="eyebrow">Gioco 05 · Da 2 a 6 squadre</span>
         <h1 class="intro__title">Dillo senza <em>dirlo</em></h1>
-        <p class="intro__lead">Fai indovinare «Catenaccio» senza dire difesa, Italia e chiuso. Oltre 2.700 carte di calcio, un cronometro e un avversario che ti fa le pulci.</p>
+        <p class="intro__lead">Fai indovinare «Catenaccio» senza dire difesa, Italia e chiuso. Oltre <span id="lead-count">2.800</span> carte di calcio, un cronometro e un avversario che ti fa le pulci.</p>
         <div class="row mt-3">
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
+          <button class="btn btn--lg tb-resume" type="button" id="resume-btn" hidden></button>
         </div>
         <p class="note mt-2" id="start-record"></p>
       </div>
@@ -244,8 +253,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-taboo.js?v=7ab6f8ee" defer></script>
-<script src="assets/games/taboo.js?v=621e0ec5" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-taboo.js?v=18e98a2f" defer></script>
+<script src="assets/games/taboo.js?v=cc01a8fd" defer></script>
 </body>
 </html>

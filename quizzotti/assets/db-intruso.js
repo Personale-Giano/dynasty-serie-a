@@ -64,7 +64,7 @@ const intrusoRounds = [
     { cat: "Carriere", diff: 2, items: ["Brescia", "Inter", "Reggina", "Milan", "Juventus", "Roma"], odd: "Roma", rule: "Squadre in cui ha giocato Andrea Pirlo", why: "Pirlo ha chiuso a New York, ma alla Roma non ci è mai passato." },
     { cat: "Carriere", diff: 2, items: ["Reggiana", "Parma", "Juventus", "Milan", "Chelsea", "Inter"], odd: "Inter", rule: "Squadre allenate da Carlo Ancelotti", why: "Ancelotti ha allenato mezzo mondo (PSG, Real, Bayern, Napoli), l'Inter no." },
     { cat: "Carriere", diff: 2, items: ["Porto", "Chelsea", "Inter", "Real Madrid", "Roma", "Milan"], odd: "Milan", rule: "Squadre allenate da José Mourinho", why: "Mourinho a Milano ha vinto tutto, ma sulla panchina dell'Inter." },
-    { cat: "Carriere", diff: 2, items: ["Juventus", "Chelsea", "Inter", "Tottenham", "Bari", "Milan"], odd: "Milan", rule: "Squadre allenate da Antonio Conte", why: "Conte ha allenato Juve e Inter, il Milan mai." },
+    { cat: "Carriere", diff: 2, items: ["Juventus", "Chelsea", "Inter", "Tottenham", "Bari", "Milan"], odd: "Milan", rule: "Squadre allenate da Antonio Conte", why: "Conte ha allenato Juve, Inter e Napoli: il Milan mai." },
     { cat: "Carriere", diff: 3, items: ["Juventus", "Inter", "Napoli", "Guangzhou Evergrande", "Atalanta", "Milan"], odd: "Milan", rule: "Squadre allenate da Marcello Lippi", why: "Lippi ha allenato le altre due grandi del Nord, mai il Milan." },
     { cat: "Carriere", diff: 2, items: ["Milan", "Roma", "Juventus", "Real Madrid", "Inghilterra", "Inter"], odd: "Inter", rule: "Squadre allenate da Fabio Capello", why: "Capello ha vinto ovunque sia andato, ma all'Inter non c'è mai andato." },
 
@@ -172,11 +172,11 @@ const intrusoRounds = [
     /* ---------- Trofei dei club ---------- */
     { cat: "Trofei", diff: 1, items: ["Milan", "Inter", "Juventus", "Porto", "Celtic", "Arsenal"], odd: "Arsenal", rule: "Hanno vinto la Coppa dei Campioni/Champions League", why: "L'Arsenal ci è andato vicino due volte, nel 2006 e nel 2026: due finali, due sconfitte." },
     { cat: "Trofei", diff: 2, items: ["Verona", "Sampdoria", "Cagliari", "Lazio", "Napoli", "Atalanta"], odd: "Atalanta", rule: "Hanno vinto almeno uno scudetto", why: "L'Atalanta ha vinto un'Europa League, ma lo scudetto ancora no." },
-    { cat: "Trofei", diff: 2, items: ["Parma", "Sampdoria", "Fiorentina", "Lazio", "Napoli", "Torino"], odd: "Torino", rule: "Hanno vinto una coppa europea UEFA", why: "Il Torino la finale UEFA l'ha persa nel 1992 con l'Ajax, senza perdere una partita." },
+    { cat: "Trofei", diff: 2, items: ["Parma", "Sampdoria", "Fiorentina", "Lazio", "Napoli", "Torino"], odd: "Torino", rule: "Hanno vinto almeno una coppa europea", why: "Il Torino la finale UEFA l'ha persa nel 1992 con l'Ajax, senza perdere una partita." },
     { cat: "Trofei", diff: 2, items: ["Manchester United", "Manchester City", "Chelsea", "Arsenal", "Leicester", "Tottenham"], odd: "Tottenham", rule: "Hanno vinto la Premier League (dal 1992)", why: "Gli Spurs hanno titoli inglesi, ma degli anni '50 e '60: la Premier mai." },
     { cat: "Trofei", diff: 2, items: ["Real Madrid", "Barcellona", "Atlético Madrid", "Valencia", "Deportivo La Coruña", "Villarreal"], odd: "Villarreal", rule: "Hanno vinto la Liga", why: "Il Villarreal ha vinto un'Europa League, ma la Liga mai." },
     { cat: "Trofei", diff: 3, items: ["Bayern Monaco", "Borussia Dortmund", "Wolfsburg", "Stoccarda", "Werder Brema", "Schalke 04"], odd: "Schalke 04", rule: "Hanno vinto la Bundesliga (dal 1963)", why: "Lo Schalke ha sette titoli tedeschi, ma tutti prima della Bundesliga." },
-    { cat: "Trofei", diff: 2, items: ["Inter", "Juventus", "Parma", "Napoli", "Siviglia", "Roma"], odd: "Roma", rule: "Hanno vinto la Coppa UEFA/Europa League", why: "La Roma la finale UEFA l'ha persa nel 1991, proprio con l'Inter." },
+    { cat: "Trofei", diff: 2, items: ["Inter", "Juventus", "Parma", "Napoli", "Siviglia", "Roma"], odd: "Roma", rule: "Hanno vinto la Coppa UEFA/Europa League", why: "La Roma la finale UEFA l'ha persa nel 1991, proprio con l'Inter, e quella di Europa League nel 2023 col Siviglia." },
     { cat: "Trofei", diff: 3, items: ["Sampdoria", "Parma", "Lazio", "Fiorentina", "Milan", "Inter"], odd: "Inter", rule: "Hanno vinto la Coppa delle Coppe", why: "L'Inter ha vinto tanto in Europa, ma la Coppa delle Coppe mai." },
     { cat: "Trofei", diff: 2, items: ["Inter", "Barcellona", "Bayern Monaco", "Manchester United", "Celtic", "Milan"], odd: "Milan", rule: "Hanno fatto il triplete (campionato, coppa nazionale e Coppa dei Campioni)", why: "Il Milan ha sette Champions, ma mai insieme a scudetto e Coppa Italia." },
     { cat: "Trofei", diff: 3, items: ["Vicenza", "Parma", "Sampdoria", "Vado", "Venezia", "Udinese"], odd: "Udinese", rule: "Hanno vinto la Coppa Italia", why: "L'Udinese la Coppa Italia non l'ha mai vinta. Il Vado sì: la prima, nel 1922." },
@@ -186,16 +186,16 @@ const intrusoRounds = [
     { cat: "Trofei", diff: 3, items: ["Sergio Ramos", "Modrić", "Benzema", "Bale", "Figo", "Beckham"], odd: "Beckham", rule: "Hanno vinto la Champions col Real Madrid", why: "Beckham la Champions l'ha vinta nel 1999, ma con lo United." },
 
     /* ---------- Stadi ---------- */
-    { cat: "Stadi", diff: 1, items: ["Stadio Maradona", "Artemio Franchi", "Luigi Ferraris", "Renato Dall'Ara", "Ennio Tardini", "Stadio Olimpico"], odd: "Stadio Olimpico", rule: "Stadi intitolati a una persona", why: "L'Olimpico di Roma è dedicato ai Giochi olimpici (Roma 1960), non a una persona." },
+    { cat: "Stadi", diff: 1, items: ["Stadio Maradona", "Artemio Franchi", "Luigi Ferraris", "Renato Dall'Ara", "Ennio Tardini", "Olimpico di Roma"], odd: "Olimpico di Roma", rule: "Stadi intitolati a una persona", why: "L'Olimpico di Roma è dedicato ai Giochi olimpici (Roma 1960), non a una persona." },
     { cat: "Stadi", diff: 2, items: ["San Siro", "Olimpico di Roma", "Wembley", "Santiago Bernabéu", "Camp Nou", "Stadio Maradona"], odd: "Stadio Maradona", rule: "Hanno ospitato una finale di Coppa dei Campioni/Champions", why: "A Fuorigrotta si è giocata una finale UEFA, ma di Coppa dei Campioni mai." },
     { cat: "Stadi", diff: 2, items: ["San Siro", "Olimpico di Roma", "San Paolo", "Delle Alpi", "San Nicola", "Allianz Stadium"], odd: "Allianz Stadium", rule: "Stadi dei Mondiali di Italia '90", why: "Lo stadio della Juve è stato inaugurato nel 2011, dove c'era il Delle Alpi." },
     { cat: "Stadi", diff: 1, items: ["Emirates Stadium", "Stamford Bridge", "Tottenham Hotspur Stadium", "Craven Cottage", "London Stadium", "Anfield"], odd: "Anfield", rule: "Stadi di Londra", why: "Anfield è a Liverpool, casa dei Reds." },
     { cat: "Stadi", diff: 1, items: ["Santiago Bernabéu", "Camp Nou", "Metropolitano", "Mestalla", "Sánchez-Pizjuán", "Signal Iduna Park"], odd: "Signal Iduna Park", rule: "Stadi spagnoli", why: "Il Signal Iduna Park è il Westfalenstadion di Dortmund." },
     { cat: "Stadi", diff: 2, items: ["Allianz Arena", "Signal Iduna Park", "Olympiastadion", "Veltins-Arena", "BayArena", "De Kuip"], odd: "De Kuip", rule: "Stadi tedeschi", why: "De Kuip è lo stadio del Feyenoord, a Rotterdam." },
     { cat: "Stadi", diff: 2, items: ["Maracanã", "Monumental", "La Bombonera", "Centenario", "Morumbi", "Azteca"], odd: "Azteca", rule: "Stadi sudamericani", why: "L'Azteca è a Città del Messico: America sì, ma del Nord." },
-    { cat: "Stadi", diff: 3, items: ["San Siro", "Gewiss Stadium", "Rigamonti", "Sinigaglia", "Zini", "Tardini"], odd: "Tardini", rule: "Stadi della Lombardia", why: "Il Tardini è a Parma, in Emilia." },
+    { cat: "Stadi", diff: 3, items: ["San Siro", "New Balance Arena", "Rigamonti", "Sinigaglia", "Zini", "Tardini"], odd: "Tardini", rule: "Stadi della Lombardia", why: "Il Tardini è a Parma, in Emilia." },
     { cat: "Stadi", diff: 2, items: ["San Nicola", "Via del Mare", "Arechi", "Renzo Barbera", "Massimino", "Bentegodi"], odd: "Bentegodi", rule: "Stadi del Sud Italia", why: "Il Bentegodi è a Verona, in pieno Nord-Est." },
-    { cat: "Stadi", diff: 2, items: ["Allianz Stadium", "Emirates Stadium", "Etihad Stadium", "Signal Iduna Park", "Gewiss Stadium", "Maracanã"], odd: "Maracanã", rule: "Stadi con il nome di uno sponsor", why: "Il Maracanã si chiama Estádio Jornalista Mário Filho: niente sponsor." },
+    { cat: "Stadi", diff: 2, items: ["Allianz Stadium", "Emirates Stadium", "Etihad Stadium", "Signal Iduna Park", "New Balance Arena", "Maracanã"], odd: "Maracanã", rule: "Stadi con il nome di uno sponsor", why: "Il Maracanã si chiama Estádio Jornalista Mário Filho: niente sponsor." },
 
     /* ---------- Città e regioni ---------- */
     { cat: "Geografia", diff: 2, items: ["Milano", "Roma", "Torino", "Genova", "Verona", "Firenze"], odd: "Firenze", rule: "Città che hanno avuto un derby in Serie A", why: "A Firenze c'è solo la Viola: niente derby cittadino in A." },
@@ -227,7 +227,7 @@ const intrusoRounds = [
 
     /* ---------- Maglie e colori ---------- */
     { cat: "Maglie", diff: 1, items: ["Genoa", "Bologna", "Cagliari", "Crotone", "Cosenza", "Torino"], odd: "Torino", rule: "Squadre rossoblù", why: "Il Toro è granata." },
-    { cat: "Maglie", diff: 1, items: ["Juventus", "Udinese", "Ascoli", "Cesena", "Siena", "Parma"], odd: "Parma", rule: "Squadre bianconere", why: "Il Parma è gialloblù, o crociato." },
+    { cat: "Maglie", diff: 1, items: ["Juventus", "Udinese", "Ascoli", "Cesena", "Siena", "Palermo"], odd: "Palermo", rule: "Squadre bianconere", why: "Il Palermo è rosanero: il nero c'è, il bianco no." },
     { cat: "Maglie", diff: 2, items: ["Hellas Verona", "Parma", "Chievo", "Modena", "Frosinone", "Lecce"], odd: "Lecce", rule: "Squadre gialloblù", why: "Il Lecce è giallorosso." },
     { cat: "Maglie", diff: 1, items: ["Roma", "Lecce", "Catanzaro", "Benevento", "Messina", "Sampdoria"], odd: "Sampdoria", rule: "Squadre giallorosse", why: "La Samp è blucerchiata." },
     { cat: "Maglie", diff: 2, items: ["Milan", "Foggia", "Lucchese", "Flamengo", "Nizza", "Sassuolo"], odd: "Sassuolo", rule: "Squadre rossonere", why: "Il Sassuolo è neroverde." },
@@ -260,7 +260,112 @@ const intrusoRounds = [
     /* ---------- Curiosità ---------- */
     { cat: "Curiosità", diff: 2, items: ["Totti", "De Rossi", "Nesta", "Florenzi", "Di Canio", "Pirlo"], odd: "Pirlo", rule: "Sono nati a Roma", why: "Pirlo è bresciano, di Flero." },
     { cat: "Curiosità", diff: 2, items: ["De Boer", "Inzaghi", "Baresi", "Milito", "Laudrup", "Weah"], odd: "Weah", rule: "Cognomi di due fratelli calciatori famosi", why: "George e Timothy Weah sono padre e figlio, non fratelli." },
-    { cat: "Curiosità", diff: 2, items: ["Maldini", "Chiesa", "Weah", "Simeone", "Cruijff", "Inzaghi"], odd: "Inzaghi", rule: "Cognomi di padre e figlio calciatori famosi", why: "Pippo e Simone Inzaghi sono fratelli." }
+    { cat: "Curiosità", diff: 2, items: ["Maldini", "Chiesa", "Weah", "Simeone", "Cruijff", "Inzaghi"], odd: "Inzaghi", rule: "Cognomi di padre e figlio calciatori famosi", why: "Pippo e Simone Inzaghi sono fratelli." },
+
+    /* ======================================================================
+       Aggiunte di novembre 2026 (stagione 2026-27). Stesse regole di sopra:
+       un solo intruso, fatti chiusi e verificabili.
+       ====================================================================== */
+
+    /* ---------- Club ---------- */
+    { cat: "Club", diff: 1, items: ["Reus", "Lewandowski", "Haaland", "Götze", "Hummels", "Kroos"], odd: "Kroos", rule: "Hanno giocato tutti nel Borussia Dortmund", why: "Kroos in Germania ha vestito Bayern e Leverkusen, poi dieci anni di Real. Il giallonero mai." },
+    { cat: "Club", diff: 2, items: ["Mendieta", "David Villa", "David Silva", "Ayala", "Cañizares", "Raúl"], odd: "Raúl", rule: "Hanno giocato tutti nel Valencia", why: "Raúl in Spagna è stato Real Madrid e basta, prima di Schalke, Qatar e New York." },
+    { cat: "Club", diff: 2, items: ["Griezmann", "Fernando Torres", "Forlán", "Agüero", "Koke", "Iniesta"], odd: "Iniesta", rule: "Hanno giocato tutti nell'Atlético Madrid", why: "Iniesta in Europa ha giocato solo col Barcellona, poi Giappone ed Emirati." },
+    { cat: "Club", diff: 1, items: ["Agüero", "De Bruyne", "David Silva", "Haaland", "Foden", "Rooney"], odd: "Rooney", rule: "Hanno giocato tutti nel Manchester City", why: "Rooney a Manchester era dello United, la sponda rossa." },
+    { cat: "Club", diff: 2, items: ["Jesús Navas", "Sergio Ramos", "Dani Alves", "Kanouté", "Rakitić", "Xavi"], odd: "Xavi", rule: "Hanno giocato tutti nel Siviglia", why: "Xavi è cresciuto e ha giocato nel Barcellona, poi l'Al-Sadd. A Siviglia solo in trasferta." },
+    { cat: "Club", diff: 2, items: ["Deco", "Falcao", "Hulk", "James Rodríguez", "Pepe", "Figo"], odd: "Figo", rule: "Hanno giocato tutti nel Porto", why: "Figo in Portogallo è stato dello Sporting, poi Barça, Real e Inter." },
+    { cat: "Club", diff: 2, items: ["Eusébio", "Rui Costa", "Di María", "João Félix", "Aimar", "Quaresma"], odd: "Quaresma", rule: "Hanno giocato tutti nel Benfica", why: "Quaresma a Lisbona è cresciuto nello Sporting, i rivali, e poi è passato al Porto." },
+    { cat: "Club", diff: 3, items: ["Vieri", "Stanković", "Mihajlović", "Simeone", "Crespo", "Nesta"], odd: "Nesta", rule: "Hanno giocato sia nella Lazio sia nell'Inter", why: "Nesta dalla Lazio è passato al Milan: il nerazzurro non l'ha mai messo." },
+
+    /* ---------- Carriere ---------- */
+    { cat: "Carriere", diff: 2, items: ["Anderlecht", "Everton", "Manchester United", "Inter", "Roma", "Juventus"], odd: "Juventus", rule: "Squadre in cui ha giocato Romelu Lukaku", why: "Lukaku ha girato mezza Europa (anche Chelsea e Napoli), ma alla Juve non è mai arrivato." },
+    { cat: "Carriere", diff: 2, items: ["Bari", "Roma", "Real Madrid", "Sampdoria", "Milan", "Barcellona"], odd: "Barcellona", rule: "Squadre in cui ha giocato Antonio Cassano", why: "Cassano in Spagna ci è andato col Real: al Camp Nou solo da avversario. In Italia ha fatto anche Inter e Parma." },
+    { cat: "Carriere", diff: 2, items: ["Udinese", "Roma", "Empoli", "Inter", "Napoli", "Milan"], odd: "Milan", rule: "Squadre allenate da Luciano Spalletti", why: "Spalletti ha allenato anche lo Zenit e la Nazionale, ma la panchina del Milan mai." },
+    { cat: "Carriere", diff: 2, items: ["River Plate", "Parma", "Lazio", "Inter", "Chelsea", "Juventus"], odd: "Juventus", rule: "Squadre in cui ha giocato Hernán Crespo", why: "Crespo in Italia ha fatto anche Milan e Genoa. In bianconero mai." },
+    { cat: "Carriere", diff: 3, items: ["Empoli", "Napoli", "Pescara", "Juventus", "Lazio", "Roma"], odd: "Roma", rule: "Squadre allenate da Maurizio Sarri", why: "A Roma Sarri c'è stato due volte, ma sempre sulla panchina della Lazio. All'estero solo il Chelsea." },
+
+    /* ---------- Allenatori ---------- */
+    { cat: "Allenatori", diff: 2, items: ["Eriksson", "Zoff", "Simone Inzaghi", "Sarri", "Zeman", "Spalletti"], odd: "Spalletti", rule: "Hanno allenato tutti la Lazio", why: "Spalletti a Roma ha allenato due volte, ma sempre la Roma." },
+    { cat: "Allenatori", diff: 2, items: ["Prandelli", "Montella", "Trapattoni", "Italiano", "Ranieri", "Ancelotti"], odd: "Ancelotti", rule: "Hanno allenato tutti la Fiorentina", why: "Ancelotti a Firenze ci è passato da avversario: la Viola non l'ha mai allenata." },
+    { cat: "Allenatori", diff: 3, items: ["Ancelotti", "Mourinho", "Heynckes", "Hitzfeld", "Happel", "Klopp"], odd: "Klopp", rule: "Hanno vinto la Coppa dei Campioni/Champions con due club diversi", why: "Klopp la Champions l'ha vinta una volta sola, col Liverpool nel 2019. Col Dortmund perse la finale del 2013." },
+    { cat: "Allenatori", diff: 1, items: ["Cruijff", "Van Gaal", "Koeman", "Rijkaard", "Hiddink", "Klopp"], odd: "Klopp", rule: "Allenatori olandesi", why: "Klopp è tedesco, di Stoccarda." },
+    { cat: "Allenatori", diff: 2, items: ["Ancelotti", "Conte", "Zola", "Ranieri", "Mancini", "Sacchi"], odd: "Sacchi", rule: "Hanno allenato in Premier League", why: "Sacchi all'estero ha allenato solo l'Atlético Madrid. L'Inghilterra l'ha vista in tv." },
+
+    /* ---------- Nazionalità ---------- */
+    { cat: "Nazionalità", diff: 2, items: ["Haaland", "Ødegaard", "Solskjær", "Riise", "Tore André Flo", "Henrik Larsson"], odd: "Henrik Larsson", rule: "Sono tutti norvegesi", why: "Larsson è svedese di Helsingborg: stessa penisola, altra nazionale." },
+    { cat: "Nazionalità", diff: 2, items: ["Osimhen", "Okocha", "Kanu", "Lookman", "Taribo West", "Eto'o"], odd: "Eto'o", rule: "Sono tutti nigeriani", why: "Eto'o è camerunense, il più forte che il Camerun abbia avuto." },
+    { cat: "Nazionalità", diff: 2, items: ["Kvaratskhelia", "Kaladze", "Mamardashvili", "Mikautadze", "Kinkladze", "Shevchenko"], odd: "Shevchenko", rule: "Sono tutti georgiani", why: "Sheva è ucraino. Al Milan però giocava accanto a un georgiano: Kaladze." },
+    { cat: "Nazionalità", diff: 2, items: ["Dalglish", "Denis Law", "McTominay", "Gilmour", "Robertson", "Giggs"], odd: "Giggs", rule: "Sono tutti scozzesi", why: "Giggs è gallese: Manchester United a vita, ma con la maglia del Galles." },
+    { cat: "Nazionalità", diff: 1, items: ["Kane", "Bellingham", "Rooney", "Gerrard", "Lampard", "Bale"], odd: "Bale", rule: "Sono tutti inglesi", why: "Bale è gallese di Cardiff, il più grande della storia del Galles." },
+    { cat: "Nazionalità", diff: 2, items: ["Eto'o", "Roger Milla", "Rigobert Song", "André Onana", "Mbeumo", "Koulibaly"], odd: "Koulibaly", rule: "Sono tutti camerunensi", why: "Koulibaly è nato in Francia e gioca per il Senegal." },
+    { cat: "Nazionalità", diff: 2, items: ["Hugo Sánchez", "Chicharito", "Lozano", "Rafa Márquez", "Ochoa", "Zamorano"], odd: "Zamorano", rule: "Sono tutti messicani", why: "Zamorano, Bam Bam dell'Inter, è cileno." },
+    { cat: "Nazionalità", diff: 3, items: ["Alaba", "Arnautović", "Polster", "Prohaska", "Krankl", "Kovačić"], odd: "Kovačić", rule: "Hanno giocato tutti per l'Austria", why: "Kovačić è nato a Linz, in Austria, ma ha scelto la Croazia." },
+
+    /* ---------- Ruoli ---------- */
+    { cat: "Ruoli", diff: 1, items: ["Vieri", "Filippo Inzaghi", "Shevchenko", "Batistuta", "Trezeguet", "Cannavaro"], odd: "Cannavaro", rule: "Sono tutti attaccanti", why: "Cannavaro i gol li toglieva: difensore, Pallone d'Oro 2006." },
+    { cat: "Ruoli", diff: 1, items: ["Pirlo", "Gattuso", "Xavi", "Iniesta", "Modrić", "Thiago Silva"], odd: "Thiago Silva", rule: "Sono tutti centrocampisti", why: "Thiago Silva è un difensore centrale, e di quelli forti." },
+    { cat: "Ruoli", diff: 2, items: ["Roberto Carlos", "Facchetti", "Cabrini", "Marcelo", "Grosso", "Cafu"], odd: "Cafu", rule: "Terzini sinistri", why: "Cafu andava su e giù dall'altra parte: terzino destro." },
+    { cat: "Ruoli", diff: 3, items: ["Combi", "Olivieri", "Zoff", "Buffon", "Peruzzi", "Zenga"], odd: "Zenga", rule: "Portieri campioni del mondo con l'Italia", why: "Zenga il suo Mondiale l'ha giocato nel 1990, ed è finito in semifinale." },
+
+    /* ---------- Gol ---------- */
+    { cat: "Gol", diff: 3, items: ["Immobile", "Nordahl", "Meazza", "Platini", "Luca Toni", "Batistuta"], odd: "Batistuta", rule: "Capocannonieri della Serie A più di una volta", why: "Batistuta il titolo l'ha vinto una volta sola, nel 1995 con la Fiorentina." },
+    { cat: "Gol", diff: 2, items: ["Cristiano Ronaldo", "Messi", "Lewandowski", "Haaland", "Benzema", "Ibrahimović"], odd: "Ibrahimović", rule: "Capocannonieri di una Champions League", why: "Ibra in Champions ha segnato tanto, ma la classifica marcatori non l'ha mai vinta." },
+    { cat: "Gol", diff: 3, items: ["Bonucci", "Delvecchio", "Charisteas", "Eder", "Fernando Torres", "Del Piero"], odd: "Del Piero", rule: "Hanno segnato in una finale dell'Europeo", why: "Nel 2000 a Rotterdam Del Piero ebbe le occasioni, ma a segnare fu Delvecchio." },
+
+    /* ---------- Premi ---------- */
+    { cat: "Premi", diff: 2, items: ["Messi", "Pogba", "Haaland", "Pedri", "Bellingham", "Cristiano Ronaldo"], odd: "Cristiano Ronaldo", rule: "Hanno vinto il Golden Boy", why: "Nel 2004 il Golden Boy andò a Rooney: Cristiano è uno dei pochi grandi a non averlo." },
+    { cat: "Premi", diff: 3, items: ["Ronaldo il Fenomeno", "Cannavaro", "Roberto Baggio", "Nedvěd", "Owen", "Kakà"], odd: "Kakà", rule: "Pallone d'Oro senza mai vincere la Champions", why: "Kakà la Champions l'ha vinta nel 2007 col Milan, lo stesso anno del Pallone d'Oro." },
+    { cat: "Premi", diff: 2, items: ["Rodri", "Dembélé", "Papin", "Rivaldo", "Figo", "Lewandowski"], odd: "Lewandowski", rule: "Hanno vinto il Pallone d'Oro", why: "Il 2020, l'anno di Lewandowski, il Pallone d'Oro non venne assegnato." },
+
+    /* ---------- Mondiali ---------- */
+    { cat: "Mondiali", diff: 1, items: ["Mbappé", "Griezmann", "Pogba", "Lloris", "Varane", "Benzema"], odd: "Benzema", rule: "Campioni del mondo con la Francia nel 2018", why: "Benzema in Russia non c'era: in Nazionale tornò solo nel 2021." },
+    { cat: "Mondiali", diff: 3, items: ["Zoff", "Casillas", "Xavi", "Iniesta", "Zidane", "Pirlo"], odd: "Pirlo", rule: "Hanno vinto sia un Mondiale sia un Europeo da giocatori", why: "Pirlo l'Europeo l'ha sfiorato nel 2012: finale persa 4-0 con la Spagna." },
+    { cat: "Mondiali", diff: 3, items: ["Matthäus", "Carbajal", "Buffon", "Messi", "Cristiano Ronaldo", "Maldini"], odd: "Maldini", rule: "Convocati per almeno cinque Mondiali", why: "Maldini si è fermato a quattro: dal 1990 al 2002." },
+
+    /* ---------- Numeri ---------- */
+    { cat: "Numeri", diff: 3, items: ["1954", "1974", "1978", "1990", "2014", "2002"], odd: "2002", rule: "Anni di un Mondiale vinto dalla Germania o dall'Argentina", why: "Nel 2002 la Germania arrivò in finale, ma vinse il Brasile 2-0." },
+    { cat: "Numeri", diff: 3, items: ["Il 3 del Milan", "Il 6 del Milan", "Il 10 del Napoli", "Il 4 dell'Inter", "L'11 del Cagliari", "Il 10 della Juventus"], odd: "Il 10 della Juventus", rule: "Maglie ritirate in Serie A", why: "Il 10 della Juve passa di campione in campione: Platini, Baggio, Del Piero, fino a Yıldız." },
+
+    /* ---------- Trofei ---------- */
+    { cat: "Trofei", diff: 1, items: ["Real Madrid", "Barcellona", "Bayern Monaco", "Liverpool", "Paris Saint-Germain", "Atlético Madrid"], odd: "Atlético Madrid", rule: "Hanno vinto la Coppa dei Campioni/Champions League", why: "L'Atlético di finali ne ha perse tre: 1974, 2014 e 2016." },
+    { cat: "Trofei", diff: 2, items: ["Roma", "West Ham", "Olympiacos", "Chelsea", "Crystal Palace", "Fiorentina"], odd: "Fiorentina", rule: "Hanno vinto la Conference League", why: "La Viola in finale ci è arrivata due volte di fila, nel 2023 e nel 2024, e le ha perse entrambe." },
+    { cat: "Trofei", diff: 2, items: ["Milan", "Inter", "Juventus", "Boca Juniors", "Ajax", "Napoli"], odd: "Napoli", rule: "Campioni del mondo per club (Intercontinentale o Mondiale per club)", why: "Il Napoli di Maradona vinse la Coppa UEFA nel 1989, ma all'Intercontinentale andavano solo i campioni d'Europa." },
+    { cat: "Trofei", diff: 3, items: ["Ajax", "Sparta Rotterdam", "Feyenoord", "AZ Alkmaar", "Twente", "Vitesse"], odd: "Vitesse", rule: "Hanno vinto il campionato olandese", why: "Il Vitesse ha vinto una coppa d'Olanda nel 2017, il titolo mai." },
+    { cat: "Trofei", diff: 2, items: ["Paris Saint-Germain", "Marsiglia", "Lione", "Lille", "Nantes", "Tolosa"], odd: "Tolosa", rule: "Hanno vinto il campionato francese", why: "Il Tolosa ha vinto una Coppa di Francia nel 2023, ma il campionato mai." },
+
+    /* ---------- Stadi ---------- */
+    { cat: "Stadi", diff: 1, items: ["Old Trafford", "Anfield", "Etihad Stadium", "Villa Park", "St James' Park", "Celtic Park"], odd: "Celtic Park", rule: "Stadi inglesi", why: "Celtic Park è a Glasgow: Scozia, non Inghilterra." },
+    { cat: "Stadi", diff: 3, items: ["Stadio Maradona", "Giuseppe Meazza", "Puskás Aréna", "Johan Cruijff ArenA", "Fritz-Walter-Stadion", "Artemio Franchi"], odd: "Artemio Franchi", rule: "Stadi intitolati a un calciatore", why: "Artemio Franchi era un dirigente: presidente della Federcalcio e dell'UEFA, mai in campo." },
+    { cat: "Stadi", diff: 2, items: ["Maracanã", "Wembley", "Azteca", "Olympiastadion di Berlino", "Lusail", "San Siro"], odd: "San Siro", rule: "Hanno ospitato la partita decisiva di un Mondiale", why: "A Italia '90 la finale si giocò all'Olimpico di Roma. San Siro ebbe la partita inaugurale." },
+
+    /* ---------- Geografia ---------- */
+    { cat: "Geografia", diff: 1, items: ["Roma", "Lazio", "Frosinone", "Latina", "Viterbese", "Ternana"], odd: "Ternana", rule: "Squadre laziali", why: "Terni è in Umbria, anche se Roma è a un'ora di treno." },
+    { cat: "Geografia", diff: 2, items: ["Ancona", "Ascoli", "Sambenedettese", "Fermana", "Vis Pesaro", "Perugia"], odd: "Perugia", rule: "Squadre marchigiane", why: "Perugia è il capoluogo dell'Umbria." },
+    { cat: "Geografia", diff: 1, items: ["Bayern Monaco", "Borussia Dortmund", "Schalke 04", "Amburgo", "Bayer Leverkusen", "Salisburgo"], odd: "Salisburgo", rule: "Squadre tedesche", why: "Il Salisburgo ha lo stesso padrone del Lipsia, ma è austriaco." },
+    { cat: "Geografia", diff: 1, items: ["Siviglia", "Betis", "Valencia", "Athletic Bilbao", "Real Sociedad", "Sporting Lisbona"], odd: "Sporting Lisbona", rule: "Squadre spagnole", why: "Lo Sporting è di Lisbona, in Portogallo." },
+    { cat: "Geografia", diff: 3, items: ["Ajax", "Benfica", "Anderlecht", "Real Madrid", "Lazio", "Galatasaray"], odd: "Galatasaray", rule: "Squadre di una capitale", why: "Istanbul è la città più grande della Turchia, ma la capitale è Ankara." },
+
+    /* ---------- Maglie ---------- */
+    { cat: "Maglie", diff: 2, items: ["Inter", "Atalanta", "Pisa", "Club Brugge", "Latina", "Porto"], odd: "Porto", rule: "Squadre nerazzurre", why: "Il Porto è biancoblù: il nero non c'è." },
+    { cat: "Maglie", diff: 1, items: ["Bari", "Vicenza", "Monza", "Ajax", "Atlético Madrid", "Livorno"], odd: "Livorno", rule: "Squadre biancorosse", why: "Il Livorno è amaranto." },
+    { cat: "Maglie", diff: 2, items: ["Celtic", "Sporting Lisbona", "Betis", "Avellino", "Saint-Étienne", "Feyenoord"], odd: "Feyenoord", rule: "Squadre con il verde nella maglia", why: "Il Feyenoord gioca in bianco e rosso." },
+
+    /* ---------- Soprannomi ---------- */
+    { cat: "Soprannomi", diff: 1, items: ["Red Devils", "Gunners", "Blues", "Citizens", "Toffees", "Colchoneros"], odd: "Colchoneros", rule: "Soprannomi di squadre inglesi", why: "I Colchoneros sono quelli dell'Atlético Madrid." },
+    { cat: "Soprannomi", diff: 2, items: ["O Rei", "Il Fenomeno", "L'Imperatore", "Il Papero", "Baixinho", "Il Pupone"], odd: "Il Pupone", rule: "Soprannomi di attaccanti brasiliani", why: "Il Pupone è Totti, romano de Roma: brasiliano nemmeno per sbaglio." },
+    { cat: "Soprannomi", diff: 2, items: ["Il Cigno di Utrecht", "Il Tulipano nero", "Il Profeta del gol", "Il Pitbull", "L'olandese non volante", "Il Kaiser"], odd: "Il Kaiser", rule: "Soprannomi di campioni olandesi", why: "Il Kaiser è Beckenbauer, tedesco fino al midollo." },
+    { cat: "Soprannomi", diff: 3, items: ["Rombo di tuono", "Golden Boy", "Spillo", "Bonimba", "Pablito", "L'ottavo re di Roma"], odd: "L'ottavo re di Roma", rule: "Soprannomi di campioni italiani", why: "L'ottavo re di Roma era Falcão, brasiliano, il regista dello scudetto giallorosso del 1983." },
+
+    /* ---------- Storia ---------- */
+    { cat: "Storia", diff: 2, items: ["Osimhen", "Kvaratskhelia", "Di Lorenzo", "Lobotka", "Kim Min-jae", "Lukaku"], odd: "Lukaku", rule: "Campioni d'Italia col Napoli nel 2023", why: "Lukaku a Napoli è arrivato nel 2024: lo scudetto l'ha vinto l'anno dopo, con Conte." },
+    { cat: "Storia", diff: 3, items: ["McTominay", "Lukaku", "Di Lorenzo", "Anguissa", "Meret", "Osimhen"], odd: "Osimhen", rule: "Campioni d'Italia col Napoli nel 2025", why: "Osimhen quell'anno era in prestito al Galatasaray." },
+    { cat: "Storia", diff: 3, items: ["Vialli", "Ravanelli", "Del Piero", "Peruzzi", "Deschamps", "Zidane"], odd: "Zidane", rule: "Campioni d'Europa con la Juve nel 1996", why: "Zidane arrivò dal Bordeaux nell'estate del 1996, a coppa già vinta." },
+    { cat: "Storia", diff: 2, items: ["Júlio César", "Lúcio", "Zanetti", "Sneijder", "Diego Milito", "Ibrahimović"], odd: "Ibrahimović", rule: "Hanno fatto il triplete con l'Inter nel 2010", why: "Ibra andò al Barcellona nell'estate del 2009, e la Champions la vinse l'Inter." },
+    { cat: "Storia", diff: 2, items: ["Lookman", "Koopmeiners", "De Ketelaere", "Éderson", "Zappacosta", "Retegui"], odd: "Retegui", rule: "Hanno vinto l'Europa League con l'Atalanta nel 2024", why: "Retegui arrivò a Bergamo nell'estate del 2024, a coppa già in bacheca." },
+
+    /* ---------- Curiosità ---------- */
+    { cat: "Curiosità", diff: 3, items: ["Jorginho", "Thiago Motta", "Emerson Palmieri", "Amauri", "Éder", "Camoranesi"], odd: "Camoranesi", rule: "Nati in Brasile, hanno giocato con l'Italia", why: "Camoranesi, campione del mondo 2006, è nato in Argentina." },
+    { cat: "Curiosità", diff: 3, items: ["De Boer", "Bender", "Da Silva", "Filippini", "Zenoni", "Inzaghi"], odd: "Inzaghi", rule: "Cognomi di gemelli calciatori", why: "Pippo e Simone sono fratelli, ma Pippo è nato tre anni prima." }
 ];
 
 if (typeof module !== "undefined" && module.exports) { module.exports = { intrusoRounds }; }

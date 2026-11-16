@@ -73,3 +73,38 @@ test('nessuna domanda uguale a quelle degli altri database', () => {
     const clash = cadutaDomande.filter((d) => others.has(norm(d.q))).map((d) => d.q);
     assert.deepEqual(clash, [], `domande gia presenti altrove: ${clash.join(' | ')}`);
 });
+
+test('la risposta giusta non si legge gia nella domanda', () => {
+    const strip = (s) => norm(s).replace(/^(il|lo|la|l|i|gli|le) /, '');
+    const leaks = cadutaDomande.filter((d) => {
+        const o = strip(d.ok);
+        return o.length > 3 && (' ' + norm(d.q) + ' ').includes(' ' + o + ' ');
+    }).map((d) => d.q);
+    assert.deepEqual(leaks, [], `risposta scritta nella domanda: ${leaks.join(' | ')}`);
+});
+
+test('categorie fisse e abbastanza piene da non ripetersi', () => {
+    const allowed = ['Stadi', 'Soprannomi', 'Calcio estero', 'Calcio italiano', 'Champions', 'Allenatori', 'Nazionale',
+        'Mondiali ed Europei', 'Storia', 'Calciomercato', 'Regole e curiosità'];
+    const count = {};
+    cadutaDomande.forEach((d) => {
+        assert.ok(allowed.includes(d.cat), `categoria sconosciuta "${d.cat}" in "${d.q}"`);
+        count[d.cat] = (count[d.cat] || 0) + 1;
+    });
+    allowed.forEach((c) => assert.ok((count[c] || 0) >= 25, `categoria ${c}: solo ${count[c] || 0} domande`));
+});
+
+test('niente fatti che invecchiano: nessuna domanda al presente su record o squadre attuali', () => {
+    const risky = /\b(attuale|attualmente|oggi allena|in questa stagione|quest'anno|ancora in attivit)/i;
+    const bad = cadutaDomande.filter((d) => risky.test(d.q)).map((d) => d.q);
+    assert.deepEqual(bad, [], `domande a rischio scadenza: ${bad.join(' | ')}`);
+});
+
+test('testi senza spazi doppi o ai bordi', () => {
+    cadutaDomande.forEach((d) => {
+        [d.q, d.ok, ...d.ko].forEach((t) => {
+            assert.equal(t, t.trim(), `spazi ai bordi in "${t}"`);
+            assert.ok(!/ {2}/.test(t), `spazio doppio in "${t}"`);
+        });
+    });
+});

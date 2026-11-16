@@ -20,13 +20,29 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   /* ---------- Impostazioni ---------- */
   .iv-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 34px; }
   @media (min-width: 900px) { .iv-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
   .iv-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
   .field__hint { font-size: 14px; color: var(--text-2); margin-top: -4px; }
+  .field__hint--after { margin-top: 2px; }
+  /* quattro mazzi su una riga anche a 375px */
+  #opt-deck { flex-wrap: nowrap; }
+  #opt-deck button { flex: 1 1 0; min-width: 0; padding: 0 6px; }
+  @media (max-width: 420px) { #opt-deck button { padding: 0 2px; font-size: 14px; letter-spacing: -.01em; } }
+
+  /* la partita lasciata a meta' (ricarica, tasto Indietro, telefono spento) */
+  .iv-resume { padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--r); }
+  .iv-resume p { margin: 4px 0 12px; color: var(--text-2); font-size: 15px; overflow-wrap: anywhere; }
+  .iv-resume .btn { min-height: 44px; }
+
+  /* lo spareggio proposto a fine partita */
+  .iv-tie { padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--r); text-align: left; }
+  .iv-tie p { margin: 0 0 12px; color: var(--text-2); overflow-wrap: anywhere; }
+  .handoff__deck { display: block; margin-top: 4px; font-family: var(--font-led); font-size: 15px; text-transform: uppercase; color: var(--accent-ink); }
+  .handoff__deck:empty { display: none; }
 
   /* ---------- In campo ---------- */
   .iv-play { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; max-width: 600px; margin: 0 auto; }
@@ -46,7 +62,9 @@
   .iv-card__strip .ico { width: 18px; height: 18px; filter: drop-shadow(0 0 3px currentcolor); }
   .iv-card__sec { min-width: 2ch; padding: 1px 6px; border: 1px solid #3a1612; border-radius: var(--r-sm); color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .6); }
   .iv-card__stage { position: relative; flex: 1; display: grid; place-items: center; padding: 26px 16px; }
-  .iv-card .bigword { font-size: clamp(42px, 12vw, 76px); }
+  .iv-card .bigword { font-size: clamp(42px, 12vw, 76px); max-width: 100%; overflow-wrap: break-word; hyphens: none; }
+  .iv-card .bigword.is-long { font-size: clamp(34px, 9.5vw, 62px); }
+  .iv-card .bigword.is-xlong { font-size: clamp(28px, 7.6vw, 50px); }
   .iv-card.is-buzz { border-left-color: var(--led-red); }
   .iv-card.is-buzz .iv-card__strip { color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .6); }
   .iv-card .qz-stamp.is-low { top: 82%; }
@@ -150,6 +168,11 @@
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
         <p class="note mt-2" id="start-record"></p>
+        <div class="iv-resume mt-2" id="resume" hidden>
+          <span class="label">Partita a metà</span>
+          <p id="resume-text"></p>
+          <div class="row"><button class="btn btn--primary" type="button" id="resume-go"></button><button class="btn btn--ghost" type="button" id="resume-drop"></button></div>
+        </div>
       </div>
       <div class="stack" style="--gap:22px;align-items:center">
         <div class="medal" id="medal"></div>
@@ -162,6 +185,7 @@
     <div class="iv-setup">
       <div class="card" id="teams-host"></div>
       <div class="card iv-opts">
+        <div class="field"><span class="label" id="lbl-deck">Mazzo</span><div id="opt-deck" aria-labelledby="lbl-deck" aria-describedby="deck-hint"></div><p class="field__hint field__hint--after" id="deck-hint"></p></div>
         <div class="field"><span class="label" id="lbl-time">Tempo per turno</span><div id="opt-time" aria-labelledby="lbl-time"></div></div>
         <div class="field"><span class="label" id="lbl-rounds">Giri</span><p class="field__hint">A ogni giro ogni squadra gioca un turno.</p><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
         <div class="field"><span class="label" id="lbl-skips">Passi per turno</span><div id="opt-skips" aria-labelledby="lbl-skips"></div></div>
@@ -177,7 +201,7 @@
         <div class="handoff__top"><span class="led handoff__call" aria-hidden="true">Tocca a</span><span class="handoff__round" id="hand-round"></span></div>
         <div class="handoff__band"></div>
         <h2 class="handoff__name" id="hand-name"></h2>
-        <p class="handoff__sub">Il telefono ai due suggeritori.</p>
+        <p class="handoff__sub">Il telefono ai suggeritori, chi indovina di spalle. <span class="handoff__deck" id="hand-deck"></span></p>
         <ul class="rules" id="hand-rules"></ul>
       </div>
       <button class="btn btn--primary btn--xl btn--block" type="button" id="go-btn" data-autofocus></button>
@@ -237,8 +261,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-intesavincente.js?v=96896c08" defer></script>
-<script src="assets/games/intesavincente.js?v=405fcccd" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-intesavincente.js?v=1eebbd7e" defer></script>
+<script src="assets/games/intesavincente.js?v=24c80624" defer></script>
 </body>
 </html>

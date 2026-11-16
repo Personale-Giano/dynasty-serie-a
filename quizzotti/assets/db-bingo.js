@@ -9,8 +9,10 @@
             o che arrivano tutti insieme con lo stesso episodio.
    Ogni evento vale per tutte e due le squadre. Conta solo quello che passa
    in diretta dal fischio d'inizio ai saluti di fine partita.
-   ATTENZIONE: aggiungere, togliere o riordinare voci cambia le cartelle
-   generate dai codici (il generatore pesca da questo elenco).
+   ATTENZIONE: togliere o riordinare voci cambia le cartelle generate dai
+   codici. Le voci nuove vanno SOLO in fondo: le partite salvate ricordano
+   quanti eventi c'erano (campo `pool`) e si rigenerano uguali; le prime 113
+   voci sono quelle delle partite salvate prima di `pool` (LEGACY_POOL).
    ========================================================================== */
 
 const bingoEvents = [
@@ -135,7 +137,46 @@ const bingoEvents = [
   { text: "Invasione di campo", rarity: 3, cat: "Tifosi" },
   { text: "Gioco fermo per cori o oggetti", rarity: 3, cat: "Tifosi" },
   { text: "Inquadrano la mascotte", rarity: 3, cat: "Tifosi" },
-  { text: "Inquadrano un tifoso travestito", rarity: 3, cat: "Tifosi" }
+  { text: "Inquadrano un tifoso travestito", rarity: 3, cat: "Tifosi" },
+
+  // ========== AGGIUNTE (novembre 2026) ==========
+  // Solo in fondo: le partite salvate prima ricordano quanti eventi c'erano
+  // (campo `pool`) e si rigenerano uguali.
+  { text: "Gol in contropiede", rarity: 2, cat: "Campo" },
+  { text: "Tunnel a un avversario", rarity: 2, cat: "Campo" },
+  { text: "Gol con un tiro deviato", rarity: 2, cat: "Campo" },
+  { text: "Tentativo in rovesciata", rarity: 3, cat: "Campo" },
+  { text: "Giocatore che perde lo scarpino", rarity: 3, cat: "Campo" },
+  { text: "Si cambia il pallone", rarity: 3, cat: "Campo" },
+  { text: "Assist di tacco", rarity: 3, cat: "Campo" },
+  { text: "Gol del pareggio dopo l'80'", rarity: 3, cat: "Campo" },
+  { text: "Si gioca sotto la pioggia", rarity: 3, cat: "Campo" },
+  { text: "Proteste per un fallo di mano", rarity: 1, cat: "Arbitro e VAR" },
+  { text: "Rigore reclamato, si gioca", rarity: 1, cat: "Arbitro e VAR" },
+  { text: "Gol confermato dopo il controllo VAR", rarity: 2, cat: "Arbitro e VAR" },
+  { text: "L'arbitro fa giocare il vantaggio", rarity: 1, cat: "Arbitro e VAR" },
+  { text: "Giallo per proteste", rarity: 2, cat: "Arbitro e VAR" },
+  { text: "Giallo per perdita di tempo", rarity: 2, cat: "Arbitro e VAR" },
+  { text: "Gol annullato per fallo di mano", rarity: 3, cat: "Arbitro e VAR", g: "annullato" },
+  { text: "Mister inquadrato a braccia conserte", rarity: 1, cat: "Panchina" },
+  { text: "Il mister protesta col quarto uomo", rarity: 2, cat: "Panchina" },
+  { text: "Il vice parla all'orecchio del mister", rarity: 2, cat: "Panchina" },
+  { text: "Panchina in piedi a protestare", rarity: 2, cat: "Panchina" },
+  { text: "Cambio del portiere", rarity: 3, cat: "Panchina" },
+  { text: "Grafica dei tiri in porta", rarity: 1, cat: "Telecronaca e TV" },
+  { text: "Mostrano la classifica", rarity: 1, cat: "Telecronaca e TV" },
+  { text: "Il telecronista dice «pazzesco»", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Ricordano l'ultimo precedente", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Il commento tecnico critica l'arbitro", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Inquadratura dalla spidercam", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Si parla del mercato", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Mappa di calore di un giocatore", rarity: 3, cat: "Telecronaca e TV" },
+  { text: "Coreografia in curva", rarity: 2, cat: "Tifosi" },
+  { text: "Cori contro l'arbitro", rarity: 2, cat: "Tifosi" },
+  { text: "Tifosi che escono prima della fine", rarity: 2, cat: "Tifosi" },
+  { text: "Tifoso che prende il pallone al volo", rarity: 2, cat: "Tifosi" },
+  { text: "Inquadrano settori vuoti", rarity: 2, cat: "Tifosi" },
+  { text: "Applausi per un avversario", rarity: 3, cat: "Tifosi" }
 ];
 
 if (typeof module !== "undefined" && module.exports) { module.exports = { bingoEvents }; }

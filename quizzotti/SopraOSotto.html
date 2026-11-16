@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sopra o Sotto · Quizzotti</title>
-<meta name="description" content="Due calciatori, un valore di mercato scoperto e uno no: il secondo vale di più o di meno? Oltre 1.800 giocatori, una serie finché non sbagli. Anche a turni con gli amici.">
+<meta name="description" content="Due calciatori, un numero scoperto e uno no: il secondo vale di più o di meno? Oltre 1.800 valori di mercato e i gol in Serie A dei grandi bomber, una serie finché non sbagli. Anche a turni con gli amici.">
 <link rel="canonical" href="https://quizotti.altervista.org/quizzotti/SopraOSotto.html">
 <meta property="og:url" content="https://quizotti.altervista.org/quizzotti/SopraOSotto.html">
 <meta name="theme-color" content="#07090b">
@@ -20,11 +20,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
-  /* il colore del gioco (dal registro QZ.GAMES): qz.css non ha ancora la riga di Sopra o Sotto */
-  [data-game="sopraosotto"] { --accent: #5ee0a0; --accent-2: #a8f0cc; --accent-rgb: 94, 224, 160; --accent-ink: #5ee0a0; --on-accent: #07090b; }
-
   .intro { grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px) { .intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
 
@@ -32,7 +29,8 @@
   .sos-form { padding: 18px 18px 20px; }
   .sos-form__title { font-size: 24px; padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
   .sos-setup { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
-  @media (min-width: 900px) { .sos-setup { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); } }
+  @media (min-width: 900px) { .sos-setup { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .sos-setup .field--wide { grid-column: 1 / -1; } }
+  .sos-setup .field[hidden] { display: none; }
   .sos-setup .segmented { flex-wrap: wrap; }
   .sos-setup .segmented button { flex: 1 1 auto; min-height: 46px; padding: 0 12px; font-size: 15px; }
   .sos-hint { margin: 8px 0 0; font-size: 13px; color: var(--text-2); }
@@ -58,6 +56,10 @@
   .sos-card__role { justify-self: start; }
   .sos-card__name { margin: 2px 0 0; font-size: clamp(24px, 6.4vw, 34px); font-weight: 900; line-height: 1.02; letter-spacing: -.02em; overflow-wrap: anywhere; }
   .sos-card__team { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-2); }
+  .sos-card__diff { margin: 2px 0 0; font-size: 14px; font-weight: 700; color: var(--text-2); animation: qz-rise .25s var(--ease-out) both; }
+  .is-ok .sos-card__diff { color: var(--led-green); }
+  .is-bad .sos-card__diff { color: #ff8a7d; }
+  .sos-question { margin: 10px 0 0; font-size: 15px; font-weight: 700; color: var(--text); }
   .sos-value { margin-top: 8px; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 8px 14px 6px; background: #000; border: 1px solid var(--line-2); border-radius: var(--r); }
   .sos-value__label { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #8a949b; white-space: nowrap; }
   .sos-value__num { font-family: var(--font-led); font-size: clamp(30px, 8vw, 42px); line-height: 1; color: var(--led); text-shadow: var(--led-glow); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -91,7 +93,24 @@
     @keyframes sos-slide { from { opacity: .4; transform: translateX(40px); } }
     @keyframes sos-in { from { opacity: 0; transform: translateX(40px); } }
   }
-  @media (prefers-reduced-motion: reduce) { .sos-card.is-slide, .sos-card.is-in { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .sos-card.is-slide, .sos-card.is-in, .sos-card__diff { animation: none; } }
+  /* telefono in orizzontale: poco spazio in altezza, le figurine si stringono */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .sos-arena { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+    .sos-card { padding: 10px 12px 12px; gap: 3px; }
+    .sos-card__team { font-size: 14px; }
+    .sos-filter { font-size: 11px; margin: -4px 0; }
+    .sos-card__name { font-size: 22px; }
+    .sos-value__num { font-size: 28px; }
+    .sos-pick { min-height: 48px; }
+    .sos-picks { margin-top: 8px; }
+    .sos-game { gap: 8px; }
+    .sos-board .board__cell { padding-block: 4px; }
+    .sos-board__big, .sos-board__rec { font-size: 24px; }
+    .sos-board__who { font-size: 15px; }
+    .sos-question { display: none; }
+    .sos-value { margin-top: 4px; padding: 4px 10px 3px; }
+  }
 
   .sos-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
   .sos-foot .kbd-hint { margin: 0; }
@@ -118,7 +137,7 @@
       <div data-stagger>
         <span class="eyebrow">Gioco 12 · Da solo</span>
         <h1 class="intro__title">Sopra o <em>sotto?</em></h1>
-        <p class="intro__lead">Il gioco del direttore sportivo. Di un calciatore conosci il prezzo, dell'altro no: vale di <b>più</b> o di <b>meno</b>? Si va avanti finché non sbagli, e più dura la serie più i prezzi si avvicinano.</p>
+        <p class="intro__lead">Il gioco del direttore sportivo. Di un calciatore conosci il prezzo, dell'altro no: vale di <b>più</b> o di <b>meno</b>? Si va avanti finché non sbagli, e più dura la serie più i prezzi si avvicinano. Per i nostalgici c'è anche il mazzo dei bomber: chi ha segnato di più in Serie A?</p>
         <div class="row mt-3">
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
@@ -135,19 +154,20 @@
     <div class="card sos-form mt-4">
       <h2 class="sos-form__title">Come giochiamo</h2>
       <div class="sos-setup">
-        <div class="field">
+        <div class="field field--wide"><span class="label" id="lbl-deck">Si gioca con</span><div id="set-deck" aria-labelledby="lbl-deck"></div></div>
+        <div class="field field--wide" id="f-league">
           <span class="label" id="lbl-league">Campionato</span>
           <div id="set-league" aria-labelledby="lbl-league"></div>
           <p class="sos-hint">Conta il paese del club, serie minori comprese.</p>
         </div>
-        <div class="field"><span class="label" id="lbl-role">Confronti</span><div id="set-role" aria-labelledby="lbl-role"></div></div>
+        <div class="field" id="f-role"><span class="label" id="lbl-role">Confronti</span><div id="set-role" aria-labelledby="lbl-role"></div></div>
         <div class="field"><span class="label" id="lbl-mode">Chi gioca</span><div id="set-mode" aria-labelledby="lbl-mode"></div></div>
       </div>
       <div class="sos-players" id="players-box" hidden>
         <div id="set-players"></div>
         <p class="sos-hint">Una serie a testa sullo stesso telefono: vince la più lunga.</p>
       </div>
-      <p class="sos-hint mt-2">Valori di mercato stimati, sulla scala di Transfermarkt, aggiornati a novembre 2026. Il mercato cambia: se un prezzo vi sembra strano, prendetevela col procuratore.</p>
+      <p class="sos-hint mt-2" id="deck-hint"></p>
     </div>
   </section>
 
@@ -190,6 +210,8 @@
           <h2 class="sos-card__name" data-name></h2>
           <p class="sos-card__team" data-team></p>
           <div class="sos-value"><span class="sos-value__label">Valore stimato</span><span class="sos-value__num" data-value></span></div>
+          <p class="sos-card__diff" data-diff hidden></p>
+          <p class="sos-question" id="g-question"></p>
           <div class="sos-picks">
             <button type="button" class="sos-pick sos-pick--up" id="g-up"></button>
             <button type="button" class="sos-pick sos-pick--down" id="g-down"></button>
@@ -198,7 +220,7 @@
       </div>
 
       <div class="sos-foot">
-        <p class="small kbd-hint">Tastiera: <span class="kbd">↑</span> vale di più, <span class="kbd">↓</span> vale di meno</p>
+        <p class="small kbd-hint">Tastiera: <span class="kbd">↑</span> <span id="g-kbd">vale di più</span>, <span class="kbd">↓</span> <span id="g-kbd2">vale di meno</span></p>
         <button class="btn btn--ghost btn--sm" type="button" id="g-quit"></button>
       </div>
     </div>
@@ -209,8 +231,9 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
 <script src="assets/db-giocatoributget.js?v=45bb7104" defer></script>
-<script src="assets/games/sopraosotto.js?v=bbbc6d33" defer></script>
+<script src="assets/db-sopraosotto.js?v=6d76a1bb" defer></script>
+<script src="assets/games/sopraosotto.js?v=a6c2f41f" defer></script>
 </body>
 </html>

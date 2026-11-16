@@ -1,11 +1,14 @@
 /* ==========================================================================
-   QUIZZOTTI — Cruciverba: le schede fisse (N° 1 ... N° 15)
+   QUIZZOTTI — Cruciverba: le schede fisse (N° 1 ... N° 20)
    FILE GENERATO da scripts/build-cruciverba.js a partire da
    assets/db-cruciverba.js: non modificarlo a mano, rilancia lo script.
-   tema: nazionale | champions | mondiali | bandiere | mercato | bar | stadi.
+   tema: nazionale | champions | mondiali | bandiere | mercato | bar | stadi |
+   anni90 | mister | estero.
    row/col partono da 0; dir "A" = orizzontale, "D" = verticale.
+   cruciverbaErrata: definizioni corrette dopo la pubblicazione (risposta ->
+   definizione nuova); il gioco le mostra al posto di quelle della scheda.
    ========================================================================== */
-/* exported cruciverbaSchede */
+/* exported cruciverbaSchede, cruciverbaErrata */
 const cruciverbaSchede = [
   {
     n: 1, tema: "nazionale", title: "Notti magiche",
@@ -365,7 +368,132 @@ const cruciverbaSchede = [
       { answer: "RELEONE", clue: "Batistuta, per i tifosi viola", row: 7, col: 5, dir: "D", num: 11 },
       { answer: "ORRICO", clue: "Corrado, la gabbia dell'Inter 1991", row: 9, col: 7, dir: "D", num: 13 }
     ]
+  },
+  {
+    n: 16, tema: "nazionale", title: "Cuore azzurro",
+    sottotitolo: "Dal 1934 a Wembley 2021: gol, rigori e CT della Nazionale", w: 13, h: 15,
+    words: [
+      { answer: "AZZURRI", clue: "La Nazionale, per il colore della maglia", row: 1, col: 0, dir: "A", num: 6 },
+      { answer: "SHAW", clue: "Luke, gol inglese dopo due minuti nella finale di Wembley 2021", row: 2, col: 8, dir: "A", num: 7 },
+      { answer: "ALTOBELLI", clue: "Alessandro, gol nella finale del Mundial '82", row: 3, col: 0, dir: "A", num: 8 },
+      { answer: "SARRIA", clue: "Lo stadio di Barcellona di Italia-Brasile 3-2 nel 1982", row: 5, col: 7, dir: "A", num: 10 },
+      { answer: "ZOFF", clue: "Dino, campione del mondo a 40 anni", row: 6, col: 2, dir: "A", num: 11 },
+      { answer: "VALCAREGGI", clue: "Ferruccio, CT campione d'Europa nel 1968", row: 9, col: 3, dir: "A", num: 15 },
+      { answer: "FISCHIO", clue: "Inizio, fine o fallo: lo decide l'arbitro", row: 11, col: 4, dir: "A", num: 16 },
+      { answer: "MACEDONIA", clue: "Ci fece fuori a Palermo nel 2022", row: 13, col: 0, dir: "A", num: 17 },
+      { answer: "ZAZA", clue: "Simone, il balletto prima del rigore con la Germania nel 2016", row: 0, col: 0, dir: "D", num: 1 },
+      { answer: "EUROPEO", clue: "L'Italia lo vinse a Wembley nel 2021", row: 0, col: 3, dir: "D", num: 2 },
+      { answer: "PIRLO", clue: "Regista del cucchiaio all'Inghilterra a Euro 2012", row: 0, col: 6, dir: "D", num: 3 },
+      { answer: "ORSI", clue: "Raimundo, oriundo campione del mondo nel 1934", row: 0, col: 8, dir: "D", num: 4 },
+      { answer: "QUATTRO", clue: "Le stelle sulla maglia azzurra", row: 0, col: 10, dir: "D", num: 5 },
+      { answer: "FABBRI", clue: "Edmondo, CT della disfatta con la Corea del Nord nel 1966", row: 4, col: 12, dir: "D", num: 9 },
+      { answer: "SLOVACCHIA", clue: "Ci eliminò al Mondiale 2010", row: 5, col: 7, dir: "D", num: 10 },
+      { answer: "FERLAINO", clue: "Corrado, presidente del Napoli di Maradona", row: 6, col: 5, dir: "D", num: 12 },
+      { answer: "TESTATA", clue: "Il colpo di Zidane a Materazzi nella finale di Berlino", row: 7, col: 1, dir: "D", num: 13 },
+      { answer: "GUERIN", clue: "Il ... Sportivo, rivista storica", row: 7, col: 9, dir: "D", num: 14 }
+    ]
+  },
+  {
+    n: 17, tema: "champions", title: "Notti europee",
+    sottotitolo: "Coppa dei Campioni e Champions: finali, eroi e beffe", w: 12, h: 15,
+    words: [
+      { answer: "CASEMIRO", clue: "Mediano brasiliano, cinque Champions col Real", row: 0, col: 3, dir: "A", num: 1 },
+      { answer: "PRATI", clue: "Pierino, tripletta all'Ajax nella finale di Coppa dei Campioni 1969", row: 2, col: 6, dir: "A", num: 4 },
+      { answer: "STEIN", clue: "Jock, il tecnico del Celtic campione d'Europa nel 1967", row: 4, col: 1, dir: "A", num: 5 },
+      { answer: "TAPIE", clue: "Bernard, presidente del Marsiglia campione d'Europa", row: 4, col: 7, dir: "A", num: 6 },
+      { answer: "TESTA", clue: "La si usa per il colpo aereo", row: 6, col: 0, dir: "A", num: 8 },
+      { answer: "VIENNA", clue: "Finale 1964 della Grande Inter contro il Real", row: 6, col: 6, dir: "A", num: 9 },
+      { answer: "STARBALL", clue: "Il pallone di stelle, simbolo della Champions", row: 8, col: 4, dir: "A", num: 10 },
+      { answer: "HAPPEL", clue: "Ernst, Coppa dei Campioni con Feyenoord e Amburgo", row: 10, col: 4, dir: "A", num: 13 },
+      { answer: "DIFRANCESCO", clue: "Eusebio, semifinale di Champions con la Roma nel 2018", row: 12, col: 1, dir: "A", num: 15 },
+      { answer: "REMONTADA", clue: "Il 6-1 del Barça al PSG nel 2017, in spagnolo", row: 14, col: 1, dir: "A", num: 16 },
+      { answer: "CARLETTO", clue: "Ancelotti, per tutti", row: 0, col: 3, dir: "D", num: 1 },
+      { answer: "MORATTI", clue: "Massimo, presidente del Triplete", row: 0, col: 7, dir: "D", num: 2 },
+      { answer: "ORIGI", clue: "Divock, gol in semifinale e in finale col Liverpool nel 2019", row: 0, col: 10, dir: "D", num: 3 },
+      { answer: "SEEDORF", clue: "Clarence, quattro Champions con tre squadre diverse", row: 4, col: 1, dir: "D", num: 5 },
+      { answer: "PUNTA", clue: "L'attaccante più avanzato", row: 4, col: 9, dir: "D", num: 7 },
+      { answer: "REP", clue: "Johnny, il gol dell'Ajax alla Juve nella finale di Belgrado 1973", row: 8, col: 7, dir: "D", num: 11 },
+      { answer: "LUCIO", clue: "Difensore brasiliano del Triplete", row: 8, col: 11, dir: "D", num: 12 },
+      { answer: "LISTA", clue: "La ... UEFA: i giocatori iscritti alle coppe", row: 10, col: 9, dir: "D", num: 14 }
+    ]
+  },
+  {
+    n: 18, tema: "bandiere", title: "Fedeli alla maglia",
+    sottotitolo: "Capitani e campioni di una sola squadra, qui e altrove", w: 14, h: 15,
+    words: [
+      { answer: "VETERANO", clue: "Il giocatore più esperto della rosa", row: 1, col: 0, dir: "A", num: 3 },
+      { answer: "STEMMA", clue: "Lo si bacia dopo il gol, sulla maglia", row: 2, col: 7, dir: "A", num: 6 },
+      { answer: "VICECAPITANO", clue: "Indossa la fascia quando il titolare non c'è", row: 4, col: 0, dir: "A", num: 7 },
+      { answer: "MUSEO", clue: "Quello del club espone maglie e trofei", row: 7, col: 1, dir: "A", num: 11 },
+      { answer: "SENATORE", clue: "Giocatore anziano e carismatico dello spogliatoio", row: 9, col: 6, dir: "A", num: 13 },
+      { answer: "CESARE", clue: "Il primo dei Maldini capitani del Milan", row: 10, col: 1, dir: "A", num: 14 },
+      { answer: "DILUVIO", clue: "Quello di Perugia che costò lo scudetto alla Juve nel 2000", row: 12, col: 4, dir: "A", num: 15 },
+      { answer: "DELPIERO", clue: "Il numero 10 bianconero dei gol a giro", row: 14, col: 0, dir: "A", num: 16 },
+      { answer: "BOSNIA", clue: "La nazionale di Dzeko e Pjanic", row: 0, col: 7, dir: "D", num: 1 },
+      { answer: "ROMBODITUONO", clue: "Gigi Riva, secondo Gianni Brera", row: 0, col: 11, dir: "D", num: 2 },
+      { answer: "EROE", clue: "Chi decide la partita all'ultimo minuto", row: 1, col: 3, dir: "D", num: 4 },
+      { answer: "AREA", clue: "Lì dentro un contatto può valere un rigore", row: 1, col: 5, dir: "D", num: 5 },
+      { answer: "CAFU", clue: "Pendolino brasiliano, capitano nel 2002", row: 4, col: 2, dir: "D", num: 8 },
+      { answer: "BONIPERTI", clue: "Prima bandiera, poi presidente della Juve", row: 4, col: 13, dir: "D", num: 9 },
+      { answer: "GERRARD", clue: "Steven, capitano del Liverpool, scivolata fatale nel 2014", row: 6, col: 4, dir: "D", num: 10 },
+      { answer: "MASCOTTE", clue: "Il pupazzo che saluta i bambini a bordocampo", row: 7, col: 1, dir: "D", num: 11 },
+      { answer: "MANNINI", clue: "Moreno, terzino-bandiera della Samp", row: 8, col: 9, dir: "D", num: 12 },
+      { answer: "SEELER", clue: "Uwe, il centravanti una vita all'Amburgo", row: 9, col: 6, dir: "D", num: 13 }
+    ]
+  },
+  {
+    n: 19, tema: "mercato", title: "Mercato aperto",
+    sottotitolo: "Colpi record, procuratori e trattative infinite", w: 14, h: 14,
+    words: [
+      { answer: "GIUNTOLI", clue: "Cristiano, ds dello scudetto del Napoli, poi alla Juve", row: 0, col: 2, dir: "A", num: 1 },
+      { answer: "BRAIDA", clue: "Ariedo, ds del Milan di Berlusconi", row: 3, col: 5, dir: "A", num: 4 },
+      { answer: "CUADRADO", clue: "Juan, colombiano bianconero, poi interista", row: 5, col: 6, dir: "A", num: 7 },
+      { answer: "MOGGI", clue: "Lucianone, direttore generale ai tempi di Calciopoli", row: 7, col: 2, dir: "A", num: 9 },
+      { answer: "DIRITTO", clue: "Prestito con ... di riscatto: si compra solo se si vuole", row: 8, col: 7, dir: "A", num: 12 },
+      { answer: "AGENTE", clue: "Il procuratore, per chi parla all'inglese", row: 9, col: 1, dir: "A", num: 15 },
+      { answer: "SARTORI", clue: "Giovanni, il ds di Chievo, Atalanta e Bologna", row: 10, col: 7, dir: "A", num: 16 },
+      { answer: "NEYMAR", clue: "Brasiliano dei rotoloni, ex Barça e PSG", row: 11, col: 0, dir: "A", num: 17 },
+      { answer: "ACCORDO", clue: "Quello verbale tra club arriva prima delle firme", row: 13, col: 1, dir: "A", num: 18 },
+      { answer: "INGAGGIO", clue: "Lo stipendio del calciatore", row: 0, col: 3, dir: "D", num: 2 },
+      { answer: "LATINA", clue: "Coppa ..., vecchio torneo tra club di Spagna, Italia, Francia e Portogallo", row: 0, col: 8, dir: "D", num: 3 },
+      { answer: "RICCI", clue: "Samuele, regista ex Toro passato al Milan nel 2025", row: 3, col: 6, dir: "D", num: 5 },
+      { answer: "FONDO", clue: "Proprietà d'investimento, come Elliott al Milan fino al 2022", row: 4, col: 13, dir: "D", num: 6 },
+      { answer: "RABIOT", clue: "Adrien, francese ex Juve e Marsiglia, passato al Milan nel 2025", row: 5, col: 10, dir: "D", num: 8 },
+      { answer: "GENNAIO", clue: "Il mese del mercato di riparazione", row: 7, col: 4, dir: "D", num: 10 },
+      { answer: "CARECA", clue: "Il brasiliano del Napoli di Maradona", row: 8, col: 1, dir: "D", num: 11 },
+      { answer: "ISAK", clue: "Alexander, svedese passato dal Newcastle al Liverpool", row: 8, col: 8, dir: "D", num: 13 },
+      { answer: "TARE", clue: "Igli, albanese per anni ds della Lazio", row: 8, col: 12, dir: "D", num: 14 }
+    ]
+  },
+  {
+    n: 20, tema: "bar", title: "Al bar del lunedì",
+    sottotitolo: "Campetto, schedina, figurine e moviola", w: 14, h: 15,
+    words: [
+      { answer: "PIPPA", clue: "Giocatore scarso, nel gergo del bar", row: 0, col: 9, dir: "A", num: 1 },
+      { answer: "BOLLETTA", clue: "La giocata in ricevitoria, nel gergo dello scommettitore", row: 1, col: 2, dir: "A", num: 3 },
+      { answer: "IFAB", clue: "L'organo che scrive le regole del calcio, in sigla", row: 3, col: 1, dir: "A", num: 6 },
+      { answer: "HEREWEGO", clue: "Il tormentone di Fabrizio Romano a trattativa chiusa", row: 3, col: 6, dir: "A", num: 8 },
+      { answer: "MALUS", clue: "Al fantacalcio, il segno meno di un'espulsione", row: 5, col: 8, dir: "A", num: 10 },
+      { answer: "CASCIAVIT", clue: "I milanisti, per gli interisti", row: 7, col: 4, dir: "A", num: 11 },
+      { answer: "ORATORIO", clue: "Il campetto dove tutti abbiamo cominciato", row: 9, col: 2, dir: "A", num: 12 },
+      { answer: "SUPERTELE", clue: "Il pallone leggerissimo che vola via col vento", row: 11, col: 0, dir: "A", num: 13 },
+      { answer: "GOBBI", clue: "I bianconeri, per i tifosi avversari", row: 12, col: 8, dir: "A", num: 14 },
+      { answer: "PAROLA", clue: "Carlo, la rovesciata bianconera sulle bustine Panini", row: 14, col: 4, dir: "A", num: 15 },
+      { answer: "PAPERA", clue: "Errore clamoroso del portiere", row: 0, col: 9, dir: "D", num: 1 },
+      { answer: "ASSO", clue: "Fuoriclasse, come la carta migliore del mazzo", row: 0, col: 13, dir: "D", num: 2 },
+      { answer: "BEFFA", clue: "Gol subito all'ultimo secondo", row: 1, col: 2, dir: "D", num: 3 },
+      { answer: "TRE", clue: "I punti per una vittoria", row: 1, col: 7, dir: "D", num: 4 },
+      { answer: "PERUGIA", clue: "Grifoni umbri di Gaucci", row: 2, col: 11, dir: "D", num: 5 },
+      { answer: "BAUSCIA", clue: "Gli interisti, per i milanisti", row: 3, col: 4, dir: "D", num: 7 },
+      { answer: "LISTONE", clue: "Al fantacalcio, l'elenco dei giocatori acquistabili", row: 5, col: 6, dir: "D", num: 9 },
+      { answer: "MAIDIREGOL", clue: "Il programma comico della Gialappa's", row: 5, col: 8, dir: "D", num: 10 }
+    ]
   }
 ];
 
-if (typeof module !== "undefined" && module.exports) { module.exports = { cruciverbaSchede }; }
+const cruciverbaErrata = {
+  KOSTIC: "Filip, esterno serbo dell'Eintracht campione di Europa League 2022",
+  WANDA: "Nara, procuratrice di Icardi ai tempi dell'Inter"
+};
+
+if (typeof module !== "undefined" && module.exports) { module.exports = { cruciverbaSchede, cruciverbaErrata }; }

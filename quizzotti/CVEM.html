@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   .cv-layout { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 980px) { .cv-layout { grid-template-columns: minmax(0, 1fr) 270px; align-items: start; } }
@@ -78,6 +78,21 @@
   .cv-audience__track { flex: 1; display: flex; align-items: flex-end; }
   .cv-audience__bar { width: 100%; height: 0; background: repeating-linear-gradient(180deg, var(--led) 0 6px, transparent 6px 9px); transition: height .9s var(--ease-out); }
   .cv-audience__col span:last-child { font-family: var(--font-led); font-size: 22px; color: var(--text); }
+  .cv-audience__col.is-out { opacity: .3; }
+
+  /* a fine partita: le domande della scalata, con la risposta giusta */
+  .cv-review { padding: 0; text-align: left; }
+  .cv-review summary { cursor: pointer; padding: 14px 18px; min-height: 44px; font-weight: 800; color: var(--text); list-style-position: inside; }
+  .cv-review summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r); }
+  .cv-review ol { list-style: none; margin: 0; padding: 0 18px 16px; display: grid; gap: 12px; }
+  .cv-review li { display: flex; gap: 12px; align-items: flex-start; padding-top: 12px; border-top: 1px solid var(--line); }
+  .cv-review__lv { flex: none; min-width: 32px; font-family: var(--font-led); font-size: 18px; color: var(--led); }
+  .cv-review li.is-ko .cv-review__lv { color: var(--led-red); }
+  .cv-review__q { color: var(--text-2); font-size: 15px; overflow-wrap: anywhere; }
+  .cv-review__a { margin-top: 4px; font-weight: 700; color: var(--ok); overflow-wrap: anywhere; }
+  .cv-review__a::before { content: "✓ "; }
+  .cv-review__bad { margin-top: 2px; font-size: 14px; color: var(--text-2); }
+  #start-record { max-width: 46ch; }
 </style>
 </head>
 <body data-game="cvem">
@@ -124,7 +139,7 @@
         <div class="answers answers--2col" id="answers"></div>
 
         <div class="cv-lifelines" id="lifelines"></div>
-        <p class="small center kbd-hint">Da tastiera: <span class="kbd">A</span><span class="kbd">B</span><span class="kbd">C</span><span class="kbd">D</span> per rispondere</p>
+        <p class="small center kbd-hint">Da tastiera: <span class="kbd">A</span><span class="kbd">B</span><span class="kbd">C</span><span class="kbd">D</span> oppure <span class="kbd">1</span>…<span class="kbd">4</span> per rispondere</p>
       </div>
 
       <aside class="cv-side card" aria-label="Montepremi">
@@ -139,9 +154,9 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-cvem.js?v=606bdf05" defer></script>
-<script src="assets/questions-data.js?v=56cfcfe7" defer></script>
-<script src="assets/games/cvem.js?v=746f8996" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-cvem.js?v=d887487d" defer></script>
+<script src="assets/questions-data.js?v=1f53394a" defer></script>
+<script src="assets/games/cvem.js?v=81faeafd" defer></script>
 </body>
 </html>

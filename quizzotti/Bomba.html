@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   .bb-wrap { --heat: 0; max-width: 600px; margin: 0 auto; }
   .bb-setup, .bb-opt { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
@@ -126,6 +126,10 @@
   .bb-fix { display: grid; gap: 8px; justify-items: center; padding-top: 12px; margin-top: 4px; border-top: 1px dashed var(--line-2); width: 100%; }
   .bb-fix > div { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
   .bb-standings { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr); }
+  .bb-quip { font-size: 18px; font-weight: 700; color: var(--text); text-wrap: balance; }
+  .bb-resume { display: grid; gap: 10px; }
+  .bb-resume p { color: var(--text-2); }
+  .bb-resume p b { color: var(--text); }
   .bb-delta { font-family: var(--font-led); font-size: 19px; line-height: 1; color: var(--led-green); }
 
   @media (min-width: 900px) { #s-start .intro { align-items: start; } #s-start .intro > .stack { position: sticky; top: calc(var(--header-h) + 32px); } }
@@ -143,6 +147,7 @@
         <span class="eyebrow">N° 08 · Da 2 a 12</span>
         <h1 class="intro__title">Occhio alla <em>bomba</em></h1>
         <p class="intro__lead">Esce un tema. Chi ha la bomba dice una cosa giusta e la passa al vicino. La miccia non si vede e il ticchettio accelera: quando scoppia, chi ce l'ha in mano paga.</p>
+        <div class="mt-3" id="resume-host" hidden></div>
         <div class="card mt-3">
           <div class="bb-setup">
             <div id="players-host"></div>
@@ -158,6 +163,7 @@
             <div class="bb-opt">
               <span class="label" id="lbl-fuse">Miccia</span>
               <div id="opt-fuse" aria-labelledby="lbl-fuse"></div>
+              <p class="small muted" id="fuse-desc"></p>
             </div>
             <details class="bb-cats card card--flat card--tight">
               <summary><span id="cats-label">Temi</span><span id="cats-ico"></span></summary>
@@ -190,7 +196,7 @@
       </div>
       <div class="bb-board" id="rd-board" role="group" aria-label="Giocatori"></div>
       <button class="btn btn--primary btn--xl btn--block" type="button" id="rd-go" data-autofocus></button>
-      <p class="small muted center kbd-hint">In partita: <span class="kbd">Spazio</span> passa · <span class="kbd">P</span> pausa · <span class="kbd">S</span> cambia tema</p>
+      <p class="small muted center kbd-hint">In partita: <span class="kbd">Spazio</span> passa · <span class="kbd">P</span> pausa · <span class="kbd">S</span> cambia tema (la miccia non si ferma)</p>
     </div>
   </section>
 
@@ -266,8 +272,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-bomba.js?v=f88a61d6" defer></script>
-<script src="assets/games/bomba.js?v=ef81e701" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-bomba.js?v=d9667c1d" defer></script>
+<script src="assets/games/bomba.js?v=6b1254f0" defer></script>
 </body>
 </html>

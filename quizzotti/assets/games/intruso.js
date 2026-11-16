@@ -7,7 +7,10 @@
    difficolta' che sale round dopo round, QZ.Deck per non ripetere i round
    tra una partita e l'altra. Dopo ogni round il legame e il perche'.
    Modalita' "Sfida a due" sullo stesso telefono: turni alterni, tre vite a
-   testa, dieci round a testa al massimo, passaggio di mano senza sbirciare.
+   testa, dieci round a testa al massimo, passaggio di mano senza sbirciare
+   (saltato quando l'altro e' gia' fuori).
+   Memoria locale: qz.intruso.settings, qz.intruso.best (record per ritmo),
+   qz.intruso.stats (carriera da solo: partite, round, scovati, serie record).
    ========================================================================== */
 /* global intrusoRounds */
 (function () {
@@ -27,7 +30,11 @@
     function roundKey(r) { return r.items.slice().sort().join('|'); }
     var deck = new QZ.Deck(GAME, intrusoRounds, roundKey);
     var set = Object.assign({ pace: 10, after: 'tap', mode: 'solo' }, QZ.store.get('qz.intruso.settings', {}) || {});
+    set.pace = Number(set.pace);
     if (!PACE_XP[set.pace]) set.pace = 10;
+    if (set.after !== 'auto') set.after = 'tap';
+    if (set.mode !== 'duo') set.mode = 'solo';
+    var STATS_KEY = 'qz.intruso.stats';
 
     var S = {};
     var timer = null;
@@ -73,7 +80,13 @@
         if (!S.running || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
         if (document.querySelector('.qz-modal')) return;
         var n = Number(e.key);
-        if (S.active && n >= 1 && n <= 6) { e.preventDefault(); pick(n - 1); }
+        if (S.active && n >= 1 && n <= 6) { e.preventDefault(); pick(n - 1); return; }
+        // Invio fa andare avanti anche se il fuoco e' finito altrove (sul bottone ci pensa il browser)
+        if (e.key !== 'Enter') return;
+        var t = e.target;
+        if (t && t.closest && t.closest('button, a, input, textarea, select')) return;
+        if (S.revealing) { e.preventDefault(); next(); }
+        else if (S.passing) { e.preventDefault(); $('#p-go').click(); }
     });
 
     paintRecord();
@@ -84,7 +97,40 @@
     function two(n) { return String(n).padStart(2, '0'); }
     function paintRecord() {
         var b = bestScores()[set.pace];
-        $('#start-record').textContent = b ? 'Record a ritmo ' + paceName(set.pace) + ': ' + QZ.fmt(b.score) + ' punti, ' + b.rounds + ' round superati' : '';
+        $('#start-record').textContent = b ? 'Record a ritmo ' + paceName(set.pace) + ': ' + QZ.fmt(b.score) + ' punti, ' + b.rounds + ' round superati' : 'Nessun record a ritmo ' + paceName(set.pace) + ': il primo lo metti tu.';
+        var st = careerStats();
+        var box = $('#start-career');
+        if (!st.games) { box.hidden = true; return; }
+        box.hidden = false;
+        $('#c-games').textContent = QZ.fmt(st.games);
+        $('#c-found').textContent = QZ.fmt(st.found);
+        $('#c-pct').textContent = st.rounds ? Math.round(st.found / st.rounds * 100) + '%' : '-';
+        $('#c-streak').textContent = QZ.fmt(st.streak);
+    }
+    /** Statistiche di carriera (solo partite da solo): partite, round, intrusi scovati, serie record. */
+    function careerStats() {
+        var st = QZ.store.get(STATS_KEY, null);
+        st = st && typeof st === 'object' ? st : {};
+        ['games', 'rounds', 'found', 'streak'].forEach(function (k) { st[k] = Math.max(0, Number(st[k]) || 0); });
+        return st;
+    }
+    function saveCareer(p) {
+        var st = careerStats();
+        // "la piu' lunga di sempre" ha senso solo se prima c'era gia' una carriera da battere
+        var newStreak = st.games > 0 && p.best > st.streak && p.best >= 3;
+        st.games++;
+        st.rounds += p.played;
+        st.found += p.passed;
+        st.streak = Math.max(st.streak, p.best);
+        QZ.store.set(STATS_KEY, st);
+        return { st: st, newStreak: newStreak };
+    }
+    /** La partita in quadratini, per la condivisione: verde preso, rosso sbagliato, nero tempo scaduto. */
+    function shareGrid(p) {
+        var marks = p.log.map(function (x) { return x === 'ok' ? '🟩' : x === 'bad' ? '🟥' : '⬛'; });
+        var rows = [];
+        for (var i = 0; i < marks.length; i += 10) rows.push(marks.slice(i, i + 10).join(''));
+        return rows.join('\n');
     }
     function cur() { return S.players[S.turn]; }
     function alive(p) { return p.lives > 0 && (!S.duo || p.played < DUO_ROUNDS); }
@@ -136,7 +182,7 @@
         var list = duo ? names.get() : ['Tu'];
         S = {
             duo: duo, pace: set.pace, auto: set.after === 'auto',
-            players: list.map(function (n) { return { name: n, score: 0, lives: LIVES, played: 0, passed: 0, streak: 0, best: 0, rts: [], wrong: [] }; }),
+            players: list.map(function (n) { return { name: n, score: 0, lives: LIVES, played: 0, passed: 0, streak: 0, best: 0, rts: [], wrong: [], log: [] }; }),
             turn: 0, used: new Set(), round: null, order: null,
             active: false, running: false, passing: false, done: false
         };
@@ -207,7 +253,6 @@
         QZ.say((S.duo ? p.name + ', round ' : 'Round ') + (p.played + 1) + '. ' + r.cat + '. Chi è l\'intruso?');
         var a = document.activeElement;
         if (!document.querySelector('.qz-modal') && (!a || a === document.body || a.disabled || a.offsetParent === null)) cells[0].focus({ preventScroll: true });
-        S.t0 = performance.now();
         timer.reset(S.pace);
         timer.start();
     }
@@ -226,8 +271,10 @@
         var oddIdx = S.order.indexOf(r.odd);
         var ok = i === oddIdx;
         var timeout = i < 0;
-        var rt = (performance.now() - S.t0) / 1000;
+        // tempo di gioco vero: il timer si ferma con la scheda nascosta e con la conferma aperta
+        var rt = timer.duration - timer.remaining;
         p.played++;
+        p.log.push(ok ? 'ok' : timeout ? 'time' : 'bad');
         var pts = 0;
         if (ok) {
             p.passed++;
@@ -284,18 +331,24 @@
         // sul telefono il verdetto sta sotto le caselle: lo si porta in vista
         var rect = box.getBoundingClientRect();
         if (rect.bottom > window.innerHeight) box.scrollIntoView({ block: 'nearest', behavior: QZ.reducedMotion() ? 'auto' : 'smooth' });
+        $('#r-auto').hidden = !S.auto;
+        S.revealing = true;
+        if (S.auto) runAuto(ok ? AUTO_MS : AUTO_MS + 1500); else clearTimeout(autoT);
+    }
+
+    /** "Dopo ogni round: automatico": barra che si svuota e poi si va avanti da soli. */
+    function runAuto(ms) {
         var bar = $('#r-auto');
         clearTimeout(autoT);
-        bar.hidden = !S.auto;
         bar.classList.remove('is-run');
-        if (S.auto) {
-            var ms = ok ? AUTO_MS : AUTO_MS + 1500;
-            bar.style.setProperty('--auto', ms + 'ms');
-            void bar.offsetWidth;
-            bar.classList.add('is-run');
-            autoT = setTimeout(function () { if (!document.querySelector('.qz-modal')) next(); }, ms);
-        }
-        S.revealing = true;
+        bar.style.setProperty('--auto', ms + 'ms');
+        void bar.offsetWidth;
+        bar.classList.add('is-run');
+        autoT = setTimeout(function () {
+            // con una finestra aperta (conferma, profilo) si aspetta che si chiuda
+            if (document.querySelector('.qz-modal')) { runAuto(2500); return; }
+            next();
+        }, ms);
     }
 
     function anyoneLeft() { return S.players.some(alive); }
@@ -310,7 +363,11 @@
         S.revealing = false;
         clearTimeout(autoT);
         if (!anyoneLeft()) { finish(false); return; }
-        if (S.duo) { S.turn = nextTurnIndex(); turnStart(); return; }
+        if (S.duo) {
+            var n = nextTurnIndex();
+            // l'altro e' gia' fuori: il telefono resta in mano, niente schermata di passaggio a ogni round
+            if (n !== S.turn) { S.turn = n; turnStart(); return; }
+        }
         load();
     }
 
@@ -324,7 +381,7 @@
         QZ.confirm(S.duo ? 'La sfida finisce qui e si contano i punti fatti finora.' : 'Esci dal campo: a referto restano ' + QZ.fmt(cur().score) + ' punti.', { title: 'Chiedi il cambio?', okLabel: 'Esco', cancelLabel: 'Resto in campo', danger: true }).then(function (ok) {
             if (ok) { finish(true); return; }
             if (wasActive) { S.active = true; cells.forEach(function (el) { el.disabled = false; }); timer.start(); }
-            else if (S.revealing && S.auto) { autoT = setTimeout(next, 2500); }
+            else if (S.revealing && S.auto) runAuto(2500);
         });
     }
 
@@ -333,7 +390,7 @@
         var all = [];
         S.players.forEach(function (p) { p.wrong.forEach(function (w) { all.push({ p: p, w: w }); }); });
         if (!all.length) return '<div class="ix-review"><h2>Il ripasso</h2><p class="muted">Nessun round sbagliato. Da ripassare non c\'è niente: solo da incorniciare.</p></div>';
-        return '<div class="ix-review"><h2>Il ripasso</h2><p class="small muted">I round sbagliati, con l\'intruso in verde' + (all.some(function (x) { return x.w.picked; }) ? ' e la tua scelta in rosso' : '') + '.</p>' +
+        return '<div class="ix-review"><h2>Il ripasso</h2><p class="small muted">I round sbagliati, con l\'intruso in verde' + (all.some(function (x) { return x.w.picked; }) ? (S.duo ? ' e la scelta sbagliata in rosso' : ' e la tua scelta in rosso') : '') + '.</p>' +
             all.map(function (x) {
                 var r = x.w.r;
                 var chips = r.items.map(function (it) {
@@ -370,13 +427,14 @@
         var paceRecord = !prev || p.score > prev.score;
         if (paceRecord && p.score > 0) { bests[S.pace] = { score: p.score, rounds: p.passed }; QZ.store.set('qz.intruso.best', bests); }
         var xp = Math.round((p.score / 25 + p.passed * 2) * (PACE_XP[S.pace] || 1));
-        var r = QZ.profile.record(GAME, { xp: xp, label: p.passed + ' intrusi scovati · ' + QZ.fmt(p.score) + ' punti', score: p.score });
+        var r = QZ.profile.record(GAME, { xp: xp, label: p.passed + (p.passed === 1 ? ' intruso scovato · ' : ' intrusi scovati · ') + QZ.fmt(p.score) + ' punti', score: p.score });
         var rec = bestScores()[S.pace];
+        var car = p.played ? saveCareer(p) : { st: careerStats(), newStreak: false };
         QZ.results($('#end-host'), {
             win: p.passed >= 10,
             icon: p.passed >= 10 ? 'eye' : 'flag',
             title: p.passed >= 20 ? 'Occhio di falco' : p.passed >= 10 ? 'Non ti sfugge niente' : p.passed >= 5 ? 'Qualcuno ti è scappato' : 'Gli intrusi ringraziano',
-            subtitle: 'Hai scovato ' + p.passed + (p.passed === 1 ? ' intruso' : ' intrusi') + ' su ' + p.played + ' round, a ritmo ' + paceName(S.pace) + '.' + (p.best >= 3 ? ' Serie migliore: ' + p.best + ' di fila.' : ''),
+            subtitle: !p.played ? 'Cambio chiesto prima del primo round: la partita non fa testo.' : 'Hai scovato ' + p.passed + (p.passed === 1 ? ' intruso' : ' intrusi') + ' su ' + p.played + ' round, a ritmo ' + paceName(S.pace) + '.' + (p.best >= 3 ? ' Serie migliore: ' + p.best + ' di fila' + (car.newStreak ? ', la più lunga di sempre.' : '.') : ''),
             big: p.score,
             bigSuffix: ' pt',
             record: { newRecord: r.newRecord || (paceRecord && !!prev && p.score > 0), xp: r.xp },
@@ -388,7 +446,7 @@
                 { label: 'Record ' + paceName(S.pace), value: rec ? QZ.fmt(rec.score) : '-' }
             ],
             extraHTML: reviewHTML(),
-            share: 'A L\'Intruso su Quizzotti ho scovato ' + p.passed + ' intrusi e fatto ' + QZ.fmt(p.score) + ' punti. Tu quanti ne trovi?',
+            share: 'L\'Intruso, ritmo ' + paceName(S.pace) + ': ' + p.passed + (p.passed === 1 ? ' intruso scovato' : ' intrusi scovati') + ' su ' + p.played + ', ' + QZ.fmt(p.score) + ' punti.' + (p.log.length ? '\n' + shareGrid(p) : '') + '\nTu quanti ne trovi?',
             onRetry: start,
             secondary: { label: 'Cambia ritmo', icon: 'list', onClick: function () { QZ.show('s-start'); } }
         });
@@ -409,7 +467,8 @@
             extraHTML: '<div class="mt-3">' + QZ.podiumHTML(ps.map(function (p) {
                 return { name: p.name, score: p.score, color: QZ.TEAM_COLORS[S.players.indexOf(p)], sub: p.passed + (p.passed === 1 ? ' intruso' : ' intrusi') + ' · serie max ' + p.best };
             }), function (s) { return QZ.fmt(s) + ' pt'; }) + '</div>' + reviewHTML(),
-            share: tie ? 'Sfida a due a L\'Intruso su Quizzotti: pareggio perfetto. Chi ci batte?' : ps[0].name + ' ha vinto la sfida a L\'Intruso su Quizzotti con ' + QZ.fmt(ps[0].score) + ' punti. Ci provi?',
+            share: (tie ? 'Sfida a due a L\'Intruso: pareggio perfetto.' : ps[0].name + ' vince la sfida a L\'Intruso, ' + QZ.fmt(ps[0].score) + ' a ' + QZ.fmt(ps[1].score) + '.') +
+                S.players.map(function (p) { return '\n' + p.name + ' ' + (p.log.length ? shareGrid(p).replace(/\n/g, '') : '-'); }).join('') + '\nChi ci batte?',
             retryLabel: 'Rivincita',
             onRetry: start,
             secondary: { label: 'Cambia giocatori', icon: 'users', onClick: function () { QZ.show('s-start'); } }

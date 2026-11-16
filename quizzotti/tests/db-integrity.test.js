@@ -26,9 +26,9 @@ test('db-cvem.js: domande per livello 1-15, correctAnswer in ABCD', () => {
     });
 });
 
-test('db-avantiunaltro.js: 180 domande con correct A/B', () => {
+test('db-avantiunaltro.js: almeno 230 domande con correct A/B', () => {
     const { fullDatabase } = load('db-avantiunaltro.js');
-    assert.equal(fullDatabase.length, 180);
+    assert.ok(fullDatabase.length >= 230, `solo ${fullDatabase.length} domande`);
     fullDatabase.forEach((q) => {
         assert.ok(['A', 'B'].includes(q.correct), `correct non valido: ${q.correct}`);
         assert.ok(q.a && q.b, 'opzioni a/b mancanti');
@@ -72,12 +72,12 @@ test('db-intesavincente.js: parole senza duplicati', () => {
     noDuplicates(words, 'words');
 });
 
-test('db-jeopardy.js: 9 categorie x 75 domande, tutte con value 100-500', () => {
+test('db-jeopardy.js: 9 categorie x 90 domande, tutte con value 100-500', () => {
     const { jeopardyData } = load('db-jeopardy.js');
     assert.equal(jeopardyData.length, 9);
     const valoriAmmessi = [100, 200, 300, 400, 500];
     jeopardyData.forEach((cat) => {
-        assert.equal(cat.questions.length, 75, `categoria "${cat.category}" non ha 75 domande`);
+        assert.equal(cat.questions.length, 90, `categoria "${cat.category}" non ha 90 domande`);
         cat.questions.forEach((q) => {
             assert.ok(valoriAmmessi.includes(q.value), `valore non valido in "${cat.category}": ${q.value}`);
             assert.ok(q.question && q.answer, `domanda o risposta mancante in "${cat.category}"`);
@@ -144,13 +144,20 @@ test('db-cruciverba.js: parole A-Z 3-13, definizioni brevi senza la risposta, ca
     }
 });
 
-test('cruciverba-schede.js: 15 schede a tema coerenti, risposte uniche e prese dal database', () => {
-    const { cruciverbaSchede } = load('cruciverba-schede.js');
+test('cruciverba-schede.js: 20 schede a tema coerenti, risposte uniche e prese dal database', () => {
+    const { cruciverbaSchede, cruciverbaErrata } = load('cruciverba-schede.js');
     const { cruciverba } = load('db-cruciverba.js');
     const clueOf = new Map(cruciverba.map((x) => [x.answer, x.clue]));
     const temiOf = new Map(cruciverba.map((x) => [x.answer, x.temi || []]));
-    assert.equal(cruciverbaSchede.length, 15);
-    assert.deepEqual(cruciverbaSchede.map((p) => p.n), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
+    const errata = cruciverbaErrata || {};
+    assert.equal(cruciverbaSchede.length, 20);
+    assert.deepEqual(cruciverbaSchede.map((p) => p.n), Array.from({ length: 20 }, (_, i) => i + 1));
+    // le correzioni valgono solo per parole delle schede e coincidono con il database
+    const inSchede = new Set(cruciverbaSchede.flatMap((p) => p.words.map((w) => w.answer)));
+    for (const [a, c] of Object.entries(errata)) {
+        assert.ok(inSchede.has(a), `errata per ${a}, che non e' in nessuna scheda`);
+        assert.equal(c, clueOf.get(a), `errata per ${a} diversa dal database`);
+    }
     // ogni tema compare in una scheda dei primi 10 numeri; dal N° 11 i temi ricominciano
     noDuplicates(cruciverbaSchede.slice(0, 10).map((p) => p.tema), 'temi delle schede 1-10');
     const allAnswers = [];
@@ -167,7 +174,7 @@ test('cruciverba-schede.js: 15 schede a tema coerenti, risposte uniche e prese d
         p.words.forEach((w, i) => {
             assert.match(w.answer, /^[A-Z]{3,15}$/, `${tag}: risposta non valida ${w.answer}`);
             assert.ok(w.dir === 'A' || w.dir === 'D', `${tag}: verso non valido`);
-            assert.equal(clueOf.get(w.answer), w.clue, `${tag}: ${w.answer} assente dal database o con definizione diversa`);
+            assert.equal(clueOf.get(w.answer), errata[w.answer] || w.clue, `${tag}: ${w.answer} assente dal database o con definizione diversa`);
             const [dr, dc] = w.dir === 'A' ? [0, 1] : [1, 0];
             const endR = w.row + dr * (w.answer.length - 1), endC = w.col + dc * (w.answer.length - 1);
             assert.ok(w.row >= 0 && w.col >= 0 && endR < p.h && endC < p.w, `${tag}: ${w.answer} esce dalla griglia`);
@@ -210,7 +217,7 @@ test('cruciverba-schede.js: 15 schede a tema coerenti, risposte uniche e prese d
     }
 });
 
-test('cruciverba-schede.js: le schede pubblicate (N° 1-10) non cambiano mai', () => {
+test('cruciverba-schede.js: le schede pubblicate (N° 1-15) non cambiano mai', () => {
     // I giocatori hanno partite salvate su queste griglie: rigenerarle romperebbe i progressi.
     // scripts/build-cruciverba.js le congela; se questo test fallisce, qualcuno le ha toccate.
     // Quando si pubblicano nuove schede, si aggiunge la loro impronta qui sotto (mai cambiare quelle esistenti).
@@ -218,7 +225,8 @@ test('cruciverba-schede.js: le schede pubblicate (N° 1-10) non cambiano mai', (
     const { cruciverbaSchede } = load('cruciverba-schede.js');
     const PUBBLICATE = [
         { fino: 7, sha256: '5b494d2e1384dd9411d9dd99dd1910520b160bd15936236dc83de554971e0365' },
-        { fino: 10, sha256: 'f4ac217d8b446c051f2a7d16cdeba8d77d1c30a72c5eccd7f8dec4eed2abbdf6' }
+        { fino: 10, sha256: 'f4ac217d8b446c051f2a7d16cdeba8d77d1c30a72c5eccd7f8dec4eed2abbdf6' },
+        { fino: 15, sha256: '468e9c619745437bb7da948ba988ef2012386eb445fb5fa86045ea6791fb51da' }
     ];
     for (const { fino, sha256 } of PUBBLICATE) {
         const got = crypto.createHash('sha256').update(JSON.stringify(cruciverbaSchede.slice(0, fino))).digest('hex');

@@ -1,14 +1,15 @@
 /* ==========================================================================
-   QUIZZOTTI — Database: Avanti un Altro (quiz A/B, 180 domande)
+   QUIZZOTTI — Database: Avanti un Altro (quiz A/B, 233 domande)
    Estratto da AvantiUnAltro.html per separare i dati dalla logica di gioco.
-   Revisione contenuti: novembre 2026 (ampliato da 120 a 180 domande, risposte
-   giuste bilanciate tra A e B). I fatti che possono cambiare nel tempo sono
+   Revisione contenuti: 16 novembre 2026 (da 180 a 233 domande: stagione 2025-26,
+   Mondiale 2026, Palloni d'Oro 2025-26, grandi notti e Serie A; risposte giuste
+   bilanciate tra A e B). I fatti che possono cambiare nel tempo sono
    ancorati a un anno o a una stagione.
    ========================================================================== */
 
 const fullDatabase = [
       // Blocco 1
-      { q: "Quale squadra aveva vinto più titoli di Premier League (dal 1992 in poi) fino al 2025?", a: "Manchester United", b: "Liverpool", correct: "A" },
+      { q: "Quale squadra aveva vinto più titoli di Premier League (dal 1992 in poi) fino al 2026?", a: "Manchester United", b: "Liverpool", correct: "A" },
       { q: "Chi è stato il primo portiere a segnare un gol in Premier League?", a: "David Seaman", b: "Peter Schmeichel", correct: "B" },
       { q: "Quale squadra ha vinto la Coppa del Mondo FIFA nel 2014?", a: "Argentina", b: "Germania", correct: "B" },
       { q: "Chi ha segnato il gol decisivo nella finale di Champions League 2012?", a: "Frank Lampard", b: "Didier Drogba", correct: "B" },
@@ -31,15 +32,14 @@ const fullDatabase = [
       // Blocco 2
       { q: "Chi segnò il millesimo gol della storia dei Mondiali, nel 1978?", a: "Rob Rensenbrink", b: "Mario Kempes", correct: "A" },
       { q: "Quale nazionale africana fu la prima a raggiungere i quarti di finale di un Mondiale, nel 1990?", a: "Nigeria", b: "Camerun", correct: "B" },
-      { q: "Chi segnò nel 2007, dopo circa 10 secondi, quello che fino al 2025 era il gol più veloce della storia della Champions League?", a: "Roy Makaay", b: "Paolo Maldini", correct: "A" },
+      { q: "Chi segnò al Real Madrid nel 2007, dopo 10 secondi, il gol più veloce della storia della Champions League?", a: "Roy Makaay", b: "Ruud van Nistelrooy", correct: "A" },
       { q: "Chi ha vinto più campionati spagnoli da calciatore?", a: "Sergio Ramos", b: "Paco Gento", correct: "B" },
       { q: "Chi segnò il celebre gol al volo di sinistro nella finale di Champions League 2002?", a: "Zinedine Zidane", b: "Rivaldo", correct: "A" },
-      { q: "Quale club inglese aveva vinto più Coppe dei Campioni/Champions League fino al 2025?", a: "Manchester United", b: "Liverpool", correct: "B" },
+      { q: "Quale club inglese aveva vinto più Coppe dei Campioni/Champions League fino al 2026?", a: "Manchester United", b: "Liverpool", correct: "B" },
       { q: "Chi era nel 2025 il miglior marcatore della storia della nazionale brasiliana, secondo il conteggio ufficiale FIFA?", a: "Neymar", b: "Pelé", correct: "A" },
       { q: "In quale anno la Juventus vinse il suo primo Scudetto?", a: "1926", b: "1905", correct: "B" },
       { q: "Quale nazionale ha disputato più finali di Coppa del Mondo senza mai vincerla?", a: "Paesi Bassi", b: "Croazia", correct: "A" },
       { q: "Chi ha il maggior numero di presenze nella storia del Barcellona?", a: "Xavi", b: "Lionel Messi", correct: "B" },
-      { q: "Quale squadra argentina è la più titolata a livello internazionale?", a: "Boca Juniors", b: "River Plate", correct: "A" },
       { q: "Quale difensore tedesco vinse il Pallone d'Oro nel 1996?", a: "Jürgen Kohler", b: "Matthias Sammer", correct: "B" },
       { q: "Quale paese ha ospitato il Mondiale 1970?", a: "Messico", b: "Germania Ovest", correct: "A" },
       { q: "Chi detiene il record di imbattibilità di un portiere in Serie A (974 minuti nel 2016)?", a: "Sebastiano Rossi", b: "Gianluigi Buffon", correct: "B" },
@@ -57,10 +57,10 @@ const fullDatabase = [
       { q: "Quale squadra ha vinto la Coppa UEFA/Europa League per tre anni consecutivi?", a: "Siviglia", b: "Atlético Madrid", correct: "A" },
       { q: "Quale calciatore ha vinto più titoli di Serie A nella storia?", a: "Paolo Maldini", b: "Gianluigi Buffon", correct: "B" },
       { q: "Chi deteneva nel 2025 il record di cartellini rossi in carriera nella Liga?", a: "Sergio Ramos", b: "Pepe", correct: "A" },
-      { q: "Quale stadio ha una capienza maggiore?", a: "Stadio Giuseppe Meazza (San Siro)", b: "Camp Nou", correct: "B" },
+      { q: "Quale di questi due stadi può ospitare più spettatori?", a: "Stadio Giuseppe Meazza (San Siro)", b: "Camp Nou", correct: "B" },
       { q: "Chi ha collezionato più presenze in Bundesliga?", a: "Charly Körbel", b: "Oliver Kahn", correct: "A" },
       { q: "Quale nazionale aveva partecipato a più Mondiali senza mai vincerne uno, fino al 2022?", a: "Paesi Bassi", b: "Messico", correct: "B" },
-      { q: "Quale club aveva vinto più volte la Coppa UEFA/Europa League fino al 2025?", a: "Siviglia", b: "Inter", correct: "A" },
+      { q: "Quale club aveva vinto più volte la Coppa UEFA/Europa League fino al 2026?", a: "Siviglia", b: "Inter", correct: "A" },
       { q: "Quale squadra ha vinto nel 2025 il primo Mondiale per club FIFA a 32 squadre?", a: "Paris Saint-Germain", b: "Chelsea", correct: "B" },
       { q: "Prima dell'avvento della Premier League (1992), quale squadra inglese aveva vinto più titoli di First Division?", a: "Liverpool", b: "Manchester United", correct: "A" },
       { q: "Quale squadra ha vinto la prima edizione della Coppa Libertadores?", a: "Independiente", b: "Peñarol", correct: "B" },
@@ -196,6 +196,63 @@ const fullDatabase = [
       { q: "Con quale squadra Andrea Pirlo ha chiuso la carriera da calciatore nel 2017?", a: "New York City FC", b: "Toronto FC", correct: "A" },
       { q: "Con quale squadra Roberto Baggio ha chiuso la carriera nel 2004?", a: "Brescia", b: "Bologna", correct: "A" },
       { q: "Quale squadra aveva vinto più Champions League femminili fino al 2025?", a: "Olympique Lione", b: "Barcellona", correct: "A" },
+      // Blocco 10: la stagione 2025-26 e il Mondiale 2026
+      { q: "Quale nazionale ha vinto il Mondiale 2026, battendo l'Argentina in finale?", a: "Spagna", b: "Francia", correct: "A" },
+      { q: "Chi ha segnato ai supplementari il gol che ha deciso la finale del Mondiale 2026?", a: "Lamine Yamal", b: "Ferran Torres", correct: "B" },
+      { q: "In quale stadio si è giocata la finale del Mondiale 2026?", a: "MetLife Stadium (New York/New Jersey)", b: "Stadio Azteca (Città del Messico)", correct: "A" },
+      { q: "Chi è stato il capocannoniere del Mondiale 2026, con 10 gol?", a: "Lionel Messi", b: "Kylian Mbappé", correct: "B" },
+      { q: "Chi è stato premiato come miglior giocatore del Mondiale 2026?", a: "Rodri", b: "Lamine Yamal", correct: "A" },
+      { q: "Quale nazionale ha chiuso al terzo posto il Mondiale 2026, battendo 6-4 la Francia?", a: "Portogallo", b: "Inghilterra", correct: "B" },
+      { q: "Quale nazionale ha eliminato l'Italia ai rigori nella finale dei playoff per il Mondiale 2026?", a: "Bosnia ed Erzegovina", b: "Galles", correct: "A" },
+      { q: "Chi ha vinto il Pallone d'Oro 2025?", a: "Lamine Yamal", b: "Ousmane Dembélé", correct: "B" },
+      { q: "Chi ha vinto il Pallone d'Oro 2026, nella cerimonia di Londra?", a: "Harry Kane", b: "Kylian Mbappé", correct: "A" },
+      { q: "Quale squadra ha vinto lo scudetto 2025-26, il ventunesimo della sua storia?", a: "Napoli", b: "Inter", correct: "B" },
+      { q: "Contro quale squadra l'Inter ha vinto la finale di Coppa Italia 2026 all'Olimpico?", a: "Lazio", b: "Atalanta", correct: "A" },
+      { q: "Quale squadra ha vinto la Supercoppa italiana giocata a Riad nel dicembre 2025?", a: "Bologna", b: "Napoli", correct: "B" },
+      { q: "Quale squadra ha vinto la Champions League 2026, ai rigori nella finale di Budapest?", a: "Paris Saint-Germain", b: "Arsenal", correct: "A" },
+      { q: "Quale squadra ha vinto la Premier League 2025-26, ventidue anni dopo l'ultima volta?", a: "Manchester City", b: "Arsenal", correct: "B" },
+      { q: "Quale squadra ha vinto l'Europa League 2026, nella finale di Istanbul?", a: "Aston Villa", b: "Friburgo", correct: "A" },
+      { q: "Quale squadra ha vinto la Conference League 2026, il primo trofeo europeo della sua storia?", a: "Rayo Vallecano", b: "Crystal Palace", correct: "B" },
+      { q: "Quale squadra ha vinto la Liga 2025-26?", a: "Barcellona", b: "Real Madrid", correct: "A" },
+      // Blocco 11: notti da ricordare
+      { q: "Chi segnò il \"gol del secolo\" contro l'Inghilterra al Mondiale 1986?", a: "Jorge Valdano", b: "Diego Armando Maradona", correct: "B" },
+      { q: "Chi tirò alto l'ultimo rigore dell'Italia nella finale del Mondiale 1994?", a: "Roberto Baggio", b: "Franco Baresi", correct: "A" },
+      { q: "Chi rifilò la testata a Materazzi nella finale del Mondiale 2006?", a: "Thierry Henry", b: "Zinedine Zidane", correct: "B" },
+      { q: "Quale squadra rimontò tre gol al Milan nella finale di Champions League 2005 a Istanbul?", a: "Liverpool", b: "Chelsea", correct: "A" },
+      { q: "Chi segnò al 93' il gol vittoria del Manchester United nella finale di Champions League 1999?", a: "Teddy Sheringham", b: "Ole Gunnar Solskjær", correct: "B" },
+      { q: "Chi segnò il gol decisivo della Spagna nella finale del Mondiale 2010?", a: "Andrés Iniesta", b: "David Villa", correct: "A" },
+      { q: "Chi segnò ai supplementari il gol decisivo della Germania nella finale del Mondiale 2014?", a: "Thomas Müller", b: "Mario Götze", correct: "B" },
+      { q: "Chi segnò il celebre \"gol fantasma\" nella finale del Mondiale 1966?", a: "Geoff Hurst", b: "Bobby Charlton", correct: "A" },
+      { q: "Chi trasformò il rigore \"a cucchiaio\" contro l'Olanda nella semifinale dell'Europeo 2000?", a: "Alessandro Del Piero", b: "Francesco Totti", correct: "B" },
+      { q: "Quale nazionale vinse il primo Mondiale della storia, nel 1930?", a: "Uruguay", b: "Argentina", correct: "A" },
+      { q: "Quale nazionale vinse a sorpresa l'Europeo 2004, battendo il Portogallo padrone di casa?", a: "Repubblica Ceca", b: "Grecia", correct: "B" },
+      { q: "Quale nazionale ha vinto l'Europeo 2024, battendo l'Inghilterra in finale?", a: "Spagna", b: "Francia", correct: "A" },
+      { q: "Quale squadra ha battuto l'Inter nella finale di Champions League 2023 a Istanbul?", a: "Real Madrid", b: "Manchester City", correct: "B" },
+      { q: "Contro quale squadra l'Inter di Mourinho vinse la finale di Champions League 2010, a Madrid?", a: "Bayern Monaco", b: "Barcellona", correct: "A" },
+      { q: "Con quale squadra Zinedine Zidane ha vinto tre Champions League di fila da allenatore?", a: "Juventus", b: "Real Madrid", correct: "B" },
+      // Blocco 12: Serie A, panchine e Palloni d'Oro
+      { q: "Quale squadra vinse lo scudetto 1984-85, il primo e unico della sua storia?", a: "Verona", b: "Torino", correct: "A" },
+      { q: "Quale squadra vinse lo scudetto 1990-91 con Vialli e Mancini?", a: "Napoli", b: "Sampdoria", correct: "B" },
+      { q: "Quale squadra vinse lo scudetto 1999-2000, il giorno in cui la Juventus affondò sotto il diluvio di Perugia?", a: "Lazio", b: "Roma", correct: "A" },
+      { q: "Quale squadra vinse lo scudetto 2000-01 con Fabio Capello in panchina?", a: "Lazio", b: "Roma", correct: "B" },
+      { q: "Chi è il giocatore con più presenze nella storia della Serie A?", a: "Gianluigi Buffon", b: "Paolo Maldini", correct: "A" },
+      { q: "Chi è il miglior marcatore di tutti i tempi della Serie A?", a: "Francesco Totti", b: "Silvio Piola", correct: "B" },
+      { q: "Quale squadra vinse a sorpresa la Premier League 2015-16, con quote da 5000 a 1?", a: "Leicester City", b: "Tottenham", correct: "A" },
+      { q: "Chi allenava il Leicester campione d'Inghilterra nel 2016?", a: "Nigel Pearson", b: "Claudio Ranieri", correct: "B" },
+      { q: "Chi era il CT dell'Italia campione del mondo nel 1982?", a: "Enzo Bearzot", b: "Azeglio Vicini", correct: "A" },
+      { q: "Chi era il CT dell'Italia campione del mondo nel 2006?", a: "Roberto Donadoni", b: "Marcello Lippi", correct: "B" },
+      { q: "Chi era il CT dell'Italia campione d'Europa nel 2021?", a: "Roberto Mancini", b: "Antonio Conte", correct: "A" },
+      { q: "Quale portiere vinse il Pallone d'Oro nel 1963, unico nella storia del premio?", a: "Gordon Banks", b: "Lev Yashin", correct: "B" },
+      { q: "Chi ha vinto il Pallone d'Oro nel 1993?", a: "Roberto Baggio", b: "Dennis Bergkamp", correct: "A" },
+      { q: "Chi ha vinto il Pallone d'Oro nel 2006, dopo il Mondiale tedesco?", a: "Gianluigi Buffon", b: "Fabio Cannavaro", correct: "B" },
+      { q: "Chi ha vinto il Pallone d'Oro nel 2018, rompendo il duopolio Messi-Ronaldo?", a: "Luka Modrić", b: "Antoine Griezmann", correct: "A" },
+      { q: "Chi ha vinto il Pallone d'Oro nel 2024?", a: "Vinícius Júnior", b: "Rodri", correct: "B" },
+      { q: "Di quale squadra è lo stadio Signal Iduna Park?", a: "Borussia Dortmund", b: "Schalke 04", correct: "A" },
+      { q: "Di quale squadra è lo stadio Old Trafford?", a: "Manchester City", b: "Manchester United", correct: "B" },
+      { q: "Quale squadra gioca in casa allo stadio Maradona di Fuorigrotta?", a: "Napoli", b: "Salernitana", correct: "A" },
+      { q: "Con quale maglia Francesco Totti ha giocato tutta la carriera?", a: "Lazio", b: "Roma", correct: "B" },
+      { q: "Con quale squadra Paolo Maldini ha giocato tutta la carriera?", a: "Milan", b: "Inter", correct: "A" },
+      { q: "Con quale squadra il Torino ha diviso lo stadio Delle Alpi fino al 2006?", a: "Genoa", b: "Juventus", correct: "B" },
 ];
 
 if (typeof module !== "undefined" && module.exports) { module.exports = { fullDatabase }; }

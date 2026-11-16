@@ -44,7 +44,12 @@ const PLAN = [
     { n: 12, tema: 'estero', title: 'Oltre confine', sottotitolo: "Bundesliga, Ligue 1, Eredivisie e campioni lontani dall'Italia", diff2: 0.50, diff3: [2, 4] },
     { n: 13, tema: 'stadi', title: 'Cattedrali del pallone', sottotitolo: 'Stadi storici, curve e campi di provincia', diff2: 0.50, diff3: [2, 4] },
     { n: 14, tema: 'mister', title: 'Lavagna tattica', sottotitolo: 'Allenatori, moduli e panchine celebri', diff2: 0.50, diff3: [2, 4] },
-    { n: 15, tema: 'anni90', title: 'Album di figurine', sottotitolo: "Campioni e meteore della Serie A tra anni '80 e '90", diff2: 0.50, diff3: [2, 4] }
+    { n: 15, tema: 'anni90', title: 'Album di figurine', sottotitolo: "Campioni e meteore della Serie A tra anni '80 e '90", diff2: 0.50, diff3: [2, 4] },
+    { n: 16, tema: 'nazionale', title: 'Cuore azzurro', sottotitolo: 'Dal 1934 a Wembley 2021: gol, rigori e CT della Nazionale', diff2: 0.50, diff3: [2, 4] },
+    { n: 17, tema: 'champions', title: 'Notti europee', sottotitolo: 'Coppa dei Campioni e Champions: finali, eroi e beffe', diff2: 0.50, diff3: [2, 4] },
+    { n: 18, tema: 'bandiere', title: 'Fedeli alla maglia', sottotitolo: 'Capitani e campioni di una sola squadra, qui e altrove', diff2: 0.50, diff3: [2, 4] },
+    { n: 19, tema: 'mercato', title: 'Mercato aperto', sottotitolo: 'Colpi record, procuratori e trattative infinite', diff2: 0.50, diff3: [2, 4] },
+    { n: 20, tema: 'bar', title: 'Al bar del lunedì', sottotitolo: 'Campetto, schedina, figurine e moviola', diff2: 0.50, diff3: [2, 4] }
 ];
 const MIN_THEMED = 9;
 const WORDS = { min: 16, max: 18 };
@@ -327,6 +332,20 @@ for (const plan of PLAN) {
     });
 }
 
+/* Errata: le schede pubblicate restano identiche (impronta nei test), ma se una
+   definizione del database e' stata corretta dopo la pubblicazione (un fatto
+   invecchiato, un trasferimento) il gioco mostra quella nuova. */
+const dbClue = new Map(DB.map((x) => [x.answer, x.clue]));
+const errata = {};
+for (const p of frozen) {
+    for (const w of p.words) {
+        if (!dbClue.has(w.answer)) throw new Error(`N° ${p.n}: ${w.answer} non e' piu' nel database`);
+        if (dbClue.get(w.answer) !== w.clue) errata[w.answer] = dbClue.get(w.answer);
+    }
+}
+if (Object.keys(errata).length) console.log('Errata per le schede pubblicate: ' + Object.keys(errata).join(', '));
+const errataBody = Object.keys(errata).sort().map((k) => '  ' + k + ': ' + JSON.stringify(errata[k])).join(',\n');
+
 const body = out.map((p) => '  {\n    n: ' + p.n + ', tema: ' + JSON.stringify(p.tema) + ', title: ' + JSON.stringify(p.title) + ',\n    sottotitolo: ' + JSON.stringify(p.sottotitolo) + ', w: ' + p.w + ', h: ' + p.h + ',\n    words: [\n' +
     p.words.map((x) => '      { answer: ' + JSON.stringify(x.answer) + ', clue: ' + JSON.stringify(x.clue) + ', row: ' + x.row + ', col: ' + x.col + ', dir: "' + x.dir + '", num: ' + x.num + ' }').join(',\n') +
     '\n    ]\n  }').join(',\n');
@@ -334,15 +353,22 @@ const file = `/* ===============================================================
    QUIZZOTTI — Cruciverba: le schede fisse (N° 1 ... N° ${out.length})
    FILE GENERATO da scripts/build-cruciverba.js a partire da
    assets/db-cruciverba.js: non modificarlo a mano, rilancia lo script.
-   tema: nazionale | champions | mondiali | bandiere | mercato | bar | stadi.
+   tema: nazionale | champions | mondiali | bandiere | mercato | bar | stadi |
+   anni90 | mister | estero.
    row/col partono da 0; dir "A" = orizzontale, "D" = verticale.
+   cruciverbaErrata: definizioni corrette dopo la pubblicazione (risposta ->
+   definizione nuova); il gioco le mostra al posto di quelle della scheda.
    ========================================================================== */
-/* exported cruciverbaSchede */
+/* exported cruciverbaSchede, cruciverbaErrata */
 const cruciverbaSchede = [
 ${body}
 ];
 
-if (typeof module !== "undefined" && module.exports) { module.exports = { cruciverbaSchede }; }
+const cruciverbaErrata = {
+${errataBody}
+};
+
+if (typeof module !== "undefined" && module.exports) { module.exports = { cruciverbaSchede, cruciverbaErrata }; }
 `;
 fs.writeFileSync(path.join(ROOT, 'assets', 'cruciverba-schede.js'), file);
 console.log(`Scritto assets/cruciverba-schede.js (${out.length} schede) in ${((Date.now() - t00) / 1000).toFixed(1)} s`);

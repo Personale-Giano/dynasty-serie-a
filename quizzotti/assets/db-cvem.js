@@ -1,9 +1,9 @@
 /* ==========================================================================
    QUIZZOTTI — Database: Chi Vuol Essere Milionario (domande per livello 1-15)
    Estratto da CVEM.html per separare i dati dalla logica di gioco.
-   225 domande: 15 per livello, dal livello 1 (banale) al 15 (molto difficile).
-   Revisione del 15 novembre 2026: fatti e record ancorati a un anno
-   ("fino al 2025") quando possono cambiare; nessun doppione con questions-data.js.
+   281 domande, almeno 18 per livello, dal livello 1 (banale) al 15 (molto difficile).
+   Revisione del 16 novembre 2026 (stagione 2025-26 e Mondiale 2026 compresi): fatti e record ancorati a un anno
+   ("fino al 2026") quando possono cambiare; nessun doppione con questions-data.js.
    ========================================================================== */
 
 const questions = [
@@ -22,9 +22,13 @@ const questions = [
             { level: 1, question: "Come si chiama il calcio che si batte dalla bandierina?", options: { A: "Calcio d'angolo", B: "Rimessa laterale", C: "Calcio di rigore", D: "Rinvio dal fondo" }, correctAnswer: "A" },
             { level: 1, question: "Con quale parte del corpo un giocatore di movimento non può toccare volontariamente il pallone?", options: { A: "La testa", B: "Le mani e le braccia", C: "Il petto", D: "Le cosce" }, correctAnswer: "B" },
             { level: 1, question: "Chi dirige la partita in campo e fischia i falli?", options: { A: "Il commissario tecnico", B: "Il capitano", C: "L'arbitro", D: "Il magazziniere" }, correctAnswer: "C" },
+            { level: 1, question: "Quanti punti si prendono in campionato per un pareggio?", options: { A: "0", B: "1", C: "2", D: "3" }, correctAnswer: "B" },
+            { level: 1, question: "Come si chiama il lancio con le mani che rimette in gioco il pallone uscito dalla linea laterale?", options: { A: "Calcio d'angolo", B: "Rinvio dal fondo", C: "Rimessa laterale", D: "Punizione" }, correctAnswer: "C" },
+            { level: 1, question: "Chi indossa di solito la maglia numero 1?", options: { A: "Il centravanti", B: "Il portiere", C: "Il terzino", D: "L'ala" }, correctAnswer: "B" },
+            { level: 1, question: "Che cosa deve superare completamente il pallone perché il gol sia valido?", options: { A: "Il dischetto", B: "La lunetta", C: "L'area piccola", D: "La linea di porta" }, correctAnswer: "D" },
 
             { level: 2, question: "Come viene chiamata la nazionale brasiliana?", options: { A: "La Seleção (i Verdeoro)", B: "La Roja", C: "Gli Azzurri", D: "La Mannschaft" }, correctAnswer: "A" },
-            { level: 2, question: "Qual è la squadra con più scudetti vinti in Italia (fino al 2025)?", options: { A: "Milan", B: "Inter", C: "Torino", D: "Juventus" }, correctAnswer: "D" },
+            { level: 2, question: "Qual è la squadra con più scudetti vinti in Italia (fino al 2026)?", options: { A: "Milan", B: "Inter", C: "Torino", D: "Juventus" }, correctAnswer: "D" },
             { level: 2, question: "Qual è lo stadio del Liverpool?", options: { A: "Old Trafford", B: "Stamford Bridge", C: "Etihad Stadium", D: "Anfield" }, correctAnswer: "D" },
             { level: 2, question: "Quale nazionale ha vinto il Mondiale 2018?", options: { A: "Croazia", B: "Francia", C: "Germania", D: "Brasile" }, correctAnswer: "B" },
             { level: 2, question: "In quale anno l'Italia ha vinto il Mondiale in Germania?", options: { A: "1998", B: "2002", C: "2006", D: "2010" }, correctAnswer: "C" },
@@ -38,6 +42,10 @@ const questions = [
             { level: 2, question: "Quale partita è chiamata 'Derby d'Italia'?", options: { A: "Milan-Inter", B: "Inter-Juventus", C: "Roma-Lazio", D: "Torino-Juventus" }, correctAnswer: "B" },
             { level: 2, question: "Quale nazionale è soprannominata 'Les Bleus'?", options: { A: "Italia", B: "Belgio", C: "Francia", D: "Paesi Bassi" }, correctAnswer: "C" },
             { level: 2, question: "Con quale nazionale gioca Cristiano Ronaldo?", options: { A: "Spagna", B: "Brasile", C: "Argentina", D: "Portogallo" }, correctAnswer: "D" },
+            { level: 2, question: "Quale nazionale è soprannominata «die Mannschaft»?", options: { A: "Austria", B: "Germania", C: "Svizzera", D: "Paesi Bassi" }, correctAnswer: "B" },
+            { level: 2, question: "Quale nazionale ha vinto il Mondiale 2026?", options: { A: "Spagna", B: "Argentina", C: "Francia", D: "Inghilterra" }, correctAnswer: "A" },
+            { level: 2, question: "Per quale nazionale gioca Lamine Yamal?", options: { A: "Marocco", B: "Portogallo", C: "Francia", D: "Spagna" }, correctAnswer: "D" },
+            { level: 2, question: "Quale di queste squadre gioca con la maglia a strisce bianche e nere?", options: { A: "Milan", B: "Roma", C: "Juventus", D: "Napoli" }, correctAnswer: "C" },
 
             { level: 3, question: "Quale nazionale ha perso ai rigori la finale del Mondiale 2022?", options: { A: "Francia", B: "Croazia", C: "Brasile", D: "Paesi Bassi" }, correctAnswer: "A" },
             { level: 3, question: "Con quale club Lionel Messi ha esordito tra i professionisti?", options: { A: "Newell's Old Boys", B: "River Plate", C: "Barcellona", D: "PSG" }, correctAnswer: "C" },
@@ -45,7 +53,7 @@ const questions = [
             { level: 3, question: "Quale nazionale vinse il primo Mondiale della storia, giocato in casa?", options: { A: "Argentina", B: "Brasile", C: "Italia", D: "Uruguay" }, correctAnswer: "D" },
             { level: 3, question: "Quale squadra vinse a sorpresa la Premier League 2015-16?", options: { A: "Leicester City", B: "Tottenham", C: "Arsenal", D: "West Ham" }, correctAnswer: "A" },
             { level: 3, question: "Quale nazionale ha vinto l'Europeo 2016?", options: { A: "Francia", B: "Germania", C: "Galles", D: "Portogallo" }, correctAnswer: "D" },
-            { level: 3, question: "Chi ha vinto più Palloni d'Oro nella storia (fino al 2025)?", options: { A: "Cristiano Ronaldo", B: "Lionel Messi", C: "Michel Platini", D: "Johan Cruijff" }, correctAnswer: "B" },
+            { level: 3, question: "Chi ha vinto più Palloni d'Oro nella storia (fino al 2026)?", options: { A: "Cristiano Ronaldo", B: "Lionel Messi", C: "Michel Platini", D: "Johan Cruijff" }, correctAnswer: "B" },
             { level: 3, question: "Quale attaccante argentino è soprannominato 'Kun'?", options: { A: "Gonzalo Higuaín", B: "Carlos Tevez", C: "Sergio Agüero", D: "Lautaro Martínez" }, correctAnswer: "C" },
             { level: 3, question: "Quale squadra è nota come 'i Red Devils'?", options: { A: "Manchester United", B: "Liverpool", C: "Arsenal", D: "Nottingham Forest" }, correctAnswer: "A" },
             { level: 3, question: "Quale nazione ha ospitato i Mondiali del 2010?", options: { A: "Brasile", B: "Sudafrica", C: "Germania", D: "Corea del Sud" }, correctAnswer: "B" },
@@ -54,13 +62,17 @@ const questions = [
             { level: 3, question: "In quale squadra ha giocato per tutta la carriera Francesco Totti?", options: { A: "Roma", B: "Lazio", C: "Juventus", D: "Inter" }, correctAnswer: "A" },
             { level: 3, question: "Chi era il CT dell'Italia campione del mondo nel 2006?", options: { A: "Arrigo Sacchi", B: "Giovanni Trapattoni", C: "Marcello Lippi", D: "Cesare Prandelli" }, correctAnswer: "C" },
             { level: 3, question: "Quale nazionale ha vinto il Mondiale 2010?", options: { A: "Paesi Bassi", B: "Spagna", C: "Germania", D: "Uruguay" }, correctAnswer: "B" },
+            { level: 3, question: "Quale nazionale ha perso la finale del Mondiale 2026?", options: { A: "Francia", B: "Argentina", C: "Inghilterra", D: "Brasile" }, correctAnswer: "B" },
+            { level: 3, question: "In quale città si trova lo stadio Maracanã?", options: { A: "San Paolo", B: "Brasilia", C: "Rio de Janeiro", D: "Belo Horizonte" }, correctAnswer: "C" },
+            { level: 3, question: "Quale squadra inglese è soprannominata «i Citizens»?", options: { A: "Manchester City", B: "Manchester United", C: "Liverpool", D: "Everton" }, correctAnswer: "A" },
+            { level: 3, question: "Chi era il portiere dell'Italia campione del mondo nel 2006?", options: { A: "Francesco Toldo", B: "Angelo Peruzzi", C: "Walter Zenga", D: "Gianluigi Buffon" }, correctAnswer: "D" },
 
             { level: 4, question: "Quale nazionale vinse a sorpresa l'Europeo 2004?", options: { A: "Grecia", B: "Turchia", C: "Danimarca", D: "Repubblica Ceca" }, correctAnswer: "A" },
-            { level: 4, question: "Quante Champions League/Coppe dei Campioni ha vinto il Milan (fino al 2025)?", options: { A: "5", B: "6", C: "7", D: "8" }, correctAnswer: "C" },
+            { level: 4, question: "Quante Champions League/Coppe dei Campioni ha vinto il Milan (fino al 2026)?", options: { A: "5", B: "6", C: "7", D: "8" }, correctAnswer: "C" },
             { level: 4, question: "Quale nazionale ha vinto l'Europeo 2024 in Germania?", options: { A: "Inghilterra", B: "Francia", C: "Germania", D: "Spagna" }, correctAnswer: "D" },
             { level: 4, question: "Chi ha vinto il Pallone d'Oro 2018, interrompendo il duopolio Messi-Ronaldo?", options: { A: "Antoine Griezmann", B: "Luka Modrić", C: "Kylian Mbappé", D: "Mohamed Salah" }, correctAnswer: "B" },
             { level: 4, question: "Qual è lo stadio con la capienza maggiore in Italia?", options: { A: "San Siro", B: "Stadio Olimpico", C: "Allianz Stadium", D: "Stadio Maradona" }, correctAnswer: "A" },
-            { level: 4, question: "Quanti Mondiali ha vinto la Germania (Germania Ovest compresa)?", options: { A: "2", B: "3", C: "4", D: "5" }, correctAnswer: "C" },
+            { level: 4, question: "Quanti Mondiali ha vinto la Germania, Germania Ovest compresa (fino al 2026)?", options: { A: "2", B: "3", C: "4", D: "5" }, correctAnswer: "C" },
             { level: 4, question: "Quale portiere italiano è stato votato miglior giocatore di Euro 2020?", options: { A: "Salvatore Sirigu", B: "Gianluigi Donnarumma", C: "Alex Meret", D: "Gianluigi Buffon" }, correctAnswer: "B" },
             { level: 4, question: "Chi era il miglior marcatore della storia dei Mondiali dopo l'edizione 2022?", options: { A: "Ronaldo (brasiliano)", B: "Gerd Müller", C: "Pelé", D: "Miroslav Klose" }, correctAnswer: "D" },
             { level: 4, question: "In quale stadio l'Italia vinse la finale dei Mondiali 2006?", options: { A: "Allianz Arena di Monaco", B: "Westfalenstadion di Dortmund", C: "Olympiastadion di Berlino", D: "Volksparkstadion di Amburgo" }, correctAnswer: "C" },
@@ -70,14 +82,18 @@ const questions = [
             { level: 4, question: "Quale nazionale vinse l'Europeo 2000 col golden gol di Trezeguet in finale contro l'Italia?", options: { A: "Paesi Bassi", B: "Portogallo", C: "Francia", D: "Spagna" }, correctAnswer: "C" },
             { level: 4, question: "Quale nazionale ha vinto la Copa América 2024?", options: { A: "Colombia", B: "Uruguay", C: "Brasile", D: "Argentina" }, correctAnswer: "D" },
             { level: 4, question: "Quale soprannome aveva Roberto Baggio?", options: { A: "Il Divin Codino", B: "Pinturicchio", C: "Il Principe", D: "Il Mago" }, correctAnswer: "A" },
+            { level: 4, question: "Chi ha vinto il Pallone d'Oro 2026?", options: { A: "Kylian Mbappé", B: "Lamine Yamal", C: "Harry Kane", D: "Ousmane Dembélé" }, correctAnswer: "C" },
+            { level: 4, question: "Chi allenava l'Inter campione d'Italia nel 2025-26?", options: { A: "Cristian Chivu", B: "Simone Inzaghi", C: "Antonio Conte", D: "Cesc Fàbregas" }, correctAnswer: "A" },
+            { level: 4, question: "Quale nazionale ha vinto l'Europeo 2008?", options: { A: "Germania", B: "Russia", C: "Turchia", D: "Spagna" }, correctAnswer: "D" },
+            { level: 4, question: "Quante Champions League/Coppe dei Campioni ha vinto l'Inter (fino al 2026)?", options: { A: "2", B: "3", C: "4", D: "5" }, correctAnswer: "B" },
 
-            { level: 5, question: "Quale squadra ha vinto più volte la Bundesliga?", options: { A: "Bayern Monaco", B: "Borussia Dortmund", C: "Borussia Mönchengladbach", D: "Amburgo" }, correctAnswer: "A" },
+            { level: 5, question: "Quale squadra ha vinto più volte la Bundesliga (fino al 2026)?", options: { A: "Bayern Monaco", B: "Borussia Dortmund", C: "Borussia Mönchengladbach", D: "Amburgo" }, correctAnswer: "A" },
             { level: 5, question: "Chi segnò il 'gol del secolo' al Mondiale 1986 contro l'Inghilterra?", options: { A: "Jorge Valdano", B: "Jorge Burruchaga", C: "Gary Lineker", D: "Diego Maradona" }, correctAnswer: "D" },
             { level: 5, question: "Quanti Mondiali ha vinto l'Inghilterra (fino al 2022)?", options: { A: "0", B: "1", C: "2", D: "3" }, correctAnswer: "B" },
             { level: 5, question: "In quale anno il Milan ha vinto la sua ultima Champions League?", options: { A: "1994", B: "2003", C: "2005", D: "2007" }, correctAnswer: "D" },
             { level: 5, question: "In quale stagione la Coppa dei Campioni ha preso il nome di Champions League?", options: { A: "1985-86", B: "1990-91", C: "1992-93", D: "1995-96" }, correctAnswer: "C" },
             { level: 5, question: "Chi ha vinto il Pallone d'Oro 2006?", options: { A: "Fabio Cannavaro", B: "Zinedine Zidane", C: "Ronaldinho", D: "Gianluigi Buffon" }, correctAnswer: "A" },
-            { level: 5, question: "Quale squadra ha vinto più volte la Liga spagnola?", options: { A: "Barcellona", B: "Atlético Madrid", C: "Athletic Bilbao", D: "Real Madrid" }, correctAnswer: "D" },
+            { level: 5, question: "Quale squadra ha vinto più volte la Liga spagnola (fino al 2026)?", options: { A: "Barcellona", B: "Atlético Madrid", C: "Athletic Bilbao", D: "Real Madrid" }, correctAnswer: "D" },
             { level: 5, question: "In quale anno la Juventus vinse la sua prima Coppa dei Campioni?", options: { A: "1973", B: "1983", C: "1985", D: "1996" }, correctAnswer: "C" },
             { level: 5, question: "Chi era il CT dell'Italia che vinse Euro 2020?", options: { A: "Antonio Conte", B: "Roberto Mancini", C: "Gian Piero Ventura", D: "Luciano Spalletti" }, correctAnswer: "B" },
             { level: 5, question: "In quale anno si è giocato il primo Campionato Europeo per nazionali?", options: { A: "1958", B: "1960", C: "1964", D: "1968" }, correctAnswer: "B" },
@@ -86,12 +102,16 @@ const questions = [
             { level: 5, question: "Quale allenatore ha guidato il Napoli allo scudetto 2022-23?", options: { A: "Antonio Conte", B: "Maurizio Sarri", C: "Carlo Ancelotti", D: "Luciano Spalletti" }, correctAnswer: "D" },
             { level: 5, question: "In quale città si è giocata la finale dell'Europeo 2024?", options: { A: "Monaco di Baviera", B: "Dortmund", C: "Berlino", D: "Gelsenkirchen" }, correctAnswer: "C" },
             { level: 5, question: "Quale club ha vinto la Conference League 2025?", options: { A: "Real Betis", B: "Chelsea", C: "Fiorentina", D: "Olympiacos" }, correctAnswer: "B" },
+            { level: 5, question: "Chi ha segnato il gol che ha deciso la finale del Mondiale 2026, ai supplementari?", options: { A: "Lamine Yamal", B: "Nico Williams", C: "Mikel Oyarzabal", D: "Ferran Torres" }, correctAnswer: "D" },
+            { level: 5, question: "Quale squadra ha vinto la Coppa Italia 2026 battendo la Lazio in finale?", options: { A: "Inter", B: "Napoli", C: "Bologna", D: "Juventus" }, correctAnswer: "A" },
+            { level: 5, question: "Chi ha vinto il Pallone d'Oro 2007?", options: { A: "Cristiano Ronaldo", B: "Kaká", C: "Lionel Messi", D: "Ronaldinho" }, correctAnswer: "B" },
+            { level: 5, question: "Chi era il CT dell'Italia all'Europeo 2024?", options: { A: "Roberto Mancini", B: "Gennaro Gattuso", C: "Luciano Spalletti", D: "Antonio Conte" }, correctAnswer: "C" },
 
             { level: 6, question: "Quale nazionale ha vinto più Europei (fino al 2024)?", options: { A: "Spagna", B: "Germania", C: "Italia", D: "Francia" }, correctAnswer: "A" },
             { level: 6, question: "Quanti Mondiali ha vinto l'Uruguay (fino al 2022)?", options: { A: "1", B: "2", C: "3", D: "4" }, correctAnswer: "B" },
             { level: 6, question: "Quante sostituzioni può fare oggi una squadra nei 90 minuti di una partita ufficiale?", options: { A: "3", B: "4", C: "5", D: "6" }, correctAnswer: "C" },
             { level: 6, question: "Chi è il miglior marcatore della storia del Real Madrid?", options: { A: "Alfredo Di Stéfano", B: "Raúl", C: "Karim Benzema", D: "Cristiano Ronaldo" }, correctAnswer: "D" },
-            { level: 6, question: "Quante Champions League/Coppe dei Campioni ha vinto il Liverpool (fino al 2025)?", options: { A: "4", B: "5", C: "6", D: "7" }, correctAnswer: "C" },
+            { level: 6, question: "Quante Champions League/Coppe dei Campioni ha vinto il Liverpool (fino al 2026)?", options: { A: "4", B: "5", C: "6", D: "7" }, correctAnswer: "C" },
             { level: 6, question: "Quale attaccante spagnolo era soprannominato 'El Buitre' (l'avvoltoio)?", options: { A: "Raúl", B: "Fernando Hierro", C: "Míchel", D: "Emilio Butragueño" }, correctAnswer: "D" },
             { level: 6, question: "Quanti Mondiali aveva vinto la Francia dopo l'edizione 2022?", options: { A: "0", B: "1", C: "2", D: "3" }, correctAnswer: "C" },
             { level: 6, question: "In quale stagione l'Arsenal vinse la Premier League senza perdere una partita?", options: { A: "1997-98", B: "2001-02", C: "2003-04", D: "2004-05" }, correctAnswer: "C" },
@@ -101,12 +121,16 @@ const questions = [
             { level: 6, question: "Chi è il miglior marcatore della storia del Barcellona?", options: { A: "Lionel Messi", B: "César Rodríguez", C: "Luis Suárez", D: "László Kubala" }, correctAnswer: "A" },
             { level: 6, question: "Quale squadra ha vinto l'Europa League 2023 battendo la Roma ai rigori?", options: { A: "Villarreal", B: "Siviglia", C: "Eintracht Francoforte", D: "Atalanta" }, correctAnswer: "B" },
             { level: 6, question: "Quale club ha vinto l'Europa League 2022 battendo i Rangers ai rigori?", options: { A: "West Ham", B: "RB Lipsia", C: "Braga", D: "Eintracht Francoforte" }, correctAnswer: "D" },
-            { level: 6, question: "Quanti scudetti ha vinto l'Inter (fino al 2025)?", options: { A: "18", B: "19", C: "20", D: "21" }, correctAnswer: "C" },
+            { level: 6, question: "Quanti scudetti ha vinto l'Inter (fino al 2026)?", options: { A: "19", B: "20", C: "21", D: "22" }, correctAnswer: "C" },
+            { level: 6, question: "Quale squadra ha vinto l'Europa League 2026 battendo il Friburgo in finale?", options: { A: "Nottingham Forest", B: "Aston Villa", C: "Roma", D: "Porto" }, correctAnswer: "B" },
+            { level: 6, question: "Quale squadra ha vinto la Conference League 2026, il primo trofeo europeo della sua storia?", options: { A: "Crystal Palace", B: "Rayo Vallecano", C: "Fiorentina", D: "Real Betis" }, correctAnswer: "A" },
+            { level: 6, question: "Chi era il capitano dell'Italia campione d'Europa nel 2021?", options: { A: "Leonardo Bonucci", B: "Giorgio Chiellini", C: "Gianluigi Donnarumma", D: "Lorenzo Insigne" }, correctAnswer: "B" },
+            { level: 6, question: "Chi era il capitano del Milan campione d'Europa nel 2003 e nel 2007?", options: { A: "Alessandro Costacurta", B: "Andrea Pirlo", C: "Alessandro Nesta", D: "Paolo Maldini" }, correctAnswer: "D" },
 
             { level: 7, question: "In quale anno l'Italia vinse il suo primo Europeo?", options: { A: "1968", B: "1976", C: "1982", D: "2000" }, correctAnswer: "A" },
             { level: 7, question: "Chi è il calciatore con più presenze in una nazionale maggiore maschile (fino al 2025)?", options: { A: "Cristiano Ronaldo", B: "Ahmed Hassan", C: "Sergio Ramos", D: "Lionel Messi" }, correctAnswer: "A" },
             { level: 7, question: "In quale anno è stato fondato il Barcellona?", options: { A: "1898", B: "1899", C: "1900", D: "1902" }, correctAnswer: "B" },
-            { level: 7, question: "Quale squadra ha vinto più volte la Coppa UEFA/Europa League (fino al 2025)?", options: { A: "Inter", B: "Juventus", C: "Liverpool", D: "Siviglia" }, correctAnswer: "D" },
+            { level: 7, question: "Quale squadra ha vinto più volte la Coppa UEFA/Europa League (fino al 2026)?", options: { A: "Inter", B: "Juventus", C: "Liverpool", D: "Siviglia" }, correctAnswer: "D" },
             { level: 7, question: "Quale nazionale vinse l'Europeo 1992 dopo essere stata ripescata?", options: { A: "Germania", B: "Paesi Bassi", C: "Svezia", D: "Danimarca" }, correctAnswer: "D" },
             { level: 7, question: "In quale stagione il Napoli ha vinto il suo quarto scudetto?", options: { A: "2020-21", B: "2022-23", C: "2023-24", D: "2024-25" }, correctAnswer: "D" },
             { level: 7, question: "Quanti gol segnò Haaland nella Premier League 2022-23, record per un campionato a 20 squadre?", options: { A: "32", B: "34", C: "36", D: "38" }, correctAnswer: "C" },
@@ -115,9 +139,13 @@ const questions = [
             { level: 7, question: "In quale stagione è stato introdotto il VAR in Serie A?", options: { A: "2016-17", B: "2017-18", C: "2018-19", D: "2019-20" }, correctAnswer: "B" },
             { level: 7, question: "In quale anno solare si è giocata la finale di Euro 2020, vinta dall'Italia a Wembley?", options: { A: "2019", B: "2020", C: "2021", D: "2022" }, correctAnswer: "C" },
             { level: 7, question: "Quale club italiano ha vinto la prima edizione della Conference League, nel 2022?", options: { A: "Roma", B: "Fiorentina", C: "Lazio", D: "Atalanta" }, correctAnswer: "A" },
-            { level: 7, question: "Chi è il miglior marcatore della storia dell'Inter (fino al 2025)?", options: { A: "Alessandro Altobelli", B: "Giuseppe Meazza", C: "Roberto Boninsegna", D: "Lautaro Martínez" }, correctAnswer: "B" },
+            { level: 7, question: "Chi è il miglior marcatore della storia dell'Inter (fino al 2026)?", options: { A: "Alessandro Altobelli", B: "Giuseppe Meazza", C: "Roberto Boninsegna", D: "Lautaro Martínez" }, correctAnswer: "B" },
             { level: 7, question: "Quale squadra vinse lo scudetto 1990-91, l'unico della sua storia?", options: { A: "Sampdoria", B: "Verona", C: "Cagliari", D: "Lazio" }, correctAnswer: "A" },
             { level: 7, question: "Chi allenava il Milan campione d'Europa nel 1989 e nel 1990?", options: { A: "Fabio Capello", B: "Nils Liedholm", C: "Carlo Ancelotti", D: "Arrigo Sacchi" }, correctAnswer: "D" },
+            { level: 7, question: "Chi ha vinto il Pallone d'Oro 2004?", options: { A: "Andriy Shevchenko", B: "Deco", C: "Ronaldinho", D: "Thierry Henry" }, correctAnswer: "A" },
+            { level: 7, question: "Chi è diventato CT dell'Italia nel giugno 2025, dopo Luciano Spalletti?", options: { A: "Claudio Ranieri", B: "Gennaro Gattuso", C: "Stefano Pioli", D: "Fabio Cannavaro" }, correctAnswer: "B" },
+            { level: 7, question: "Chi segnò entrambi i gol dell'Inter nella finale di Champions League 2010 contro il Bayern?", options: { A: "Samuel Eto'o", B: "Wesley Sneijder", C: "Diego Milito", D: "Goran Pandev" }, correctAnswer: "C" },
+            { level: 7, question: "Chi era il CT del Brasile campione del mondo nel 2002?", options: { A: "Carlos Alberto Parreira", B: "Mário Zagallo", C: "Luiz Felipe Scolari", D: "Dunga" }, correctAnswer: "C" },
 
             { level: 8, question: "Chi sbagliò il rigore decisivo nella finale del Mondiale 1994 tra Brasile e Italia?", options: { A: "Roberto Baggio", B: "Franco Baresi", C: "Daniele Massaro", D: "Demetrio Albertini" }, correctAnswer: "A" },
             { level: 8, question: "Chi è il miglior marcatore della storia della nazionale italiana?", options: { A: "Roberto Baggio", B: "Gigi Riva", C: "Giuseppe Meazza", D: "Alessandro Del Piero" }, correctAnswer: "B" },
@@ -134,11 +162,14 @@ const questions = [
             { level: 8, question: "Quale squadra vinse lo scudetto 1999-2000 all'ultima giornata, mentre la Juventus perdeva a Perugia?", options: { A: "Roma", B: "Lazio", C: "Milan", D: "Parma" }, correctAnswer: "B" },
             { level: 8, question: "Chi è il miglior marcatore della storia del Milan?", options: { A: "Andriy Shevchenko", B: "Marco van Basten", C: "Gunnar Nordahl", D: "Gianni Rivera" }, correctAnswer: "C" },
             { level: 8, question: "Chi vinse la Scarpa d'Oro come capocannoniere del Mondiale 2014?", options: { A: "Thomas Müller", B: "Neymar", C: "Lionel Messi", D: "James Rodríguez" }, correctAnswer: "D" },
+            { level: 8, question: "Chi ha vinto il Pallone d'Oro 2003?", options: { A: "Thierry Henry", B: "Paolo Maldini", C: "Pavel Nedvěd", D: "Andriy Shevchenko" }, correctAnswer: "C" },
+            { level: 8, question: "Quale squadra vinse la Coppa UEFA 1994 battendo il Salisburgo in finale?", options: { A: "Juventus", B: "Inter", C: "Parma", D: "Napoli" }, correctAnswer: "B" },
+            { level: 8, question: "Chi era il CT del Portogallo campione d'Europa nel 2016?", options: { A: "Fernando Santos", B: "Paulo Bento", C: "Roberto Martínez", D: "Carlos Queiroz" }, correctAnswer: "A" },
 
             { level: 9, question: "Quale fu il primo club italiano a vincere una coppa europea, la Coppa delle Coppe 1961?", options: { A: "Fiorentina", B: "Milan", C: "Juventus", D: "Inter" }, correctAnswer: "A" },
             { level: 9, question: "Quale squadra vinse il primo campionato italiano di calcio, nel 1898?", options: { A: "Juventus", B: "Milan", C: "Torino", D: "Genoa" }, correctAnswer: "D" },
             { level: 9, question: "Chi fu il primo a vincere tre Palloni d'Oro consecutivi?", options: { A: "Johan Cruijff", B: "Marco van Basten", C: "Michel Platini", D: "Lionel Messi" }, correctAnswer: "C" },
-            { level: 9, question: "Quanti scudetti ha vinto la Roma?", options: { A: "2", B: "3", C: "4", D: "5" }, correctAnswer: "B" },
+            { level: 9, question: "Quanti scudetti ha vinto la Roma (fino al 2026)?", options: { A: "2", B: "3", C: "4", D: "5" }, correctAnswer: "B" },
             { level: 9, question: "Quale squadra vinse la Premier League 1994-95 con Alan Shearer?", options: { A: "Manchester United", B: "Newcastle", C: "Liverpool", D: "Blackburn Rovers" }, correctAnswer: "D" },
             { level: 9, question: "Chi ha segnato il gol più veloce della storia della Serie A (fino al 2025), dopo circa 6 secondi?", options: { A: "Paolo Poggi", B: "Rafael Leão", C: "Giuseppe Signori", D: "Ciro Immobile" }, correctAnswer: "B" },
             { level: 9, question: "Quale stadio fu costruito appositamente per i Mondiali di Italia '90?", options: { A: "Stadio Olimpico di Roma", B: "San Siro di Milano", C: "Delle Alpi di Torino", D: "Artemio Franchi di Firenze" }, correctAnswer: "C" },
@@ -150,6 +181,9 @@ const questions = [
             { level: 9, question: "In quale città si giocò la finale del Mondiale 1998, allo Stade de France?", options: { A: "Marsiglia", B: "Lione", C: "Bordeaux", D: "Saint-Denis" }, correctAnswer: "D" },
             { level: 9, question: "Chi fu il capocannoniere del Mondiale 2006?", options: { A: "Miroslav Klose", B: "Hernán Crespo", C: "Thierry Henry", D: "Luca Toni" }, correctAnswer: "A" },
             { level: 9, question: "Di chi è il celebre 'urlo' dopo il gol nella finale del Mondiale 1982 contro la Germania Ovest?", options: { A: "Paolo Rossi", B: "Alessandro Altobelli", C: "Marco Tardelli", D: "Bruno Conti" }, correctAnswer: "C" },
+            { level: 9, question: "Quale squadra vinse la Coppa UEFA 1991 nella finale tutta italiana contro la Roma?", options: { A: "Juventus", B: "Napoli", C: "Inter", D: "Torino" }, correctAnswer: "C" },
+            { level: 9, question: "In quale squadra giocava Paolo Rossi quando vinse il Mondiale 1982?", options: { A: "Vicenza", B: "Perugia", C: "Milan", D: "Juventus" }, correctAnswer: "D" },
+            { level: 9, question: "Quante Coppe Italia ha vinto l'Inter (fino al 2026)?", options: { A: "8", B: "9", C: "10", D: "11" }, correctAnswer: "C" },
 
             { level: 10, question: "Chi vinse il primo Pallone d'Oro della storia, nel 1956?", options: { A: "Stanley Matthews", B: "Alfredo Di Stéfano", C: "Raymond Kopa", D: "Ferenc Puskás" }, correctAnswer: "A" },
             { level: 10, question: "Quale allenatore ha guidato più partite di Serie A?", options: { A: "Giovanni Trapattoni", B: "Carlo Mazzone", C: "Nereo Rocco", D: "Nils Liedholm" }, correctAnswer: "B" },
@@ -166,6 +200,9 @@ const questions = [
             { level: 10, question: "Chi segnò il gol vittoria del Manchester United nel recupero della finale di Champions League 1999?", options: { A: "Teddy Sheringham", B: "Ole Gunnar Solskjær", C: "Dwight Yorke", D: "Andy Cole" }, correctAnswer: "B" },
             { level: 10, question: "Quale nazionale eliminò l'Italia ai rigori nella semifinale del Mondiale 1990?", options: { A: "Germania Ovest", B: "Inghilterra", C: "Argentina", D: "Brasile" }, correctAnswer: "C" },
             { level: 10, question: "Chi fu il capocannoniere del Mondiale 1990?", options: { A: "Gary Lineker", B: "Tomáš Skuhravý", C: "Lothar Matthäus", D: "Salvatore Schillaci" }, correctAnswer: "D" },
+            { level: 10, question: "Quale squadra vinse la Coppa dei Campioni 1984 battendo la Roma ai rigori all'Olimpico?", options: { A: "Amburgo", B: "Juventus", C: "Nottingham Forest", D: "Liverpool" }, correctAnswer: "D" },
+            { level: 10, question: "Chi vinse il Pallone d'Oro 1963, unico portiere a riuscirci?", options: { A: "Dino Zoff", B: "Gordon Banks", C: "Lev Jašin", D: "Ricardo Zamora" }, correctAnswer: "C" },
+            { level: 10, question: "Quale nazionale vinse la Confederations Cup 2017 battendo il Cile in finale?", options: { A: "Portogallo", B: "Germania", C: "Messico", D: "Brasile" }, correctAnswer: "B" },
 
             { level: 11, question: "Chi vinse il Pallone d'Oro 1975?", options: { A: "Oleg Blokhin", B: "Franz Beckenbauer", C: "Johan Cruijff", D: "Gerd Müller" }, correctAnswer: "A" },
             { level: 11, question: "In quale stagione si disputò la prima Coppa delle Coppe?", options: { A: "1955-56", B: "1960-61", C: "1965-66", D: "1970-71" }, correctAnswer: "B" },
@@ -182,6 +219,10 @@ const questions = [
             { level: 11, question: "Chi era il CT dell'Italia vicecampione del mondo nel 1994?", options: { A: "Azeglio Vicini", B: "Arrigo Sacchi", C: "Cesare Maldini", D: "Dino Zoff" }, correctAnswer: "B" },
             { level: 11, question: "Quale squadra italiana vinse la Coppa delle Coppe 1990 battendo l'Anderlecht?", options: { A: "Parma", B: "Juventus", C: "Sampdoria", D: "Fiorentina" }, correctAnswer: "C" },
             { level: 11, question: "Quale squadra vinse lo scudetto 1989-90?", options: { A: "Milan", B: "Inter", C: "Sampdoria", D: "Napoli" }, correctAnswer: "D" },
+            { level: 11, question: "Quale squadra vinse la Coppa dei Campioni 1988 battendo ai rigori il Benfica?", options: { A: "PSV Eindhoven", B: "Porto", C: "Steaua Bucarest", D: "Ajax" }, correctAnswer: "A" },
+            { level: 11, question: "Chi era il CT dell'Olanda del calcio totale, finalista al Mondiale 1974?", options: { A: "Ernst Happel", B: "Rinus Michels", C: "Johan Cruijff", D: "Guus Hiddink" }, correctAnswer: "B" },
+            { level: 11, question: "Chi era il capitano del Grande Torino, scomparso a Superga nel 1949?", options: { A: "Ezio Loik", B: "Guglielmo Gabetto", C: "Romeo Menti", D: "Valentino Mazzola" }, correctAnswer: "D" },
+            { level: 11, question: "Quale squadra olandese vinse la Coppa dei Campioni 1970 battendo il Celtic?", options: { A: "Ajax", B: "PSV Eindhoven", C: "Feyenoord", D: "Twente" }, correctAnswer: "C" },
 
             { level: 12, question: "Chi vinse il Pallone d'Oro 1960?", options: { A: "Luis Suárez", B: "Alfredo Di Stéfano", C: "Paco Gento", D: "Ladislao Kubala" }, correctAnswer: "A" },
             { level: 12, question: "Contro quale squadra il Real Madrid vinse la prima finale di Coppa dei Campioni, nel 1956?", options: { A: "Fiorentina", B: "Benfica", C: "Eintracht Francoforte", D: "Stade de Reims" }, correctAnswer: "D" },
@@ -198,6 +239,10 @@ const questions = [
             { level: 12, question: "Chi vinse il Pallone d'Oro 1990?", options: { A: "Salvatore Schillaci", B: "Andreas Brehme", C: "Diego Maradona", D: "Lothar Matthäus" }, correctAnswer: "D" },
             { level: 12, question: "Quale squadra vinse la Coppa dei Campioni 1986 battendo il Barcellona ai rigori?", options: { A: "Steaua Bucarest", B: "Dinamo Kiev", C: "Benfica", D: "PSV Eindhoven" }, correctAnswer: "A" },
             { level: 12, question: "Quale nazionale vinse l'Europeo 1988?", options: { A: "Unione Sovietica", B: "Germania Ovest", C: "Paesi Bassi", D: "Italia" }, correctAnswer: "C" },
+            { level: 12, question: "Quale squadra tedesca vinse la Coppa dei Campioni 1983 battendo la Juventus ad Atene?", options: { A: "Amburgo", B: "Bayern Monaco", C: "Colonia", D: "Borussia Mönchengladbach" }, correctAnswer: "A" },
+            { level: 12, question: "Quale squadra vinse la Coppa delle Coppe 1998 battendo lo Stoccarda in finale?", options: { A: "Chelsea", B: "Lazio", C: "Arsenal", D: "Real Saragozza" }, correctAnswer: "A" },
+            { level: 12, question: "Quale squadra inglese batté il Parma nella finale di Coppa delle Coppe 1994?", options: { A: "Chelsea", B: "Arsenal", C: "Manchester United", D: "Aston Villa" }, correctAnswer: "B" },
+            { level: 12, question: "In quale stagione la Lazio vinse il suo primo scudetto?", options: { A: "1969-70", B: "1971-72", C: "1973-74", D: "1975-76" }, correctAnswer: "C" },
 
             { level: 13, question: "Chi segnò il gol dell'Italia nella finale del Mondiale 1970 persa 4-1 contro il Brasile?", options: { A: "Roberto Boninsegna", B: "Gigi Riva", C: "Gianni Rivera", D: "Sandro Mazzola" }, correctAnswer: "A" },
             { level: 13, question: "Quale squadra vinse a sorpresa lo scudetto 1984-85?", options: { A: "Sampdoria", B: "Torino", C: "Napoli", D: "Verona" }, correctAnswer: "D" },
@@ -214,6 +259,9 @@ const questions = [
             { level: 13, question: "Quale squadra vinse la prima Coppa Intercontinentale, nel 1960?", options: { A: "Peñarol", B: "Benfica", C: "Santos", D: "Real Madrid" }, correctAnswer: "D" },
             { level: 13, question: "Quale nazionale fu sconfitta nella finale del Mondiale 1954, il 'Miracolo di Berna'?", options: { A: "Ungheria", B: "Austria", C: "Uruguay", D: "Brasile" }, correctAnswer: "A" },
             { level: 13, question: "Quale calciatore del Milan vinse il Pallone d'Oro 1969?", options: { A: "Pierino Prati", B: "Karl-Heinz Schnellinger", C: "Gianni Rivera", D: "Kurt Hamrin" }, correctAnswer: "C" },
+            { level: 13, question: "Chi allenava la Lazio campione d'Italia nel 1974?", options: { A: "Tommaso Maestrelli", B: "Juan Carlos Lorenzo", C: "Nils Liedholm", D: "Bob Lovati" }, correctAnswer: "A" },
+            { level: 13, question: "Chi vinse il Pallone d'Oro 1977?", options: { A: "Kevin Keegan", B: "Franz Beckenbauer", C: "Michel Platini", D: "Allan Simonsen" }, correctAnswer: "D" },
+            { level: 13, question: "Chi allenava il Torino campione d'Italia nel 1975-76?", options: { A: "Gustavo Giagnoni", B: "Luigi Radice", C: "Nereo Rocco", D: "Emiliano Mondonico" }, correctAnswer: "B" },
 
             { level: 14, question: "Quanti gol ha segnato Gunnar Nordahl in Serie A?", options: { A: "199", B: "210", C: "225", D: "236" }, correctAnswer: "C" },
             { level: 14, question: "Chi segnò il celebre pallonetto nella finale di Atene 1994, Milan-Barcellona 4-0?", options: { A: "Dejan Savićević", B: "Daniele Massaro", C: "Marcel Desailly", D: "Zvonimir Boban" }, correctAnswer: "A" },
@@ -230,6 +278,10 @@ const questions = [
             { level: 14, question: "Quale squadra vinse lo scudetto 1963-64 dopo lo spareggio con l'Inter?", options: { A: "Torino", B: "Fiorentina", C: "Milan", D: "Bologna" }, correctAnswer: "D" },
             { level: 14, question: "Di ritorno da un'amichevole contro quale squadra precipitò a Superga l'aereo del Grande Torino?", options: { A: "Sporting Lisbona", B: "Benfica", C: "Porto", D: "Real Madrid" }, correctAnswer: "B" },
             { level: 14, question: "Quanti gol segnò l'ungherese Sándor Kocsis al Mondiale 1954, da capocannoniere?", options: { A: "9", B: "10", C: "11", D: "13" }, correctAnswer: "C" },
+            { level: 14, question: "Chi segnò il gol dell'Amburgo nella finale di Coppa dei Campioni 1983 contro la Juventus?", options: { A: "Horst Hrubesch", B: "Manfred Kaltz", C: "Felix Magath", D: "Uwe Seeler" }, correctAnswer: "C" },
+            { level: 14, question: "Quale squadra italiana vinse la Coppa delle Fiere 1960-61?", options: { A: "Roma", B: "Juventus", C: "Inter", D: "Fiorentina" }, correctAnswer: "A" },
+            { level: 14, question: "Quale nazione ospitò la fase finale del primo Europeo, nel 1960?", options: { A: "Spagna", B: "Italia", C: "Unione Sovietica", D: "Francia" }, correctAnswer: "D" },
+            { level: 14, question: "In quale anno la Juventus vinse il suo primo scudetto?", options: { A: "1897", B: "1905", C: "1912", D: "1926" }, correctAnswer: "B" },
 
             { level: 15, question: "Quanti gol ha segnato Gerd Müller in Bundesliga?", options: { A: "355", B: "365", C: "375", D: "385" }, correctAnswer: "B" },
             { level: 15, question: "In quale città fu fondata la FIFA, nel 1904?", options: { A: "Parigi", B: "Zurigo", C: "Londra", D: "Bruxelles" }, correctAnswer: "A" },
@@ -246,6 +298,10 @@ const questions = [
             { level: 15, question: "In quale anno giocò la sua prima partita ufficiale la Nazionale italiana, 6-2 alla Francia a Milano?", options: { A: "1908", B: "1910", C: "1912", D: "1920" }, correctAnswer: "B" },
             { level: 15, question: "Chi fu il capocannoniere della prima Coppa dei Campioni, nel 1955-56?", options: { A: "Alfredo Di Stéfano", B: "Raymond Kopa", C: "Miloš Milutinović", D: "Péter Palotás" }, correctAnswer: "C" },
             { level: 15, question: "Quanti gol segnò Gunnar Nordahl nella Serie A 1949-50, record poi battuto da Higuaín nel 2016?", options: { A: "33", B: "34", C: "35", D: "38" }, correctAnswer: "C" },
+            { level: 15, question: "Chi fu il capocannoniere del Mondiale 1934?", options: { A: "Giuseppe Meazza", B: "Angelo Schiavio", C: "Oldřich Nejedlý", D: "Edmund Conen" }, correctAnswer: "C" },
+            { level: 15, question: "Chi fu il capocannoniere del Mondiale 1938?", options: { A: "Leônidas", B: "Silvio Piola", C: "György Sárosi", D: "Gino Colaussi" }, correctAnswer: "A" },
+            { level: 15, question: "Quale squadra italiana vinse la Coppa Mitropa nel 1932?", options: { A: "Juventus", B: "Ambrosiana-Inter", C: "Genoa", D: "Bologna" }, correctAnswer: "D" },
+            { level: 15, question: "Quale squadra vinse lo scudetto 1924-25, il primo della sua storia?", options: { A: "Genoa", B: "Bologna", C: "Pro Vercelli", D: "Torino" }, correctAnswer: "B" },
         ];
 
 if (typeof module !== "undefined" && module.exports) { module.exports = { questions }; }

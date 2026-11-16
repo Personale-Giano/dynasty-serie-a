@@ -28,6 +28,9 @@
         var ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         var SIZE = 4;
         var MIX = { 1: 8, 2: 4, 3: 4 };
+        // eventi del database prima dell'aggiornamento di novembre 2026: le partite
+        // salvate senza `pool` si rigenerano su questi, cosi' le cartelle non cambiano
+        var LEGACY_POOL = 113;
         // rarita' per casella (riga per riga): comuni sulle diagonali,
         // un medio e un raro in ogni riga e in ogni colonna
         var PATTERN = [
@@ -88,7 +91,8 @@
          * La cartella del codice: 16 eventi (oggetti del database) in ordine di
          * casella, riga per riga. Stesso codice e stesso database = stessa cartella.
          */
-        function makeCard(code, events) {
+        function makeCard(code, events, pool) {
+            if (pool > 0 && pool < events.length) events = events.slice(0, pool);
             var rnd = rng(hash('bingo-partita/1:' + normCode(code)));
             var pools = { 1: [], 2: [], 3: [] };
             events.forEach(function (e) { if (pools[e.rarity]) pools[e.rarity].push(e); });
@@ -115,14 +119,30 @@
             return cells;
         }
 
-        /** Stato di una cartella (array di testi) dato l'insieme dei testi segnati. */
+        /**
+         * Stato di una cartella (array di testi) dato l'insieme dei testi segnati.
+         * hot: caselle libere che, segnate, chiuderebbero almeno una linea.
+         */
         function evaluate(cardTexts, isMarked) {
             var on = cardTexts.map(function (t) { return !!isMarked(t); });
-            var done = LINES.filter(function (line) { return line.every(function (i) { return on[i]; }); });
+            var done = [], hot = {};
+            LINES.forEach(function (line) {
+                var missing = line.filter(function (i) { return !on[i]; });
+                if (!missing.length) done.push(line);
+                else if (missing.length === 1) hot[missing[0]] = true;
+            });
             var inLine = {};
             done.forEach(function (line) { line.forEach(function (i) { inLine[i] = true; }); });
             var count = on.filter(Boolean).length;
-            return { on: on, lines: done.length, inLine: inLine, count: count, full: count === cardTexts.length };
+            return { on: on, lines: done.length, inLine: inLine, hot: hot, hotCount: Object.keys(hot).length, count: count, full: count === cardTexts.length };
+        }
+
+        /** Il prossimo premio a portata di una casella: 'riga' | 'doppia' | 'bingo' | null. */
+        function oneAway(ev) {
+            if (ev.full) return null;
+            if (ev.count === ev.on.length - 1) return 'bingo';
+            if (!ev.hotCount) return null;
+            return ev.lines === 0 ? 'riga' : ev.lines === 1 ? 'doppia' : null;
         }
 
         var PRIZES = [
@@ -155,9 +175,9 @@
         }
 
         return {
-            ALPHA: ALPHA, SIZE: SIZE, MIX: MIX, PATTERN: PATTERN, LINES: LINES, PRIZES: PRIZES,
+            ALPHA: ALPHA, SIZE: SIZE, MIX: MIX, LEGACY_POOL: LEGACY_POOL, PATTERN: PATTERN, LINES: LINES, PRIZES: PRIZES,
             hash: hash, rng: rng, normCode: normCode, validCode: validCode, randomCode: randomCode,
-            makeCard: makeCard, evaluate: evaluate, prizes: prizes
+            makeCard: makeCard, evaluate: evaluate, oneAway: oneAway, prizes: prizes
         };
     })();
 
@@ -177,7 +197,8 @@
     var opts = Object.assign({ mode: 'table' }, QZ.store.get(OPT_KEY, {}) || {});
 
     function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
-    function cardTexts(code) { return Core.makeCard(code, EVENTS).map(function (e) { return e.text; }); }
+    function cardTexts(code, pool) { return Core.makeCard(code, EVENTS, pool).map(function (e) { return e.text; }); }
+    function poolOf(s) { var n = Number(s && s.pool); return n > 0 && n <= EVENTS.length ? Math.floor(n) : Math.min(Core.LEGACY_POOL, EVENTS.length); }
     function rulesHTML(list) {
         return list.map(function (r, i) {
             return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
@@ -192,9 +213,9 @@
     function cardHTML(texts, ev, interactive) {
         return texts.map(function (t, i) {
             var e = BY_TEXT[t] || { rarity: 1 };
-            var on = ev.on[i], line = ev.inLine[i];
-            var cls = 'bg-cell' + (on ? ' is-on' : '') + (line ? ' is-line' : '');
-            var label = QZ.esc(t) + ', ' + RARITY_WORD[e.rarity] + (on ? ', segnato' : '') + (line ? ', in riga' : '');
+            var on = ev.on[i], line = ev.inLine[i], hot = !on && ev.hot && ev.hot[i];
+            var cls = 'bg-cell' + (on ? ' is-on' : '') + (line ? ' is-line' : '') + (hot ? ' is-hot' : '');
+            var label = QZ.esc(t) + ', ' + RARITY_WORD[e.rarity] + (on ? ', segnato' : '') + (line ? ', in riga' : '') + (hot ? ', manca solo questa per chiudere una linea' : '');
             return interactive
                 ? '<button type="button" class="' + cls + '" data-i="' + i + '" data-r="' + e.rarity + '" aria-pressed="' + on + '" aria-label="' + label + '" data-silent>' + pipsHTML(e.rarity) + '<span aria-hidden="true">' + QZ.esc(t) + '</span></button>'
                 : '<div class="' + cls + '" data-r="' + e.rarity + '" role="img" aria-label="' + label + '">' + pipsHTML(e.rarity) + '<span aria-hidden="true">' + QZ.esc(t) + '</span></div>';
@@ -256,17 +277,46 @@
         try {
             if (s.mode === 'table' && Array.isArray(s.players) && s.players.length >= 2 && Array.isArray(s.marked)) {
                 if (!s.players.every(function (p) { return p && Core.validCode(p.code); })) return null;
-                s.marked = s.marked.filter(function (t) { return BY_TEXT[t]; });
+                s.players.forEach(function (p, i) {
+                    p.name = String(p.name || '').trim() || 'Giocatore ' + (i + 1);
+                    if (typeof p.color !== 'string') p.color = QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length];
+                });
+                s.marked = s.marked.filter(function (t, k) { return BY_TEXT[t] && s.marked.indexOf(t) === k; });
+                s.pool = poolOf(s);
                 return s;
             }
             if (s.mode === 'mine' && Core.validCode(s.code) && Array.isArray(s.marked)) {
-                s.marked = s.marked.filter(function (i) { return i >= 0 && i < 16; });
+                s.marked = s.marked.filter(function (i, k) { return Number.isInteger(i) && i >= 0 && i < 16 && s.marked.indexOf(i) === k; });
+                s.pool = poolOf(s);
                 return s;
             }
         } catch { /* salvataggio rovinato */ }
         return null;
     }
     function clear() { S = null; QZ.store.set(KEY, null); }
+
+    /* ---------- Statistiche di questo telefono ---------- */
+    var STATS_KEY = 'qz.bingo.stats';
+    function getStats() {
+        var st = QZ.store.get(STATS_KEY, null);
+        st = st && typeof st === 'object' ? st : {};
+        return { games: Number(st.games) || 0, bingo: Number(st.bingo) || 0, best: Number(st.best) || 0 };
+    }
+    function bumpStats(o) {
+        var st = getStats();
+        st.games++;
+        if (o.bingo) st.bingo++;
+        if (o.best > st.best) st.best = o.best;
+        QZ.store.set(STATS_KEY, st);
+        paintStats();
+        return st;
+    }
+    function paintStats() {
+        var st = getStats(), el = $('#bg-stats');
+        el.hidden = !st.games;
+        if (st.games) el.textContent = 'Su questo telefono: ' + plural(st.games, 'partita', 'partite') + ', ' + plural(st.bingo, 'bingo uscito', 'bingo usciti') + (st.best ? ', miglior cartella personale ' + st.best + '/16' : '') + '.';
+    }
+    paintStats();
 
     function paintResume() {
         var s = load();
@@ -286,13 +336,15 @@
         enter(false);
     });
 
+    var starting = false; // il doppio tocco su "Distribuisci" non deve aprire la conferma sopra la partita appena nata
     $('#start-btn').addEventListener('click', function () {
+        if (starting) return;
         var go = function () {
             if (opts.mode === 'table') {
                 var names = playersList.get();
                 var used = {};
                 S = {
-                    mode: 'table', marked: [],
+                    mode: 'table', marked: [], pool: EVENTS.length,
                     players: names.map(function (n, i) {
                         var c;
                         do { c = Core.randomCode(); } while (used[c]);
@@ -308,8 +360,11 @@
                     $('#code-in').focus();
                     return;
                 }
-                S = { mode: 'mine', code: typed || Core.randomCode(), marked: [] };
+                S = { mode: 'mine', code: typed || Core.randomCode(), marked: [], pool: EVENTS.length };
+                $('#code-in').value = '';
             }
+            starting = true;
+            setTimeout(function () { starting = false; }, 700);
             save();
             QZ.sound.whistle();
             enter(true);
@@ -322,14 +377,14 @@
     function enter(fresh) {
         QZ.wake.on();
         if (S.mode === 'table') {
-            cards = S.players.map(function (p) { return cardTexts(p.code); });
+            cards = S.players.map(function (p) { return cardTexts(p.code, S.pool); });
             prevPrizes = Core.prizes(cards, S.marked);
             $('#t-filter').value = '';
             renderTable();
             QZ.show('s-table');
             if (fresh) QZ.toast('Cartelle pronte: ' + plural(S.players.length, 'giocatore', 'giocatori'), { icon: 'ticket', type: 'ok' });
         } else {
-            mineCard = cardTexts(S.code);
+            mineCard = cardTexts(S.code, S.pool);
             var ev0 = mineEval();
             prevMine = { lines: ev0.lines, full: ev0.full };
             renderMine();
@@ -358,10 +413,14 @@
     function evals() { return cards.map(function (c) { return Core.evaluate(c, isMarked); }); }
     function names(idx) { return idx.map(function (i) { return S.players[i].name; }).join(' e '); }
 
-    function renderTable() {
+    var hotEv = {}; // testo evento -> premio (1 riga, 2 doppia, 3 bingo) che farebbe vincere a qualcuno
+    var PRIZE_IDS = Core.PRIZES.map(function (x) { return x.id; });
+    var NEXT_WORD = { riga: 'alla riga', doppia: 'alla doppia', bingo: 'al bingo' };
+    function renderTable(pz) {
         var evs = evals();
         $('#t-count').textContent = S.marked.length;
-        var pz = Core.prizes(cards, S.marked);
+        pz = pz || Core.prizes(cards, S.marked);
+        hotEv = {};
         Core.PRIZES.forEach(function (p) {
             var cell = $('#t-p-' + p.id);
             var w = pz[p.id];
@@ -373,10 +432,22 @@
             var ev = evs[i];
             var won = Core.PRIZES.filter(function (x) { return pz[x.id] && pz[x.id].winners.indexOf(i) >= 0; }).map(function (x) { return x.name; });
             var mini = ev.on.map(function (on, k) { return '<i class="' + (ev.inLine[k] ? 'line' : on ? 'on' : '') + '"></i>'; }).join('');
-            return '<button type="button" class="bg-player" data-p="' + i + '" style="--c:' + p.color + '" aria-label="' + QZ.esc(p.name) + ': ' + ev.count + ' su 16, ' + plural(ev.lines, 'riga', 'righe') + (won.length ? ', ha vinto ' + won.join(', ') : '') + '. Apri la cartella">' +
+            // "manca 1" solo per un premio ancora da assegnare
+            var next = Core.oneAway(ev);
+            if (next && pz[next]) next = null;
+            var hotTxt = next ? 'manca 1 ' + NEXT_WORD[next] : '';
+            if (next) {
+                var rank = PRIZE_IDS.indexOf(next) + 1;
+                cards[i].forEach(function (t, k) {
+                    if (ev.on[k] || (next !== 'bingo' && !ev.hot[k])) return;
+                    if (!hotEv[t] || hotEv[t] < rank) hotEv[t] = rank;
+                });
+            }
+            return '<button type="button" class="bg-player' + (next ? ' is-hot' : '') + '" data-p="' + i + '" style="--c:' + p.color + '" aria-label="' + QZ.esc(p.name) + ': ' + ev.count + ' su 16, ' + plural(ev.lines, 'riga', 'righe') + (won.length ? ', ha vinto ' + won.join(', ') : '') + (hotTxt ? ', ' + hotTxt : '') + '. Apri la cartella">' +
                 '<span class="bg-mini" aria-hidden="true">' + mini + '</span>' +
                 '<span class="bg-player__name"><b>' + QZ.esc(p.name) + '</b><small>Codice ' + p.code + ' · ' + plural(ev.lines, 'riga', 'righe') +
-                (won.length ? '<span class="bg-tag">' + QZ.esc(won.join(' · ')) + '</span>' : '') + '</small></span>' +
+                (won.length ? '<span class="bg-tag">' + QZ.esc(won.join(' · ')) + '</span>' : '') +
+                (hotTxt ? '<span class="bg-hot">' + hotTxt + '</span>' : '') + '</small></span>' +
                 '<span class="bg-player__count" aria-hidden="true">' + ev.count + '/16</span></button>';
         }).join('');
         renderEvents();
@@ -397,7 +468,8 @@
                 var w = who[e.text];
                 return '<button type="button" class="bg-ev" data-t="' + QZ.esc(e.text) + '" aria-pressed="' + on + '" data-silent>' +
                     '<span class="bg-ev__box" aria-hidden="true">' + QZ.icon('check') + '</span>' +
-                    '<span class="bg-ev__txt">' + QZ.esc(e.text) + '<span class="sr-only">, nelle cartelle di ' + QZ.esc(names(w)) + '</span></span>' +
+                    '<span class="bg-ev__txt">' + QZ.esc(e.text) + '<span class="sr-only">, nelle cartelle di ' + QZ.esc(names(w)) + (!on && hotEv[e.text] ? ', vale ' + Core.PRIZES[hotEv[e.text] - 1].name.toLowerCase() : '') + '</span></span>' +
+                    (!on && hotEv[e.text] ? '<span class="bg-ev__hot" aria-hidden="true">' + Core.PRIZES[hotEv[e.text] - 1].name + '</span>' : '') +
                     '<span class="bg-ev__who" aria-hidden="true">' + w.map(function (i) { return '<i style="--c:' + S.players[i].color + '" title="' + QZ.esc(S.players[i].name) + '"></i>'; }).join('') + '</span></button>';
             }).join('') + '</div></div>';
         }).join('');
@@ -431,19 +503,25 @@
     }
 
     function afterTableChange() {
-        renderTable();
-        if (fullIdx != null) renderFull();
         var pz = Core.prizes(cards, S.marked);
+        renderTable(pz);
+        if (fullIdx != null) renderFull();
         var gained = Core.PRIZES.filter(function (p) { return pz[p.id] && !prevPrizes[p.id]; });
         prevPrizes = pz;
-        if (gained.length) announce(gained[gained.length - 1], pz[gained[gained.length - 1].id].winners.map(function (i) { return S.players[i].name; }));
+        if (!gained.length) return;
+        // con un evento solo possono arrivare piu' premi insieme: si festeggia il piu' alto
+        // e nel messaggio si dicono tutti
+        var top = gained[gained.length - 1];
+        var whoOf = function (p) { return pz[p.id].winners.map(function (i) { return S.players[i].name; }).join(' e '); };
+        var extra = gained.slice(0, -1).map(function (p) { return p.name.toLowerCase() + ' per ' + whoOf(p); });
+        announce(top, pz[top.id].winners.map(function (i) { return S.players[i].name; }), extra);
     }
 
-    function announce(prize, who) {
+    function announce(prize, who, extra) {
         var whoTxt = who.join(' e ');
         var host = fullIdx != null ? $('.bg-full__top') : (S.mode === 'table' ? $('#table-hud') : $('#mine-hud'));
         var stamp = prize.id === 'bingo' ? 'BINGO!' : prize.id === 'doppia' ? 'DOPPIA!' : 'RIGA!';
-        var say = S.mode === 'table' ? prize.name + ' per ' + whoTxt : prize.name + '!';
+        var say = S.mode === 'table' ? prize.name + ' per ' + whoTxt + (extra && extra.length ? ', e ' + extra.join(', ') : '') : prize.name + '!';
         QZ.fx.stamp(host, stamp, 'ok', { say: say, ms: 2200, size: 34, rot: -4 });
         if (prize.id === 'bingo') {
             QZ.sound.win();
@@ -455,7 +533,7 @@
             QZ.vibrate([40, 30, 40]);
         }
         var msg = S.mode === 'table'
-            ? (prize.id === 'bingo' ? 'Bingo! ' + whoTxt + ' ha la cartella piena' : prize.name + ' per ' + whoTxt)
+            ? (prize.id === 'bingo' ? 'Bingo! ' + whoTxt + (who.length > 1 ? ' hanno' : ' ha') + ' la cartella piena' : prize.name + ' per ' + whoTxt) + (extra && extra.length ? ' (e ' + extra.join(', ') + ')' : '')
             : (prize.id === 'bingo' ? 'Bingo! Cartella piena' : prize.id === 'doppia' ? 'Doppia! Seconda riga chiusa' : 'Riga! Fallo sapere agli altri');
         QZ.toast(msg, { icon: 'trophy', type: 'ok', ms: 3600 });
     }
@@ -583,8 +661,14 @@
         $('#m-code').textContent = S.code;
         $('#m-count').textContent = ev.count + '/16';
         $('#m-lines').textContent = ev.full ? 'BINGO' : ev.lines;
+        var next = Core.oneAway(ev);
+        // il bordo tratteggiato solo se quella casella fa vincere qualcosa (dopo la doppia conta solo il bingo)
+        if (!next) ev.hot = {};
         $('#m-card').innerHTML = cardHTML(mineCard, ev, true);
-        $('#m-hint').textContent = 'Tocca una casella quando succede, ritocca per toglierla. Detta il codice ' + S.code + ' agli amici: con quel codice esce questa cartella.';
+        $('#m-hint').textContent = next
+            ? (next === 'bingo' ? 'Manca una casella al bingo. Occhio alla TV.' : 'Ancora una casella e fai ' + next + ': va bene una di quelle col bordo tratteggiato.')
+            : ev.full ? 'Cartella piena. Adesso fischia la fine e goditi la gloria.'
+                : 'Tocca una casella quando succede, ritocca per toglierla. Detta il codice ' + S.code + ' agli amici: con quel codice esce questa cartella.';
         $('#m-undo').disabled = !S.marked.length;
     }
 
@@ -628,7 +712,7 @@
                 inp.focus();
                 return false;
             }
-            friend = { code: code, texts: cardTexts(code) };
+            friend = { code: code, texts: cardTexts(code, S ? S.pool : EVENTS.length) };
             setTimeout(function () { openFull('friend', $('#m-check')); }, 220);
             return true;
         }
@@ -639,6 +723,18 @@
             actions: [{ label: 'Annulla', ghost: true }, { label: 'Mostra la cartella', primary: true, onClick: tryOpen }],
             onOpen: function () { setTimeout(function () { inp.focus(); }, 80); }
         });
+    });
+
+    // frecce dentro una cartella: ci si muove di casella in casella come su una griglia
+    document.addEventListener('keydown', function (e) {
+        var b = e.target && e.target.closest ? e.target.closest('button.bg-cell') : null;
+        if (!b || e.altKey || e.ctrlKey || e.metaKey) return;
+        var step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -Core.SIZE, ArrowDown: Core.SIZE }[e.key];
+        if (!step) return;
+        var i = Number(b.dataset.i), j = i + step;
+        if (j < 0 || j >= Core.SIZE * Core.SIZE || (Math.abs(step) === 1 && Math.floor(j / Core.SIZE) !== Math.floor(i / Core.SIZE))) return;
+        var to = b.parentNode.querySelector('button[data-i="' + j + '"]');
+        if (to) { e.preventDefault(); to.focus(); }
     });
 
     document.addEventListener('keydown', function (e) {
@@ -682,14 +778,16 @@
         var tie = rows.filter(function (r) { return r.best === top.best && r.ev.lines === top.ev.lines && r.ev.count === top.ev.count; });
         var winName = tie.map(function (r) { return r.p.name; }).join(' e ');
         var title = tie.length > 1 ? 'Pari: ' + winName : (top.best ? 'Vince ' + top.p.name : 'Vince ' + top.p.name + ' ai punti');
-        var sub = pz.bingo ? 'Cartella piena: roba che si racconta per anni.'
+        var sub = !g.marked.length ? 'Nessun evento segnato: avete guardato la partita o il telefono?'
+            : pz.bingo ? 'Cartella piena: roba che si racconta per anni.'
             : pz.doppia ? 'Niente bingo, ma la doppia è arrivata. Partita vera.'
                 : pz.riga ? 'Una riga e poco altro: la partita non ha regalato niente.'
                     : 'Nessuna riga: una partita bloccata, decidono le caselle segnate.';
         var r = QZ.profile.record('bingo', {
-            xp: Math.min(120, 20 + g.marked.length * 2 + (pz.riga ? 10 : 0) + (pz.bingo ? 30 : 0)),
+            xp: g.marked.length ? Math.min(120, 20 + g.marked.length * 2 + (pz.riga ? 10 : 0) + (pz.bingo ? 30 : 0)) : 5,
             label: (tie.length > 1 ? 'Pari tra ' + winName : 'Vince ' + top.p.name) + ' · ' + plural(g.marked.length, 'evento', 'eventi')
         });
+        bumpStats({ bingo: !!pz.bingo });
         QZ.results($('#end-host'), {
             win: true,
             icon: 'ticket',
@@ -697,7 +795,8 @@
             subtitle: sub,
             big: g.marked.length, bigSuffix: g.marked.length === 1 ? ' evento' : ' eventi',
             record: r,
-            stats: Core.PRIZES.map(function (x) { return { label: x.name, value: pz[x.id] ? g.players.filter(function (p, i) { return pz[x.id].winners.indexOf(i) >= 0; }).map(function (p) { return p.name; }).join(', ') : '—' }; }),
+            stats: Core.PRIZES.map(function (x) { return { label: x.name, value: pz[x.id] ? g.players.filter(function (p, i) { return pz[x.id].winners.indexOf(i) >= 0; }).map(function (p) { return p.name; }).join(', ') : '—' }; })
+                .concat([{ label: 'Eventi rari usciti', value: g.marked.filter(function (t) { return BY_TEXT[t].rarity === 3; }).length }]),
             extraHTML: '<div class="mt-3">' + QZ.podiumHTML(rows.map(function (x) {
                 return { name: x.p.name, score: x.ev.count, color: x.p.color, sub: (x.won.length ? x.won.map(function (w) { return w.name; }).join(' · ') + ' · ' : '') + plural(x.ev.lines, 'riga', 'righe') + ' · codice ' + x.p.code };
             }), function (s) { return s + '/16'; }) + '</div>',
@@ -711,22 +810,31 @@
         var ev = Core.evaluate(mineCard, function (t) { return g.marked.indexOf(mineCard.indexOf(t)) >= 0; });
         var prize = ev.full ? 'Bingo' : ev.lines >= 2 ? 'Doppia' : ev.lines === 1 ? 'Riga' : null;
         var r = QZ.profile.record('bingo', {
-            xp: Math.min(120, 15 + ev.count * 3 + Math.min(ev.lines, 3) * 10 + (ev.full ? 30 : 0)),
+            xp: ev.count ? Math.min(120, 15 + ev.count * 3 + Math.min(ev.lines, 3) * 10 + (ev.full ? 30 : 0)) : 5,
             label: (prize || 'Niente riga') + ' · ' + ev.count + '/16'
         });
+        var st = bumpStats({ bingo: ev.full, best: ev.count });
+        // la cartella in quadratini, da incollare nel gruppo: giallo segnato, verde in riga
+        var grid = [0, 1, 2, 3].map(function (row) {
+            return [0, 1, 2, 3].map(function (c) { var k = row * 4 + c; return ev.inLine[k] ? '🟩' : ev.on[k] ? '🟨' : '⬛'; }).join('');
+        }).join('\n');
         QZ.results($('#end-host'), {
             win: !!prize,
             icon: prize ? 'ticket' : 'flag',
             title: prize ? (prize === 'Bingo' ? 'Bingo!' : prize + ' fatta') : 'Niente riga',
-            subtitle: prize ? 'Cartella ' + g.code + ': adesso vediamo come è andata agli altri.' : 'Cartella ' + g.code + ': la partita non ti ha dato una mano. Capita.',
+            subtitle: prize === 'Bingo' ? 'Cartella ' + g.code + ' piena: adesso mostrala agli altri, prima che dicano che hai barato.'
+                : prize ? 'Cartella ' + g.code + ': adesso vediamo come è andata agli altri.'
+                    : ev.count ? 'Cartella ' + g.code + ': la partita non ti ha dato una mano. Capita.'
+                        : 'Cartella ' + g.code + ' immacolata: o era una partita di una noia mortale, o guardavi altro.',
             big: ev.count, bigSuffix: '/16',
             record: r,
             stats: [
                 { label: 'Righe chiuse', value: ev.lines },
                 { label: 'Rari presi', value: mineCard.filter(function (t, i) { return ev.on[i] && BY_TEXT[t].rarity === 3; }).length + '/4' },
-                { label: 'Codice', value: g.code }
+                { label: 'Codice', value: g.code },
+                { label: 'Miglior cartella', value: st.best + '/16' }
             ],
-            share: 'Bingo della Partita su Quizzotti: ' + (prize ? prize.toLowerCase() : 'niente riga') + ' con ' + ev.count + ' caselle su 16 (cartella ' + g.code + ').',
+            share: 'Bingo della Partita su Quizzotti: ' + (prize ? prize.toLowerCase() : 'niente riga') + ' con ' + plural(ev.count, 'casella', 'caselle') + ' su 16 (cartella ' + g.code + ').\n' + grid,
             retryLabel: 'Altra partita',
             onRetry: function () { QZ.show('s-start'); }
         });

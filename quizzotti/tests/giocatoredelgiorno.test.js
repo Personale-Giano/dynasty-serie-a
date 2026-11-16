@@ -114,3 +114,60 @@ test('ricerca per cognome e senza accenti, testo da condividere', () => {
     const txt = Core.shareText(4, [['miss', 'near', 'miss', 'hit', 'miss', 'miss'], ['hit', 'hit', 'hit', 'hit', 'hit', 'hit']], true, false);
     assert.match(txt, /^Calciatore del Giorno N° 4 — 2\/6\n\n⬛🟨⬛🟩⬛⬛\n🟩🟩🟩🟩🟩🟩$/);
 });
+
+test('archivio: nth() e dateOf() coincidono con il calciatore di quel giorno', () => {
+    assert.equal(Core.dateOf(1), '2026-11-16');
+    assert.equal(Core.dateOf(46), '2026-12-31');
+    assert.equal(Core.dateOf(47), '2027-01-01');
+    for (const n of [1, 2, 30, 365, dailyPlayers.length + 3]) {
+        assert.equal(Core.nth(dailyPlayers, n).name, Core.daily(dailyPlayers, Core.dateOf(n)).player.name, `N° ${n}`);
+    }
+});
+
+test('il calciatore del N° 1 resta quello pubblicato (ordine dei giorni congelato)', () => {
+    // se cambia, e' cambiato l'elenco o l'algoritmo: il gioco e' gia' online e cambierebbe per tutti
+    assert.equal(Core.daily(dailyPlayers, '2026-11-16').player.name, 'João Félix');
+    assert.equal(Core.daily(dailyPlayers, '2026-11-17').player.name, 'Myles Lewis-Skelly');
+    assert.equal(Core.daily(dailyPlayers, '2026-11-18').player.name, 'Alejandro Garnacho');
+});
+
+test('testo da condividere: archivio, bandiera bianca, serie', () => {
+    const r = [['miss', 'near', 'miss', 'hit', 'miss', 'miss']];
+    assert.equal(Core.shareText(9, r, false, false, { gaveUp: true }), 'Calciatore del Giorno N° 9 — X/6\n\n⬛🟨⬛🟩⬛⬛\n🏳️ bandiera bianca');
+    assert.equal(Core.shareText(9, [], false, false, { gaveUp: true }), 'Calciatore del Giorno N° 9 — X/6\n\n🏳️ bandiera bianca');
+    assert.match(Core.shareText(3, r, true, true, { archive: true }), /^Calciatore del Giorno N° 3 \(archivio\) — 1\/6 \(con indizio\)\n/);
+    assert.match(Core.shareText(3, r, true, false, { streak: 4 }), /\n🔥 serie di 4$/);
+    assert.doesNotMatch(Core.shareText(3, r, true, false, { streak: 1 }), /serie/);
+    assert.doesNotMatch(Core.shareText(3, r, false, false, { streak: 4 }), /serie/);
+});
+
+test('indizio: cognome, nome unico, conosciuti per nome', () => {
+    assert.deepEqual(Core.hint({ name: 'Nicolò Barella' }), { mono: false, letter: 'B' });
+    assert.deepEqual(Core.hint({ name: 'Kim Min-jae' }), { mono: false, letter: 'K' });
+    assert.deepEqual(Core.hint({ name: 'Marc-André ter Stegen' }), { mono: false, letter: 'T' });
+    assert.deepEqual(Core.hint({ name: 'Vinícius Jr.' }), { mono: true, letter: 'V' });
+    assert.deepEqual(Core.hint({ name: 'João Pedro' }), { mono: true, letter: 'J' });
+    assert.deepEqual(Core.hint({ name: 'Alisson Becker' }), { mono: true, letter: 'A' });
+    // ogni nome dell'elenco ha un indizio con una lettera vera
+    for (const p of dailyPlayers) assert.match(Core.hint(p).letter, /^\p{Lu}$/u, p.name);
+});
+
+test('ricerca: esclusi i nomi gia\' provati, limite, niente risultati per query vuote', () => {
+    assert.deepEqual(Core.search(dailyPlayers, ''), []);
+    assert.deepEqual(Core.search(dailyPlayers, '  '), []);
+    const all = Core.search(dailyPlayers, 'mar', null, 50);
+    assert.ok(all.length > 8);
+    assert.equal(Core.search(dailyPlayers, 'mar').length, 8);
+    const ex = { 'Kylian Mbappé': true };
+    assert.ok(!Core.search(dailyPlayers, 'mbappe', ex).some((p) => p.name === 'Kylian Mbappé'));
+    assert.equal(Core.search(dailyPlayers, 'ODEGAARD')[0].name, 'Martin Ødegaard');
+    assert.equal(Core.search(dailyPlayers, 'calhanoglu')[0].name, 'Hakan Çalhanoğlu');
+});
+
+test('conto alla rovescia: giorni da 23 e 25 ore', () => {
+    // 28 marzo 2027, 00:00 a Roma = 27 marzo 23:00 UTC; il giorno dura 23 ore
+    assert.equal(Core.msToNext(new Date('2027-03-27T23:00:00Z')), 23 * 3600000);
+    // 31 ottobre 2027 dura 25 ore (00:00 Roma = 30 ottobre 22:00 UTC)
+    assert.equal(Core.msToNext(new Date('2027-10-30T22:00:00Z')), 25 * 3600000);
+    assert.equal(Core.msToNext(new Date('2026-11-16T22:59:59Z')), 1000);
+});

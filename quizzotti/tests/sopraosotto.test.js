@@ -121,3 +121,86 @@ test('il valore si scrive come sul tabellone', () => {
     assert.equal(G.fmtValue(0.8), '800 mila');
     assert.equal(G.fmtValue(0.15), '150 mila');
 });
+
+/* ---------- Mazzo "Gol in Serie A" ---------- */
+const { sosGoalsDatabase } = require(path.join('..', 'assets', 'db-sopraosotto.js'));
+
+test('mazzo dei bomber: voci complete, niente doppioni, gol plausibili', () => {
+    assert.ok(sosGoalsDatabase.length >= 50);
+    const names = sosGoalsDatabase.map((p) => p.name);
+    assert.equal(new Set(names).size, names.length, 'bomber ripetuto');
+    for (const p of sosGoalsDatabase) {
+        assert.ok(p.name && p.team, 'nome o squadre mancanti');
+        assert.ok(['POR', 'DIF', 'CEN', 'ATT'].includes(p.role), `ruolo non valido: ${p.name}`);
+        assert.ok(Number.isInteger(p.value) && p.value >= 100 && p.value <= 274, `gol strani: ${p.name} ${p.value}`);
+    }
+    // Piola resta il re: 274
+    assert.equal(sosGoalsDatabase.find((p) => p.name === 'Silvio Piola').value, 274);
+    assert.equal(Math.max(...sosGoalsDatabase.map((p) => p.value)), 274);
+    // ordinati come la classifica
+    for (let i = 1; i < sosGoalsDatabase.length; i++) assert.ok(sosGoalsDatabase[i - 1].value >= sosGoalsDatabase[i].value, `ordine: ${sosGoalsDatabase[i].name}`);
+});
+
+test('mazzo dei bomber: solo gente che in Serie A ha chiuso', () => {
+    const active = ['Lautaro Martínez', 'Domenico Berardi', 'Paulo Dybala', 'Ciro Immobile', 'Mauro Icardi', 'Andrea Belotti', 'Edin Džeko', 'Duván Zapata', 'Luis Muriel'];
+    for (const n of active) assert.ok(!sosGoalsDatabase.some((p) => p.name === n), `${n} e' ancora in attivita'`);
+});
+
+test('mazzo dei bomber: serie lunghe giocabili, mai pari, differenze che si stringono', () => {
+    const pool = G.buildPool(sosGoalsDatabase, {});
+    const scale = G.DECKS.gol.scale;
+    assert.ok(G.playable(pool));
+    let firstWide = 0;
+    for (let run = 0; run < 40; run++) {
+        const r = rng(500 + run);
+        const used = {};
+        let left = G.firstPlayer(pool, r);
+        used[left.name + '|' + left.team] = true;
+        for (let n = 0; n < 80; n++) {
+            const right = G.nextPlayer(pool, left, n, used, r, scale);
+            assert.ok(right, 'nessun avversario');
+            assert.notEqual(right.value, left.value);
+            if (n === 0 && Math.max(left.value, right.value) / Math.min(left.value, right.value) >= 1.3) firstWide++;
+            used[right.name + '|' + right.team] = true;
+            left = right;
+        }
+    }
+    assert.ok(firstWide >= 36, `prime coppie troppo strette: ${firstWide}/40`);
+    assert.ok(G.level(0, scale).minR < G.level(0).minR && G.level(30, scale).minR > 1);
+});
+
+test('la differenza si racconta in parole', () => {
+    assert.equal(G.diffText({ value: 10 }, { value: 45 }), '35 mln in più');
+    assert.equal(G.diffText({ value: 1.5 }, { value: 0.7 }), '800 mila in meno');
+    assert.equal(G.diffText({ value: 274 }, { value: 250 }, G.fmtGoals), '24 gol in meno');
+});
+
+test('niente ping-pong di prezzi: si evita il valore di due turni prima', () => {
+    const pool = G.buildPool(playersDatabase, {});
+    let pingpong = 0, total = 0;
+    for (let run = 0; run < 30; run++) {
+        const r = rng(900 + run);
+        const used = {};
+        let prev = null;
+        let left = G.firstPlayer(pool, r);
+        for (let n = 0; n < 40; n++) {
+            const right = G.nextPlayer(pool, left, n, used, r, 1, prev ? prev.value : null);
+            if (prev && right.value === prev.value) pingpong++;
+            total++;
+            used[right.name + '|' + right.team] = true;
+            prev = left;
+            left = right;
+        }
+    }
+    assert.ok(pingpong / total < 0.05, `ping-pong ${pingpong}/${total}`);
+});
+
+test('il confronto più stretto usa i cognomi giusti', () => {
+    assert.equal(G.surname('Gigi Riva'), 'Riva');
+    assert.equal(G.surname('Pietro Paolo Virdis'), 'Virdis');
+    assert.equal(G.surname('Koni De Winter'), 'De Winter');
+    assert.equal(G.surname('Micky van de Ven'), 'van de Ven');
+    assert.equal(G.surname('Vinícius Jr.'), 'Vinícius Jr.');
+    assert.equal(G.surname('Kim Min-jae'), 'Kim Min-jae');
+    assert.equal(G.surname('Rodri'), 'Rodri');
+});

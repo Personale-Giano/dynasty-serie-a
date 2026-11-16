@@ -58,11 +58,34 @@ test('nessun titolo di scheda ripetuto', () => {
 
 test('le schede pubblicate non sono cambiate (impronta sha256)', () => {
     const PUBBLICATE = [
-        { fino: 42, sha256: '38c50cf59d8bda38279c1d411d61701939a453f7ff02c6da49c29a0cbc296799' }
+        { fino: 42, sha256: '38c50cf59d8bda38279c1d411d61701939a453f7ff02c6da49c29a0cbc296799' },
+        { fino: 52, sha256: '0c96ae9554c58740932b454db6595fd080d3ebccab542164c30516ad7197dcf0' }
     ];
     for (const { fino, sha256 } of PUBBLICATE) {
         assert.ok(quattroSchede.length >= fino, `mancano schede: erano ${fino}`);
         const got = crypto.createHash('sha256').update(JSON.stringify(quattroSchede.slice(0, fino))).digest('hex');
         assert.equal(got, sha256, `le schede N° 1-${fino} sono cambiate rispetto a quelle pubblicate`);
     }
+});
+
+test('ogni tema ha almeno cinque schede', () => {
+    for (const t of TEMI) {
+        const n = quattroSchede.filter((p) => p.tema === t).length;
+        assert.ok(n >= 5, `tema ${t}: solo ${n} schede`);
+    }
+});
+
+test('nessuna parola di una casella oltre i 14 caratteri (sul telefono non entrerebbe)', () => {
+    for (const p of quattroSchede.slice(42)) {
+        for (const v of p.gruppi.flatMap((g) => g.voci)) {
+            for (const w of v.split(/\s+/)) assert.ok(w.length <= 14, `N° ${p.n}: «${w}» troppo lunga`);
+        }
+    }
+});
+
+test('lo script del gioco compila', () => {
+    const fs = require('node:fs');
+    const vm = require('node:vm');
+    const src = fs.readFileSync(path.join(__dirname, '..', 'assets', 'games', 'quattro.js'), 'utf8');
+    assert.doesNotThrow(() => new vm.Script(src, { filename: 'quattro.js' }));
 });

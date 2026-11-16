@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   /* colore del gioco (dal registro QZ.GAMES), finche' qz.css non ha la sua riga */
   [data-game="catena"] { --accent: #46c8c0; --accent-2: #9ae6e1; --accent-rgb: 70, 200, 192; --accent-ink: #46c8c0; --on-accent: #07090b; }
@@ -106,6 +106,21 @@
   .ct-recap span { color: var(--text-2); font-size: 15px; }
   .ct-recap em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--muted); grid-column: 1 / -1; }
 
+  .ct-recap li.is-gave b { color: var(--led-red); }
+  .ct-done-pts { margin: 0 0 8px; color: var(--text-2); font-size: 15px; }
+  .ct-hist { display: grid; gap: 0; margin: 8px 0 0; padding: 0; list-style: none; }
+  .ct-hist li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .ct-hist li:last-child { border-bottom: 0; }
+  .ct-hist__n { font-family: var(--font-led); color: var(--muted); text-align: center; }
+  .ct-hist__w { min-width: 0; overflow-wrap: anywhere; font-weight: 800; font-size: 14px; line-height: 1.3; text-transform: uppercase; }
+  .ct-hist__p { font-family: var(--font-led); font-size: 18px; color: var(--led); text-shadow: var(--led-glow); font-variant-numeric: tabular-nums; }
+  .ct-albo { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); color: var(--text-2); font-size: 15px; text-align: left; }
+  .ct-albo .ico { flex: none; color: var(--accent-ink); margin-top: 2px; }
+  .ct-albo b { color: var(--text); }
+  .ct-resume { display: grid; gap: 6px; justify-items: start; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line-2); border-left: 3px solid var(--accent); border-radius: var(--r); }
+  .ct-resume__info { color: var(--text-2); font-size: 15px; overflow-wrap: anywhere; }
+  .ct-tools .btn:disabled { opacity: .45; }
+
   @media (max-width: 479px) {
     .ct-team { padding: 8px 9px 10px; }
     .ct-team__name { font-size: 14px; }
@@ -126,7 +141,7 @@
       <div data-stagger>
         <span class="eyebrow">Gioco 17 · Due squadre</span>
         <h1 class="intro__title">La <em>Catena</em></h1>
-        <p class="intro__lead">Otto parole, una attaccata all'altra: Baggio porta al pallone, il pallone all'oro, l'oro al nero. Si vedono solo la prima e l'ultima. In mezzo, sei anelli da trovare prima degli avversari. Chi tiene il telefono fa il presentatore.</p>
+        <p class="intro__lead">Otto parole, una attaccata all'altra: il codino porta a Baggio, Baggio al Pallone d'Oro, l'oro al nero. Si vedono solo la prima e l'ultima. In mezzo, sei anelli da trovare prima degli avversari. Chi tiene il telefono fa il presentatore.</p>
         <div class="card mt-3">
           <div class="ct-setup">
             <div id="teams-host"></div>
@@ -135,6 +150,11 @@
               <div id="opt-n" aria-labelledby="lbl-n"></div>
             </div>
           </div>
+        </div>
+        <div class="ct-resume mt-3" id="resume" hidden>
+          <span class="label">Partita in sospeso</span>
+          <span class="ct-resume__info" id="resume-info"></span>
+          <button class="btn btn--primary" type="button" id="resume-btn"></button>
         </div>
         <div class="row mt-3">
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
@@ -202,17 +222,19 @@
           </form>
         </div>
         <div class="ct-tools">
+          <button class="btn btn--sm" type="button" id="undo" aria-label="Annulla l'ultimo verdetto" disabled></button>
           <button class="btn btn--sm" type="button" id="give"></button>
           <button class="btn btn--ghost btn--sm" type="button" id="quit"></button>
         </div>
-        <p class="small muted center kbd-hint">Da tastiera: <span class="kbd">G</span> giusto · <span class="kbd">X</span> sbagliato · <span class="kbd">↑</span> <span class="kbd">↓</span> lato · <span class="kbd">V</span> soluzione · <span class="kbd">/</span> scrivi</p>
+        <p class="small muted center kbd-hint">Da tastiera: <span class="kbd">G</span> giusto · <span class="kbd">X</span> sbagliato · <span class="kbd">↑</span> <span class="kbd">↓</span> lato · <span class="kbd">V</span> soluzione · <span class="kbd">/</span> scrivi · <span class="kbd">Z</span> annulla</p>
       </div>
 
       <!-- catena chiusa -->
       <div id="done" class="stack" style="--gap:14px" hidden>
         <div class="card card--glow">
           <span class="eyebrow" id="done-eyebrow"></span>
-          <h2 id="done-title" tabindex="-1" style="margin:6px 0 10px"></h2>
+          <h2 id="done-title" tabindex="-1" style="margin:6px 0 6px"></h2>
+          <p class="ct-done-pts" id="done-pts"></p>
           <ul class="ct-recap" id="recap"></ul>
         </div>
         <button class="btn btn--primary btn--xl btn--block" type="button" id="next"></button>
@@ -225,8 +247,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-catena.js?v=7abbc99f" defer></script>
-<script src="assets/games/catena.js?v=18177f88" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-catena.js?v=16533eaf" defer></script>
+<script src="assets/games/catena.js?v=5656bd78" defer></script>
 </body>
 </html>

@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   /* ---------- copertina ---------- */
   .xw-title { font-size: clamp(44px, 7vw, 78px); }
@@ -38,7 +38,8 @@
     border: 1px solid var(--line); border-top: 3px solid var(--line-2); border-radius: var(--r-lg); background: var(--panel); color: var(--text); text-align: left;
     transition: background .15s, border-color .15s, transform .15s;
   }
-  .xw-card:hover { background: var(--panel-2); border-color: var(--line-2); transform: translateY(-2px); }
+  .xw-card:hover { background: var(--panel-2); border-color: var(--line-2); }
+  @media (hover: hover) { .xw-card:hover { transform: translateY(-2px); } }
   .xw-card.is-new { border-top-color: var(--accent); }
   .xw-card.is-play { border-top-color: var(--led); }
   .xw-card.is-done { border-top-color: var(--led-green); }
@@ -67,6 +68,7 @@
     .xw-side { position: sticky; top: calc(var(--header-h) + 16px); max-height: calc(100vh - var(--header-h) - 32px); max-height: calc(100dvh - var(--header-h) - 32px); }
     .xw-side .xw-aids { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .xw-side .xw-aid { flex-direction: row; min-height: 48px; gap: 8px; font-size: 14px; }
+    .xw-side .xw-aid--quit { grid-column: 1 / -1; }
     .xw-side .kbd-hint { font-size: 13px; line-height: 2; }
   }
 
@@ -297,8 +299,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/cruciverba-schede.js?v=cdfeba3d" defer></script>
-<script src="assets/games/cruciverba.js?v=aad345bd" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/cruciverba-schede.js?v=d5e59c20" defer></script>
+<script src="assets/games/cruciverba.js?v=62cdf7ff" defer></script>
 </body>
 </html>

@@ -392,6 +392,97 @@ var quattroSchede = [
             { d: 3, nome: 'Squadre di Ronaldo il Fenomeno', voci: ['Cruzeiro', 'PSV', 'Corinthians', 'Real Madrid'] },
             { d: 4, nome: 'Squadre di Roberto Baggio', voci: ['Vicenza', 'Fiorentina', 'Bologna', 'Brescia'] }
         ]
+    },
+    /* ---------- dal N° 43: aggiunte del 16 novembre 2026 ---------- */
+    {
+        n: 43, tema: 'storia', titolo: 'Notti di finale',
+        gruppi: [
+            { d: 1, nome: 'Campioni del mondo nel Mondiale di casa', voci: ['Uruguay', 'Inghilterra', 'Argentina', 'Francia'] },
+            { d: 2, nome: 'Finaliste mondiali che non l\'hanno mai vinto', voci: ['Olanda', 'Ungheria', 'Svezia', 'Croazia'] },
+            { d: 3, nome: 'Stadi di una finale mondiale', voci: ['Wembley', 'Azteca', 'Rose Bowl', 'Lužniki'] },
+            { d: 4, nome: 'In gol in una finale mondiale', voci: ['Tardelli', 'Götze', 'Hurst', 'Materazzi'] }
+        ]
+    },
+    {
+        n: 44, tema: 'serie-a', titolo: 'Su e giù per lo Stivale',
+        gruppi: [
+            { d: 1, nome: 'Squadre toscane', voci: ['Fiorentina', 'Empoli', 'Livorno', 'Siena'] },
+            { d: 2, nome: 'Squadre lombarde', voci: ['Atalanta', 'Como', 'Monza', 'Cremonese'] },
+            { d: 3, nome: 'Squadre venete', voci: ['Vicenza', 'Padova', 'Venezia', 'Cittadella'] },
+            { d: 4, nome: 'Squadre emiliane', voci: ['Sassuolo', 'Spal', 'Reggiana', 'Carpi'] }
+        ]
+    },
+    {
+        n: 45, tema: 'serie-a', titolo: 'Venuti dal Nord',
+        gruppi: [
+            { d: 1, nome: 'Olandesi del Milan', voci: ['Gullit', 'Seedorf', 'Kluivert', 'Van Bommel'] },
+            { d: 2, nome: 'Tedeschi dell\'Inter', voci: ['Matthäus', 'Brehme', 'Rummenigge', 'Sammer'] },
+            { d: 3, nome: 'Svedesi in Serie A', voci: ['Liedholm', 'Nordahl', 'Brolin', 'Kulusevski'] },
+            { d: 4, nome: 'Danesi in Serie A', voci: ['Elkjær', 'Tomasson', 'Kjær', 'Højlund'] }
+        ]
+    },
+    {
+        n: 46, tema: 'azzurri', titolo: 'Maglia azzurra',
+        gruppi: [
+            { d: 1, nome: 'Tra i cinque migliori marcatori della Nazionale', voci: ['Riva', 'Meazza', 'Piola', 'Del Piero'] },
+            { d: 2, nome: 'Più di 115 presenze in azzurro', voci: ['Cannavaro', 'Maldini', 'Bonucci', 'De Rossi'] },
+            { d: 3, nome: 'Ct dell\'Italia dal 2000 in poi', voci: ['Trapattoni', 'Donadoni', 'Ventura', 'Spalletti'] },
+            { d: 4, nome: 'Oriundi in azzurro', voci: ['Camoranesi', 'Thiago Motta', 'Eder', 'Retegui'] }
+        ]
+    },
+    {
+        n: 47, tema: 'curiosita', titolo: 'Lavagna tattica',
+        gruppi: [
+            { d: 1, nome: 'Moduli di gioco', voci: ['4-4-2', '4-3-3', '3-5-2', '4-2-3-1'] },
+            { d: 2, nome: 'Si riparte da palla ferma', voci: ['Punizione', 'Calcio d\'angolo', 'Rimessa laterale', 'Calcio di rinvio'] },
+            { d: 3, nome: 'Movimenti senza palla', voci: ['Inserimento', 'Taglio', 'Diagonale', 'Incrocio'] },
+            { d: 4, nome: 'Filosofie di gioco', voci: ['Catenaccio', 'Tiki-taka', 'Zona', 'Calcio totale'] }
+        ]
+    },
+    {
+        n: 48, tema: 'estero', titolo: 'Stadi d\'Europa',
+        gruppi: [
+            { d: 1, nome: 'Stadi tedeschi', voci: ['Allianz Arena', 'Signal Iduna Park', 'Weserstadion', 'BayArena'] },
+            { d: 2, nome: 'Stadi scozzesi', voci: ['Celtic Park', 'Ibrox', 'Hampden Park', 'Pittodrie'] },
+            { d: 3, nome: 'Stadi portoghesi', voci: ['Da Luz', 'Dragão', 'Alvalade', 'Bessa'] },
+            { d: 4, nome: 'Stadi olandesi', voci: ['De Kuip', 'Philips Stadion', 'Cruijff Arena', 'AFAS Stadion'] }
+        ]
+    },
+    {
+        n: 49, tema: 'serie-a', titolo: 'Numeri da record',
+        gruppi: [
+            { d: 1, nome: 'Più di 550 presenze in Serie A', voci: ['Buffon', 'Maldini', 'Zanetti', 'Zoff'] },
+            { d: 2, nome: 'Più di 200 gol in Serie A', voci: ['Nordahl', 'Meazza', 'Altafini', 'Di Natale'] },
+            { d: 3, nome: 'Capocannonieri della Serie A con la Lazio', voci: ['Chinaglia', 'Giordano', 'Signori', 'Crespo'] },
+            { d: 4, nome: 'Campioni d\'Italia con la Sampdoria nel 1991', voci: ['Vialli', 'Cerezo', 'Dossena', 'Pari'] }
+        ]
+    },
+    {
+        n: 50, tema: 'azzurri', titolo: 'Gioie e dolori azzurri',
+        gruppi: [
+            { d: 1, nome: 'Città di una finale vinta dall\'Italia', voci: ['Roma', 'Madrid', 'Berlino', 'Londra'] },
+            { d: 2, nome: 'Battute dall\'Italia in una finale, tra Mondiali ed Europei', voci: ['Jugoslavia', 'Germania Ovest', 'Inghilterra', 'Ungheria'] },
+            { d: 3, nome: 'Ci hanno lasciato a casa nelle qualificazioni mondiali', voci: ['Irlanda del Nord', 'Svezia', 'Macedonia del Nord', 'Bosnia'] },
+            { d: 4, nome: 'Ct azzurri fuori ai gironi di un Mondiale', voci: ['Fabbri', 'Valcareggi', 'Lippi', 'Prandelli'] }
+        ]
+    },
+    {
+        n: 51, tema: 'storia', titolo: 'Maestri di panchina',
+        gruppi: [
+            { d: 1, nome: 'Coppa dei Campioni vinta da giocatore e da allenatore', voci: ['Ancelotti', 'Zidane', 'Rijkaard', 'Cruijff'] },
+            { d: 2, nome: 'Allenatori di un triplete', voci: ['Ferguson', 'Heynckes', 'Hiddink', 'Stein'] },
+            { d: 3, nome: 'Ct campioni d\'Europa', voci: ['Aragonés', 'Rehhagel', 'Fernando Santos', 'De la Fuente'] },
+            { d: 4, nome: 'Stranieri campioni d\'Italia in panchina', voci: ['Herrera', 'Liedholm', 'Eriksson', 'Boškov'] }
+        ]
+    },
+    {
+        n: 52, tema: 'serie-a', titolo: 'Africa in Serie A',
+        gruppi: [
+            { d: 1, nome: 'Nigeriani in Serie A', voci: ['Osimhen', 'Kanu', 'Martins', 'Taribo West'] },
+            { d: 2, nome: 'Camerunensi in Serie A', voci: ['Eto\'o', 'Anguissa', 'M\'Boma', 'Song'] },
+            { d: 3, nome: 'Ivoriani in Serie A', voci: ['Kessié', 'Gervinho', 'Kouamé', 'Ndicka'] },
+            { d: 4, nome: 'Senegalesi in Serie A', voci: ['Koulibaly', 'Keita Baldé', 'Niang', 'Boulaye Dia'] }
+        ]
     }
 ];
 

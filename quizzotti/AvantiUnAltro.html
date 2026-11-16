@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Avanti un Altro · Quizzotti</title>
-<meta name="description" content="Il quiz al contrario: scegli sempre la risposta SBAGLIATA per avanzare. 180 domande di calcio in stile Avanti un Altro, a tutta velocità.">
+<meta name="description" content="Il quiz al contrario: scegli sempre la risposta SBAGLIATA per avanzare. Oltre 230 domande di calcio in stile Avanti un Altro, a tutta velocità.">
 <link rel="canonical" href="https://quizotti.altervista.org/quizzotti/AvantiUnAltro.html">
 <meta property="og:url" content="https://quizotti.altervista.org/quizzotti/AvantiUnAltro.html">
 <meta name="theme-color" content="#07090b">
@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   .intro { grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px) { .intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
@@ -97,6 +97,19 @@
 
   .au-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
   .au-foot .kbd-hint { margin: 0; }
+  /* sul telefono il promemoria della tastiera non serve: resta solo "Chiedo il cambio" */
+  @media (hover: none) and (pointer: coarse) { .au-foot .kbd-hint { display: none; } .au-foot { justify-content: flex-end; } }
+  /* a fine partita: le domande dove si e' caduti */
+  .au-review { width: 100%; max-width: 640px; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); }
+  .au-review summary { min-height: 48px; display: flex; align-items: center; padding: 0 16px; cursor: pointer; font-weight: 800; font-size: 17px; }
+  .au-review summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r); }
+  .au-review ul { list-style: none; margin: 0; padding: 0 14px 12px; display: grid; gap: 10px; }
+  .au-review__row { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; padding-top: 10px; border-top: 1px solid var(--line); }
+  .au-review__tag { min-width: 52px; padding: 3px 6px 2px; text-align: center; background: #000; border: 1px solid var(--line-2); border-radius: var(--r-sm); font-family: var(--font-led); font-size: 14px; color: var(--led-red); white-space: nowrap; }
+  .au-review__q { font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+  .au-review__a { margin-top: 3px; font-size: 15px; color: var(--text-2); overflow-wrap: anywhere; }
+  .au-review__a b { color: var(--text); }
+  .au-clean { text-align: center; color: var(--text-2); }
 </style>
 </head>
 <body data-game="avantiunaltro">
@@ -167,8 +180,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-avantiunaltro.js?v=d0e650d6" defer></script>
-<script src="assets/games/avantiunaltro.js?v=bd9363d5" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-avantiunaltro.js?v=71e26128" defer></script>
+<script src="assets/games/avantiunaltro.js?v=5bd07c2c" defer></script>
 </body>
 </html>

@@ -1,21 +1,212 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Mr. White
-   Dati: assets/db-mrwhite.js (`wordsList`: calciatori segreti). Le immagini di
-   `playerImages` sono segnaposto finti: al loro posto una maglia disegnata.
+   Dati: assets/db-mrwhite.js (`wordsList` e `mrwhiteData`: italiani,
+   stranieri, coppie per l'Infiltrato, alias per l'ultimo tiro, nome sulla
+   maglia per l'aiutino). Al posto delle foto, una maglia disegnata.
    Il ruolo si accende sul maxischermo dello stadio: i civili vedono il
-   calciatore con la sua maglia, Mr. White uno schermo senza segnale.
+   calciatore con la sua maglia, Mr. White uno schermo senza segnale e
+   l'eventuale Infiltrato un calciatore simile (senza saperlo).
    Si vota su un tabellone a LED: chi e' fuori si spegne.
    Ordine di parola (Mr. White non parla mai per primo), eliminazione, ultimo
-   tiro per Mr. White con risposta tollerante, piu' round con classifica,
-   calciatori che non si ripetono tra le partite.
+   tiro per Mr. White con risposta tollerante (alias, refusi, cognomi doppi),
+   piu' round con classifica, calciatori che non si ripetono tra le partite.
+   La partita si salva a fine round: ricaricando la pagina si riprende.
+   La logica pura sta in `core` ed e' esportata per i test con Node.
    ========================================================================== */
 (function () {
     'use strict';
 
+    /* ---------- Impostazioni: valori ammessi (un valore vecchio o rotto torna al default) ---------- */
+    var CHOICES = { timer: [0, 60, 120, 180], rounds: [3, 5, 8, 0], pool: ['tutti', 'italiani', 'stranieri'] };
+    var DEFAULTS = { timer: 120, rounds: 5, hint: false, mw: 1, inf: false, pool: 'tutti' };
+    var MIN_P = 3, MAX_P = 12;
+    function sanitizeCfg(raw) {
+        var o = Object.assign({}, DEFAULTS);
+        if (raw && typeof raw === 'object') {
+            Object.keys(CHOICES).forEach(function (k) { if (CHOICES[k].indexOf(raw[k]) >= 0) o[k] = raw[k]; });
+            if (typeof raw.hint === 'boolean') o.hint = raw.hint;
+            if (typeof raw.inf === 'boolean') o.inf = raw.inf;
+            var mw = Math.floor(Number(raw.mw));
+            if (mw >= 1 && mw <= maxBad(MAX_P)) o.mw = mw;
+        }
+        return o;
+    }
+    /** Quanti "impostori" (Mr. White + Infiltrato) reggono n giocatori: sempre meno della meta'. */
+    function maxBad(n) { return Math.max(1, Math.floor((n - 1) / 2)); }
+    /** L'Infiltrato serve almeno a 5: con 3-4 giocatori resterebbe un civile solo. */
+    function canInf(n) { return maxBad(n) >= 2; }
+    function maxMW(n, inf) { return Math.max(1, maxBad(n) - (inf && canInf(n) ? 1 : 0)); }
+
+    var PTS = { civWin: 100, guess: 300, mate: 100, survive: 200, wrongGuess: -50 };
+
+    /* ---------- Risposta tollerante all'ultimo tiro ---------- */
+    // lettere che la scomposizione Unicode non riduce a una lettera semplice
+    var FOLD = { 'ß': 'ss', 'ø': 'o', 'æ': 'ae', 'ı': 'i', 'ł': 'l', 'đ': 'd', 'œ': 'oe', 'þ': 'th', 'ð': 'd' };
+    function norm(s) {
+        return String(s == null ? '' : s).toLowerCase()
+            .replace(/[ßøæıłđœþð]/g, function (c) { return FOLD[c]; })
+            .normalize('NFD').replace(/[̀-ͯ]/g, '')
+            .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    function compact(s) { return norm(s).replace(/ /g, ''); }
+    function lev(a, b) {
+        if (a === b) return 0;
+        var prev = [], cur, i, j;
+        for (j = 0; j <= b.length; j++) prev[j] = j;
+        for (i = 1; i <= a.length; i++) {
+            cur = [i];
+            for (j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+            prev = cur;
+        }
+        return prev[b.length];
+    }
+    /** Refusi ammessi: nessuno sui nomi corti, uno fino a 8 lettere, due oltre. */
+    function tol(len) { return len <= 4 ? 0 : len <= 8 ? 1 : 2; }
+    function near(g, c) { return Math.abs(g.length - c.length) <= tol(c.length) && lev(g, c) <= tol(c.length); }
+    /** I modi brevi di dirlo: il cognome e ogni coda del nome ("Ter Stegen", "De Rossi", "Rossi"). */
+    function partials(word) {
+        var t = norm(word).split(' '), out = [];
+        for (var k = 1; k < t.length; k++) out.push(t.slice(k).join(''));
+        return out;
+    }
+    function shortKeys(word, alias) {
+        var keys = partials(word).concat(((alias && alias[word]) || []).map(compact));
+        return keys.filter(function (k, i) { return k.length >= 3 && keys.indexOf(k) === i; });
+    }
+    /**
+     * Chi risponde a ogni forma (nome intero, cognome, alias): "Inzaghi" ne ha due, e allora serve il nome;
+     * "Conte" e' Antonio Conte, quindi non puo' passare come refuso di Bruno Conti.
+     */
+    function buildIndex(words, alias) {
+        var idx = Object.create(null);
+        function add(k, w) { (idx[k] = idx[k] || []).indexOf(w) < 0 && idx[k].push(w); }
+        words.forEach(function (w) {
+            add(compact(w), w);
+            shortKeys(w, alias).forEach(function (k) { add(k, w); });
+        });
+        return idx;
+    }
+    /**
+     * 'yes' giusto, 'ambiguous' cognome giusto ma condiviso (Thuram, Inzaghi, Maldini...), 'no' sbagliato.
+     */
+    function checkGuess(guess, word, alias, idx) {
+        var g = compact(guess);
+        if (g.length < 2) return 'no';
+        // il nome esatto di un altro calciatore non e' mai un refuso: Salah non e' Salas, Kane non e' Keane
+        if (idx && idx[g] && idx[g].indexOf(word) < 0) return 'no';
+        if (near(g, compact(word))) return 'yes';
+        var res = 'no';
+        var keys = shortKeys(word, alias);
+        for (var i = 0; i < keys.length; i++) {
+            if (!near(g, keys[i])) continue;
+            if (idx && idx[keys[i]] && idx[keys[i]].length > 1) res = 'ambiguous';
+            else return 'yes';
+        }
+        return res;
+    }
+
+    /* ---------- Aiutino: l'iniziale del nome sulla maglia ---------- */
+    var PARTICLES = ['de', 'di', 'da', 'del', 'della', 'van', 'von', 'der', 'den', 'ter', 'el', 'mac', 'dos', 'do', 'du', 'la', 'le'];
+    function shirtName(word, maglia) {
+        if (maglia && maglia[word]) return maglia[word];
+        var t = String(word).trim().split(/\s+/);
+        var i = t.length - 1;
+        while (i > 1 && PARTICLES.indexOf(t[i - 1].toLowerCase()) >= 0) i--;
+        return t.slice(Math.max(0, i)).join(' ');
+    }
+    function hintLetter(word, maglia) { return shirtName(word, maglia).charAt(0).toUpperCase(); }
+
+    /* ---------- Ruoli, esito, punti ---------- */
+    /** roles: 'civ' | 'mw' | 'inf'. Esito: 'civ' (fuori tutti gli impostori), 'bad' (sono quanti i civili), null (si continua). */
+    function outcome(roles, alive) {
+        var bad = 0, civ = 0;
+        roles.forEach(function (r, i) { if (alive[i]) { if (r === 'civ') civ++; else bad++; } });
+        if (!bad) return 'civ';
+        if (bad >= civ) return 'bad';
+        return null;
+    }
+    /** Premi di fine round (la penalita' e il bonus dell'ultimo tiro si danno a parte, sul momento). */
+    function settle(roles, alive, winner, how, guesser) {
+        return roles.map(function (r, i) {
+            if (winner === 'civ') return r === 'civ' ? PTS.civWin : 0;
+            if (r === 'civ') return 0;
+            if (how === 'guess') return i === guesser ? 0 : PTS.mate;
+            return alive[i] ? PTS.survive : 0;
+        });
+    }
+    /** Chi parla per primo: un giocatore in campo che non e' Mr. White, poi si segue il giro del tavolo. */
+    function speakOrder(seats, roles, pick) {
+        var ok = seats.filter(function (i) { return roles[i] !== 'mw'; });
+        if (!ok.length) return seats.slice();
+        var first = seats.indexOf(pick(ok));
+        return seats.slice(first).concat(seats.slice(0, first));
+    }
+    /** Nomi doppi resi unici ("Luca", "Luca 2"): altrimenti punteggi e voti si confondono. */
+    function uniqueNames(names) {
+        var seen = {};
+        return names.map(function (n) {
+            var k = n.toLowerCase();
+            seen[k] = (seen[k] || 0) + 1;
+            return seen[k] > 1 ? n + ' ' + seen[k] : n;
+        });
+    }
+    function rank(players) {
+        return players.map(function (p, i) { return { p: p, i: i }; })
+            .sort(function (a, b) { return b.p.score - a.p.score || a.i - b.i; })
+            .map(function (x) { return x.p; });
+    }
+    function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+    function shareText(ranked, rounds) {
+        var top = ranked.filter(function (p) { return p.score === ranked[0].score; });
+        var head = 'Mr. White su Quizzotti, ' + plural(rounds, 'round', 'round') + ': ' +
+            (top.length > 1 ? 'pari in vetta tra ' + top.map(function (p) { return p.name; }).join(' e ') : 'vince ' + top[0].name) +
+            ' con ' + plural(top[0].score, 'punto', 'punti') + '.';
+        return head + '\n' + ranked.map(function (p, i) { return (i + 1) + '. ' + p.name + ' ' + p.score; }).join('\n') +
+            '\nChi di voi bluffa meglio?';
+    }
+
+    /* ---------- Salvataggio tra un round e l'altro ---------- */
+    var SAVE_MAX_AGE = 12 * 3600 * 1000;
+    function snapshot(G, now) {
+        return {
+            v: 1, at: now, cfg: Object.assign({}, G.cfg), round: G.round, done: G.done,
+            stats: Object.assign({}, G.stats),
+            players: G.players.map(function (p) { return { name: p.name, color: p.color, score: p.score, mwTimes: p.mwTimes, mwWins: p.mwWins }; })
+        };
+    }
+    function validSave(s, now) {
+        if (!s || s.v !== 1 || typeof s.at !== 'number' || now - s.at > SAVE_MAX_AGE || now < s.at - 60000) return false;
+        if (!s.cfg || JSON.stringify(sanitizeCfg(s.cfg)) !== JSON.stringify(Object.assign({}, DEFAULTS, s.cfg))) return false;
+        if (!Array.isArray(s.players) || s.players.length < MIN_P || s.players.length > MAX_P) return false;
+        if (!(s.done >= 1 && s.round === s.done)) return false;
+        if (s.cfg.rounds && s.done >= s.cfg.rounds) return false;
+        if (!s.stats || ['caught', 'guessed', 'civOut', 'infOut'].some(function (k) { return typeof s.stats[k] !== 'number'; })) return false;
+        return s.players.every(function (p) {
+            return p && typeof p.name === 'string' && p.name && typeof p.color === 'string' &&
+                ['score', 'mwTimes', 'mwWins'].every(function (k) { return typeof p[k] === 'number' && isFinite(p[k]); });
+        });
+    }
+
+    var core = {
+        CHOICES: CHOICES, DEFAULTS: DEFAULTS, PTS: PTS, sanitizeCfg: sanitizeCfg, maxBad: maxBad, canInf: canInf, maxMW: maxMW,
+        norm: norm, checkGuess: checkGuess, buildIndex: buildIndex, shirtName: shirtName, hintLetter: hintLetter,
+        outcome: outcome, settle: settle, speakOrder: speakOrder, uniqueNames: uniqueNames, rank: rank,
+        shareText: shareText, snapshot: snapshot, validSave: validSave
+    };
+    if (typeof module !== 'undefined' && module.exports) { module.exports = core; return; }
+
+    /* ======================================================================
+       Da qui in giu': la pagina
+       ====================================================================== */
     var $ = QZ.$;
-    var deck = new QZ.Deck('mrwhite', wordsList.map(function (w) { return String(w).trim(); }));
-    var CFG = Object.assign({ timer: 120, rounds: 5, hint: false, mw: 1 }, QZ.store.get('qz.mrwhite.cfg', {}) || {});
-    var PTS = { civWin: 100, guess: 300, mwMate: 100, survive: 200, wrongGuess: -50 };
+    var DATA = window.mrwhiteData || { italiani: wordsList, stranieri: [], coppie: [], alias: {}, maglia: {} };
+    var ALL = wordsList.map(function (w) { return String(w).trim(); });
+    var IDX = buildIndex(ALL, DATA.alias);
+    var POOLS = { tutti: null, italiani: new Set(DATA.italiani), stranieri: new Set(DATA.stranieri) };
+    var deck = new QZ.Deck('mrwhite', ALL);
+    var pairDeck = new QZ.Deck('mrwhite-coppie', DATA.coppie || [], function (p) { return p.join('|'); });
+    var CFG = sanitizeCfg(QZ.store.get('qz.mrwhite.cfg', {}));
+    var SAVE_KEY = 'qz.mrwhite.save', STATS_KEY = 'qz.mrwhite.stats';
     var NUM = 'N° ' + String(QZ.GAMES.indexOf(QZ.game('mrwhite')) + 1).padStart(2, '0');
 
     var G = null;      // partita
@@ -24,35 +215,58 @@
     var busy = false;
 
     /* ---------- Markup statico ---------- */
+    $('#mw-eyebrow').textContent = NUM + ' · Da 3 a 12';
     $('#start-btn').innerHTML = 'Accendi lo schermo' + QZ.icon('arrow');
     $('#medal').innerHTML = '<span class="mw-q" aria-hidden="true">?</span>';
     $('#rules').innerHTML = [
         ['Passatevi il telefono:', 'ognuno accende il maxischermo di nascosto e vede il calciatore segreto.'],
         ['Mr. White', 'trova lo schermo senza segnale: non sa chi è il calciatore e deve fare finta di saperlo.'],
-        ['Una parola a testa', 'sul calciatore, poi si vota chi buttare fuori.'],
-        ['Beccato?', 'Mr. White ha un ultimo tiro: se indovina il calciatore, la vince lui.']
+        ['Una parola a testa', 'sul calciatore, poi si vota chi buttare fuori. Pari? Si rivota tra quelli.'],
+        ['Beccato?', 'Mr. White ha un ultimo tiro: se indovina il calciatore, la vince lui.'],
+        ['Con l\'Infiltrato', 'uno di voi vede un calciatore simile, e non lo sa. Occhio a chi «sbaglia» di poco.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
-    var played = QZ.profile.get().gamesPlayed.mrwhite;
-    $('#start-record').textContent = played ? 'Su questo telefono: ' + played + (played === 1 ? ' partita giocata' : ' partite giocate') + '.' : '';
+    $('#points').innerHTML = [
+        ['Civili', '+' + PTS.civWin + ' se fuori tutti gli impostori'],
+        ['Mr. White', '+' + PTS.survive + ' se arriva in fondo, +' + PTS.guess + ' se indovina all\'ultimo tiro, ' + PTS.wrongGuess + ' se sbaglia'],
+        ['Compagni', '+' + PTS.mate + ' agli altri impostori quando Mr. White indovina']
+    ].map(function (r) { return '<li><b>' + r[0] + '</b> <span>' + r[1] + '</span></li>'; }).join('');
 
-    var players = QZ.playerList($('#players-host'), { key: 'mrwhite', min: 3, max: 12, initial: 4, label: 'Giocatore', title: 'Giocatori (3-12)' });
+    function lifetime() {
+        var s = QZ.store.get(STATS_KEY, null);
+        return s && typeof s === 'object' && typeof s.rounds === 'number' && typeof s.mwWins === 'number' ? s : { rounds: 0, mwWins: 0 };
+    }
+    function paintRecord() {
+        var played = QZ.profile.get().gamesPlayed.mrwhite;
+        var s = lifetime();
+        var txt = played ? 'Su questo telefono: ' + plural(played, 'partita giocata', 'partite giocate') : '';
+        if (s.rounds) txt += (txt ? ' · ' : 'Su questo telefono: ') + 'Mr. White ha vinto ' + s.mwWins + ' round su ' + s.rounds;
+        $('#start-record').textContent = txt ? txt + '.' : '';
+    }
+    paintRecord();
+
+    var players = QZ.playerList($('#players-host'), { key: 'mrwhite', min: MIN_P, max: MAX_P, initial: 4, label: 'Giocatore', title: 'Giocatori (3-12)' });
 
     $('#mw-minus').innerHTML = QZ.icon('minus');
     $('#mw-plus').innerHTML = QZ.icon('plus');
-    function maxMW() { return Math.max(1, Math.floor((players.count() - 1) / 2)); }
-    function syncMW() {
-        CFG.mw = QZ.clamp(CFG.mw, 1, maxMW());
+    function infOn(n) { return CFG.inf && canInf(n); }
+    function syncRoles() {
+        var n = players.count();
+        var max = maxMW(n, CFG.inf);
+        CFG.mw = QZ.clamp(CFG.mw, 1, max);
         $('#mw-count').textContent = CFG.mw;
         $('#mw-minus').disabled = CFG.mw <= 1;
-        $('#mw-plus').disabled = CFG.mw >= maxMW();
+        $('#mw-plus').disabled = CFG.mw >= max;
+        var box = $('#opt-inf');
+        box.disabled = !canInf(n);
+        box.checked = infOn(n);
+        $('#inf-note').textContent = canInf(n) ? '(vede un calciatore simile)' : '(da 5 giocatori in su)';
     }
-    $('#mw-minus').addEventListener('click', function () { CFG.mw--; syncMW(); saveCfg(); QZ.sound.click(); });
-    $('#mw-plus').addEventListener('click', function () { CFG.mw++; syncMW(); saveCfg(); QZ.sound.pop(); });
-    // il numero di giocatori cambia dal componente lista: ricalcola il massimo di Mr. White
-    $('#players-host').addEventListener('click', function () { setTimeout(syncMW, 0); });
-    syncMW();
+    $('#mw-minus').addEventListener('click', function () { CFG.mw--; syncRoles(); saveCfg(); QZ.sound.click(); });
+    $('#mw-plus').addEventListener('click', function () { CFG.mw++; syncRoles(); saveCfg(); QZ.sound.pop(); });
+    // il numero di giocatori cambia dal componente lista: ricalcola i ruoli possibili
+    $('#players-host').addEventListener('click', function () { setTimeout(syncRoles, 0); });
 
     QZ.segmented($('#opt-timer'), [
         { label: 'Libero', value: 0 }, { label: '1 min', value: 60 }, { label: '2 min', value: 120 }, { label: '3 min', value: 180 }
@@ -60,11 +274,45 @@
     QZ.segmented($('#opt-rounds'), [
         { label: '3', value: 3 }, { label: '5', value: 5 }, { label: '8', value: 8 }, { label: 'Senza fine', value: 0 }
     ], CFG.rounds, function (v) { CFG.rounds = v; saveCfg(); });
-    $('#opt-hint').checked = !!CFG.hint;
+    QZ.segmented($('#opt-pool'), [
+        { label: 'Tutti', value: 'tutti' }, { label: 'Italiani', value: 'italiani' }, { label: 'Stranieri', value: 'stranieri' }
+    ], CFG.pool, function (v) { CFG.pool = v; saveCfg(); });
+    $('#opt-hint').checked = CFG.hint;
     $('#opt-hint').addEventListener('change', function () { CFG.hint = $('#opt-hint').checked; saveCfg(); });
+    $('#opt-inf').addEventListener('change', function () { CFG.inf = $('#opt-inf').checked; syncRoles(); saveCfg(); });
+    syncRoles();
     function saveCfg() { QZ.store.set('qz.mrwhite.cfg', CFG); }
 
-    $('#start-btn').addEventListener('click', startGame);
+    $('#start-btn').addEventListener('click', function () { startGame(); });
+
+    /* ---------- Partita lasciata a meta' ---------- */
+    function readSave() {
+        var s = QZ.store.get(SAVE_KEY, null);
+        if (validSave(s, Date.now())) return s;
+        if (s) QZ.store.remove(SAVE_KEY);
+        return null;
+    }
+    function paintResume() {
+        var s = readSave(), box = $('#mw-resume');
+        box.hidden = !s;
+        if (!s) return;
+        var top = rank(s.players)[0];
+        $('#mw-resume-txt').innerHTML = 'Partita lasciata a metà: <b>' + (s.cfg.rounds ? s.done + ' round su ' + s.cfg.rounds : plural(s.done, 'round giocato', 'round giocati')) +
+            '</b>, in testa ' + QZ.esc(top.name) + ' con ' + plural(top.score, 'punto', 'punti') + '. Si riparte con un calciatore nuovo.';
+    }
+    $('#mw-resume-go').innerHTML = QZ.icon('play', 'ico-fill') + 'Riprendi';
+    $('#mw-resume-no').textContent = 'Lascia stare';
+    $('#mw-resume-go').addEventListener('click', function () {
+        var s = readSave();
+        if (!s) { paintResume(); return; }
+        startGame(s);
+    });
+    $('#mw-resume-no').addEventListener('click', function () {
+        QZ.store.remove(SAVE_KEY);
+        paintResume();
+        $('#start-btn').focus({ preventScroll: true });
+    });
+    paintResume();
 
     /* ---------- Helper ---------- */
     function av(p, cls) {
@@ -113,18 +361,15 @@
                 : '<rect x="6.9" y="10.3" width="10.2" height="6.4" rx=".7" fill="#0b0e11" opacity=".88"/><text x="12" y="15.4" text-anchor="middle" fill="#fff">' + QZ.esc(initials(word)) + '</text>') +
             '</svg>';
     }
-    function surnameInitial(word) {
-        var t = word.split(/\s+/);
-        return t[t.length - 1].charAt(0).toUpperCase();
-    }
-    function alive(filterMW) {
+    function alive(role) {
         var out = [];
         G.players.forEach(function (p, i) {
-            if (R.alive[i] && (filterMW == null || R.mw[i] === filterMW)) out.push(i);
+            if (R.alive[i] && (role == null || R.role[i] === role)) out.push(i);
         });
         return out;
     }
-    function roundLabel() { return 'Round ' + G.round + (CFG.rounds ? '/' + CFG.rounds : ''); }
+    function roundLabel() { return 'Round ' + G.round + (G.cfg.rounds ? '/' + G.cfg.rounds : ''); }
+    function pad(n) { return String(n).padStart(2, '0'); }
     /** La schermata e' quella in primo piano (non sta scorrendo via): niente doppi tocchi a cambio foglio. */
     function onScreen(id) {
         var el = document.getElementById(id);
@@ -138,60 +383,76 @@
         QZ.$$('button, svg, [aria-hidden="true"]', d).forEach(function (x) { x.remove(); });
         return d.textContent.replace(/\s+/g, ' ').trim();
     }
-
-    /** Risposta tollerante: nome completo o solo cognome, con piccoli refusi. */
-    function isRight(guess, word) {
-        var g = QZ.norm(guess);
-        if (g.length < 2) return false;
-        var t = QZ.norm(word).split(' ');
-        var cands = [t.join(' ')];
-        if (t.length > 1) { cands.push(t.slice(1).join(' ')); cands.push(t[t.length - 1]); }
-        return cands.some(function (c) {
-            if (c.length < 3) return false;
-            var tol = c.length <= 4 ? 0 : c.length <= 8 ? 1 : 2;
-            return QZ.distance(g.replace(/ /g, ''), c.replace(/ /g, '')) <= tol;
-        });
-    }
+    function save() { if (G && G.done) QZ.store.set(SAVE_KEY, snapshot(G, Date.now())); }
 
     /* ---------- Partita ---------- */
-    function startGame() {
-        // nomi doppi resi unici (nella v1 i punteggi si sovrascrivevano)
-        var seen = {};
-        var names = players.get().map(function (n) {
-            var k = n.toLowerCase();
-            seen[k] = (seen[k] || 0) + 1;
-            return seen[k] > 1 ? n + ' ' + seen[k] : n;
-        });
-        syncMW();
-        G = {
-            players: names.map(function (n, i) { return { name: n, color: QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length], score: 0 }; }),
-            round: 0, done: 0,
-            stats: { caught: 0, guessed: 0, civOut: 0 }
-        };
+    function startGame(resume) {
+        if (resume) {
+            G = {
+                cfg: sanitizeCfg(resume.cfg),
+                players: resume.players.map(function (p) { return Object.assign({}, p); }),
+                round: resume.round, done: resume.done,
+                stats: Object.assign({}, resume.stats)
+            };
+        } else {
+            syncRoles();
+            var names = uniqueNames(players.get());
+            var cfg = Object.assign({}, CFG);
+            cfg.inf = infOn(names.length);
+            cfg.mw = QZ.clamp(cfg.mw, 1, maxMW(names.length, cfg.inf));
+            G = {
+                cfg: cfg,
+                players: names.map(function (n, i) { return { name: n, color: QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length], score: 0, mwTimes: 0, mwWins: 0 }; }),
+                round: 0, done: 0,
+                stats: { caught: 0, guessed: 0, civOut: 0, infOut: 0 }
+            };
+            QZ.store.remove(SAVE_KEY);
+        }
+        busy = false;
         QZ.wake.on();
         QZ.sound.start();
         newRound();
     }
 
+    function drawWords() {
+        var pool = POOLS[G.cfg.pool];
+        var inPool = pool ? function (w) { return pool.has(w); } : null;
+        if (G.cfg.inf) {
+            var pair = pairDeck.draw(inPool ? function (p) { return inPool(p[0]) && inPool(p[1]); } : null) || pairDeck.draw();
+            if (pair) {
+                var flip = Math.random() < 0.5;
+                return { word: pair[flip ? 1 : 0], infWord: pair[flip ? 0 : 1] };
+            }
+        }
+        return { word: deck.draw(inPool) || deck.draw(), infWord: null };
+    }
+
     function newRound() {
         G.round++;
         var n = G.players.length;
-        var mwIdx = QZ.shuffle(G.players.map(function (_, i) { return i; })).slice(0, CFG.mw);
+        var w = drawWords();
+        var bad = QZ.shuffle(G.players.map(function (_, i) { return i; }));
+        var mwIdx = bad.slice(0, G.cfg.mw);
+        var infIdx = w.infWord ? bad[G.cfg.mw] : -1;
         var start = (G.round - 1) % n;
         R = {
-            word: deck.draw(),
-            mw: G.players.map(function (_, i) { return mwIdx.indexOf(i) >= 0; }),
+            word: w.word, infWord: w.infWord,
+            role: G.players.map(function (_, i) { return mwIdx.indexOf(i) >= 0 ? 'mw' : i === infIdx ? 'inf' : 'civ'; }),
             alive: G.players.map(function () { return true; }),
             order: G.players.map(function (_, i) { return (start + i) % n; }),
             pos: 0, flipped: false, turn: 0,
             delta: G.players.map(function () { return 0; })
         };
-        $('#rv-round').textContent = CFG.rounds ? pad(G.round) + '/' + pad(CFG.rounds) : pad(G.round);
+        R.role.forEach(function (r, i) { if (r === 'mw') G.players[i].mwTimes++; });
+        $('#rv-round').textContent = G.cfg.rounds ? pad(G.round) + '/' + pad(G.cfg.rounds) : pad(G.round);
         $('#rv-dots').innerHTML = R.order.map(function () { return '<i></i>'; }).join('');
+        $('#rv-card').classList.remove('is-flipped');
+        $('#rv-back').innerHTML = '';
+        $('#rv-front').removeAttribute('aria-hidden');
+        $('#rv-front').setAttribute('tabindex', '0');
         renderFront();
         QZ.show('s-reveal');
     }
-    function pad(n) { return String(n).padStart(2, '0'); }
 
     /* ---------- Il maxischermo: carta 3D ---------- */
     // schermo spento: chi deve guardare, e la scritta per accenderlo
@@ -210,6 +471,15 @@
             '<span class="mw-screen__role">' + role + '</span>' + txt + '</div>' +
             '<div class="mw-screen__foot">' + (foot || QZ.icon('eyeoff') + 'Il calciatore non lo vedi') + '</div></div>';
     }
+    // il calciatore in onda: uguale per civili e Infiltrato, che non deve accorgersi di nulla
+    function onAirHTML(word) {
+        return '<div class="mw-screen">' +
+            '<div class="mw-screen__bar"><span>MAXISCHERMO</span><b>IN ONDA</b></div>' +
+            '<div class="mw-screen__body"><span class="mw-screen__k">Il calciatore segreto</span>' + shirt(word) +
+            '<div class="mw-screen__name">' + QZ.esc(word) + '</div></div>' +
+            '<div class="mw-screen__foot" style="font-weight:600;font-size:15px">Descrivilo con una parola, senza regalarlo a Mr. White.</div>' +
+            '</div>';
+    }
 
     function renderFront() {
         var p = G.players[R.order[R.pos]];
@@ -226,24 +496,22 @@
     }
 
     function secretHTML(p) {
-        if (R.mw[p]) {
-            return noSignalHTML('Sei Mr. White', CFG.hint
-                ? '<span class="note">il cognome inizia per ' + QZ.esc(surnameInitial(R.word)) + '</span>'
-                : '<p class="mw-screen__txt">Non sai chi è. Ascolta, bluffa, non farti beccare.' + (CFG.mw > 1 ? ' In campo siete in ' + CFG.mw + '.' : '') + '</p>');
+        if (R.role[p] === 'mw') {
+            var mates = G.cfg.mw > 1 ? 'In campo siete in ' + G.cfg.mw + '.' : '';
+            if (R.infWord) mates += (mates ? ' ' : '') + 'C\'è anche un infiltrato che non sa di esserlo.';
+            return noSignalHTML('Sei Mr. White', G.cfg.hint
+                ? '<span class="note">sulla maglia: ' + QZ.esc(hintLetter(R.word, DATA.maglia)) + '…</span>' + (mates ? '<p class="mw-screen__txt">' + mates + '</p>' : '')
+                : '<p class="mw-screen__txt">Non sai chi è. Ascolta, bluffa, non farti beccare.' + (mates ? ' ' + mates : '') + '</p>');
         }
-        return '<div class="mw-screen">' +
-            '<div class="mw-screen__bar"><span>MAXISCHERMO</span><b>IN ONDA</b></div>' +
-            '<div class="mw-screen__body"><span class="mw-screen__k">Il calciatore segreto</span>' + shirt(R.word) +
-            '<div class="mw-screen__name">' + QZ.esc(R.word) + '</div></div>' +
-            '<div class="mw-screen__foot" style="font-weight:600;font-size:15px">Descrivilo con una parola, senza regalarlo a Mr. White.</div>' +
-            '</div>';
+        return onAirHTML(R.role[p] === 'inf' ? R.infWord : R.word);
     }
 
     function flipCard() {
-        if (busy || R.flipped) return;
+        if (busy || R.flipped || !onScreen('s-reveal')) return;
         var i = R.order[R.pos];
         var back = $('#rv-back');
-        back.className = 'flip__face flip__face--back mw-face ' + (R.mw[i] ? 'mw-face--spy' : 'mw-face--civ');
+        // stessa classe per civili e Infiltrato: niente indizi nel markup
+        back.className = 'flip__face flip__face--back mw-face ' + (R.role[i] === 'mw' ? 'mw-face--spy' : 'mw-face--civ');
         back.innerHTML = secretHTML(i);
         back.setAttribute('aria-hidden', 'false');
         // lo schermo acceso esce dall'ordine del Tab: si spegne dal bottone sotto
@@ -312,11 +580,9 @@
         $('#tk-round').textContent = $('#rv-round').textContent;
         $('#tk-turn').textContent = pad(R.turn);
         $('#tk-alive').textContent = pad(alive().length) + '/' + pad(G.players.length);
-        $('#tk-eyebrow').innerHTML = QZ.icon('message') + 'Si parla';
-        // il primo a parlare e' sempre un civile scelto a caso, poi si segue il giro
-        var seat = alive();
-        var first = seat.indexOf(QZ.pick(alive(false)));
-        var order = seat.slice(first).concat(seat.slice(0, first));
+        $('#tk-eyebrow').innerHTML = QZ.icon('message') + (R.turn > 1 ? 'Si riparla' : 'Si parla');
+        // il primo a parlare non e' mai Mr. White, poi si segue il giro
+        var order = speakOrder(alive(), R.role, QZ.pick);
         $('#tk-order').innerHTML = order.map(function (i, k) {
             var p = G.players[i];
             return '<li style="--i:' + k + '">' + av(p) + '<span class="grow">' + QZ.esc(p.name) + '</span>' + (k === 0 ? '<span class="note">comincia tu</span>' : '') + '</li>';
@@ -324,10 +590,10 @@
 
         if (talk) talk.destroy();
         var host = $('#tk-timer');
-        if (CFG.timer) {
+        if (G.cfg.timer) {
             host.innerHTML = QZ.ringHTML('timer-ring--xl');
             talk = new QZ.Timer({
-                seconds: CFG.timer, ring: QZ.ring(host.firstChild),
+                seconds: G.cfg.timer, ring: QZ.ring(host.firstChild),
                 onSecond: function (s) {
                     if (s <= 5 && s > 0) QZ.sound.tick();
                     if (s === 10) QZ.say('Ultimi 10 secondi.');
@@ -336,6 +602,7 @@
                     QZ.sound.whistle();
                     QZ.vibrate([120, 60, 120]);
                     QZ.toast('Tempo. Si vota.', { icon: 'whistle' });
+                    QZ.say('Tempo scaduto. Si vota.', true);
                     QZ.fx.pop($('#tk-vote'));
                     paintToggle();
                 }
@@ -352,7 +619,7 @@
         }, 700);
     }
 
-    /** Cronometro in avanti (come nella v1) quando non si sceglie un tempo. */
+    /** Cronometro in avanti quando non si sceglie un tempo. */
     function Stopwatch(el) { this.el = el; this.acc = 0; this.t0 = 0; this.running = false; this.iv = 0; }
     Stopwatch.prototype.ms = function () { return this.acc + (this.running ? performance.now() - this.t0 : 0); };
     Stopwatch.prototype.render = function () {
@@ -394,7 +661,8 @@
         if (!onScreen('s-talk')) return;
         if (talk) talk.pause();
         paintToggle();
-        QZ.confirm('Il round in corso non conta. Si va dritti alla classifica.', { title: 'Chiudere qui?', okLabel: 'Chiudi', cancelLabel: 'Si continua', danger: true }).then(function (ok) {
+        var text = G.done ? 'Il round in corso non conta. Si va dritti alla classifica.' : 'Nessun round finito: la partita non conta.';
+        QZ.confirm(text, { title: 'Chiudere qui?', okLabel: 'Chiudi', cancelLabel: 'Si continua', danger: true }).then(function (ok) {
             if (ok) finishGame();
         });
     });
@@ -415,14 +683,16 @@
                     (out ? '<span class="mw-ballot__out">FUORI</span>' : '') +
                     '<span class="mw-ballot__box" aria-hidden="true"></span></button>';
             }).join('');
-        QZ.$$('#vt-list .mw-ballot__row:not(:disabled)').forEach(function (b) {
-            b.setAttribute('aria-label', 'Vota ' + G.players[Number(b.dataset.i)].name);
+        QZ.$$('#vt-list .mw-ballot__row').forEach(function (b) {
+            var p = G.players[Number(b.dataset.i)];
+            if (b.disabled) { b.setAttribute('aria-label', p.name + ', già fuori'); return; }
+            b.setAttribute('aria-label', 'Vota ' + p.name);
             b.addEventListener('click', function () { vote(Number(b.dataset.i), b); });
         });
         QZ.sound.whoosh();
         QZ.show('s-vote');
     }
-    $('#vt-back').addEventListener('click', function () { if (onScreen('s-vote')) QZ.show('s-talk'); });
+    $('#vt-back').addEventListener('click', function () { if (!busy && onScreen('s-vote')) QZ.show('s-talk'); });
 
     function vote(i, row) {
         if (busy || !onScreen('s-vote') || !R.alive[i]) return;
@@ -436,7 +706,7 @@
             QZ.confirm('Il suo schermo si accende davanti a tutti. Niente ripensamenti.', { title: 'Fuori ' + p.name + '?', okLabel: 'Fuori', cancelLabel: 'Aspetta' }).then(function (ok) {
                 busy = false;
                 if (ok) eliminate(i);
-                else { row.classList.remove('is-picked'); QZ.$$('.qz-mark', box).forEach(function (m) { m.remove(); }); }
+                else { row.classList.remove('is-picked'); QZ.$$('.qz-mark', box).forEach(function (m) { m.remove(); }); row.focus({ preventScroll: true }); }
             });
         }, QZ.reducedMotion() ? 0 : 750);
     }
@@ -444,21 +714,30 @@
     /* ---------- Verdetto con suspense ---------- */
     function eliminate(i) {
         var p = G.players[i];
-        var isMW = R.mw[i];
+        var role = R.role[i];
         R.alive[i] = false;
+        busy = true;
         $('#vd-card').classList.remove('is-flipped');
         $('#vd-front').innerHTML = offHTML('Sul maxischermo', p, '<span>era…</span>', 'mw-screen--verdict');
         var back = $('#vd-back');
-        back.className = 'flip__face flip__face--back mw-face ' + (isMW ? 'mw-face--spy' : 'mw-face--out');
+        back.className = 'flip__face flip__face--back mw-face ' + (role === 'mw' ? 'mw-face--spy' : 'mw-face--out');
         // il retro (l'esito) resta muto finche' la carta non si gira
         back.setAttribute('aria-hidden', 'true');
         $('#vd-front').removeAttribute('aria-hidden');
-        back.innerHTML = isMW
-            ? noSignalHTML('Mr. White', '<p class="mw-screen__txt">' + QZ.esc(p.name) + ' non sapeva niente. Ma ha ancora un tiro.</p>', QZ.icon('target') + 'Ultimo tiro in arrivo')
-            : '<div class="mw-screen"><div class="mw-screen__bar"><span>MAXISCHERMO</span><b>IN ONDA</b></div>' +
+        if (role === 'mw') {
+            back.innerHTML = noSignalHTML('Mr. White', '<p class="mw-screen__txt">' + QZ.esc(p.name) + ' non sapeva niente. Ma ha ancora un tiro.</p>', QZ.icon('target') + 'Ultimo tiro in arrivo');
+        } else if (role === 'inf') {
+            // il suo calciatore resta coperto: direbbe troppo a un Mr. White ancora in campo
+            back.innerHTML = '<div class="mw-screen"><div class="mw-screen__bar"><span>MAXISCHERMO</span><b>SEGNALE DISTURBATO</b></div>' +
+                '<div class="mw-screen__body"><span class="mw-screen__k">L\'infiltrato</span>' + av(p, 'mw-av--xl') +
+                '<div class="mw-screen__name">' + QZ.esc(p.name) + '</div><p class="mw-screen__txt">Vedeva un altro calciatore, simile al vostro. Non lo sapeva nemmeno lui.</p></div>' +
+                '<div class="mw-screen__foot">' + QZ.icon('eyeoff') + 'Il suo calciatore si scopre a fine round</div></div>';
+        } else {
+            back.innerHTML = '<div class="mw-screen"><div class="mw-screen__bar"><span>MAXISCHERMO</span><b>IN ONDA</b></div>' +
                 '<div class="mw-screen__body"><span class="mw-screen__k">Uno dei vostri</span>' + av(p, 'mw-av--xl') +
                 '<div class="mw-screen__name">' + QZ.esc(p.name) + '</div><p class="mw-screen__txt">Avete buttato fuori un innocente.</p></div>' +
                 '<div class="mw-screen__foot">' + QZ.icon('users') + 'Sapeva chi era il calciatore</div></div>';
+        }
         $('#vd-panel').innerHTML = '';
         QZ.say('Fuori ' + p.name + '. Si accende il suo schermo…');
         QZ.show('s-verdict');
@@ -469,29 +748,42 @@
             $('#vd-card').classList.add('is-flipped');
             back.setAttribute('aria-hidden', 'false');
             $('#vd-front').setAttribute('aria-hidden', 'true');
-            if (isMW) {
+            var body = back.querySelector('.mw-screen__body');
+            if (role === 'mw') {
                 G.stats.caught++;
                 QZ.sound.reveal();
                 QZ.vibrate([60, 40, 160]);
-                setTimeout(function () { QZ.fx.stamp(back.querySelector('.mw-screen__body'), 'Smascherato', 'ok', { size: 34, y: 46, say: false }); }, 550);
-                setTimeout(function () { guessPanel(i); }, 900);
+                setTimeout(function () { QZ.fx.stamp(body, 'Smascherato', 'ok', { size: 34, y: 46, say: false }); }, 550);
+                setTimeout(function () { busy = false; guessPanel(i); }, 900);
+            } else if (role === 'inf') {
+                G.stats.infOut++;
+                QZ.sound.reveal();
+                QZ.vibrate([60, 40, 160]);
+                setTimeout(function () { QZ.fx.stamp(body, 'Infiltrato', 'ink', { size: 34, y: 46, say: false }); }, 550);
+                setTimeout(function () { busy = false; afterOut(p.name + ' era l\'infiltrato: preso. '); }, 900);
             } else {
                 G.stats.civOut++;
                 QZ.sound.wrong();
                 QZ.vibrate([60, 40, 60]);
-                setTimeout(function () { QZ.fx.stamp(back.querySelector('.mw-screen__body'), 'Innocente', 'bad', { size: 34, y: 46, say: false }); }, 550);
-                setTimeout(function () { afterCivilian(p.name); }, 900);
+                setTimeout(function () { QZ.fx.stamp(body, 'Innocente', 'bad', { size: 34, y: 46, say: false }); }, 550);
+                setTimeout(function () { busy = false; afterOut(p.name + ' era innocente. '); }, 900);
             }
         }, beats ? 1350 : 200);
     }
 
-    function afterCivilian(name) {
-        var mwLeft = alive(true).length, civLeft = alive(false).length;
-        var lead = name + ' era innocente. ';
-        if (mwLeft >= civLeft) {
-            panel('<p class="mw-msg center">Ora i Mr. White sono quanti voi. Partita chiusa: l\'hanno fatta franca.</p>', 'Vedi il round', function () { endRound('mw', 'survive'); }, lead);
+    /** Dopo un'eliminazione senza ultimo tiro: si chiude il round o si riparla. */
+    function afterOut(lead) {
+        var res = outcome(R.role, R.alive);
+        if (res === 'civ') {
+            panel('<p class="mw-msg center">Fuori tutti gli impostori. Il calciatore è salvo.</p>', 'Vedi il round', function () { endRound('civ', 'caught'); }, lead);
+        } else if (res === 'bad') {
+            var solo = R.role.filter(function (r) { return r !== 'civ'; }).length === 1;
+            panel('<p class="mw-msg center">' + (solo ? 'Ora Mr. White e voi siete pari. Partita chiusa: l\'ha fatta franca.' : 'Ora gli impostori sono quanti voi. Partita chiusa: l\'hanno fatta franca.') + '</p>', 'Vedi il round', function () { endRound('bad', 'survive'); }, lead);
         } else {
-            panel('<p class="mw-msg center">' + (mwLeft > 1 ? 'Ci sono ancora ' + mwLeft + ' Mr. White' : 'Mr. White è ancora') + ' in campo. Altro giro di parole.</p>', 'Altro giro', startTalk, lead);
+            var mw = alive('mw').length, inf = alive('inf').length;
+            var who = mw > 1 ? 'Ci sono ancora ' + mw + ' Mr. White' : mw ? 'Mr. White è ancora' : 'L\'infiltrato è ancora';
+            if (mw && inf) who += (mw > 1 ? ' e l\'infiltrato' : ', e pure l\'infiltrato,');
+            panel('<p class="mw-msg center">' + who + ' in campo. Altro giro di parole.</p>', 'Altro giro', startTalk, lead);
         }
     }
 
@@ -501,7 +793,7 @@
         host.innerHTML = html + '<button type="button" class="btn btn--primary btn--lg btn--block" data-next>' + QZ.icon('arrow') + '<span></span></button>';
         host.querySelector('[data-next] span').textContent = label;
         var btn = host.querySelector('[data-next]');
-        btn.addEventListener('click', fn, { once: true });
+        btn.addEventListener('click', function () { if (onScreen('s-verdict')) fn(); }, { once: true });
         QZ.say((lead || '') + plain(html));
         QZ.fx.replay(host.firstElementChild);
         setTimeout(function () { btn.focus({ preventScroll: true }); }, 60);
@@ -513,8 +805,9 @@
         host.innerHTML =
             '<form class="card mw-guess" id="vd-form" autocomplete="off">' +
             '<label class="label" for="vd-input">Ultimo tiro per ' + QZ.esc(p.name) + ': chi è il calciatore?</label>' +
-            '<div class="mw-guess__row"><input class="input" id="vd-input" maxlength="40" placeholder="Nome o cognome" autocapitalize="words" spellcheck="false" enterkeyhint="go">' +
+            '<div class="mw-guess__row"><input class="input" id="vd-input" maxlength="40" placeholder="Nome e cognome" autocapitalize="words" autocomplete="off" spellcheck="false" enterkeyhint="go">' +
             '<button class="btn btn--primary" type="submit">' + QZ.icon('ball') + 'Tira</button></div>' +
+            '<p class="small muted">Vale anche il solo cognome, se non ce ne sono due uguali. Qualche refuso si perdona.</p>' +
             '<button class="btn btn--ghost btn--sm" type="button" id="vd-giveup">Non lo so, bandiera bianca</button></form>';
         var form = $('#vd-form'), input = $('#vd-input');
         QZ.say(p.name + ' era Mr. White: smascherato. Ultimo tiro: deve indovinare il calciatore.');
@@ -523,83 +816,90 @@
         form.addEventListener('submit', function (e) {
             e.preventDefault();
             if (shot) return;
-            if (!input.value.trim()) { QZ.fx.shake(input); return; }
+            if (!input.value.trim()) { QZ.fx.shake(input); QZ.say('Scrivi un nome, o alza bandiera bianca.'); return; }
             shot = true;
-            judge(i, isRight(input.value, R.word), input.value.trim());
+            judge(i, checkGuess(input.value, R.word, DATA.alias, IDX), input.value.trim());
         });
-        $('#vd-giveup').addEventListener('click', function () { if (shot) return; shot = true; judge(i, false, ''); });
+        $('#vd-giveup').addEventListener('click', function () { if (shot) return; shot = true; judge(i, 'no', ''); });
     }
 
-    function judge(i, ok, said) {
+    function judge(i, res, said) {
         var p = G.players[i];
-        if (ok) {
+        if (res === 'yes') {
             G.stats.guessed++;
             R.delta[i] += PTS.guess;
             QZ.sound.correct();
             panel('<div class="card mw-solution">' + shirt(R.word) +
                 '<p class="mw-msg grow"><b>' + QZ.esc(p.name) + '</b> ci ha preso: era <b>' + QZ.esc(R.word) + '</b>. Che faccia tosta.</p></div>',
-                'Vedi il round', function () { endRound('mw', 'guess', i); }, 'Gol! ');
+                'Vedi il round', function () { endRound('bad', 'guess', i); }, 'Gol! ');
             QZ.fx.stamp($('#vd-panel .mw-solution'), 'Gol!', 'bad', { size: 26, x: 80, y: 0, say: false });
             return;
         }
         R.delta[i] += PTS.wrongGuess;
         QZ.sound.buzzer();
         QZ.fx.shake($('#vd-panel'));
-        var mwLeft = alive(true).length;
-        // se restano altri Mr. White il calciatore non si svela ancora
-        var msg = said ? '«' + QZ.esc(said) + '»: fuori dallo specchio.' : QZ.esc(p.name) + ' alza bandiera bianca.';
+        // se il round va avanti (altri impostori in campo) nessun indizio: il messaggio resta neutro
+        var res2 = outcome(R.role, R.alive);
+        var ends = res2 !== null;
+        var msg = !said ? QZ.esc(p.name) + ' alza bandiera bianca.'
+            : res === 'ambiguous' && ends ? '«' + QZ.esc(said) + '»: di quel cognome ce n\'è più d\'uno, serviva anche il nome.'
+                : '«' + QZ.esc(said) + '»: ' + QZ.pick(['fuori dallo specchio.', 'alto sopra la traversa.', 'para il portiere.', 'palo pieno.']);
         var override = said ? '<button type="button" class="btn btn--ghost btn--sm" id="vd-override">' + QZ.icon('check') + 'Era giusta, decide il gruppo</button>' : '';
-        var next = mwLeft === 0
-            ? function () { endRound('civ', 'caught'); }
-            : function () { afterWrongWithMates(); };
+        var next = res2 === 'civ' ? function () { endRound('civ', 'caught'); }
+            : res2 === 'bad' ? function () { endRound('bad', 'survive'); }
+                : startTalk;
         panel('<div class="card center stack" style="--gap:10px;align-items:center"><span class="note" style="color:var(--led-red)">' + QZ.fmt(PTS.wrongGuess) + ' punti</span><p class="mw-msg">' + msg + '</p>' + override + '</div>',
-            mwLeft === 0 ? 'Vedi il round' : 'Avanti', next);
+            ends ? 'Vedi il round' : 'Altro giro', next);
         var ov = $('#vd-override');
         if (ov) ov.addEventListener('click', function () {
             if (ov.disabled) return;
             ov.disabled = true;
             R.delta[i] -= PTS.wrongGuess;  // annulla la penalita' appena data
-            judge(i, true, said);
+            judge(i, 'yes', said);
         });
-    }
-
-    function afterWrongWithMates() {
-        if (alive(true).length >= alive(false).length) endRound('mw', 'survive');
-        else startTalk();
     }
 
     /* ---------- Fine round ---------- */
     function endRound(winner, how, guesser) {
         if (talk) talk.pause();
-        G.players.forEach(function (_, i) {
-            if (winner === 'civ' && !R.mw[i]) R.delta[i] += PTS.civWin;
-            if (winner === 'mw' && R.mw[i]) {
-                if (how === 'survive' && R.alive[i]) R.delta[i] += PTS.survive;
-                if (how === 'guess' && i !== guesser) R.delta[i] += PTS.mwMate;
-            }
+        var bonus = settle(R.role, R.alive, winner, how, guesser);
+        G.players.forEach(function (p, i) {
+            R.delta[i] += bonus[i];
+            p.score += R.delta[i];
+            if (winner === 'bad' && R.role[i] === 'mw') p.mwWins++;
         });
-        G.players.forEach(function (p, i) { p.score += R.delta[i]; });
         G.done++;
-        var mwNames = G.players.filter(function (_, i) { return R.mw[i]; }).map(function (p) { return p.name; });
+        var life = lifetime();
+        life.rounds++;
+        if (winner === 'bad') life.mwWins++;
+        QZ.store.set(STATS_KEY, life);
+
+        var mwNames = G.players.filter(function (_, i) { return R.role[i] === 'mw'; }).map(function (p) { return p.name; });
+        var infI = R.role.indexOf('inf');
+        var many = mwNames.length > 1;
         var hows = {
-            caught: ['Smascherato', 'Beccati tutti, e nessuno ha indovinato il calciatore.'],
+            caught: ['Smascherato', infI >= 0 ? (many ? 'Fuori i Mr. White' : 'Fuori Mr. White') + ' e l\'infiltrato: il gruppo ha tenuto.' : many ? 'Beccati tutti, e nessuno ha indovinato il calciatore.' : 'Beccato, e all\'ultimo tiro niente gol.'],
             guess: ['Colpo di scena', 'Beccato, ma all\'ultimo tiro ha indovinato il calciatore.'],
             survive: ['L\'ha fatta franca', 'Nessuno se n\'è accorto in tempo. Bluff da manuale.']
         };
-        var more = !CFG.rounds || G.round < CFG.rounds;
-        var sorted = G.players.map(function (p, i) { return { p: p, i: i }; }).sort(function (a, b) { return b.p.score - a.p.score; });
+        var title = winner === 'civ' ? 'Vincono i civili' : infI >= 0 && how === 'survive' ? 'Vincono gli impostori' : many ? 'Vincono i Mr. White' : 'Vince Mr. White';
+        var more = !G.cfg.rounds || G.round < G.cfg.rounds;
+        var sorted = G.players.map(function (p, i) { return { p: p, i: i }; }).sort(function (a, b) { return b.p.score - a.p.score || a.i - b.i; });
+        var tag = function (i) { return R.role[i] === 'mw' ? '<small>era Mr. White</small>' : R.role[i] === 'inf' ? '<small>era l\'infiltrato</small>' : ''; };
         $('#rd-host').innerHTML =
             '<div class="result" data-stagger>' +
             '<span class="eyebrow">Fine ' + roundLabel() + '</span>' +
-            '<h2 class="result__title">' + (winner === 'civ' ? 'Vincono i civili' : 'Vince Mr. White') + '</h2>' +
+            '<h2 class="result__title" tabindex="-1">' + title + '</h2>' +
             '<p class="muted result__sub">' + hows[how][1] + '</p></div>' +
             '<div class="card card--tight mw-solution" id="rd-sol">' + shirt(R.word) +
             '<div class="grow"><div class="mw-solution__k">Il calciatore era</div><div class="mw-name">' + QZ.esc(R.word) + '</div>' +
-            '<div class="mt-1">' + (mwNames.length > 1 ? 'I Mr. White: ' : 'Mr. White: ') + '<b>' + QZ.esc(mwNames.join(', ')) + '</b></div></div></div>' +
+            '<div class="mt-1">' + (many ? 'I Mr. White: ' : 'Mr. White: ') + '<b>' + QZ.esc(mwNames.join(', ')) + '</b></div>' +
+            (infI >= 0 ? '<div class="mt-1">L\'infiltrato, <b>' + QZ.esc(G.players[infI].name) + '</b>, vedeva <b>' + QZ.esc(R.infWord) + '</b></div>' : '') +
+            '</div></div>' +
             '<div class="mw-standings" style="margin-top:6px">' + sorted.map(function (x, k) {
                 var d = R.delta[x.i];
                 return '<div class="team" style="--c:' + x.p.color + ';animation:qz-rise .35s var(--ease-out) both;animation-delay:' + (k * 60 + 200) + 'ms">' +
-                    '<span class="team__dot"></span><span class="team__name">' + QZ.esc(x.p.name) + (R.mw[x.i] ? '<small>era Mr. White</small>' : '') + '</span>' +
+                    '<span class="team__dot"></span><span class="team__name">' + QZ.esc(x.p.name) + tag(x.i) + '</span>' +
                     (d ? '<span class="mw-delta ' + (d > 0 ? 'mw-delta--up' : 'mw-delta--down') + '">' + (d > 0 ? '+' : '') + d + '</span>' : '') +
                     '<span class="team__score">' + QZ.fmt(x.p.score) + '</span></div>';
             }).join('') + '</div>' +
@@ -608,6 +908,7 @@
                 '<button type="button" class="btn btn--ghost btn--lg" id="rd-end">' + QZ.icon('flag') + 'Chiudi qui</button>'
                 : '<button type="button" class="btn btn--primary btn--lg" id="rd-end">' + QZ.icon('trophy') + 'Classifica finale</button>') +
             '</div>';
+        if (more) save(); else QZ.store.remove(SAVE_KEY);
         QZ.show('s-round');
         setTimeout(function () {
             // la scritta LED sul bordo basso del riquadro, senza coprire il nome
@@ -615,10 +916,10 @@
         }, QZ.reducedMotion() ? 0 : 650);
         if (winner === 'civ') { QZ.sound.win(); setTimeout(function () { QZ.fx.confetti({ count: 100 }); }, 300); }
         else QZ.sound.reveal();
-        QZ.say((winner === 'civ' ? 'Vincono i civili. ' : 'Vince Mr. White. ') + hows[how][1] + ' Il calciatore era ' + R.word + '.');
+        QZ.say(title + '. ' + hows[how][1] + ' Il calciatore era ' + R.word + '.' + (infI >= 0 ? ' L\'infiltrato vedeva ' + R.infWord + '.' : ''));
         // un tocco solo: il doppio tap non deve saltare un round o registrare due volte la partita
         var leaving = false;
-        var once = function (fn) { return function () { if (leaving) return; leaving = true; fn(); }; };
+        var once = function (fn) { return function () { if (leaving || !onScreen('s-round')) return; leaving = true; fn(); }; };
         if ($('#rd-next')) $('#rd-next').addEventListener('click', once(newRound));
         $('#rd-end').addEventListener('click', once(finishGame));
         setTimeout(function () { var b = $('#rd-next') || $('#rd-end'); if (b) b.focus({ preventScroll: true }); }, 250);
@@ -628,17 +929,23 @@
     function finishGame() {
         if (talk) { talk.destroy(); talk = null; }
         QZ.wake.off();
-        if (!G || !G.done) { QZ.show('s-start'); return; }
-        var sorted = G.players.slice().sort(function (a, b) { return b.score - a.score; });
+        QZ.store.remove(SAVE_KEY);
+        busy = false;
+        if (!G || !G.done) { G = null; paintResume(); QZ.show('s-start'); return; }
+        var sorted = rank(G.players);
         var top = sorted.filter(function (p) { return p.score === sorted[0].score; });
         var champ = top.map(function (p) { return p.name; }).join(' e ');
-        var r = QZ.profile.record('mrwhite', { xp: 20 + G.done * 15 + G.stats.caught * 5, label: G.done + ' round · vince ' + champ });
+        var r = QZ.profile.record('mrwhite', { xp: Math.min(200, 20 + G.done * 15 + G.stats.caught * 5), label: plural(G.done, 'round', 'round') + ' · ' + (top.length > 1 ? 'pari tra ' : 'vince ') + champ });
+        paintRecord();
+        paintResume();
+        var bluffer = G.players.filter(function (p) { return p.mwWins; }).sort(function (a, b) { return b.mwWins - a.mwWins; })[0];
         QZ.show('s-end');
         QZ.results($('#end-host'), {
             win: true,
             icon: 'trophy',
             title: top.length > 1 ? 'Pari in vetta' : 'Vince ' + champ,
-            subtitle: top.length > 1 ? champ + ' chiudono a pari punti dopo ' + G.done + ' round.' : 'Il miglior segugio, o il miglior bugiardo. Dopo ' + G.done + ' round non si discute.',
+            subtitle: top.length > 1 ? champ + ' chiudono a pari punti dopo ' + plural(G.done, 'round', 'round') + '.'
+                : QZ.pick(['Il miglior segugio, o il miglior bugiardo.', 'Faccia da poker e orecchio fino.', 'Al bar se ne parlerà per una settimana.']) + ' Dopo ' + plural(G.done, 'round', 'round') + ' non si discute.',
             big: sorted[0].score, bigSuffix: ' pt',
             record: r,
             // il voto in pagella al vincitore: 150 punti a round sono una media da campione
@@ -647,30 +954,34 @@
                 { label: 'Round giocati', value: G.done },
                 { label: 'Mr. White beccati', value: G.stats.caught },
                 { label: 'Indovinati all\'ultimo', value: G.stats.guessed },
-                { label: 'Innocenti fuori', value: G.stats.civOut }
+                { label: 'Innocenti fuori', value: G.stats.civOut },
+                G.cfg.inf ? { label: 'Infiltrati presi', value: G.stats.infOut } : null,
+                bluffer ? { label: 'Bugiardo d\'oro', value: bluffer.name } : null
             ],
-            extraHTML: '<div class="mt-3">' + QZ.podiumHTML(sorted.map(function (p) { return { name: p.name, score: p.score, color: p.color }; }), function (s) { return QZ.fmt(s) + ' pt'; }) + '</div>',
-            share: 'Partita a Mr. White su Quizzotti: ' + champ + ' ' + (top.length > 1 ? 'chiudono' : 'chiude') + ' in testa con ' + sorted[0].score + ' punti. Chi di voi bluffa meglio?',
-            onRetry: startGame,
+            extraHTML: '<div class="mt-3">' + QZ.podiumHTML(sorted.map(function (p) {
+                return { name: p.name, score: p.score, color: p.color, sub: !p.mwTimes ? 'mai Mr. White' : 'Mr. White ' + plural(p.mwTimes, 'volta', 'volte') + (p.mwWins ? ', l\'ha fatta franca ' + plural(p.mwWins, 'volta', 'volte') : ', sempre beccato') };
+            }), function (s) { return QZ.fmt(s) + ' pt'; }) + '</div>',
+            share: shareText(sorted, G.done),
+            onRetry: function () { startGame(); },
             secondary: { label: 'Cambia giocatori', icon: 'users', onClick: function () { QZ.show('s-start'); } }
         });
     }
 
     /* ---------- Tastiera ---------- */
     document.addEventListener('keydown', function (e) {
-        if (e.ctrlKey || e.metaKey || e.altKey || document.querySelector('.qz-modal')) return;
+        if (e.ctrlKey || e.metaKey || e.altKey || e.repeat || document.querySelector('.qz-modal')) return;
         var t = e.target;
         if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
-        var scr = document.querySelector('.screen.is-active');
-        if (!scr) return;
+        var scr = document.querySelector('.screen.is-active:not(.is-leaving)');
+        if (!scr || !R) return;
         var k = e.key;
         // Spazio e Invio su un bottone fanno il loro mestiere; le lettere e i numeri valgono ovunque
         if ((k === ' ' || k === 'Enter') && t && t.closest && t.closest('button, a, [role="button"]')) return;
         if (scr.id === 's-reveal' && (k === ' ' || k === 'Enter')) { e.preventDefault(); $('#rv-btn').click(); }
         else if (scr.id === 's-talk' && k === ' ') { e.preventDefault(); toggleTalk(); }
         else if (scr.id === 's-talk' && (k === 'v' || k === 'V')) { e.preventDefault(); openVote(); }
-        else if (scr.id === 's-vote' && /^[1-9]$/.test(k)) {
-            var b = $('#vt-list [data-n="' + k + '"]');
+        else if (scr.id === 's-vote' && /^[0-9]$/.test(k)) {
+            var b = $('#vt-list [data-n="' + (k === '0' ? '10' : k) + '"]');
             if (b) { e.preventDefault(); b.click(); }
         }
     });

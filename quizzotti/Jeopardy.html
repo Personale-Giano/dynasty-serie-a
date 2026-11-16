@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   /* ---------- Impostazioni ---------- */
   .jp-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 34px; }
@@ -120,6 +120,37 @@
   .jp-adjust { display: grid; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); }
   .jp-adjust__row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
   .jp-adjust__row:last-child { border-bottom: 0; }
+  .jp-adjust__name { font-weight: 800; min-width: 0; overflow-wrap: anywhere; }
+  .jp-adjust__name small { display: block; font-weight: 500; font-size: 13px; color: var(--text-2); }
+
+  /* ---------- Chi risponde, partita in sospeso ---------- */
+  .jp-q-who { display: flex; align-items: center; justify-content: center; gap: 8px; margin: -12px 0 14px; font-weight: 700; font-size: 15px; color: var(--text-2); }
+  .jp-q-who .team__dot { background: var(--c); }
+  .jp-resume { display: grid; gap: 10px; border-left: 3px solid var(--led); }
+  .jp-resume__txt { margin: 0; color: var(--text-2); overflow-wrap: anywhere; }
+
+  /* ---------- Gran finale ---------- */
+  .jp-final__sub { margin: 14px auto 0; max-width: 40ch; color: var(--text-2); font-size: 15px; }
+  .jp-final__sub:empty { display: none; }
+  .jp-screen--final .jp-screen__top .led { font-size: clamp(22px, 5vw, 30px); }
+  .jp-bets .jp-adjust__row { flex-wrap: wrap; }
+  .jp-bets .jp-adjust__name { flex: 1 1 140px; }
+  .jp-allin { min-width: 0; }
+  /* sul telefono il nome sta sopra, i comandi della puntata tutti in fila sotto */
+  @media (max-width: 559px) {
+    .jp-bets .jp-adjust__name { flex-basis: calc(100% - 22px); }
+    .jp-bets .jp-adjust__row > .btn:first-of-type { margin-left: 22px; }
+    .jp-allin { margin-left: auto; }
+  }
+  .jp-verdict { display: flex; gap: 8px; margin-left: auto; }
+  .jp-verdict .btn { gap: 6px; }
+  .jp-verdict .btn[data-v="1"][aria-pressed="true"] { --b-bg: #17804a; --b-fg: #fff; --b-bd: #17804a; }
+  .jp-verdict .btn[data-v="0"][aria-pressed="true"] { --b-bg: #c8302a; --b-fg: #fff; --b-bd: #c8302a; }
+  @media (max-width: 420px) {
+    .jp-bets .jp-adjust__row output { min-width: 60px; font-size: 20px; }
+    .jp-verdict { width: 100%; }
+    .jp-verdict .btn { flex: 1; justify-content: center; }
+  }
   .jp-adjust__row output { min-width: 72px; padding: 6px 4px; text-align: center; font-family: var(--font-led); font-size: 24px; line-height: 1; color: var(--led); text-shadow: var(--led-glow); background: #000; border: 1px solid var(--line); border-radius: var(--r-sm); }
 </style>
 </head>
@@ -137,6 +168,14 @@
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
         <p class="note mt-2" id="start-record"></p>
+        <div class="card jp-resume mt-3" id="resume" hidden>
+          <span class="label">Partita in sospeso</span>
+          <p class="jp-resume__txt" id="resume-txt"></p>
+          <div class="row">
+            <button class="btn btn--primary" type="button" id="resume-go"></button>
+            <button class="btn btn--ghost" type="button" id="resume-drop"></button>
+          </div>
+        </div>
       </div>
       <div class="stack" style="--gap:22px;align-items:center">
         <div class="medal" id="medal"></div>
@@ -159,6 +198,7 @@
         <div class="field"><span class="label" id="lbl-penalty">Chi sbaglia</span><div id="opt-penalty" aria-labelledby="lbl-penalty"></div></div>
         <label class="switch"><input type="checkbox" id="opt-steal" checked><span><b>Rubata.</b> Se una squadra sbaglia, le altre possono soffiarle i punti.</span></label>
         <label class="switch"><input type="checkbox" id="opt-double" checked><span><b>Doppia posta.</b> Una casella a sorpresa per tempo vale il doppio.</span></label>
+        <label class="switch"><input type="checkbox" id="opt-final" checked><span><b>Gran finale.</b> A tabellone pulito, un'ultima domanda: ognuno punta quanto vuole.</span></label>
       </div>
     </div>
   </section>
@@ -189,6 +229,7 @@
           <span class="jp-screen__value" id="q-value-box"><span class="board__label" id="q-value-label">In palio</span><span class="led" id="q-value"></span></span>
         </div>
         <div class="jp-screen__body" id="q-body">
+          <p class="jp-q-who" id="q-who" hidden><span class="team__dot" aria-hidden="true"></span><span class="sr-only">Risponde </span><span></span></p>
           <h2 class="question" id="q-text" aria-live="polite"></h2>
           <div id="q-timer"></div>
         </div>
@@ -208,7 +249,29 @@
         <p class="jp-steal__title">Chi la ruba?<small id="steal-sub"></small></p>
         <div class="jp-steal" id="steal-list"></div>
       </div>
-      <p class="small center kbd-hint">Da tastiera: <span class="kbd">Spazio</span> risposta · <span class="kbd">G</span> giusta · <span class="kbd">S</span> sbagliata</p>
+      <p class="small center kbd-hint" id="q-hint"></p>
+    </div>
+  </section>
+
+  <section class="screen" id="s-final">
+    <div class="qz-main--narrow stack" style="--gap:18px;margin:0 auto">
+      <div class="jp-screen jp-screen--final" id="f-card">
+        <div class="jp-screen__top">
+          <span class="jp-screen__cat" id="f-cat"></span>
+          <span class="jp-screen__value is-double"><span class="board__label">Gran finale</span><span class="led led--red" aria-hidden="true">PUNTATE</span></span>
+        </div>
+        <div class="jp-screen__body" id="f-body">
+          <h2 class="question" id="f-text" aria-live="polite"></h2>
+          <p class="jp-final__sub" id="f-sub"></p>
+          <div id="f-timer"></div>
+        </div>
+        <div class="jp-ans" id="f-ans" hidden>
+          <span class="jp-ans__label">La risposta</span>
+          <div class="jp-ans__text" id="f-ans-text"></div>
+        </div>
+      </div>
+      <div class="jp-adjust jp-bets" id="f-bets" role="group" aria-label="Puntate del gran finale"></div>
+      <button class="btn btn--primary btn--xl btn--block" type="button" id="f-go"></button>
     </div>
   </section>
 
@@ -217,8 +280,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-jeopardy.js?v=ac754521" defer></script>
-<script src="assets/games/jeopardy.js?v=a230f49e" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-jeopardy.js?v=18212055" defer></script>
+<script src="assets/games/jeopardy.js?v=2a0f535d" defer></script>
 </body>
 </html>

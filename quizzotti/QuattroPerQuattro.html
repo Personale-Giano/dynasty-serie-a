@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   /* il colore del gioco (dal registro QZ.GAMES), finche' qz.css non ha la sua riga */
   [data-game="quattro"] { --accent: #7c9cff; --accent-2: #b8c8ff; --accent-rgb: 124, 156, 255; --accent-ink: #9db4ff; --on-accent: #07090b; }
@@ -34,7 +34,14 @@
   .qq-sheets__head h2 { font-size: 26px; }
   .qq-count { display: inline-flex; align-items: baseline; gap: 10px; padding: 6px 14px; background: #000; border: 1px solid var(--line-2); border-radius: var(--r); }
   .qq-count .led { font-size: 30px; }
-  .qq-filter { margin-bottom: 14px; }
+  .qq-filters { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .qq-filters .segmented button { min-height: 44px; }
+  .qq-empty { grid-column: 1 / -1; padding: 14px 4px; }
+  .qq-stats { margin-top: 14px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .qq-stats .stat { padding: 10px 10px; border-bottom: 0; }
+  .qq-stats .stat:last-child { border-right: 0; }
+  .qq-stats .stat__label { font-size: 10px; letter-spacing: .1em; }
+  .qq-stats .stat__value { font-size: 26px; }
   .qq-cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); margin: 0; padding: 0; list-style: none; }
   @media (min-width: 980px) { .qq-cards { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
   .qq-cards li { display: flex; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 18) * 30ms); }
@@ -43,7 +50,7 @@
     border: 1px solid var(--line); border-top: 3px solid var(--accent); border-radius: var(--r-lg); background: var(--panel); color: var(--text); text-align: left;
     transition: background .15s, border-color .15s, transform .15s;
   }
-  .qq-card:hover { background: var(--panel-2); border-color: var(--line-2); transform: translateY(-2px); }
+  @media (hover: hover) { .qq-card:hover { background: var(--panel-2); border-color: var(--line-2); transform: translateY(-2px); } }
   .qq-card.is-play { border-top-color: var(--led); }
   .qq-card.is-win { border-top-color: var(--led-green); }
   .qq-card.is-lost { border-top-color: var(--led-red); }
@@ -69,6 +76,7 @@
   .qq-lives { display: flex; gap: 6px; align-items: center; height: clamp(24px, 5vw, 34px); }
   .qq-lives i { width: 14px; height: 14px; border-radius: 50%; background: var(--led-green); box-shadow: 0 0 8px rgba(61, 220, 132, .55); transition: background .2s, box-shadow .2s; }
   .qq-lives i.is-off { background: #2a0f0c; box-shadow: none; border: 1px solid rgba(255, 75, 58, .55); }
+  .qq-lives.is-last i:not(.is-off) { background: var(--led-red); box-shadow: 0 0 8px rgba(255, 75, 58, .6); animation: qz-heartbeat 1.2s ease-in-out infinite; }
   .qq-hint { min-height: 22px; color: var(--text-2); font-size: 15px; text-align: center; }
 
   .qq-area { position: relative; display: flex; flex-direction: column; gap: 8px; }
@@ -96,7 +104,9 @@
     transition: background .12s, border-color .12s, transform .12s, color .12s;
   }
   .qq-tile__t { display: block; max-width: 100%; }
-  .qq-tile:hover { border-color: #4a5762; background: var(--panel-3); }
+  @media (hover: hover) { .qq-tile:hover { border-color: #4a5762; background: var(--panel-3); } }
+  .qq-tile.is-tight .qq-tile__t { overflow-wrap: anywhere; hyphens: auto; }
+  .qq-tile:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; z-index: 1; }
   .qq-tile:active { transform: scale(.97); }
   .qq-tile[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .qq-tile.is-out { animation: qq-out .32s var(--ease-out) both; }
@@ -118,6 +128,11 @@
   @media (pointer: coarse) { #qq-kbd { display: none; } }
   .qq-review { padding: 16px 18px; }
   .qq-review p { color: var(--text-2); }
+  /* flex e non griglia: se «Condividi» e' nascosto, «Torna alle schede» prende tutta la riga */
+  .qq-review__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .qq-review__actions .btn { min-height: 48px; flex: 1 1 100%; }
+  @media (min-width: 480px) { .qq-review__actions .btn { flex: 1 1 0; } #qq-back-2 { flex-grow: 1.4; } }
+  .qq-review__actions .btn[hidden] { display: none; }
   .qq-back { align-self: center; }
 
   /* i tentativi nel resoconto */
@@ -136,7 +151,7 @@
   .qq-sol h2 { font-size: 22px; }
 
   @media (prefers-reduced-motion: reduce) {
-    .qq-strip, .qq-tile, .qq-cards li { animation: none !important; transition: none; }
+    .qq-strip, .qq-tile, .qq-cards li, .qq-lives i { animation: none !important; transition: none; }
   }
 </style>
 </head>
@@ -154,6 +169,7 @@
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
         <p class="small muted mt-2" id="start-record"></p>
+        <div class="stats qq-stats" id="qq-stats" role="group" hidden></div>
       </div>
       <div class="stack" style="--gap:22px;align-items:center">
         <div class="medal" id="medal"></div>
@@ -168,7 +184,10 @@
         <h2 id="qq-sheets-t">Le schede</h2>
         <p class="qq-count"><span class="led" id="qq-count" aria-hidden="true">0/0</span><span class="board__label" aria-hidden="true">giocate</span><span class="sr-only" id="qq-count-sr"></span></p>
       </div>
-      <div class="qq-filter" id="qq-filter"></div>
+      <div class="qq-filters">
+        <div id="qq-filter"></div>
+        <div id="qq-temi"></div>
+      </div>
       <ul class="qq-cards" id="qq-cards"></ul>
     </section>
   </section>
@@ -199,7 +218,10 @@
 
       <div class="card card--glow qq-review" id="qq-review" hidden>
         <div id="qq-review-txt" class="muted"></div>
-        <button type="button" class="btn btn--primary btn--block mt-2" id="qq-back-2"></button>
+        <div class="qq-review__actions mt-2">
+          <button type="button" class="btn btn--primary" id="qq-back-2"></button>
+          <button type="button" class="btn" id="qq-share-2"></button>
+        </div>
       </div>
       <button type="button" class="btn btn--ghost btn--sm qq-back" id="qq-back"></button>
       <p class="small center kbd-hint muted" id="qq-kbd">Da tastiera: frecce per muoverti, <span class="kbd">Spazio</span> sceglie, <span class="kbd">Invio</span> sulla quarta conferma, <span class="kbd">Esc</span> deseleziona.</p>
@@ -211,8 +233,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-quattro.js?v=6408e82c" defer></script>
-<script src="assets/games/quattro.js?v=7ac059f2" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-quattro.js?v=2951e1eb" defer></script>
+<script src="assets/games/quattro.js?v=bae60580" defer></script>
 </body>
 </html>

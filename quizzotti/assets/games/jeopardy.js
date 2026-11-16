@@ -1,11 +1,12 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Jeopardy
-   Dati: assets/db-jeopardy.js (`jeopardyData`: 9 categorie x 75 domande,
-   10 per ciascun valore da 100 a 500).
+   Dati: assets/db-jeopardy.js (`jeopardyData`: 9 categorie x 90 domande,
+   18 per ciascun valore da 100 a 500).
    Tabellone unico che si adatta allo schermo, categorie a scelta, domande
    che non si ripetono tra le partite, secondo tempo a punti doppi, casella
-   "doppia posta", rubata, tempo per rispondere opzionale, correzione
-   punteggi e classifica finale.
+   "doppia posta", rubata, tempo per rispondere opzionale, gran finale a
+   puntata libera, correzione punteggi, partita salvata (si riprende dopo
+   una ricarica o il tasto Indietro) e classifica finale.
    Stile "Riflettori": il tabellone e' una griglia di LED dello stadio, le
    caselle giocate si spengono e restano accese le iniziali di chi le ha
    prese; la domanda va sul maxischermo.
@@ -15,6 +16,7 @@
 
     var TIERS = [100, 200, 300, 400, 500];
     var MAX_CATS = 6, MIN_CATS = 2;
+    var FINAL_MIN_BET = 500; // chi ha meno punti puo' comunque puntare fino a qui
     var $ = QZ.$;
 
     /* ---------- Pool domande ---------- */
@@ -25,7 +27,7 @@
     });
     var deck = new QZ.Deck('jeopardy', POOL, function (x) { return x.q; });
 
-    function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+    function plural(n, one, many) { return QZ.fmt(n) + ' ' + (Math.abs(n) === 1 ? one : many); }
 
     function pretty(cat) {
         return String(cat).toLowerCase().split(' ').map(function (w, i) {
@@ -42,7 +44,8 @@
 
     /* ---------- Impostazioni (ricordate tra le visite) ---------- */
     var OPT_KEY = 'qz.jeopardy.opts';
-    var opts = Object.assign({ rounds: 1, time: 0, penalty: true, steal: true, double: true, cats: null }, QZ.store.get(OPT_KEY, {}) || {});
+    var SAVE_KEY = 'qz.jeopardy.save';
+    var opts = Object.assign({ rounds: 1, time: 0, penalty: true, steal: true, double: true, final: true, cats: null }, QZ.store.get(OPT_KEY, {}) || {});
     function saveOpts() { QZ.store.set(OPT_KEY, opts); }
 
     var selected = (Array.isArray(opts.cats) ? opts.cats : []).filter(function (c) { return CATS.indexOf(c) >= 0; });
@@ -55,12 +58,17 @@
         ['A turno', 'ogni squadra sceglie una casella: categoria e valore.'],
         ['Rispondete a voce,', 'poi scoprite la risposta e segnate se è giusta.'],
         ['Chi sbaglia paga', 'i punti della casella. Gli altri possono rubarli.'],
-        ['Tabellone pulito?', 'Vince chi ha più punti. Nel secondo tempo valgono doppio.']
+        ['Tabellone pulito?', 'Nel secondo tempo le caselle valgono doppio.'],
+        ['Gran finale:', 'ultima domanda e ognuno punta quanto vuole. Lì si ribalta tutto.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
-    var rec = QZ.profile.best('jeopardy');
-    $('#start-record').textContent = rec != null ? 'record da battere: ' + QZ.fmt(rec) + ' punti' : '';
+    function paintRecord() {
+        var rec = QZ.profile.best('jeopardy');
+        // un record a zero o sotto zero non e' un traguardo da mostrare
+        $('#start-record').textContent = rec > 0 ? 'record da battere: ' + QZ.fmt(rec) + ' punti' : '';
+    }
+    paintRecord();
 
     var teamsList = QZ.playerList($('#teams-host'), { key: 'jeopardy', min: 1, max: 6, initial: 2, label: 'Squadra', title: 'Squadre (1-6)' });
 
@@ -95,6 +103,7 @@
     });
     $('#cats-random').addEventListener('click', function () {
         selected = QZ.shuffle(CATS).slice(0, 5);
+        QZ.sound.click();
         opts.cats = selected.slice(); saveOpts();
         paintCats('all');
     });
@@ -102,10 +111,11 @@
     QZ.segmented($('#opt-rounds'), [{ label: 'Un tempo', value: 1 }, { label: 'Due tempi', value: 2 }], opts.rounds, function (v) { opts.rounds = v; saveOpts(); });
     QZ.segmented($('#opt-time'), [{ label: 'Libero', value: 0 }, { label: '15 s', value: 15 }, { label: '30 s', value: 30 }], opts.time, function (v) { opts.time = v; saveOpts(); });
     QZ.segmented($('#opt-penalty'), [{ label: 'Perde i punti', value: true }, { label: 'Non perde nulla', value: false }], opts.penalty, function (v) { opts.penalty = v; saveOpts(); });
-    $('#opt-steal').checked = opts.steal;
-    $('#opt-double').checked = opts.double;
-    $('#opt-steal').addEventListener('change', function () { opts.steal = this.checked; saveOpts(); });
-    $('#opt-double').addEventListener('change', function () { opts.double = this.checked; saveOpts(); });
+    ['steal', 'double', 'final'].forEach(function (k) {
+        var box = $('#opt-' + k);
+        box.checked = !!opts[k];
+        box.addEventListener('change', function () { opts[k] = this.checked; saveOpts(); });
+    });
 
     $('#reveal-btn').innerHTML = QZ.icon('eye') + 'Scopri la risposta';
     $('#adjust-btn').innerHTML = QZ.icon('plus') + '<span>Correggi</span>';
@@ -133,6 +143,24 @@
         }
     });
 
+    // il gran finale ha un suo anello: si scrive la risposta su un foglio, serve piu' tempo
+    $('#f-timer').innerHTML = QZ.ringHTML();
+    var fTimer = new QZ.Timer({
+        seconds: 30, ring: QZ.ring($('#f-timer .timer-ring')),
+        onSecond: function (s) {
+            if (S.phase !== 'final-q') return;
+            if (s <= 5 && s > 0) QZ.sound.tick();
+            if (s === 10) QZ.say('Dieci secondi');
+        },
+        onExpire: function () {
+            if (S.phase !== 'final-q') return;
+            QZ.sound.buzzer();
+            QZ.vibrate([80, 40, 80]);
+            QZ.fx.stamp($('#f-body'), 'Penne giù!', 'bad', { size: 32, ms: 1400, say: 'Tempo scaduto: penne giù.' });
+            finalReveal();
+        }
+    });
+
     /* ---------- Stato ---------- */
     var S = { phase: 'idle' };
 
@@ -150,17 +178,28 @@
     });
     $('#adjust-btn').addEventListener('click', openAdjust);
     $('#end-btn').addEventListener('click', function () {
-        QZ.confirm('Si chiude qui e si guarda la classifica. Le caselle rimaste restano sul tabellone.', { title: 'Fischio finale?', okLabel: 'Classifica', cancelLabel: 'Si gioca ancora' }).then(function (ok) { if (ok) finish(); });
+        if (S.phase !== 'board') return;
+        QZ.confirm('Si chiude qui e si guarda la classifica. Le caselle rimaste restano sul tabellone.', { title: 'Fischio finale?', okLabel: 'Classifica', cancelLabel: 'Si gioca ancora' }).then(function (ok) {
+            // nel frattempo la partita puo' essere andata avanti da sola (ultima casella, secondo tempo)
+            if (ok && S.phase === 'board') finish();
+        });
     });
+    $('#f-bets').addEventListener('click', onFinalClick);
+    $('#f-go').addEventListener('click', onFinalGo);
 
     document.addEventListener('keydown', function (e) {
         if (e.ctrlKey || e.metaKey || e.altKey || document.querySelector('.qz-modal')) return;
         var t = e.target;
         if (t.closest && t.closest('input, textarea, select')) return;
         var k = e.key.toLowerCase();
+        if (S.phase === 'board' && /^arrow/.test(k) && t.classList && t.classList.contains('jp-cell')) {
+            if (moveFocus(t, k)) e.preventDefault();
+            return;
+        }
         var onButton = t.closest && t.closest('button, a');
         if ((k === ' ' || k === 'enter') && onButton) return; // lascia il click nativo
         if (S.phase === 'question' && (k === ' ' || k === 'enter')) { e.preventDefault(); reveal(); }
+        else if (S.phase === 'final-q' && (k === ' ' || k === 'enter')) { e.preventDefault(); finalReveal(); }
         else if (S.phase === 'judge' && k === 'g') { e.preventDefault(); judge(true); }
         else if (S.phase === 'judge' && k === 's') { e.preventDefault(); judge(false); }
         else if (S.phase === 'steal') {
@@ -172,22 +211,122 @@
         }
     });
 
+    /**
+     * Frecce sul tabellone: su desktop le categorie sono colonne, su telefono righe.
+     * Le caselle spente si saltano; ai bordi il fuoco resta dov'e'.
+     */
+    function moveFocus(from, key) {
+        var p = from.dataset.k.split('-'), ci = Number(p[0]), ti = TIERS.indexOf(Number(p[1]));
+        var wide = window.matchMedia('(min-width: 760px)').matches;
+        var dCat = 0, dTier = 0;
+        if (key === 'arrowleft') { if (wide) dCat = -1; else dTier = -1; }
+        else if (key === 'arrowright') { if (wide) dCat = 1; else dTier = 1; }
+        else if (key === 'arrowup') { if (wide) dTier = -1; else dCat = -1; }
+        else if (key === 'arrowdown') { if (wide) dTier = 1; else dCat = 1; }
+        else return false;
+        for (var step = 1; step < 8; step++) {
+            var c = ci + dCat * step, ti2 = ti + dTier * step;
+            if (c < 0 || c >= S.cats.length || ti2 < 0 || ti2 >= TIERS.length) break;
+            var b = $('#board [data-k="' + c + '-' + TIERS[ti2] + '"]');
+            if (b && !b.disabled) { b.focus(); return true; }
+        }
+        return true;
+    }
+
+    /** Il suggerimento della tastiera segue la fase: solo i tasti che servono adesso. */
+    function hint(phase) {
+        var h = $('#q-hint');
+        if (!h) return;
+        var k = function (x) { return '<span class="kbd">' + x + '</span>'; };
+        h.innerHTML = phase === 'judge' ? 'Da tastiera: ' + k('G') + ' giusta · ' + k('S') + ' sbagliata'
+            : phase === 'steal' ? 'Da tastiera: ' + k('1') + (S.teams.length > 2 ? '–' + k(String(S.teams.length - 1)) : '') + ' chi ruba · ' + k('N') + ' nessuno'
+                : 'Da tastiera: ' + k('Spazio') + ' scopri la risposta';
+    }
+
+    /* ---------- Partita salvata ---------- */
+    function snapshot(stage) {
+        return {
+            v: 1, at: Date.now(), stage: stage || 'board', o: S.o, round: S.round, rounds: S.rounds, cats: S.cats,
+            teams: S.teams, active: S.active, asked: S.asked, cells: S.cells, doubleKey: S.doubleKey
+        };
+    }
+    function save(stage) { if (S.teams) QZ.store.set(SAVE_KEY, snapshot(stage)); }
+    function dropSave() { QZ.store.remove(SAVE_KEY); }
+
+    /** Una partita salvata da una versione vecchia o rovinata non si riprende. */
+    function loadSave() {
+        var d = QZ.store.get(SAVE_KEY, null);
+        if (!d || d.v !== 1 || !Array.isArray(d.cats) || !Array.isArray(d.teams) || !d.cells || typeof d.cells !== 'object') return null;
+        if (d.cats.length < MIN_CATS || d.cats.some(function (c) { return CATS.indexOf(c) < 0; })) return null;
+        if (!d.teams.length || d.teams.length > 6 || d.teams.some(function (t) { return !t || typeof t.name !== 'string' || typeof t.score !== 'number'; })) return null;
+        var ok = d.cats.every(function (c, ci) {
+            return TIERS.every(function (t) { var x = d.cells[ci + '-' + t]; return x && x.cat === c && x.tier === t; });
+        });
+        if (!ok || Date.now() - (d.at || 0) > 14 * 864e5) return null;
+        return d;
+    }
+
+    function paintResume() {
+        var d = loadSave(), box = $('#resume');
+        box.hidden = !d;
+        if (!d) return;
+        var played = Object.keys(d.cells).filter(function (k) { return d.cells[k].used; }).length;
+        var ranked = d.teams.slice().sort(function (a, b) { return b.score - a.score; });
+        $('#resume-txt').textContent = (d.teams.length === 1 ? QZ.fmt(ranked[0].score) + ' punti' : ranked.map(function (t) { return t.name + ' ' + QZ.fmt(t.score); }).join(' · ')) +
+            ' · ' + (d.stage === 'final' ? 'si era al gran finale' : plural(played, 'casella giocata', 'caselle giocate') + (d.rounds > 1 ? ', ' + (d.round === 1 ? 'primo' : 'secondo') + ' tempo' : ''));
+    }
+    $('#resume-go').innerHTML = QZ.icon('arrow') + 'Riprendi';
+    $('#resume-drop').textContent = 'Lascia perdere';
+    $('#resume-go').addEventListener('click', resume);
+    $('#resume-drop').addEventListener('click', function () { dropSave(); paintResume(); QZ.sound.click(); $('#start-btn').focus(); });
+    paintResume();
+
+    function resume() {
+        if (S.phase !== 'idle' && S.phase !== 'done') return;
+        var d = loadSave();
+        if (!d) { paintResume(); return; }
+        S = {
+            phase: 'board', o: Object.assign({ penalty: true, steal: true, double: true, final: false, time: 0 }, d.o || {}),
+            round: d.round === 2 ? 2 : 1, rounds: d.rounds === 2 ? 2 : 1, cats: d.cats, cells: d.cells, doubleKey: d.doubleKey || null,
+            teams: d.teams.map(function (t, i) {
+                return { name: t.name, short: t.short || initials(t.name), color: t.color || QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length], score: t.score, right: t.right || 0, wrong: t.wrong || 0, steals: t.steals || 0 };
+            }),
+            active: Math.min(Math.max(0, d.active | 0), d.teams.length - 1), asked: d.asked | 0, q: null
+        };
+        enterGame();
+        if (d.stage === 'final') { startFinal(); return; }
+        QZ.show('s-board');
+        renderBoard();
+        QZ.say('Partita ripresa.');
+        if (!remaining()) { S.phase = 'between'; setTimeout(endRound, 400); return; }
+        setTimeout(function () { focusFreeCell(null); }, QZ.reducedMotion() ? 30 : 260);
+    }
+
     /* ---------- Partita ---------- */
+    function enterGame() {
+        S.readyAt = Date.now() + 400;
+        renderScores();
+        $('#scorebar').hidden = false;
+        QZ.wake.on();
+        QZ.sound.whistle();
+    }
+
     function start() {
         // doppio tocco su "Fischio d'inizio": la partita parte una volta sola
         if (S.phase !== 'idle' && S.phase !== 'done') return;
         if (selected.length < MIN_CATS) { QZ.toast('Scegli almeno ' + MIN_CATS + ' categorie', { icon: 'info', type: 'bad' }); return; }
         var names = teamsList.get();
         S = {
-            phase: 'board', round: 1, rounds: opts.rounds, cats: CATS.filter(function (c) { return selected.indexOf(c) >= 0; }),
+            phase: 'board', round: 1, rounds: opts.rounds,
+            // le regole si fissano al fischio d'inizio: cambiarle dopo non tocca la partita in corso
+            o: { penalty: opts.penalty, steal: opts.steal, double: opts.double, final: opts.final, time: opts.time },
+            cats: CATS.filter(function (c) { return selected.indexOf(c) >= 0; }),
             teams: names.map(function (n, i) { return { name: n, short: initials(n), color: QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length], score: 0, right: 0, wrong: 0, steals: 0 }; }),
             active: 0, asked: 0, q: null
         };
         setupRound();
-        renderScores();
-        $('#scorebar').hidden = false;
-        QZ.wake.on();
-        QZ.sound.whistle();
+        save();
+        enterGame();
         QZ.show('s-board');
         renderBoard();
         setTimeout(function () { focusFreeCell(null); }, QZ.reducedMotion() ? 30 : 260);
@@ -201,7 +340,7 @@
         var keys = Object.keys(S.cells);
         // la doppia posta non cade mai sulla riga piu' bassa: sarebbe sprecata
         var good = keys.filter(function (k) { return S.cells[k].tier >= 200; });
-        S.doubleKey = opts.double ? QZ.pick(good) : null;
+        S.doubleKey = S.o.double ? QZ.pick(good) : null;
     }
 
     function mult() { return S.round === 2 ? 2 : 1; }
@@ -289,14 +428,15 @@
     }
 
     function openCell(k) {
-        if (S.phase !== 'board') return;
+        // il secondo tocco di un doppio tap su "Fischio d'inizio" cadrebbe su una casella appena comparsa
+        if (S.phase !== 'board' || Date.now() < (S.readyAt || 0)) return;
         var cell = S.cells[k];
         if (!cell || cell.used) return;
         var item = deck.draw(function (x) { return x.cat === cell.cat && x.value === cell.tier; });
         if (!item) { QZ.toast('Casella vuota: scegline un\'altra', { icon: 'info', type: 'bad' }); return; }
         cell.used = true;
         var isDouble = k === S.doubleKey;
-        S.q = { key: k, cell: cell, item: item, points: cell.tier * mult() * (isDouble ? 2 : 1), double: isDouble, answered: S.active };
+        S.q = { key: k, cell: cell, item: item, points: cell.tier * mult() * (isDouble ? 2 : 1), double: isDouble };
         S.asked++;
         S.phase = 'question';
         S.timeUp = false;
@@ -309,6 +449,12 @@
         v.classList.toggle('led--red', isDouble);
         $('#q-value-box').classList.toggle('is-double', isDouble);
         $('#q-value-label').textContent = isDouble ? 'Doppia posta' : 'In palio';
+        // chi risponde: col telefono sul tavolo si vede subito di chi e' il turno
+        var t = S.teams[S.active];
+        var who = $('#q-who');
+        who.hidden = S.teams.length < 2;
+        who.style.setProperty('--c', t.color);
+        who.querySelector('span:last-child').textContent = t.name;
         var qt = $('#q-text');
         qt.textContent = item.q;
         $('#q-ans').hidden = true;
@@ -316,8 +462,9 @@
         $('#act-reveal').hidden = false;
         $('#act-judge').hidden = true;
         $('#act-steal').hidden = true;
-        $('#q-timer').hidden = !opts.time;
-        timer.reset(opts.time || 30);
+        $('#q-timer').hidden = !S.o.time;
+        timer.reset(S.o.time || 30);
+        hint('question');
 
         QZ.show('s-q');
         QZ.fx.replay(qt);
@@ -336,7 +483,10 @@
         } else {
             QZ.sound.whoosh();
         }
-        if (opts.time) setTimeout(function () { if (S.phase === 'question') timer.start(); }, startDelay);
+        if (S.o.time) {
+            var qref = S.q;
+            setTimeout(function () { if (S.phase === 'question' && S.q === qref) timer.start(); }, startDelay);
+        }
     }
 
     function reveal() {
@@ -349,8 +499,9 @@
         $('#act-judge').hidden = false;
         var p = QZ.fmt(S.q.points);
         $('#ok-btn').innerHTML = QZ.icon('check') + 'Giusta +' + p;
-        $('#ko-btn').innerHTML = QZ.icon('x') + 'Sbagliata' + (opts.penalty ? ' −' + p : '');
+        $('#ko-btn').innerHTML = QZ.icon('x') + 'Sbagliata' + (S.o.penalty ? ' −' + p : '');
         $('#q-timer').hidden = true;
+        hint('judge');
         QZ.say((S.timeUp ? 'Tempo scaduto. ' : '') + 'La risposta: ' + S.q.item.a + '. Giusta o sbagliata?');
         $('#ok-btn').focus({ preventScroll: true });
         $('#act-judge').scrollIntoView({ block: 'nearest', behavior: QZ.reducedMotion() ? 'auto' : 'smooth' });
@@ -374,11 +525,11 @@
             return;
         }
         t.wrong++;
-        if (opts.penalty) addScore(i, -S.q.points);
-        var canSteal = opts.steal && S.teams.length > 1;
+        if (S.o.penalty) addScore(i, -S.q.points);
+        var canSteal = S.o.steal && S.teams.length > 1;
         QZ.fx.stamp(body, QZ.pick(['Fuorigioco', 'Palo', 'Fuori!']), 'bad', {
             size: 38,
-            say: 'Sbagliata. ' + t.name + (opts.penalty ? ' meno ' + QZ.fmt(S.q.points) + ', ora ' + plural(t.score, 'punto', 'punti') : ' non perde punti') + '.' + (canSteal ? ' Chi la ruba?' : '')
+            say: 'Sbagliata. ' + t.name + (S.o.penalty ? ' meno ' + QZ.fmt(S.q.points) + ', ora ' + plural(t.score, 'punto', 'punti') : ' non perde punti') + '.' + (canSteal ? ' Chi la ruba?' : '')
         });
         QZ.sound.wrong();
         QZ.vibrate([60, 40, 60]);
@@ -394,6 +545,7 @@
                 return '<button type="button" class="btn" style="--c:' + x.color + '" data-steal="' + j + '" data-key="' + n + '"><span class="team__dot"></span>' + QZ.esc(x.name) + '</button>';
             }).join('') + '<button type="button" class="btn btn--ghost" data-steal="-1">Nessuno</button>';
             $('#act-steal').hidden = false;
+            hint('steal');
             QZ.fx.replay($('#act-steal'), 'is-pop');
             // il bottone appena premuto e' sparito: il fuoco passa alla prima squadra che puo' rubare
             var first = $('#steal-list [data-steal]');
@@ -433,6 +585,7 @@
             paintActive();
             // si torna al tabellone e la casella appena giocata si spegne
             setTimeout(function () {
+                if (S.phase !== 'switching') return;
                 var b = $('#board [data-k="' + k + '"]');
                 if (b) b.scrollIntoView({ block: 'nearest', behavior: QZ.reducedMotion() ? 'auto' : 'smooth' });
                 darkCell(k, true);
@@ -440,6 +593,7 @@
                 QZ.sound.tock();
                 if (!remaining()) { S.phase = 'between'; setTimeout(endRound, 900); return; }
                 S.phase = 'board';
+                save();
             }, QZ.reducedMotion() ? 30 : 320);
         }, delay);
     }
@@ -454,10 +608,11 @@
     }
 
     function endRound() {
+        if (S.phase !== 'between') return;
         if (S.round < S.rounds) {
             S.round++;
             setupRound();
-            S.phase = 'between';
+            save();
             QZ.sound.whistle();
             QZ.modal({
                 title: 'Secondo tempo',
@@ -466,19 +621,21 @@
                 actions: [{ label: 'Si riparte', primary: true, icon: 'arrow' }]
             }).then(function () {
                 S.phase = 'board';
+                S.readyAt = Date.now() + 400;
                 renderBoard();
                 focusFreeCell(null);
             });
             return;
         }
-        finish();
+        if (S.o.final) startFinal();
+        else finish();
     }
 
     /* ---------- Correzione punteggi ---------- */
     function openAdjust() {
         if (S.phase !== 'board') return;
         var node = QZ.el('<div class="jp-adjust">' + S.teams.map(function (t, i) {
-            return '<div class="jp-adjust__row" style="--c:' + t.color + '"><span class="team__dot"></span><span class="grow" style="font-weight:800">' + QZ.esc(t.name) + '</span>' +
+            return '<div class="jp-adjust__row" style="--c:' + t.color + '"><span class="team__dot"></span><span class="grow jp-adjust__name">' + QZ.esc(t.name) + '</span>' +
                 '<button type="button" class="btn btn--sm btn--icon" data-adj="' + i + '" data-d="-100" aria-label="Togli 100 punti a ' + QZ.esc(t.name) + '">' + QZ.icon('minus') + '</button>' +
                 '<output data-out="' + i + '" aria-live="polite">' + QZ.fmt(t.score) + '</output>' +
                 '<button type="button" class="btn btn--sm btn--icon" data-adj="' + i + '" data-d="100" aria-label="Aggiungi 100 punti a ' + QZ.esc(t.name) + '">' + QZ.icon('plus') + '</button></div>';
@@ -489,6 +646,7 @@
             var i = Number(b.dataset.adj);
             addScore(i, Number(b.dataset.d));
             node.querySelector('[data-out="' + i + '"]').textContent = QZ.fmt(S.teams[i].score);
+            save();
         });
         QZ.modal({
             title: 'Correggi i punteggi',
@@ -498,10 +656,152 @@
         });
     }
 
+    /* ---------- Gran finale: una domanda, ognuno punta quanto vuole ---------- */
+    function maxBet(t) { return Math.max(t.score, FINAL_MIN_BET); }
+
+    function startFinal() {
+        var cat = QZ.pick(S.cats);
+        var item = deck.draw(function (x) { return x.cat === cat && x.value === 500; }) || deck.draw(function (x) { return x.value === 500; });
+        S.fin = { cat: item.cat, item: item, bets: S.teams.map(function () { return 0; }), res: S.teams.map(function () { return null; }) };
+        S.phase = 'final-bet';
+        save('final');
+        QZ.$$('#f-card .qz-stamp').forEach(function (x) { x.remove(); });
+        $('#f-cat').innerHTML = QZ.icon('ball') + QZ.esc(pretty(item.cat));
+        $('#f-text').textContent = 'Categoria: ' + pretty(item.cat) + '. Quanto ci puntate?';
+        $('#f-sub').textContent = S.teams.length === 1
+            ? 'Punta da 0 a tutti i tuoi punti (sotto i ' + FINAL_MIN_BET + ' puoi arrivare a ' + FINAL_MIN_BET + '). Se sbagli, la puntata la perdi.'
+            : 'Ogni squadra punta da 0 a tutti i suoi punti (chi ne ha meno di ' + FINAL_MIN_BET + ' può arrivare a ' + FINAL_MIN_BET + '). Chi sbaglia perde la puntata.';
+        $('#f-sub').hidden = false;
+        $('#f-ans').hidden = true;
+        $('#f-timer').hidden = true;
+        fTimer.reset(Math.max(30, S.o.time || 30));
+        renderBets();
+        setGo('Mostra la domanda', 'eye');
+        QZ.show('s-final');
+        QZ.sound.levelUp();
+        QZ.fx.flash('rgba(255, 182, 39, .18)');
+        setTimeout(function () {
+            if (S.phase !== 'final-bet') return;
+            QZ.fx.stamp($('#f-body'), 'Gran finale', 'ink', { size: window.innerWidth < 600 ? 34 : 50, ms: 1500, say: 'Gran finale. Categoria ' + pretty(item.cat) + ': fate le vostre puntate.' });
+        }, QZ.reducedMotion() ? 0 : 280);
+    }
+
+    function setGo(label, icon) { $('#f-go').innerHTML = QZ.icon(icon) + QZ.esc(label); }
+
+    function renderBets() {
+        var judging = S.phase === 'final-judge';
+        $('#f-bets').innerHTML = S.teams.map(function (t, i) {
+            var name = QZ.esc(t.name), bet = S.fin.bets[i];
+            var head = '<span class="team__dot"></span><span class="grow jp-adjust__name">' + name +
+                '<small>' + (judging ? 'punta ' + QZ.fmt(bet) : plural(t.score, 'punto', 'punti')) + '</small></span>';
+            if (judging) {
+                var r = S.fin.res[i];
+                return '<div class="jp-adjust__row" style="--c:' + t.color + '">' + head +
+                    '<div class="jp-verdict" role="group" aria-label="Risposta di ' + name + '">' +
+                    '<button type="button" class="btn btn--sm" data-res="' + i + '" data-v="0" aria-pressed="' + (r === false) + '">' + QZ.icon('x') + 'Sbagliata</button>' +
+                    '<button type="button" class="btn btn--sm" data-res="' + i + '" data-v="1" aria-pressed="' + (r === true) + '">' + QZ.icon('check') + 'Giusta</button></div></div>';
+            }
+            var max = maxBet(t);
+            return '<div class="jp-adjust__row" style="--c:' + t.color + '">' + head +
+                '<button type="button" class="btn btn--sm btn--icon" data-bet="' + i + '" data-d="-100"' + (bet <= 0 ? ' disabled' : '') + ' aria-label="Punta 100 in meno, ' + name + '">' + QZ.icon('minus') + '</button>' +
+                '<output data-out="' + i + '" aria-live="polite" aria-label="Puntata di ' + name + '">' + QZ.fmt(bet) + '</output>' +
+                '<button type="button" class="btn btn--sm btn--icon" data-bet="' + i + '" data-d="100"' + (bet >= max ? ' disabled' : '') + ' aria-label="Punta 100 in più, ' + name + '">' + QZ.icon('plus') + '</button>' +
+                '<button type="button" class="btn btn--sm jp-allin" data-bet="' + i + '" data-d="all"' + (bet >= max ? ' disabled' : '') + ' aria-label="Punta tutto, ' + name + '">Tutto</button></div>';
+        }).join('');
+        if (judging) $('#f-go').disabled = S.fin.res.some(function (r) { return r === null; });
+        else $('#f-go').disabled = false;
+    }
+
+    function onFinalClick(e) {
+        var b = e.target.closest('button');
+        if (!b || b.disabled) return;
+        if (S.phase === 'final-bet' && b.dataset.bet != null) {
+            var i = Number(b.dataset.bet), t = S.teams[i], max = maxBet(t);
+            var next = b.dataset.d === 'all' ? max : S.fin.bets[i] + Number(b.dataset.d);
+            S.fin.bets[i] = QZ.clamp(next, 0, max);
+            QZ.sound.click();
+            var keep = b.dataset.d;
+            renderBets();
+            // il fuoco resta sullo stesso comando (o sul vicino, se si e' spento)
+            var again = $('#f-bets [data-bet="' + i + '"][data-d="' + keep + '"]');
+            if (again && !again.disabled) again.focus();
+            else { var any = QZ.$$('#f-bets [data-bet="' + i + '"]').filter(function (x) { return !x.disabled; })[0]; if (any) any.focus(); }
+            if (b.dataset.d === 'all') QZ.say(t.name + ' punta tutto: ' + QZ.fmt(max) + '.');
+        } else if (S.phase === 'final-judge' && b.dataset.res != null) {
+            var j = Number(b.dataset.res);
+            S.fin.res[j] = b.dataset.v === '1';
+            QZ.sound.click();
+            renderBets();
+            var sameBtn = $('#f-bets [data-res="' + j + '"][data-v="' + b.dataset.v + '"]');
+            if (sameBtn) sameBtn.focus();
+        }
+    }
+
+    function onFinalGo() {
+        if (S.phase === 'final-bet') finalQuestion();
+        else if (S.phase === 'final-q') finalReveal();
+        else if (S.phase === 'final-judge') finalSettle();
+    }
+
+    function finalQuestion() {
+        S.phase = 'final-q';
+        $('#f-text').textContent = S.fin.item.q;
+        $('#f-sub').textContent = S.teams.length === 1 ? 'Pensaci bene, poi scopri la risposta.' : 'Ogni squadra scrive la risposta su un foglio, senza farla vedere.';
+        QZ.fx.replay($('#f-text'));
+        QZ.$$('#f-card .qz-stamp').forEach(function (x) { x.remove(); });
+        $('#f-bets').hidden = true;
+        setGo('Scopri la risposta', 'eye');
+        QZ.sound.whoosh();
+        QZ.say(S.fin.item.q);
+        if (S.o.time) {
+            $('#f-timer').hidden = false;
+            setTimeout(function () { if (S.phase === 'final-q') fTimer.start(); }, 500);
+        }
+        $('#f-go').focus({ preventScroll: true });
+    }
+
+    function finalReveal() {
+        if (S.phase !== 'final-q') return;
+        S.phase = 'final-judge';
+        fTimer.pause();
+        $('#f-timer').hidden = true;
+        $('#f-ans-text').textContent = S.fin.item.a;
+        $('#f-ans').hidden = false;
+        var ask = S.teams.length === 1 ? 'L\'avevi detta giusta?' : 'Segnate chi l\'ha presa e chi no.';
+        $('#f-sub').textContent = ask;
+        $('#f-bets').hidden = false;
+        renderBets();
+        setGo('Classifica finale', 'trophy');
+        QZ.sound.reveal();
+        QZ.say('La risposta: ' + S.fin.item.a + '. ' + ask);
+        var first = $('#f-bets [data-res]');
+        if (first) first.focus({ preventScroll: true });
+    }
+
+    function finalSettle() {
+        if (S.phase !== 'final-judge' || S.fin.res.some(function (r) { return r === null; })) return;
+        S.phase = 'final-done';
+        $('#f-go').disabled = true;
+        var anyRight = false, said = [];
+        S.teams.forEach(function (t, i) {
+            var bet = S.fin.bets[i], ok = S.fin.res[i];
+            if (ok) { t.right++; anyRight = true; } else t.wrong++;
+            if (bet) addScore(i, ok ? bet : -bet);
+            said.push(t.name + (bet ? (ok ? ' più ' : ' meno ') + QZ.fmt(bet) : (ok ? ' giusta' : ' sbagliata') + ' ma senza puntata'));
+        });
+        S.asked++;
+        if (anyRight) QZ.sound.correct(); else QZ.sound.wrong();
+        QZ.fx.stamp($('#f-body'), anyRight ? 'Che finale' : 'Tutti fuori', anyRight ? 'ok' : 'bad', { size: 38, say: said.join(', ') + '.' });
+        setTimeout(finish, 1700);
+    }
+
     /* ---------- Fine partita ---------- */
     function finish() {
+        if (S.phase === 'done') return;
         S.phase = 'done';
         timer.pause();
+        fTimer.pause();
+        dropSave();
         QZ.wake.off();
         $('#scorebar').hidden = true;
         var ranked = S.teams.slice().sort(function (a, b) { return b.score - a.score; });
@@ -520,13 +820,14 @@
         var tries = top.right + top.wrong;
         var ratio = tries ? top.right / tries : 0;
         if (top.score <= 0) ratio = Math.min(ratio, 0.25);
+        var asked = plural(S.asked, 'domanda', 'domande');
 
         QZ.show('s-end');
         QZ.results($('#end-host'), {
             win: solo ? top.score > 0 : true,
             icon: solo ? 'grid' : 'trophy',
             title: solo ? (top.score > 0 ? 'Tabellone chiuso' : 'Serata storta') : tie ? 'Pareggio' : 'Vince ' + top.name,
-            subtitle: solo ? plural(right, 'risposta giusta', 'risposte giuste') + ' su ' + plural(S.asked, 'domanda', 'domande') + '.' : tie ? 'Stessi punti in vetta. Qui ci vogliono i supplementari.' : 'Classifica finale dopo ' + plural(S.asked, 'domanda', 'domande') + '.',
+            subtitle: solo ? plural(right, 'risposta giusta', 'risposte giuste') + ' su ' + asked + '.' : tie ? 'Stessi punti in vetta. Qui ci vogliono i supplementari.' : 'Classifica finale dopo ' + asked + '.',
             big: top.score, bigSuffix: ' pt',
             ratio: ratio,
             record: r,
@@ -539,10 +840,11 @@
             extraHTML: solo ? '' : '<div class="mt-3">' + QZ.podiumHTML(ranked.map(function (t) {
                 return { name: t.name, score: t.score, color: t.color, sub: plural(t.right, 'giusta', 'giuste') + ' · ' + plural(t.wrong, 'sbagliata', 'sbagliate') + (t.steals ? ' · ' + plural(t.steals, 'rubata', 'rubate') : '') };
             }), function (s) { return QZ.fmt(s) + ' pt'; }) + '</div>',
-            share: solo ? 'Ho fatto ' + QZ.fmt(top.score) + ' punti al Jeopardy del calcio su Quizzotti.' :
-                (tie ? 'Pareggio' : top.name + ' vince') + ' al Jeopardy del calcio su Quizzotti con ' + QZ.fmt(top.score) + ' punti.',
+            share: solo
+                ? 'Al Jeopardy del calcio su Quizzotti ho fatto ' + QZ.fmt(top.score) + ' punti: ' + plural(right, 'risposta giusta', 'risposte giuste') + ' su ' + asked + '. Tocca a te.'
+                : 'Jeopardy del calcio su Quizzotti, classifica finale: ' + ranked.map(function (t, i) { return (i + 1) + '. ' + t.name + ' ' + QZ.fmt(t.score); }).join(' · ') + '.',
             onRetry: start,
-            secondary: { label: 'Cambia squadre', icon: 'users', onClick: function () { QZ.show('s-start'); } }
+            secondary: { label: 'Cambia squadre', icon: 'users', onClick: function () { QZ.show('s-start'); paintResume(); paintRecord(); } }
         });
     }
 })();

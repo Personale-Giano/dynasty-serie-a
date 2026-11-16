@@ -10,8 +10,8 @@ const Core = require(path.join('..', 'assets', 'games', 'bingo.js'));
 
 const CATS = ['Campo', 'Arbitro e VAR', 'Panchina', 'Telecronaca e TV', 'Tifosi'];
 
-test('db-bingo.js: almeno 90 eventi con testo breve, rarita\' 1-3 e categoria valida', () => {
-    assert.ok(bingoEvents.length >= 90, `eventi: ${bingoEvents.length}`);
+test('db-bingo.js: almeno 140 eventi con testo breve, rarita\' 1-3 e categoria valida', () => {
+    assert.ok(bingoEvents.length >= 140, `eventi: ${bingoEvents.length}`);
     for (const e of bingoEvents) {
         assert.equal(typeof e.text, 'string');
         assert.ok(e.text.trim().length > 0, 'testo vuoto');
@@ -118,4 +118,40 @@ test('righe e premi: riga, doppia e bingo vanno al primo che li raggiunge', () =
     const ev = Core.evaluate(A, (t) => all.includes(t));
     assert.equal(ev.full, true);
     assert.equal(ev.lines, 10);
+});
+
+test('cartelle stabili: le partite salvate prima delle aggiunte (pool 113) escono identiche', () => {
+    assert.equal(Core.LEGACY_POOL, 113);
+    // cartella generata dal codice K7QX con il database di 113 eventi (prima di novembre 2026)
+    const legacy = ["Gol nel secondo tempo", "Giocatore con la testa fasciata", "Tifoso inquadrato con un cartello", "Inquadrano le riserve che si scaldano", "L'arbitro va a rivedere al monitor", "La squadra va a salutare la curva", "Giocatore a terra, entrano i medici", "Ola sugli spalti", "Il telecronista dice «zona Cesarini»", "Spray per segnare la barriera", "Esultanza sotto la curva", "Rimessa laterale lunga in area", "Replay del gol da un'altra camera", "Rigore assegnato", "Ammonito un portiere", "Una squadra fa tutti e 5 i cambi"];
+    assert.deepEqual(Core.makeCard('K7QX', bingoEvents, Core.LEGACY_POOL).map((e) => e.text), legacy);
+    // con un pool fissato, aggiungere eventi in fondo non cambia niente
+    const n = bingoEvents.length;
+    const more = bingoEvents.concat([{ text: 'Evento di prova', rarity: 1, cat: 'Campo' }, { text: 'Altro evento', rarity: 3, cat: 'Tifosi' }]);
+    for (const code of ['AAAA', 'K7QX', 'ZZ99', 'M3NP']) {
+        assert.deepEqual(Core.makeCard(code, more, n).map((e) => e.text), Core.makeCard(code, bingoEvents).map((e) => e.text));
+    }
+    // le prime 113 voci non vanno toccate: solo aggiunte in fondo
+    assert.ok(bingoEvents.length >= Core.LEGACY_POOL);
+});
+
+test('caselle calde e "manca 1": evaluate e oneAway', () => {
+    const A = Core.makeCard('AAAA', bingoEvents).map((e) => e.text);
+    const marked = new Set([A[0], A[1], A[2]]);
+    let ev = Core.evaluate(A, (t) => marked.has(t));
+    assert.equal(ev.lines, 0);
+    assert.ok(ev.hot[3], 'la quarta casella della prima riga chiude la riga');
+    assert.equal(ev.hotCount, 1);
+    assert.equal(Core.oneAway(ev), 'riga');
+    marked.add(A[3]); marked.add(A[4]); marked.add(A[8]);
+    ev = Core.evaluate(A, (t) => marked.has(t));
+    assert.equal(ev.lines, 1);
+    assert.ok(ev.hot[12]);
+    assert.equal(Core.oneAway(ev), 'doppia');
+    const almost = new Set(A.slice(0, 15));
+    ev = Core.evaluate(A, (t) => almost.has(t));
+    assert.equal(Core.oneAway(ev), 'bingo');
+    ev = Core.evaluate(A, () => true);
+    assert.equal(Core.oneAway(ev), null);
+    assert.equal(Core.oneAway(Core.evaluate(A, () => false)), null);
 });

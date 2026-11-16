@@ -4,15 +4,16 @@
    Da 2 a 6 squadre, tempo e numero di giri a scelta, penalita' per la parola
    vietata e passi configurabili, argomenti selezionabili, carte che non si
    ripetono tra le partite, schermata "passa il telefono", resoconto del turno
-   correggibile, classifica finale.
+   correggibile, classifica finale. La partita si salva a ogni cambio di
+   squadra: se la pagina si ricarica si riprende dal turno in corso.
    Stile "Riflettori": la carta va sul maxischermo con le vietate a LED rossi;
    ogni verdetto e' una scritta che si accende ("GOL!", "VIETATA"), il
    resoconto del turno si accende riga per riga.
+   La logica pura (argomenti, punti, classifica, salvataggio) sta in `core` ed
+   e' esportata per i test con Node.
    ========================================================================== */
 (function () {
     'use strict';
-
-    var $ = QZ.$;
 
     /* ---------- Argomenti: le categorie del DB raggruppate in 7 macro-temi ---------- */
     var GROUPS = [
@@ -43,18 +44,92 @@
         }
         return groupCache[cat];
     }
+
+    /* ---------- Impostazioni: valori ammessi (un valore vecchio o rotto torna al default) ---------- */
+    var CHOICES = {
+        time: [45, 60, 90, 120],
+        rounds: [1, 2, 3, 5],
+        pen: [1, 0],
+        skips: [-1, 3, 1, 0]
+    };
+    var DEFAULTS = { time: 60, rounds: 3, pen: 1, skips: -1, groups: null };
+    function sanitizeOpts(raw) {
+        var o = Object.assign({}, DEFAULTS);
+        if (raw && typeof raw === 'object') {
+            Object.keys(CHOICES).forEach(function (k) { if (CHOICES[k].indexOf(raw[k]) >= 0) o[k] = raw[k]; });
+            if (Array.isArray(raw.groups)) o.groups = raw.groups.filter(function (g) { return GROUPS.some(function (x) { return x.id === g; }); });
+        }
+        return o;
+    }
+
+    function points(res, pen) { return res === 'ok' ? 1 : res === 'bad' && pen ? -pen : 0; }
+
+    /** Classifica: punti, poi carte indovinate, poi meno vietate. */
+    function rank(teams) {
+        return teams.slice().sort(function (a, b) { return b.score - a.score || b.ok - a.ok || a.bad - b.bad; });
+    }
+    function isTie(ranked) { return !!(ranked[1] && ranked[1].score === ranked[0].score); }
+
+    /** Taglia del carattere della parola sulla carta: dipende dal pezzo piu' lungo e dalla lunghezza totale. */
+    function wordFit(word) {
+        var longest = word.split(/\s+/).reduce(function (m, t) { return Math.max(m, t.length); }, 0);
+        if (longest > 15 || word.length > 34) return 'xlong';
+        if (longest > 11 || word.length > 22) return 'long';
+        return '';
+    }
+
+    function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+    /** Testo da condividere: chi ha vinto e la classifica intera, una riga per squadra. */
+    function shareText(ranked) {
+        var top = ranked[0];
+        var head = isTie(ranked)
+            ? 'Taboo su Quizzotti: pareggio in vetta a ' + plural(top.score, 'punto', 'punti') + '.'
+            : 'Taboo su Quizzotti: vince ' + top.name + ' con ' + plural(top.score, 'punto', 'punti') + '.';
+        var rows = ranked.map(function (t, i) { return (i + 1) + '. ' + t.name + ' ' + t.score; });
+        return head + '\n' + rows.join('\n') + '\nRiuscite a spiegare il calcio senza dire le parole vietate?';
+    }
+
+    /* ---------- Salvataggio della partita in corso (ripresa dopo un ricaricamento) ---------- */
+    var SAVE_MAX_AGE = 12 * 3600 * 1000;
+    function snapshot(S, now) {
+        return {
+            v: 1, at: now, round: S.round, turn: S.turn, rounds: S.rounds, time: S.time, pen: S.pen, skips: S.skips,
+            groups: S.groups.slice(),
+            teams: S.teams.map(function (t) { return { name: t.name, color: t.color, score: t.score, ok: t.ok, bad: t.bad, skip: t.skip, best: t.best }; })
+        };
+    }
+    function validSave(s, now) {
+        if (!s || s.v !== 1 || typeof s.at !== 'number' || now - s.at > SAVE_MAX_AGE || now < s.at - 60000) return false;
+        if (!Array.isArray(s.teams) || s.teams.length < 2 || s.teams.length > 6) return false;
+        if (CHOICES.rounds.indexOf(s.rounds) < 0 || CHOICES.time.indexOf(s.time) < 0 || CHOICES.pen.indexOf(s.pen) < 0 || CHOICES.skips.indexOf(s.skips) < 0) return false;
+        if (!(s.round >= 1 && s.round <= s.rounds && s.turn >= 0 && s.turn < s.teams.length)) return false;
+        if (!Array.isArray(s.groups) || !s.groups.length) return false;
+        return s.teams.every(function (t) {
+            // il colore finisce in uno style: solo esadecimali, niente testo libero
+            return t && typeof t.name === 'string' && t.name && typeof t.color === 'string' && /^#[0-9a-f]{3,8}$/i.test(t.color) && ['score', 'ok', 'bad', 'skip', 'best'].every(function (k) { return typeof t[k] === 'number' && isFinite(t[k]); });
+        });
+    }
+
+    var core = { GROUPS: GROUPS, groupOf: groupOf, wordFit: wordFit, CHOICES: CHOICES, sanitizeOpts: sanitizeOpts, points: points, rank: rank, isTie: isTie, shareText: shareText, snapshot: snapshot, validSave: validSave };
+    if (typeof module !== 'undefined' && module.exports) { module.exports = core; return; }
+
+    /* ======================================================================
+       Da qui in giu': la pagina
+       ====================================================================== */
+    var $ = QZ.$;
+
     var COUNT = {};
     tabooWords.forEach(function (w) { var g = groupOf(w.categoria); COUNT[g] = (COUNT[g] || 0) + 1; });
     var deck = new QZ.Deck('taboo', tabooWords, function (w) { return w.word; });
 
-    /* ---------- Impostazioni ---------- */
     var OPT_KEY = 'qz.taboo.opts';
-    var opts = Object.assign({ time: 60, rounds: 3, pen: 1, skips: -1, groups: null }, QZ.store.get(OPT_KEY, {}) || {});
+    var SAVE_KEY = 'qz.taboo.saved';
+    var opts = sanitizeOpts(QZ.store.get(OPT_KEY, {}));
     function saveOpts() { QZ.store.set(OPT_KEY, opts); }
-    var groups = (Array.isArray(opts.groups) ? opts.groups : []).filter(function (g) { return COUNT[g]; });
+    var groups = (opts.groups || []).filter(function (g) { return COUNT[g]; });
     if (!groups.length) groups = GROUPS.map(function (g) { return g.id; });
 
-    function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
     function rulesHTML(list) {
         return list.map(function (r, i) {
             return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
@@ -64,19 +139,27 @@
     /* ---------- Markup statico ---------- */
     $('#start-btn').innerHTML = 'Fischio d\'inizio' + QZ.icon('arrow');
     $('#medal').innerHTML = QZ.icon('ban');
+    $('#lead-count').textContent = QZ.fmt(Math.floor(tabooWords.length / 100) * 100);
     $('#rules').innerHTML = rulesHTML([
         ['Uno spiega,', 'i compagni indovinano prima che scada il tempo.'],
-        ['Vietato dire', 'la parola, quelle accese in rosso e i loro parenti stretti.'],
+        ['Vietato dire', 'la parola, i suoi pezzi, quelle accese in rosso e i loro parenti stretti. Niente gesti, niente «fa rima con».'],
         ['Un avversario fa l\'arbitro:', 'sente una vietata e fischia.'],
         ['Carta indovinata, un punto.', 'Alla fine dei giri vince chi ne ha di più.']
     ]);
-    var rec = QZ.profile.best('taboo');
-    $('#start-record').textContent = rec != null ? 'record: ' + plural(rec, 'carta', 'carte') + ' in un turno' : '';
+    function paintRecord() {
+        var rec = QZ.profile.best('taboo');
+        var played = QZ.profile.get().gamesPlayed.taboo || 0;
+        var bits = [];
+        if (rec != null) bits.push('record: ' + plural(rec, 'carta', 'carte') + ' in un turno');
+        if (played) bits.push(plural(played, 'partita giocata', 'partite giocate'));
+        $('#start-record').textContent = bits.join(' · ');
+    }
+    paintRecord();
 
     var teamsList = QZ.playerList($('#teams-host'), { key: 'taboo', min: 2, max: 6, initial: 2, label: 'Squadra', title: 'Squadre (2-6)' });
 
-    QZ.segmented($('#opt-time'), [{ label: '45 s', value: 45 }, { label: '60 s', value: 60 }, { label: '90 s', value: 90 }], opts.time, function (v) { opts.time = v; saveOpts(); });
-    QZ.segmented($('#opt-rounds'), [1, 2, 3, 5].map(function (n) { return { label: String(n), value: n }; }), opts.rounds, function (v) { opts.rounds = v; saveOpts(); });
+    QZ.segmented($('#opt-time'), CHOICES.time.map(function (n) { return { label: n + ' s', value: n }; }), opts.time, function (v) { opts.time = v; saveOpts(); });
+    QZ.segmented($('#opt-rounds'), CHOICES.rounds.map(function (n) { return { label: String(n), value: n }; }), opts.rounds, function (v) { opts.rounds = v; saveOpts(); });
     QZ.segmented($('#opt-pen'), [{ label: 'Costa un punto', value: 1 }, { label: 'Solo carta buttata', value: 0 }], opts.pen, function (v) { opts.pen = v; saveOpts(); });
     QZ.segmented($('#opt-skip'), [{ label: 'Quanti vuoi', value: -1 }, { label: '3', value: 3 }, { label: '1', value: 1 }, { label: 'Zero', value: 0 }], opts.skips, function (v) { opts.skips = v; saveOpts(); });
 
@@ -91,8 +174,9 @@
             b.setAttribute('aria-pressed', String(on));
             b.classList.toggle('is-drawn', on && (drawn === 'all' || drawn === b));
         });
-        var n = tabooWords.filter(function (w) { return groups.indexOf(groupOf(w.categoria)) >= 0; }).length;
+        var n = groups.reduce(function (s, g) { return s + (COUNT[g] || 0); }, 0);
         $('#groups-hint').textContent = QZ.fmt(n) + ' carte nel mazzo';
+        $('#groups-all').disabled = groups.length === GROUPS.length;
     }
     paintGroups();
     $('#groups').addEventListener('click', function (e) {
@@ -110,6 +194,7 @@
     $('#groups-all').addEventListener('click', function () {
         groups = GROUPS.map(function (g) { return g.id; });
         opts.groups = groups.slice(); saveOpts();
+        QZ.sound.click();
         paintGroups('all');
     });
 
@@ -136,8 +221,11 @@
 
     /* ---------- Stato ---------- */
     var S = { phase: 'idle' };
+    // ogni resoconto ha il suo numero: le righe che si accendono in ritardo non toccano quello dopo
+    var sumSeq = 0;
 
     $('#start-btn').addEventListener('click', start);
+    $('#resume-btn').addEventListener('click', resume);
     $('#go-btn').addEventListener('click', beginTurn);
     $('#ok-btn').addEventListener('click', function () { mark('ok'); });
     $('#bad-btn').addEventListener('click', function () { mark('bad'); });
@@ -150,11 +238,11 @@
     });
 
     document.addEventListener('keydown', function (e) {
-        if (e.ctrlKey || e.metaKey || e.altKey || document.querySelector('.qz-modal')) return;
+        if (e.ctrlKey || e.metaKey || e.altKey || e.repeat || document.querySelector('.qz-modal')) return;
         var t = e.target;
         if (t.closest && t.closest('input, textarea, select')) return;
         var k = e.key;
-        if (S.phase === 'play') {
+        if (S.phase === 'play' || S.phase === 'anim') {
             if (k === 'ArrowRight' || k === 'g' || k === 'G') { e.preventDefault(); mark('ok'); }
             else if (k === 'ArrowLeft' || k === 'v' || k === 'V') { e.preventDefault(); mark('bad'); }
             else if (k === 'ArrowDown' || k === 'p' || k === 'P') { e.preventDefault(); mark('skip'); }
@@ -164,17 +252,52 @@
         }
     });
 
+    /* ---------- Partita salvata ---------- */
+    function saveGame() { QZ.store.set(SAVE_KEY, snapshot(S, Date.now())); }
+    function clearGame() { QZ.store.set(SAVE_KEY, null); }
+    function savedGame() {
+        var s = QZ.store.get(SAVE_KEY, null);
+        return validSave(s, Date.now()) ? s : null;
+    }
+    function paintResume() {
+        var s = savedGame();
+        var b = $('#resume-btn');
+        b.hidden = !s;
+        if (!s) return;
+        b.innerHTML = QZ.icon('play') + '<span>Riprendi la partita<small>' +
+            QZ.esc((s.rounds > 1 ? 'giro ' + s.round + '/' + s.rounds + ' · ' : '') + 'tocca a ' + s.teams[s.turn].name) + '</small></span>';
+    }
+    paintResume();
+
     /* ---------- Partita ---------- */
+    function newState(o) {
+        return {
+            phase: 'hand', round: o.round || 1, turn: o.turn || 0, rounds: o.rounds, time: o.time, pen: o.pen, skips: o.skips,
+            groups: o.groups.filter(function (g) { return COUNT[g]; }),
+            teams: o.teams, log: [], cur: null
+        };
+    }
+
     function start() {
         // doppio tocco su "Fischio d'inizio": la partita parte una volta sola
         if (S.phase !== 'idle' && S.phase !== 'done') return;
         var names = teamsList.get();
-        S = {
-            phase: 'hand', round: 1, turn: 0, rounds: opts.rounds, time: opts.time, pen: opts.pen, skips: opts.skips,
-            groups: groups.slice(),
-            teams: names.map(function (n, i) { return { name: n, color: QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length], score: 0, ok: 0, bad: 0, skip: 0, best: 0 }; }),
-            log: [], cur: null
-        };
+        S = newState({
+            rounds: opts.rounds, time: opts.time, pen: opts.pen, skips: opts.skips, groups: groups.slice(),
+            teams: names.map(function (n, i) { return { name: n, color: QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length], score: 0, ok: 0, bad: 0, skip: 0, best: 0 }; })
+        });
+        if (!S.groups.length) S.groups = GROUPS.map(function (g) { return g.id; });
+        QZ.wake.on();
+        QZ.sound.whistle();
+        showHand();
+    }
+
+    function resume() {
+        if (S.phase !== 'idle' && S.phase !== 'done') return;
+        var s = savedGame();
+        if (!s) { paintResume(); return; }
+        S = newState(s);
+        if (!S.groups.length) S.groups = GROUPS.map(function (g) { return g.id; });
         QZ.wake.on();
         QZ.sound.whistle();
         showHand();
@@ -191,6 +314,7 @@
 
     function showHand() {
         S.phase = 'hand';
+        saveGame();
         var t = team();
         $('#s-turn').style.setProperty('--c', t.color);
         $('#hand-round').textContent = S.rounds > 1 ? 'Giro ' + S.round + '/' + S.rounds : 'Giro unico';
@@ -221,6 +345,7 @@
         timer.render();
         QZ.show('s-game');
         QZ.countdown(3, 'Via!').then(function () {
+            if (S.phase !== 'count') return;
             S.phase = 'play';
             deal(null);
             timer.start();
@@ -246,12 +371,30 @@
     }
 
     var VERDICT = {
-        ok: { cls: 'is-go-ok', kind: 'ok', words: ['Gol!', 'Gol!', 'Esatto'] },
-        bad: { cls: 'is-go-bad', kind: 'bad', words: ['Vietata'] },
+        ok: { cls: 'is-go-ok', kind: 'ok', words: ['Gol!', 'Gol!', 'Esatto', 'Dentro!'] },
+        bad: { cls: 'is-go-bad', kind: 'bad', words: ['Vietata', 'Fischio!', 'Fallo!'] },
         skip: { cls: 'is-go-skip', kind: 'ink', words: ['Passo'] }
     };
 
     var SAID = { ok: 'Indovinata, più uno.', bad: 'Vietata!', skip: 'Passo.' };
+
+    function showCard() {
+        var card = $('#card');
+        var w = draw();
+        S.cur = w;
+        card.classList.remove('is-go-ok', 'is-go-bad', 'is-go-skip', 'is-foul');
+        QZ.$$('.qz-stamp', card).forEach(function (x) { x.remove(); });
+        $('#word').textContent = w.word;
+        // le parole lunghe ("Ernst-Happel-Stadion") rimpiccioliscono invece di spezzarsi a meta'
+        var fit = wordFit(w.word);
+        $('#word').classList.toggle('is-long', fit === 'long');
+        $('#word').classList.toggle('is-xlong', fit === 'xlong');
+        $('#taboo').innerHTML = w.taboo.map(function (x) { return '<li>' + QZ.esc(x) + '</li>'; }).join('');
+        $('#word-cat').textContent = w.categoria;
+        QZ.fx.replay(card);
+        if (S.phase === 'anim') S.phase = 'play';
+        return w;
+    }
 
     // res: verdetto sulla carta precedente (null alla prima carta del turno)
     function deal(res) {
@@ -259,16 +402,8 @@
         // verdetto e carta nuova in un solo annuncio: due annunci a 260 ms si coprirebbero
         var said = res ? SAID[res] + (res === 'bad' && S.pen ? ' Meno ' + S.pen + '.' : '') + ' Turno a ' + S.turnPts + '. ' : '';
         var show = function () {
-            var w = draw();
-            S.cur = w;
-            card.classList.remove('is-go-ok', 'is-go-bad', 'is-go-skip', 'is-foul');
-            QZ.$$('.qz-stamp', card).forEach(function (x) { x.remove(); });
-            $('#word').textContent = w.word;
-            $('#taboo').innerHTML = w.taboo.map(function (x) { return '<li>' + QZ.esc(x) + '</li>'; }).join('');
-            $('#word-cat').textContent = w.categoria;
+            var w = showCard();
             QZ.say(said + 'Carta: ' + w.word + '. Vietate: ' + w.taboo.join(', ') + '.');
-            QZ.fx.replay(card);
-            if (S.phase === 'anim') S.phase = 'play';
         };
         if (!res) { show(); return; }
         var v = VERDICT[res];
@@ -285,15 +420,13 @@
         }, 260);
     }
 
-    function points(res) { return res === 'ok' ? 1 : res === 'bad' ? -S.pen : 0; }
-
     function mark(res) {
         if (S.phase !== 'play' || !S.cur) return;
-        if (res === 'skip' && S.skipsLeft === 0) { QZ.fx.shake($('#skip-btn')); return; }
+        if (res === 'skip' && S.skipsLeft === 0) { QZ.fx.shake($('#skip-btn')); QZ.sound.buzzer(); return; }
         var t = team();
         S.log.push({ word: S.cur.word, res: res });
         S.cur = null;
-        var d = points(res);
+        var d = points(res, S.pen);
         S.turnPts += d;
         t.score += d;
         var pts = $('#hud-pts');
@@ -316,22 +449,28 @@
     }
 
     function pause() {
-        if (S.phase !== 'play') return;
+        // anche a meta' del cambio carta: alla ripresa la carta nuova arriva comunque
+        if (S.phase !== 'play' && S.phase !== 'anim') return;
         S.phase = 'pause';
         timer.pause();
         $('#card').classList.add('is-covered');
+        var go = function () {
+            $('#card').classList.remove('is-covered');
+            S.phase = 'play';
+            if (!S.cur) showCard();
+            timer.start();
+            QZ.say('Si riparte. Carta: ' + S.cur.word + '.');
+        };
         QZ.modal({
             title: 'Time-out',
             text: 'Cronometro fermo e maxischermo spento. Si riparte quando siete pronti.',
             actions: [{ label: 'Riprendi', primary: true, icon: 'play', value: 'go' }, { label: 'Chiudi qui', ghost: true, icon: 'whistle', value: 'end' }]
         }).then(function (v) {
-            $('#card').classList.remove('is-covered');
             if (v === 'end') {
                 QZ.confirm('Si va dritti alla classifica. Le carte di questo turno valgono.', { title: 'Fischio finale?', okLabel: 'Classifica', cancelLabel: 'Riprendi' }).then(function (ok) {
-                    if (ok) finish();
-                    else { S.phase = 'play'; timer.start(); }
+                    if (ok) { $('#card').classList.remove('is-covered'); finish(); } else go();
                 });
-            } else { S.phase = 'play'; timer.start(); }
+            } else go();
         });
     }
 
@@ -354,6 +493,7 @@
     };
 
     function showSummary() {
+        var seq = ++sumSeq;
         var t = team();
         $('#s-sum').style.setProperty('--c', t.color);
         $('#sum-eyebrow').textContent = 'Fine del turno';
@@ -370,11 +510,11 @@
         var last = S.turn === S.teams.length - 1 && S.round === S.rounds;
         $('#sum-next').innerHTML = last ? QZ.icon('trophy') + 'Classifica finale' : 'Tocca a ' + QZ.esc(S.teams[(S.turn + 1) % S.teams.length].name) + QZ.icon('arrow');
         QZ.show('s-sum');
-        // il resoconto si accende riga per riga
+        // il resoconto si accende riga per riga (con tante carte il passo si accorcia)
         var rows = QZ.$$('#sum-list .report__row');
-        var step = QZ.reducedMotion() ? 0 : 110;
+        var step = QZ.reducedMotion() ? 0 : Math.min(110, Math.round(1400 / Math.max(1, rows.length)));
         rows.forEach(function (row, i) {
-            setTimeout(function () { lightRow(i, step > 0); }, 300 + i * step);
+            setTimeout(function () { if (seq === sumSeq && S.phase === 'sum') lightRow(i, step > 0); }, 300 + i * step);
         });
     }
 
@@ -387,7 +527,7 @@
 
     function labelRow(i) {
         var row = $('#sum-list [data-idx="' + i + '"]');
-        if (!row) return;
+        if (!row || !S.log[i]) return;
         var l = S.log[i];
         row.dataset.res = l.res;
         row.setAttribute('aria-label', l.word + ': ' + RES[l.res].label + '. Tocca per cambiare');
@@ -396,7 +536,7 @@
     /** Accende l'esito della riga sul suo pezzetto di tabellone: spunta verde, croce rossa, PASSO ambra. */
     function lightRow(i, sound) {
         var row = $('#sum-list [data-idx="' + i + '"]');
-        if (!row) return;
+        if (!row || !S.log[i]) return;
         var res = S.log[i].res, r = RES[res];
         var box = row.querySelector('.report__res');
         box.dataset.res = res;
@@ -406,11 +546,11 @@
     }
 
     function cycle(i) {
-        if (S.phase !== 'sum') return;
+        if (S.phase !== 'sum' || !S.log[i]) return;
         var l = S.log[i];
         var order = ['ok', 'bad', 'skip'];
         var next = order[(order.indexOf(l.res) + 1) % 3];
-        var d = points(next) - points(l.res);
+        var d = points(next, S.pen) - points(l.res, S.pen);
         l.res = next;
         S.turnPts += d;
         team().score += d;
@@ -426,6 +566,7 @@
         S.log.forEach(function (l) { t[l.res]++; });
         var ok = S.log.filter(function (l) { return l.res === 'ok'; }).length;
         if (ok > t.best) t.best = ok;
+        S.log = [];
     }
 
     function nextTurn() {
@@ -444,9 +585,10 @@
         S.phase = 'done';
         timer.pause();
         QZ.wake.off();
-        var ranked = S.teams.slice().sort(function (a, b) { return b.score - a.score || b.ok - a.ok; });
+        clearGame();
+        var ranked = rank(S.teams);
         var top = ranked[0];
-        var tie = ranked[1] && ranked[1].score === top.score;
+        var tie = isTie(ranked);
         var tot = S.teams.reduce(function (s, t) { return s + t.ok; }, 0);
         var bad = S.teams.reduce(function (s, t) { return s + t.bad; }, 0);
         var best = S.teams.reduce(function (s, t) { return Math.max(s, t.best); }, 0);
@@ -455,14 +597,17 @@
             label: (tie ? 'Pareggio a ' : 'Vince ' + top.name + ' con ') + top.score + ' punti',
             score: best
         });
+        paintRecord();
+        paintResume();
         // pagella della squadra vincente: carte indovinate su carte viste (i passi pesano la meta')
         var seen = top.ok + top.bad + top.skip * 0.5;
+        var leaders = ranked.filter(function (t) { return t.score === top.score; }).map(function (t) { return t.name; });
         QZ.show('s-end');
         QZ.results($('#end-host'), {
             win: true,
             icon: 'trophy',
             title: tie ? 'Pareggio' : 'Vince ' + top.name,
-            subtitle: tie ? 'Stessi punti in vetta. Ci vuole lo spareggio.' : 'Nessuno l\'ha detto, tutti l\'hanno capito.',
+            subtitle: tie ? leaders.join(' e ') + ' a pari punti in vetta. Ci vuole lo spareggio.' : QZ.pick(['Nessuno l\'ha detto, tutti l\'hanno capito.', 'Spiegato tutto senza dire niente. Applausi.', 'Lingua lunga e parole giuste: coppa meritata.']),
             big: top.score, bigSuffix: ' pt',
             ratio: seen ? top.ok / seen : 0,
             record: r,
@@ -475,7 +620,7 @@
             extraHTML: '<div class="mt-3">' + QZ.podiumHTML(ranked.map(function (t) {
                 return { name: t.name, score: t.score, color: t.color, sub: plural(t.ok, 'indovinata', 'indovinate') + ' · ' + plural(t.bad, 'vietata', 'vietate') + ' · ' + plural(t.skip, 'passata', 'passate') };
             }), function (s) { return s + ' pt'; }) + '</div>',
-            share: (tie ? 'Pareggio' : top.name + ' vince') + ' a Taboo su Quizzotti con ' + top.score + ' punti. Riuscite a spiegare il calcio senza dire le parole vietate?',
+            share: shareText(ranked),
             onRetry: start,
             secondary: { label: 'Cambia impostazioni', icon: 'users', onClick: function () { QZ.show('s-start'); } }
         });

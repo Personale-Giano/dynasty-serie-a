@@ -42,6 +42,37 @@ test('ogni asset locale referenziato dalle pagine esiste', () => {
     }
 });
 
+test('la home: dati strutturati validi e allineati al registro', () => {
+    const html = read('index.html');
+    const m = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);
+    assert.ok(m, 'manca il JSON-LD nella home');
+    const data = JSON.parse(m[1]);
+    const list = data['@graph'].find((x) => x['@type'] === 'ItemList');
+    assert.ok(list, 'manca la ItemList dei giochi');
+    assert.equal(list.numberOfItems, games.length);
+    assert.deepEqual(list.itemListElement.map((x) => x.url.replace(/^.*\/quizzotti\//, '')), games.map((g) => g.file),
+        'la lista dei giochi nel JSON-LD non segue il registro QZ.GAMES');
+    assert.match(html, /src="assets\/qz\.js(\?v=[a-f0-9]+)?"/);
+    assert.match(html, /src="assets\/home\.js(\?v=[a-f0-9]+)?"/);
+    assert.equal((html.match(/<h1[\s>]/g) || []).length, 1, 'la home deve avere un solo h1');
+});
+
+test('gli asset usati dal motore esistono e qz.js compila', () => {
+    const vm = require('node:vm');
+    assert.doesNotThrow(() => new vm.Script(engine, { filename: 'assets/qz.js' }));
+    assert.doesNotThrow(() => new vm.Script(read('assets/home.js'), { filename: 'assets/home.js' }));
+    for (const m of engine.matchAll(/src="((?:assets\/|logo)[^"?#]+)"/g)) {
+        assert.ok(fs.existsSync(path.join(ROOT, m[1])), `qz.js: asset inesistente ${m[1]}`);
+    }
+});
+
+test('ogni gioco del registro ha il suo colore in qz.css', () => {
+    const css = read('assets/qz.css');
+    for (const g of games) {
+        assert.match(css, new RegExp(`\\[data-game="${g.id}"\\]\\s*\\{[^}]*--accent:`), `manca [data-game="${g.id}"] in qz.css`);
+    }
+});
+
 test('gli script di gioco sono JavaScript valido', () => {
     const vm = require('node:vm');
     for (const g of games) {

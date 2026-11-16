@@ -49,7 +49,16 @@ tests/                     integrità dei database + coerenza pagine/registro
 
 - **Header, menu giochi, footer e sfondo** li genera `qz.js`: non vanno scritti nelle pagine. Per aggiungere o rinominare un gioco basta modificare `QZ.GAMES` in `assets/qz.js` (home, launcher e profilo si aggiornano da soli).
 - **Colore del gioco**: `data-game` sul `<body>` attiva il suo accento (`--accent`) definito in `qz.css`; bottoni, timer e risposte lo ereditano.
+- **Home**: la sfida del giorno, "riprendi da dove eri" (ultimi tre giochi dal profilo), i giochi divisi tra *Da solo* e *In compagnia* con i filtri (ricordati in `qz.home.filter`). Il JSON-LD della home elenca i giochi: se cambia il registro va aggiornato (lo controlla `tests/pages.test.js`).
 - **API principali** (`window.QZ`): `show(screenId)`, `Timer`, `ringHTML()/ring()`, `sound.*`, `fx.*` (coriandoli, scintille, testo volante, shake…), `toast`, `modal`, `confirm`, `countdown`, `share`, `wake` (schermo sempre acceso), `playerList`, `segmented`, `results`, `podiumHTML`, `Deck` (estrazioni senza ripetizioni tra una partita e l'altra), `profile.record(id, {xp, label, score})`.
+- **Dettagli utili del motore**:
+  - `Deck.draw(filtro)` non ripete mai la stessa carta due volte di fila, nemmeno quando il mazzo si rimescola; `Deck.remaining(filtro)` dice quante carte mai viste restano.
+  - `store.get/set/remove` non esplodono mai (modalità privata, memoria piena); `set` restituisce `false` se non è riuscito a salvare.
+  - Dopo ogni `profile.record()` o azzeramento parte l'evento `qz:profile` su `document` (anche quando la partita finisce in un'altra scheda).
+  - `show()`: se arrivano due cambi di schermata ravvicinati vince l'ultimo; se il fuoco era su un bottone sparito, passa all'`h1` della nuova schermata (oppure a `[data-autofocus]`).
+  - Le modali si possono impilare (es. `confirm` sopra una modale): Esc e Tab comandano solo quella in cima.
+  - `share()` prova la condivisione del telefono, poi gli appunti, poi la copia alla vecchia maniera; non ripete il link se è già nel testo.
+- **Registro**: `daily: true` segna il gioco quotidiano (la home lo mette in evidenza come "La sfida di oggi").
 
 ## Aggiungere un gioco
 

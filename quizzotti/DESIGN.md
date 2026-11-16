@@ -54,3 +54,5 @@ Italiano da stadio: diretto, ironico, affettuoso. Frasi corte. Gergo calcistico 
 - Contrasto AA: testo utile mai più scuro di `--text-2` su `--panel`. Il colore del gioco come testo è `var(--accent-ink)`.
 - Timbri, segni e colori sono decorativi (`aria-hidden`): l'esito va anche **detto**, con `opts.say` di `QZ.fx.stamp` o con `QZ.say()`. Il cronometro non si annuncia a ogni secondo.
 - Ogni schermata ha un solo `h1`. Comandi di gioco alti almeno 44px.
+- Gli effetti di spostamento al passaggio del mouse (`translateY` su figurine e tessere) valgono solo con `@media (hover: hover)`: sul telefono resterebbero "appiccicati" dopo il tocco.
+- Testo bianco sui bottoni verdi: si usa `.btn--ok` (verde scuro `#17804a`), non `--green` come sfondo con testo bianco.

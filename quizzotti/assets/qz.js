@@ -26,8 +26,8 @@
         { id: 'sfidaeredita', file: 'sfidaEredita.html', name: 'Derby delle Parole', short: 'Derby', icon: 'ball', color: '#3ddc84', color2: '#9cf0c0', on: '#07090b', rgb: '61, 220, 132', players: '2 squadre', kind: 'party', desc: 'Una definizione, le lettere che spuntano piano piano. Chi la sa, tira in porta.', tags: ['Definizioni', 'Squadre', 'Voce'] },
         { id: 'giocatoributget', file: 'GiocatoriBudget.html', name: 'Sfida dei Budget', short: 'Budget', icon: 'coins', color: '#c6f04d', color2: '#e0f8a0', on: '#07090b', rgb: '198, 240, 77', players: '1-6 giocatori', kind: 'party', desc: 'Fai mercato a occhio: i prezzi sono nascosti e il presidente non perdona.', tags: ['Mercato', 'Strategia', 'Budget'] },
         { id: 'cruciverba', file: 'Cruciverba.html', name: 'Cruciverba', short: 'Cruciverba', icon: 'xword', color: '#ff6ad5', color2: '#ffb3ea', on: '#07090b', rgb: '255, 106, 213', players: 'Da solo', kind: 'quiz', desc: 'Il cruciverba del calcio: definizioni cattive, incroci e una griglia nuova a ogni partita.', tags: ['Parole', 'Enigmistica', 'Griglia nuova'] },
-        { id: 'sopraosotto', file: 'SopraOSotto.html', name: 'Sopra o Sotto', short: 'Sopra o Sotto', icon: 'updown', color: '#5ee0a0', color2: '#a8f0cc', on: '#07090b', rgb: '94, 224, 160', players: 'Da solo', kind: 'quiz', desc: 'Due calciatori, un solo prezzo da indovinare: chi vale di più? Una serie finché non sbagli.', tags: ['Valori', 'Serie', 'Veloce'] },
-        { id: 'giocatoredelgiorno', file: 'GiocatoreDelGiorno.html', name: 'Il Calciatore del Giorno', short: 'Del Giorno', icon: 'calendar', color: '#ffd23f', color2: '#ffe68f', on: '#07090b', rgb: '255, 210, 63', players: 'Da solo', kind: 'quiz', desc: 'Un calciatore segreto al giorno, uguale per tutti. Sei tentativi, e poi lo racconti agli amici.', tags: ['Ogni giorno', 'Indizi', 'Da condividere'] },
+        { id: 'sopraosotto', file: 'SopraOSotto.html', name: 'Sopra o Sotto', short: 'Sopra o Sotto', icon: 'updown', color: '#5ee0a0', color2: '#a8f0cc', on: '#07090b', rgb: '94, 224, 160', players: 'Da solo', kind: 'quiz', desc: 'Due calciatori, una domanda sola: chi vale di più sul mercato? Si va avanti finché non sbagli.', tags: ['Valori', 'Serie', 'Veloce'] },
+        { id: 'giocatoredelgiorno', file: 'GiocatoreDelGiorno.html', name: 'Il Calciatore del Giorno', short: 'Del Giorno', icon: 'calendar', color: '#ffd23f', color2: '#ffe68f', on: '#07090b', rgb: '255, 210, 63', players: 'Da solo', kind: 'quiz', desc: 'Un calciatore segreto al giorno, uguale per tutti. Sei tentativi, e poi lo racconti agli amici.', tags: ['Ogni giorno', 'Indizi', 'Da condividere'], daily: true },
         { id: 'cadutalibera', file: 'CadutaLibera.html', name: 'Caduta Libera', short: 'Caduta Libera', icon: 'zap', color: '#ff8a3d', color2: '#ffc193', on: '#07090b', rgb: '255, 138, 61', players: 'Da solo', kind: 'quiz', desc: 'Tre risposte, pochi secondi. Se sbagli o passi, il pavimento si apre sotto i piedi.', tags: ['Quiz', 'A tempo', 'Botole'] },
         { id: 'quattro', file: 'QuattroPerQuattro.html', name: 'Quattro per Quattro', short: '4 per 4', icon: 'layers', color: '#7c9cff', color2: '#b8c8ff', on: '#07090b', rgb: '124, 156, 255', players: 'Da solo', kind: 'quiz', desc: 'Sedici nomi, quattro gruppi nascosti. Hai quattro errori per scoprire cosa li lega.', tags: ['Gruppi', 'Schede', 'Logica'] },
         { id: 'intruso', file: 'Intruso.html', name: 'L\'Intruso', short: 'L\'Intruso', icon: 'eye', color: '#ff5fa2', color2: '#ffa8cc', on: '#07090b', rgb: '255, 95, 162', players: 'Da solo', kind: 'quiz', desc: 'Sei nomi e uno non c\'entra niente. Trovalo prima che scada il tempo.', tags: ['Veloce', 'Logica', 'Serie'] },
@@ -205,7 +205,9 @@
         this.items = items;
         this.keyFn = keyFn || function (x) { return typeof x === 'string' ? x : JSON.stringify(x); };
         var seen = QZ.store.get(this.key, []);
-        this.seen = new Set(Array.isArray(seen) ? seen : []);
+        seen = Array.isArray(seen) ? seen : [];
+        this.seen = new Set(seen);
+        this._last = seen.length ? seen[seen.length - 1] : null;
     };
     QZ.Deck.prototype.draw = function (filterFn) {
         var self = this;
@@ -214,14 +216,29 @@
         var fresh = pool.filter(function (x) { return !self.seen.has(self.keyFn(x)); });
         if (!fresh.length) {
             pool.forEach(function (x) { self.seen.delete(self.keyFn(x)); });
-            fresh = pool;
+            // mazzo rimescolato: l'ultima carta uscita non torna subito in cima
+            fresh = pool.length > 1 && this._last != null
+                ? pool.filter(function (x) { return self.keyFn(x) !== self._last; })
+                : pool;
+            if (!fresh.length) fresh = pool;
         }
         var item = QZ.pick(fresh);
-        this.seen.add(this.keyFn(item));
-        var arr = Array.from(this.seen);
-        if (arr.length > 1500) arr = arr.slice(arr.length - 1500);
-        QZ.store.set(this.key, arr);
+        var k = this.keyFn(item);
+        this._last = k;
+        // reinserita in coda: il Set tiene l'ordine di uscita, le piu' vecchie si scartano per prime
+        this.seen.delete(k);
+        this.seen.add(k);
+        if (this.seen.size > 1500) {
+            var arr = Array.from(this.seen).slice(this.seen.size - 1500);
+            this.seen = new Set(arr);
+        }
+        QZ.store.set(this.key, Array.from(this.seen));
         return item;
+    };
+    /** Quante carte mai viste restano (con lo stesso filtro di draw). */
+    QZ.Deck.prototype.remaining = function (filterFn) {
+        var self = this;
+        return this.items.filter(function (x) { return (!filterFn || filterFn(x)) && !self.seen.has(self.keyFn(x)); }).length;
     };
 
     /* ---------------------------------------------------------------------
@@ -235,7 +252,10 @@
             } catch { return fallback; }
         },
         set: function (k, v) {
-            try { global.localStorage.setItem(k, JSON.stringify(v)); } catch { /* storage non disponibile */ }
+            try { global.localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; /* storage non disponibile o pieno */ }
+        },
+        remove: function (k) {
+            try { global.localStorage.removeItem(k); } catch { /* storage non disponibile */ }
         }
     };
 
@@ -417,7 +437,19 @@
         var KEY = 'quizzottiProfile';
         var BASE = 60;
         function empty() { return { totalXP: 0, gamesPlayed: {}, bestScores: {}, lastPlayed: {}, records: {} }; }
-        function get() { return Object.assign(empty(), QZ.store.get(KEY, {}) || {}); }
+        // un profilo rovinato (vecchie versioni, modifiche a mano) non deve rompere la pagina
+        function get() {
+            var raw = QZ.store.get(KEY, {});
+            var p = Object.assign(empty(), raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {});
+            p.totalXP = Number(p.totalXP) > 0 ? Number(p.totalXP) : 0;
+            ['gamesPlayed', 'bestScores', 'lastPlayed', 'records'].forEach(function (k) {
+                if (!p[k] || typeof p[k] !== 'object') p[k] = {};
+            });
+            return p;
+        }
+        function changed() {
+            try { doc.dispatchEvent(new CustomEvent('qz:profile', { detail: get() })); } catch { /* evento non supportato */ }
+        }
         function levelFor(xp) { return Math.max(1, Math.floor(Math.sqrt(xp / BASE)) + 1); }
         function xpFor(level) { return Math.pow(level - 1, 2) * BASE; }
         function progress(p) {
@@ -452,6 +484,7 @@
             QZ.store.set(KEY, p);
             var after = levelFor(p.totalXP);
             renderBadge(true);
+            changed();
             if (after > before) {
                 setTimeout(function () {
                     QZ.sound.levelUp();
@@ -461,7 +494,7 @@
             return { xp: xp, levelUp: after > before, newRecord: newRecord, level: after };
         }
         function record_(gameId) { return get().records[gameId]; }
-        function reset() { QZ.store.set(KEY, empty()); renderBadge(); }
+        function reset() { QZ.store.set(KEY, empty()); renderBadge(); changed(); }
 
         function renderBadge(bump) {
             var b = doc.getElementById('qz-level');
@@ -539,27 +572,46 @@
             } catch { /* history non disponibile */ }
         }
         var current = QZ.$$('.screen.is-active').filter(function (s) { return s !== next; });
+        // due cambi ravvicinati (doppio tap, esito + fine partita): vince l'ultimo,
+        // altrimenti restavano accese due schermate insieme
+        var seq = ++showSeq;
+        clearTimeout(showTimer);
         var enter = function () {
-            current.forEach(function (s) { s.classList.remove('is-active', 'is-leaving'); });
+            if (seq !== showSeq) return;
+            QZ.$$('.screen.is-active, .screen.is-leaving').forEach(function (s) { if (s !== next) s.classList.remove('is-active', 'is-leaving'); });
             next.classList.remove('is-leaving');
             next.classList.remove('is-active');
             void next.offsetWidth;
             next.classList.add('is-active');
             if (!next.querySelector('h1')) {
                 var gg = QZ.game(doc.body.dataset.game);
-                if (gg) next.insertAdjacentHTML('afterbegin', '<h1 class="sr-only" data-qz-h1>' + QZ.esc(gg.name) + '</h1>');
+                if (gg) next.insertAdjacentHTML('afterbegin', '<h1 class="sr-only" data-qz-h1 tabindex="-1">' + QZ.esc(gg.name) + '</h1>');
             }
             if (opts.scroll !== false) global.scrollTo({ top: 0, behavior: QZ.reducedMotion() ? 'auto' : 'smooth' });
             var focusEl = next.querySelector('[data-autofocus]');
-            if (focusEl) setTimeout(function () { focusEl.focus({ preventScroll: true }); }, 60);
+            setTimeout(function () {
+                if (seq !== showSeq) return;
+                if (focusEl) { focusEl.focus({ preventScroll: true }); return; }
+                // il bottone appena premuto e' sparito con la vecchia schermata: senza un punto
+                // di partenza il fuoco cadrebbe sul body e Tab ripartirebbe dalla testata
+                var a = doc.activeElement;
+                if (a && a !== doc.body && a.isConnected && a.offsetParent !== null) return;
+                if (QZ.$$('.qz-modal').length) return;
+                var h = next.querySelector('h1');
+                if (h) {
+                    if (!h.hasAttribute('tabindex')) h.setAttribute('tabindex', '-1');
+                    h.focus({ preventScroll: true });
+                }
+            }, 60);
         };
         if (current.length && !QZ.reducedMotion()) {
             current.forEach(function (s) { s.classList.add('is-leaving'); });
-            setTimeout(enter, 200);
+            showTimer = setTimeout(enter, 200);
         } else {
             enter();
         }
     };
+    var showSeq = 0, showTimer = 0;
 
     /* ---------------------------------------------------------------------
        Timer preciso (rAF), con anello o barra, pausa automatica in background
@@ -593,12 +645,14 @@
         this._painted = sec;
         if (o.ring) {
             if (!this._fill) { this._fill = o.ring.querySelector('.t-fill'); this._ringLabel = o.ring.querySelector('.timer-ring__label'); }
-            if (this._fill) this._fill.style.strokeDashoffset = String(this._fill.__len * (1 - ratio));
+            // anello creato da ringHTML() ma mai passato a QZ.ring(): lo si prepara qui
+            if (this._fill && !this._fill.__len) QZ.ring(o.ring);
+            if (this._fill) this._fill.style.strokeDashoffset = String(this._fill.__len * (1 - Math.min(1, ratio)));
             if (this._ringLabel && secChanged) this._ringLabel.textContent = sec;
         }
         if (o.bar) {
             if (!this._barFill) this._barFill = o.bar.querySelector('.timer-bar__fill');
-            if (this._barFill) this._barFill.style.transform = 'scaleX(' + ratio + ')';
+            if (this._barFill) this._barFill.style.transform = 'scaleX(' + Math.min(1, ratio) + ')';
         }
         if (o.label && secChanged) o.label.textContent = sec;
         if (host && secChanged) {
@@ -614,8 +668,10 @@
         var self = this;
         var frame = function (ts) {
             if (!self.running) return;
-            self.remaining = Math.max(0, self.remaining - (ts - self._last) / 1000);
-            self._last = ts;
+            // il timestamp del primo frame puo' precedere performance.now() di start():
+            // un delta negativo farebbe risalire il tempo oltre la durata
+            self.remaining = Math.max(0, self.remaining - Math.max(0, ts - self._last) / 1000);
+            self._last = Math.max(self._last, ts);
             self.render();
             var sec = Math.ceil(self.remaining);
             if (sec !== self._lastSec) { self._lastSec = sec; if (self.o.onSecond) self.o.onSecond(sec); }
@@ -630,7 +686,9 @@
         this._raf = requestAnimationFrame(frame);
         return this;
     };
-    QZ.Timer.prototype.pause = function () { this.running = false; cancelAnimationFrame(this._raf); return this; };
+    // una pausa voluta dal gioco vince sulla pausa automatica: tornando sulla pagina
+    // il tempo non deve ripartire da solo (es. pausa chiesta mentre la scheda era nascosta)
+    QZ.Timer.prototype.pause = function () { this.running = false; this._autoPaused = false; cancelAnimationFrame(this._raf); return this; };
     QZ.Timer.prototype.reset = function (seconds) {
         this.pause();
         if (seconds != null) this.duration = seconds;
@@ -754,6 +812,7 @@
             s.style.setProperty('--rot', (Math.random() * 360) + 'deg');
             doc.body.appendChild(s);
             s.addEventListener('animationend', s.remove.bind(s));
+            setTimeout(s.remove.bind(s), 1500); // riserva se l'animazione non parte
         }
     };
 
@@ -767,6 +826,7 @@
         f.style.top = (r.top + r.height / 2 - 20) + 'px';
         doc.body.appendChild(f);
         f.addEventListener('animationend', f.remove.bind(f));
+        setTimeout(f.remove.bind(f), 2000); // riserva se l'animazione non parte
     };
 
     QZ.fx.flash = function (color) {
@@ -776,6 +836,7 @@
         f.style.background = color || 'rgba(var(--accent-rgb), .28)';
         doc.body.appendChild(f);
         f.addEventListener('animationend', f.remove.bind(f));
+        setTimeout(f.remove.bind(f), 2000); // riserva se l'animazione non parte
     };
 
     /**
@@ -858,8 +919,12 @@
         if (!el) return;
         opts = opts || {};
         var t0 = performance.now(), dur = QZ.reducedMotion() ? 1 : (ms || 900);
+        // un nuovo conteggio sullo stesso elemento ferma il precedente (prima si contendevano il testo)
+        var token = (el.__qzCount || 0) + 1;
+        el.__qzCount = token;
         (function frame(ts) {
-            var k = Math.min(1, (ts - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+            if (el.__qzCount !== token) return;
+            var k = Math.min(1, Math.max(0, ts - t0) / dur), e = 1 - Math.pow(1 - k, 3);
             el.textContent = (opts.prefix || '') + QZ.fmt(from + (to - from) * e, opts.decimals) + (opts.suffix || '');
             if (k < 1) requestAnimationFrame(frame);
         })(t0);
@@ -875,6 +940,9 @@
         var t = QZ.el('<div class="qz-toast' + (o.type ? ' qz-toast--' + o.type : '') + '">' + QZ.icon(o.icon || 'info') + '<span></span></div>');
         t.querySelector('span').textContent = msg;
         wrap.appendChild(t);
+        // tanti avvisi di fila (raffica di risposte): ne restano a schermo al massimo tre
+        var live = QZ.$$('.qz-toast:not(.is-out)', wrap);
+        live.slice(0, Math.max(0, live.length - 3)).forEach(function (x) { x.remove(); });
         setTimeout(function () {
             t.classList.add('is-out');
             setTimeout(function () { t.remove(); }, 260);
@@ -940,6 +1008,10 @@
             });
             if (!acts.children.length) acts.remove();
             function onKey(e) {
+                // con due finestre aperte (es. conferma sopra una modale) comanda solo quella in cima:
+                // prima Esc le chiudeva tutte e due e il Tab veniva conteso tra le due
+                var open = QZ.$$('.qz-modal').filter(function (x) { return !x.classList.contains('is-closing'); });
+                if (open[open.length - 1] !== m) return;
                 if (e.key === 'Escape' && o.dismissable !== false) close(null);
                 if (e.key === 'Tab') trapTab(e, m);
             }
@@ -988,18 +1060,43 @@
        Condivisione (Web Share API, fallback appunti + toast)
        ------------------------------------------------------------------- */
     QZ.share = function (text, title) {
+        text = String(text == null ? '' : text);
         var url = global.location.href.split('#')[0];
+        // se il testo contiene gia' il link non lo si ripete in coda
+        var hasUrl = text.indexOf(url) !== -1;
+        var full = hasUrl ? text : text + '\n' + url;
+        function legacyCopy() {
+            // http, browser vecchi e alcuni browser interni alle app non hanno navigator.clipboard
+            try {
+                var ta = doc.createElement('textarea');
+                ta.value = full;
+                ta.setAttribute('readonly', '');
+                ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+                doc.body.appendChild(ta);
+                ta.select();
+                var ok = doc.execCommand && doc.execCommand('copy');
+                ta.remove();
+                return !!ok;
+            } catch { return false; }
+        }
+        function copy() {
+            var done = function () { QZ.toast('Risultato copiato: incollalo dove vuoi', { icon: 'check', type: 'ok' }); };
+            var fail = function () { QZ.toast('Condivisione non disponibile su questo browser', { icon: 'x', type: 'bad' }); };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(full).then(done, function () { if (legacyCopy()) done(); else fail(); });
+            }
+            if (legacyCopy()) done(); else fail();
+            return Promise.resolve();
+        }
         if (navigator.share) {
-            return navigator.share({ title: title || 'Quizzotti', text: text, url: url }).catch(function () {});
+            var data = { title: title || 'Quizzotti', text: text };
+            if (!hasUrl) data.url = url;
+            return navigator.share(data).catch(function (err) {
+                // annullata dall'utente: niente; negata o non supportata (browser in-app): si copia
+                if (!err || err.name !== 'AbortError') return copy();
+            });
         }
-        var full = text + '\n' + url;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            return navigator.clipboard.writeText(full).then(function () {
-                QZ.toast('Risultato copiato negli appunti', { icon: 'check', type: 'ok' });
-            }, function () { QZ.toast('Condivisione non disponibile', { icon: 'x', type: 'bad' }); });
-        }
-        QZ.toast('Condivisione non disponibile', { icon: 'x', type: 'bad' });
-        return Promise.resolve();
+        return copy();
     };
 
     /* ---------------------------------------------------------------------
@@ -1034,8 +1131,8 @@
         while (names.length < (saved && names.length ? min : initial)) names.push('');
         host.innerHTML =
             '<div class="row row--between" style="margin-bottom:10px"><span class="label">' + QZ.esc(o.title || (label + ' (' + min + '-' + max + ')')) + '</span>' +
-            '<div class="stepper"><button type="button" data-act="minus" aria-label="Rimuovi">' + QZ.icon('minus') + '</button><output data-count></output>' +
-            '<button type="button" data-act="plus" aria-label="Aggiungi">' + QZ.icon('plus') + '</button></div></div>' +
+            '<div class="stepper"><button type="button" data-act="minus" aria-label="Togli ' + QZ.esc(label.toLowerCase()) + '">' + QZ.icon('minus') + '</button><output data-count aria-live="polite"></output>' +
+            '<button type="button" data-act="plus" aria-label="Aggiungi ' + QZ.esc(label.toLowerCase()) + '">' + QZ.icon('plus') + '</button></div></div>' +
             '<div class="players"></div>';
         var list = host.querySelector('.players');
         var out = host.querySelector('[data-count]');
@@ -1136,7 +1233,8 @@
             (o.big != null ? '<div class="result__big">0</div>' : '') +
             (o.ratio != null ? (function () {
                 var pg = QZ.pagella(o.ratio);
-                return '<div class="pagella"><div class="pagella__voto" aria-label="Voto ' + pg.voto + '">' + pg.label + '</div>' +
+                // un div con aria-label e basta non viene letto: role="img" e il voto detto in italiano
+                return '<div class="pagella"><div class="pagella__voto" role="img" aria-label="Voto in pagella: ' + Math.floor(pg.voto) + (pg.voto % 1 ? ' e mezzo' : '') + '">' + pg.label + '</div>' +
                     '<div><div class="pagella__label">Il voto in pagella</div><p class="pagella__text">' + QZ.esc(pg.txt) + '</p></div></div>';
             })() : '') +
             (o.record && (o.record.newRecord || o.record.xp) ?
@@ -1144,7 +1242,7 @@
                 (o.record.newRecord ? '<span class="note" style="font-size:22px">nuovo record!</span>' : '') +
                 (o.record.xp ? '<span class="chip">' + QZ.icon('star') + '+' + o.record.xp + ' XP</span>' : '') + '</div>' : '') +
             '</div>' +
-            (o.stats && o.stats.filter(Boolean).length ? '<div class="stats mt-3">' + o.stats.filter(function (x) { return x && x.value != null; }).map(function (s) {
+            (o.stats && o.stats.filter(function (x) { return x && x.value != null; }).length ? '<div class="stats mt-3">' + o.stats.filter(function (x) { return x && x.value != null; }).map(function (s) {
                 return '<div class="stat"><div class="stat__label">' + QZ.esc(s.label) + '</div><div class="stat__value">' + QZ.esc(s.value) + '</div></div>';
             }).join('') + '</div>' : '') +
             (o.extraHTML || '') +
@@ -1205,7 +1303,7 @@
             '<div class="qz-bg__pitch"></div></div>' +
             '<header class="qz-header"><div class="qz-header__bar">' +
             '<a class="qz-brand" href="index.html" aria-label="Quizzotti, torna alla prima pagina">' +
-            '<img src="logo1.webp" alt="" width="44" height="44" decoding="async">' +
+            '<img src="logo1-96.webp" alt="" width="44" height="44" decoding="async">' +
             '<span class="qz-brand__text"><span class="qz-brand__name">Quiz<b>zotti</b></span>' +
             '<span class="qz-brand__tag">' + (g ? 'Gioco ' + String(QZ.GAMES.indexOf(g) + 1).padStart(2, '0') + ' · ' + QZ.esc(g.name) : QZ.esc(today) + ' · edizione n° ' + (played + 1)) + '</span></span>' +
             '</a>' +
@@ -1220,14 +1318,20 @@
             '<div class="qz-launcher__scrim"></div>' +
             '<div class="qz-launcher__sheet">' +
             '<div class="qz-launcher__head"><h2>A cosa giochiamo?</h2><button class="qz-iconbtn" type="button" data-close aria-label="Chiudi">' + QZ.icon('x') + '</button></div>' +
-            '<div class="qz-launcher__grid">' +
-            QZ.GAMES.map(function (x, i) {
-                return '<a class="qz-tile" href="' + x.file + '" style="--i:' + i + ';--c:' + x.color + ';--c-2:' + x.color2 + ';--tilt:' + (i % 2 ? 1 : -1) + 'deg"' + (x.id === gameId ? ' aria-current="page"' : '') + '>' +
-                    '<span class="qz-tile__icon" style="color:' + x.on + '">' + QZ.icon(x.icon) + '</span>' +
-                    '<span class="qz-tile__name">' + QZ.esc(x.name) + '</span>' +
-                    '<span class="qz-tile__meta">' + QZ.esc(x.players) + '</span></a>';
+            // due gruppi, come sul divano: si sceglie prima se si gioca da soli o in compagnia
+            [{ kind: 'quiz', label: 'Da solo' }, { kind: 'party', label: 'In compagnia' }].map(function (grp, gi) {
+                var list = QZ.GAMES.filter(function (x) { return x.kind === grp.kind; });
+                if (!list.length) return '';
+                return '<h3 class="qz-launcher__group" id="qz-lg-' + gi + '">' + grp.label + ' <span>' + list.length + '</span></h3>' +
+                    '<div class="qz-launcher__grid">' +
+                    list.map(function (x) {
+                        var i = QZ.GAMES.indexOf(x);
+                        return '<a class="qz-tile" href="' + x.file + '" style="--i:' + i + ';--c:' + x.color + ';--c-2:' + x.color2 + ';--tilt:' + (i % 2 ? 1 : -1) + 'deg"' + (x.id === gameId ? ' aria-current="page"' : '') + '>' +
+                            '<span class="qz-tile__icon" style="color:' + x.on + '">' + QZ.icon(x.icon) + '</span>' +
+                            '<span class="qz-tile__name">' + QZ.esc(x.name) + '</span>' +
+                            '<span class="qz-tile__meta">' + QZ.esc(x.kind === 'quiz' && x.tags && x.tags.length ? x.tags.slice(0, 2).join(' · ') : x.players) + '</span></a>';
+                    }).join('') + '</div>';
             }).join('') +
-            '</div>' +
             (isHome ? '' : '<a class="btn btn--ghost btn--block mt-2" href="index.html">' + QZ.icon('home') + 'Torna alla prima pagina</a>') +
             '</div></div>');
         body.appendChild(launcher);
@@ -1266,6 +1370,16 @@
         // Profilo
         doc.getElementById('qz-level').addEventListener('click', QZ.profile.open);
         QZ.profile.renderBadge();
+        // partita finita in un'altra scheda: livello e XP si aggiornano anche qui
+        global.addEventListener('storage', function (e) {
+            if (e.key !== 'quizzottiProfile' && e.key !== null) return;
+            QZ.profile.renderBadge();
+            try { doc.dispatchEvent(new CustomEvent('qz:profile', { detail: QZ.profile.get() })); } catch { /* evento non supportato */ }
+        });
+
+        // il link "Vai al contenuto" deve poter portare il fuoco su <main>
+        var app = doc.getElementById('app');
+        if (app && !app.hasAttribute('tabindex')) app.setAttribute('tabindex', '-1');
 
         // Anelli timer gia' presenti nel markup
         QZ.$$('.timer-ring').forEach(QZ.ring);

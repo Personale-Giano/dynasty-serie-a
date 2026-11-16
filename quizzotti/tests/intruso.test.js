@@ -47,3 +47,34 @@ test('db-intruso.js: tutte e tre le difficolta\' ben rappresentate', () => {
         assert.ok(n >= 30, `troppo pochi round di difficolta' ${d}: ${n}`);
     }
 });
+
+test('db-intruso.js: almeno 280 round dopo la revisione di novembre 2026', () => {
+    assert.ok(intrusoRounds.length >= 280, `trovati solo ${intrusoRounds.length} round`);
+});
+
+test('db-intruso.js: nomi abbastanza corti da stare in una casella del telefono', () => {
+    for (const r of intrusoRounds) {
+        r.items.forEach((it) => assert.ok(it.length <= 26, `nome troppo lungo (${it.length}): "${it}" in ${label(r)}`));
+        assert.equal(r.items.filter((it) => it === r.odd).length, 1, `intruso presente piu' volte: ${label(r)}`);
+    }
+});
+
+test('db-intruso.js: il legame non svela l\'intruso e nessun nome ha spazi ai bordi', () => {
+    for (const r of intrusoRounds) {
+        assert.ok(!r.rule.toLowerCase().includes(r.odd.toLowerCase()), `la regola contiene l'intruso: ${label(r)}`);
+        r.items.forEach((it) => assert.equal(it, it.trim(), `spazi ai bordi: "${it}"`));
+        assert.ok(!/\s{2,}/.test(r.why + r.rule), `spazi doppi: ${label(r)}`);
+    }
+});
+
+test('db-intruso.js: nomi gia\' superati non tornano (stadio dell\'Atalanta rinominato nel 2025)', () => {
+    for (const r of intrusoRounds) {
+        assert.ok(!r.items.includes('Gewiss Stadium'), `Gewiss Stadium ora si chiama New Balance Arena: ${label(r)}`);
+    }
+});
+
+test('games/intruso.js: lo script del gioco compila', () => {
+    const fs = require('node:fs');
+    const src = fs.readFileSync(path.join(__dirname, '..', 'assets', 'games', 'intruso.js'), 'utf8');
+    assert.doesNotThrow(() => new Function(src));
+});

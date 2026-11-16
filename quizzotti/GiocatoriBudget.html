@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sfida dei Budget · Quizzotti</title>
-<meta name="description" content="Costruisci la squadra dei tuoi sogni avvicinandoti il più possibile al budget: i valori di mercato dei calciatori sono nascosti, dovrai indovinarli. Da 1 a 6 giocatori.">
+<meta name="description" content="Costruisci la squadra dei tuoi sogni avvicinandoti il più possibile al budget: i valori di mercato dei calciatori sono nascosti, dovrai indovinarli. Mercato mondiale o solo italiano, da 1 a 6 giocatori.">
 <link rel="canonical" href="https://quizotti.altervista.org/quizzotti/GiocatoriBudget.html">
 <meta property="og:url" content="https://quizotti.altervista.org/quizzotti/GiocatoriBudget.html">
 <meta name="theme-color" content="#07090b">
@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   .intro { grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px) { .intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
@@ -40,6 +40,12 @@
   .bg-presets button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .stepper output small { font-size: 13px; color: #a07a2e; text-shadow: none; }
   .bg-setup .segmented { flex-wrap: nowrap; }
+  .bg-avg { margin-top: -10px; }
+
+  /* ---- mercato lasciato a meta' (ricarica, tasto Indietro) ---- */
+  .bg-resume { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-bottom: 22px; padding: 14px 16px; border-left: 4px solid var(--accent); }
+  .bg-resume__title { font-size: 20px; line-height: 1.15; }
+  .bg-resume__txt { margin-top: 2px; color: var(--text-2); font-size: 15px; }
   .bg-setup .segmented button { flex: 1 1 0; min-width: 0; min-height: 48px; padding: 0 6px; font-size: 16px; }
 
   /* ---- passaggio del telefono: il numero di maglia sul tabellone ---- */
@@ -65,6 +71,7 @@
 
   .bg-ledger { margin-top: 12px; display: grid; gap: 10px; }
   .bg-ledger .board__cell { padding: 8px 12px; }
+  .bg-side__avg { font-size: 13px; color: var(--text-2); line-height: 1.35; }
   .bg-ledger__budget { font-size: clamp(24px, 5vw, 30px); }
   .bg-ledger__left { font-size: clamp(24px, 5vw, 30px); }
   .bg-ledger__left small { font-size: .6em; color: #a07a2e; text-shadow: none; }
@@ -160,12 +167,16 @@
   .bg-meter__mark { position: absolute; top: -8px; bottom: -8px; width: 2px; margin-left: -1px; background: var(--text); }
   .bg-meter__mark::before { content: "BUDGET"; position: absolute; bottom: calc(100% + 3px); left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; letter-spacing: .16em; color: var(--text-2); white-space: nowrap; }
   .bg-rfoot { display: flex; align-items: center; justify-content: space-between; gap: 6px 12px; margin-top: 10px; }
+  .bg-rfoot > div:first-child { flex: 1; min-width: 0; }
   .bg-rcard__stamp { position: relative; flex: none; width: 116px; height: 34px; }
   .bg-rcard__stamp:empty { width: 0; }
   .bg-rcard__stamp .qz-stamp { left: auto; right: 0; top: 50%; transform: translateY(-50%); }
   .bg-verdict { font-family: var(--font-display); font-weight: 800; font-size: 18px; min-height: 1.3em; }
   .bg-verdict.ok { color: var(--ok); }
   .bg-verdict.bad { color: var(--bad); }
+  .bg-line { margin-top: 2px; font-size: 15px; color: var(--text-2); line-height: 1.35; }
+  .bg-line:empty { display: none; }
+  .bg-hand .btn--ghost { margin-top: -4px; }
 
   #end-host .stat__label { overflow-wrap: anywhere; }
   .bg-detail { display: grid; gap: 10px; margin-top: 22px; text-align: left; }
@@ -185,6 +196,16 @@
 
   <!-- ============ INIZIO ============ -->
   <section class="screen is-active" id="s-start">
+    <div class="card bg-resume" id="resume" role="region" aria-labelledby="resume-title" hidden>
+      <div class="grow" style="min-width:0">
+        <h2 class="bg-resume__title" id="resume-title">C'è un mercato aperto</h2>
+        <p class="bg-resume__txt" id="resume-txt"></p>
+      </div>
+      <div class="row">
+        <button class="btn btn--primary" type="button" id="resume-go"></button>
+        <button class="btn btn--ghost" type="button" id="resume-drop">Lascia perdere</button>
+      </div>
+    </div>
     <div class="intro">
       <div data-stagger>
         <span class="eyebrow">Gioco 10 · Da 1 a 6 giocatori</span>
@@ -215,6 +236,8 @@
           </div>
           <div class="row row--between"><span class="label" id="lbl-picks">Calciatori a testa</span>
             <div class="stepper" role="group" aria-labelledby="lbl-picks"><button type="button" id="picks-minus" aria-label="Meno calciatori"></button><output id="picks-out" aria-live="polite"></output><button type="button" id="picks-plus" aria-label="Più calciatori"></button></div></div>
+          <p class="small muted bg-avg" id="avg-help"></p>
+          <div class="field"><span class="label" id="lbl-market">Il mercato</span><div id="set-market" aria-labelledby="lbl-market"></div><p class="small muted" id="market-help"></p></div>
           <div class="field"><span class="label" id="lbl-rule">Se sfori il budget</span><div id="set-rule" aria-labelledby="lbl-rule"></div><p class="small muted" id="rule-help"></p></div>
           <div class="row">
             <button class="btn btn--sm" type="button" id="randomize"></button>
@@ -244,6 +267,7 @@
             <div class="board__cell"><span class="board__label">Budget</span><span class="led bg-ledger__budget" id="p-budget"></span></div>
             <div class="board__cell board__cell--grow"><span class="board__label">Da prendere</span><span class="led bg-ledger__left" id="p-left"></span></div>
           </div>
+          <p class="bg-side__avg" id="p-avg"></p>
           <ol class="bg-slots" id="p-slots" aria-label="La tua rosa"></ol>
         </div>
       </aside>
@@ -286,8 +310,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
 <script src="assets/db-giocatoributget.js?v=45bb7104" defer></script>
-<script src="assets/games/giocatoributget.js?v=3fbef541" defer></script>
+<script src="assets/games/giocatoributget.js?v=e3bd6f3d" defer></script>
 </body>
 </html>

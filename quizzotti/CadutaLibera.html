@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Caduta Libera · Quizzotti</title>
-<meta name="description" content="Domande di calcio a raffica, tre risposte e pochi secondi: ogni errore apre una botola sotto i piedi. Oltre 450 domande, montepremi che cresce con la serie.">
+<meta name="description" content="Domande di calcio a raffica, tre risposte e pochi secondi: ogni errore apre una botola sotto i piedi. Oltre 650 domande, montepremi che cresce con la serie.">
 <link rel="canonical" href="https://quizotti.altervista.org/quizzotti/CadutaLibera.html">
 <meta property="og:url" content="https://quizotti.altervista.org/quizzotti/CadutaLibera.html">
 <meta name="theme-color" content="#07090b">
@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   [data-game="cadutalibera"] { --accent: #ff8a3d; --accent-2: #ffc193; --accent-rgb: 255, 138, 61; --accent-ink: #ff9a55; --on-accent: #07090b; }
 
@@ -140,6 +140,24 @@
   .cl-review__a b { color: var(--led-green); }
   .cl-review__a s { color: var(--text-2); font-weight: 500; }
 
+  /* telefoni bassi (iPhone SE, schermi con la barra del browser): domanda e tre risposte senza scorrere */
+  @media (max-width: 719px) and (max-height: 760px) {
+    .cl-game { gap: 8px; }
+    .cl-stage { height: 104px; }
+    .cl-player { width: 40px; height: 57px; margin-left: -20px; }
+    .cl-q { min-height: 0; padding: 12px 14px 14px; gap: 6px; }
+    .cl-q .question { font-size: 21px; }
+    .cl-answers .answer { min-height: 54px; font-size: 18px; }
+  }
+  /* telefono girato: palco basso e risposte affiancate */
+  @media (min-width: 560px) and (max-height: 500px) {
+    .cl-stage { height: 96px; }
+    .cl-player { width: 38px; height: 54px; margin-left: -19px; }
+    .cl-q { min-height: 0; }
+    .cl-answers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cl-answers .answer { min-height: 60px; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .cl-door { transition: none; }
     .cl-player.is-wobble, .cl-player.is-hop, .cl-player.is-scare { animation: none; }
@@ -218,7 +236,7 @@
       <div class="answers cl-answers" id="g-answers"></div>
 
       <div class="cl-foot">
-        <p class="small kbd-hint">Tastiera: <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span> per rispondere, <span class="kbd">P</span> per passare</p>
+        <p class="small kbd-hint">Tastiera: <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span> per rispondere, <span class="kbd">P</span> per passare, <span class="kbd">Esc</span> per fermarti</p>
         <div class="cl-foot__btns">
           <button class="btn btn--sm cl-pass" type="button" id="g-pass"></button>
           <button class="btn btn--ghost btn--sm" type="button" id="g-quit"></button>
@@ -232,8 +250,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-cadutalibera.js?v=3d34461b" defer></script>
-<script src="assets/games/cadutalibera.js?v=b020f47d" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-cadutalibera.js?v=88589521" defer></script>
+<script src="assets/games/cadutalibera.js?v=b7e89cc7" defer></script>
 </body>
 </html>

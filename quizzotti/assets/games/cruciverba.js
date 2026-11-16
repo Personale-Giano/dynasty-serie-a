@@ -7,7 +7,7 @@
    completata resta da rivedere, non da rigiocare. Ogni scheda ha il suo
    salvataggio: si puo' lasciare a meta' e riprenderla quando si vuole.
    ========================================================================== */
-/* global cruciverbaSchede */
+/* global cruciverbaSchede, cruciverbaErrata */
 (function () {
     'use strict';
 
@@ -25,10 +25,16 @@
     /* =====================================================================
        LE SCHEDE
        ===================================================================== */
+    // le schede pubblicate non cambiano mai (i progressi sono salvati casella per casella),
+    // ma una definizione invecchiata si corregge qui: risposta -> definizione nuova
+    var ERRATA = typeof cruciverbaErrata !== 'undefined' && cruciverbaErrata ? cruciverbaErrata : {};
     var SCHEDE = (typeof cruciverbaSchede !== 'undefined' && Array.isArray(cruciverbaSchede) ? cruciverbaSchede : []).map(function (p) {
         return {
             n: p.n, tema: p.tema || '', title: p.title, sottotitolo: p.sottotitolo || '', w: p.w, h: p.h,
-            words: p.words.map(function (x) { return { answer: x.answer, clue: x.clue, r: x.row, c: x.col, dir: x.dir === 'D' ? 'd' : 'a', n: x.num }; })
+            words: p.words.map(function (x) {
+                var clue = Object.prototype.hasOwnProperty.call(ERRATA, x.answer) ? ERRATA[x.answer] : x.clue;
+                return { answer: x.answer, clue: clue, r: x.row, c: x.col, dir: x.dir === 'D' ? 'd' : 'a', n: x.num };
+            })
         };
     });
     function scheda(n) { return SCHEDE.filter(function (p) { return p.n === n; })[0] || null; }
@@ -48,6 +54,20 @@
         return list.filter(function (p) { return p.n > (after || 0); })[0] || list[0] || null;
     }
     function votoOf(ratio) { var v = QZ.pagella(ratio).voto; return (v % 1 ? Math.floor(v) + '½' : String(v)); }
+
+    /** La bacheca: griglie chiuse (rese escluse), quelle senza aiuti, voto medio e la piu' veloce. */
+    function records(st) {
+        var wins = SCHEDE.map(function (p) { var d = st.done[p.n]; return d && !d.quit ? { n: p.n, d: d } : null; }).filter(Boolean);
+        if (!wins.length) return { wins: 0 };
+        var best = wins.reduce(function (a, b) { return b.d.time < a.d.time ? b : a; });
+        var media = wins.reduce(function (s, x) { return s + QZ.pagella(x.d.ratio || 0).voto; }, 0) / wins.length;
+        return {
+            wins: wins.length,
+            clean: wins.filter(function (x) { var a = x.d.aids || {}; return !(a.letter || a.word); }).length,
+            media: (Math.round(media * 10) / 10).toFixed(1).replace('.', ',').replace(',0', ''),
+            best: { n: best.n, time: best.d.time || 0 }
+        };
+    }
 
     /* =====================================================================
        STATO E MARKUP
@@ -132,8 +152,12 @@
         var btn = $('#start-btn');
         btn.hidden = !nx;
         btn.innerHTML = 'Scegli la scheda' + QZ.icon('arrow');
+        var rec = records(st);
         $('#start-record').textContent = !SCHEDE.length ? 'Le schede stanno arrivando in sala stampa: riprova tra poco.'
-            : !nx ? 'Tutte le schede completate. Nuove griglie in arrivo: torna a trovarci.' : '';
+            : (!nx ? 'Tutte le schede completate. Nuove griglie in arrivo: torna a trovarci. ' : '') +
+              (rec.wins ? 'In bacheca: ' + rec.wins + (rec.wins === 1 ? ' griglia chiusa' : ' griglie chiuse') +
+                (rec.clean ? ', ' + rec.clean + ' senza aiuti' : '') +
+                ' · voto medio ' + rec.media + ' · record di velocità ' + fmtTime(rec.best.time) + ' (N° ' + rec.best.n + ').' : '');
         $('#xw-cards').innerHTML = SCHEDE.map(function (p, i) {
             var d = st.done[p.n], play = validPlay(p, st.play[p.n]) ? st.play[p.n] : null;
             var status, cls, action, detail = '';
@@ -640,6 +664,21 @@
     function verify() {
         if (!S || S.done) return;
         var cells = Object.keys(S.map).map(Number);
+        // niente da controllare (griglia vuota, o solo lettere gia' confermate): la verifica non si conta
+        // (anche le lettere rosse non ancora corrette non sono una novita')
+        S.checked = S.checked || {};
+        var pending = cells.some(function (ci) { return S.fill[ci] && !S.ok[ci] && !S.rev[ci] && S.checked[ci] !== S.fill[ci]; });
+        var bad = cells.filter(function (ci) { return S.fill[ci] && S.checked[ci] === S.fill[ci] && S.fill[ci] !== S.map[ci].ch; });
+        var knownBad = bad.length > 0;
+        if (!pending && (knownBad || cells.some(function (ci) { return !S.fill[ci]; }))) {
+            // le lettere gia' bocciate tornano rosse (riscriverle uguali toglie il colore)
+            bad.forEach(function (ci) { if (cellEls[ci]) cellEls[ci].classList.add('is-wrong'); });
+            var msg = knownBad ? 'Prima correggi le lettere rosse, poi riverifica.' : 'Niente di nuovo da verificare: scrivi qualche lettera e poi riprova.';
+            QZ.toast(msg, { icon: 'check', ms: 2800 });
+            QZ.say(msg);
+            keepFocus();
+            return;
+        }
         S.verifies++;
         var wrong = [], empty = 0, newOk = 0;
         cells.forEach(function (ci) {
@@ -649,6 +688,7 @@
                 cellEls[ci].classList.remove('is-wrong');
             } else {
                 wrong.push(ci);
+                S.checked[ci] = S.fill[ci];
             }
             paintCell(ci);
         });
@@ -656,20 +696,29 @@
         S.p.words.forEach(function (w, wi) {
             if (!S.solved[wi] && w.cells.every(function (x) { return S.ok[x] || S.rev[x]; })) S.solved[wi] = w.cells.every(function (x) { return S.rev[x]; }) ? 2 : 1;
         });
+        var G = S;
         wrong.forEach(function (ci, k) {
-            setTimeout(function () { cellEls[ci].classList.add('is-wrong'); }, QZ.reducedMotion() ? 0 : Math.min(k * 25, 500));
+            var el = cellEls[ci];
+            // se nel frattempo la lettera e' stata corretta (o si e' usciti dalla scheda) non si colora
+            setTimeout(function () { if (el && S === G && G.fill[ci] !== G.map[ci].ch) el.classList.add('is-wrong'); }, QZ.reducedMotion() ? 0 : Math.min(k * 25, 500));
         });
         paintClues();
         paintBoard();
         save();
         if (!wrong.length && !empty) {
-            S.done = true;
             S.verified = true;
-            stopClock();
             try { inputEl.blur(); } catch { /* niente */ }
             QZ.sound.correct();
+            // l'onda verde parte dall'angolo in alto a sinistra
+            cells.forEach(function (ci) {
+                paintCell(ci);
+                var el = cellEls[ci];
+                if (!el || QZ.reducedMotion()) return;
+                el.style.setProperty('--d', Math.min((Math.floor(ci / S.p.w) + ci % S.p.w) * 35, 900) + 'ms');
+                el.classList.add('is-goal');
+            });
             QZ.fx.stamp(gridEl, 'Perfetta!', 'ok', { size: 26, x: 50, y: 50, ms: 1500, say: 'Verifica: griglia tutta giusta.' });
-            setTimeout(function () { finish('win'); }, 1300);
+            finish('win');
             return;
         }
         var parts = [];
@@ -737,19 +786,20 @@
         if (!S || S.done) return;
         QZ.confirm('Si scopre tutta la griglia e la partita finisce qui.', { title: 'Bandiera bianca?', okLabel: 'Mi arrendo', cancelLabel: 'Gioco ancora', danger: true }).then(function (ok) {
             if (!ok || !S || S.done) return;
-            S.done = true;
-            stopClock();
+            var G = S;
             QZ.say('Ecco la soluzione.');
-            var cells = Object.keys(S.map).map(Number).filter(function (ci) { return S.fill[ci] !== S.map[ci].ch; });
+            var cells = Object.keys(G.map).map(Number).filter(function (ci) { return G.fill[ci] !== G.map[ci].ch; });
+            // l'esito si salva subito: anche uscendo durante l'animazione la resa resta registrata
+            finish('quit', QZ.reducedMotion() ? 900 : 2200);
             cells.forEach(function (ci, k) {
                 setTimeout(function () {
-                    S.fill[ci] = S.map[ci].ch;
-                    S.rev[ci] = 1;
+                    if (S !== G) return;
+                    G.fill[ci] = G.map[ci].ch;
+                    G.rev[ci] = 1;
                     paintCell(ci);
-                    cellEls[ci].classList.add('is-given');
+                    if (cellEls[ci]) cellEls[ci].classList.add('is-given');
                 }, QZ.reducedMotion() ? 0 : Math.min(k * 18, 900));
             });
-            setTimeout(function () { finish('quit'); }, QZ.reducedMotion() ? 900 : 2200);
         });
     }
 
@@ -780,6 +830,9 @@
         }, 1000);
     }
     function stopClock() { if (clock) clearInterval(clock); clock = null; }
+    // chiudendo la scheda del browser o passando a un'altra app non si perdono gli ultimi secondi
+    document.addEventListener('visibilitychange', function () { if (document.hidden) save(); });
+    window.addEventListener('pagehide', function () { save(); });
 
     function save() {
         if (!S || S.done) return;
@@ -794,79 +847,79 @@
     /* =====================================================================
        FINE PARTITA
        ===================================================================== */
-    function finish(type) {
-        if (S.finished) return;
-        S.done = true;
-        S.finished = true;
+    /**
+     * Chiude la scheda: esito e punti si salvano SUBITO, il resoconto arriva dopo
+     * `delay` ms (il tempo dell'animazione), solo se si e' ancora su questa scheda.
+     */
+    function finish(type, delay) {
+        if (!S || S.finished) return;
+        var G = S;
+        G.done = true;
+        G.finished = true;
         stopClock();
         try { inputEl.blur(); } catch { /* niente */ }
-        var p = S.p, tot = p.words.length;
-        var mine = S.solved.filter(function (x) { return x === 1; }).length;
-        var revCells = Object.keys(S.map).filter(function (ci) { return S.rev[ci]; }).length;
+        var tot = G.p.words.length;
+        var mine = G.solved.filter(function (x) { return x === 1; }).length;
+        var revCells = Object.keys(G.map).filter(function (ci) { return G.rev[ci]; }).length;
         var aids = aidsCount();
-        var target = S.total * 7;                      // ~7 secondi a casella: il passo di chi se la cava bene
-        var speed = QZ.clamp(target / Math.max(S.elapsed, 1), 0, 1);
-        var ratio;
-        var clean = QZ.clamp(1 - (revCells / S.total) * 1.6 - Math.max(0, S.verifies - 1) * 0.04, 0, 1);
-        if (type === 'win') {
-            ratio = clean * (0.72 + 0.28 * speed);
-        } else if (type === 'checked') {
-            // conta quante parole hai azzeccato da solo, poi aiuti e tempo
-            ratio = (mine / tot) * clean * (0.8 + 0.2 * speed);
-        } else {
-            ratio = (mine / tot) * 0.55;
-        }
+        var target = G.total * 7;                      // ~7 secondi a casella: il passo di chi se la cava bene
+        var speed = QZ.clamp(target / Math.max(G.elapsed, 1), 0, 1);
+        var clean = QZ.clamp(1 - (revCells / G.total) * 1.6 - Math.max(0, G.verifies - 1) * 0.04, 0, 1);
+        var ratio = type === 'win' ? clean * (0.72 + 0.28 * speed) : (mine / tot) * 0.55;
+        var time = Math.floor(G.elapsed);
 
         // la scheda si chiude una volta sola: i punti si prendono alla prima
         var st = getStore();
-        var first = !st.done[S.n];
-        delete st.play[S.n];
-        if (first) st.done[S.n] = { time: Math.floor(S.elapsed), ratio: Math.round(ratio * 1000) / 1000, aids: S.aids, mine: mine, tot: tot, quit: type === 'quit', verifies: S.verifies || 0, date: Date.now() };
+        var prevBest = records(st);
+        var first = !st.done[G.n];
+        delete st.play[G.n];
+        if (first) st.done[G.n] = { time: time, ratio: Math.round(ratio * 1000) / 1000, aids: G.aids, mine: mine, tot: tot, quit: type === 'quit', verifies: G.verifies || 0, date: Date.now() };
         putStore(st);
+        var speedRecord = first && type === 'win' && prevBest.wins > 0 && time < prevBest.best.time;
         var r = null;
         if (first) {
-                var xp = mine * 5 + (type === 'win' ? 40 : 0) + (type === 'win' && !aids ? 25 : 0);
-            r = QZ.profile.record('cruciverba', { xp: xp, label: 'N° ' + S.n + ' ' + S.p.title + ' · ' + mine + '/' + tot + ' parole · ' + fmtTime(S.elapsed), score: Math.round(ratio * 100) });
+            var xp = mine * 5 + (type === 'win' ? 40 : 0) + (type === 'win' && !aids ? 25 : 0);
+            r = QZ.profile.record('cruciverba', { xp: xp, label: 'N° ' + G.n + ' ' + G.p.title + ' · ' + mine + '/' + tot + ' parole · ' + fmtTime(time), score: Math.round(ratio * 100) });
         }
         var doneN = SCHEDE.filter(function (x) { return st.done[x.n]; }).length;
-        var nx = nextOpen(S.n);
+        var nx = nextOpen(G.n);
 
         var title, sub;
-        if (type === 'win' && !aids && S.verifies <= 1) { title = 'Griglia pulita'; sub = 'Tutte e ' + tot + ' le parole senza chiedere niente alla panchina. In tribuna stampa si tolgono il cappello.'; }
-        else if (type === 'win' && !aids) { title = 'Chiusa al ' + S.verifies + '° tentativo'; sub = 'Tutte e ' + tot + ' le parole senza aiuti, con ' + (S.verifies - 1) + (S.verifies === 2 ? ' correzione' : ' correzioni') + ' dopo la verifica. Testa e pazienza.'; }
+        if (type === 'win' && !aids && G.verifies <= 1) { title = 'Griglia pulita'; sub = 'Tutte e ' + tot + ' le parole al primo colpo, senza chiedere niente alla panchina. In tribuna stampa si tolgono il cappello.'; }
+        else if (type === 'win' && !aids) { title = 'Chiusa al ' + G.verifies + '° tentativo'; sub = 'Tutte e ' + tot + ' le parole senza aiuti, con ' + (G.verifies - 1) + (G.verifies === 2 ? ' correzione' : ' correzioni') + ' dopo la verifica. Testa e pazienza.'; }
         else if (type === 'win' && mine >= tot / 2) { title = 'Griglia chiusa'; sub = 'Qualche dritta dalla panchina, ma le parole decisive le hai trovate tu: ' + mine + ' su ' + tot + '.'; }
         else if (type === 'win') { title = 'Chiusa col VAR'; sub = 'La griglia è piena, ma più della metà l\'ha scritta la panchina. Nella prossima scheda prova da solo.'; }
-        else if (type === 'checked' && mine >= tot * 0.8) { title = 'Quasi perfetta'; sub = mine + ' parole giuste su ' + tot + '. Le lettere sbagliate le trovi in rosso qui sotto, con quello che avevi scritto.'; }
-        else if (type === 'checked' && mine >= tot / 2) { title = 'Promosso con riserva'; sub = mine + ' parole giuste su ' + tot + '. Qualche errore di misura: la soluzione è qui sotto.'; }
-        else if (type === 'checked') { title = 'Serata storta'; sub = 'Solo ' + mine + (mine === 1 ? ' parola giusta' : ' parole giuste') + ' su ' + tot + '. Ripassa la soluzione qui sotto e torna in campo.'; }
-        else if (mine) { title = 'Bandiera bianca'; sub = 'Ti fermi a ' + mine + (mine === 1 ? ' parola' : ' parole') + ' su ' + tot + '. La soluzione è qui sotto: ripassala per le prossime schede.'; }
-        else { title = 'Non pervenuto'; sub = 'Nessuna parola trovata da solo. La soluzione è qui sotto: studiala e torna in campo.'; }
+        else if (mine) { title = 'Bandiera bianca'; sub = 'Ti fermi a ' + mine + (mine === 1 ? ' parola confermata' : ' parole confermate') + ' su ' + tot + '. La soluzione è qui sotto: ripassala per le prossime schede.'; }
+        else { title = 'Non pervenuto'; sub = 'Nessuna parola confermata dalla verifica. La soluzione è qui sotto: studiala e torna in campo.'; }
+        if (speedRecord) sub += ' E in più è il tuo record di velocità: ' + fmtTime(time) + ', meglio del N° ' + prevBest.best.n + '.';
+        var voto = votoOf(ratio);
 
         setTimeout(function () {
+            if (S !== G) return;   // nel frattempo si e' tornati alle schede: l'esito e' gia' salvato
             QZ.show('s-end');
             QZ.results($('#end-host'), {
-                win: type === 'win' || (type === 'checked' && mine >= tot / 2),
+                win: type === 'win',
                 icon: type === 'win' ? 'trophy' : 'flag',
                 title: title, subtitle: sub,
                 record: r, ratio: ratio,
                 stats: [
-                    { label: 'Tempo', value: fmtTime(S.elapsed) },
-                    { label: 'Parole giuste', value: mine + '/' + tot },
+                    { label: 'Tempo', value: fmtTime(time) },
+                    { label: 'Parole tue', value: mine + '/' + tot },
                     { label: 'Aiuti', value: aids },
-                    { label: 'Verifiche', value: S.verifies || 0 },
+                    { label: 'Verifiche', value: G.verifies || 0 },
                     { label: 'Completati', value: doneN + '/' + SCHEDE.length }
                 ],
                 extraHTML: solutionHTML(),
-                share: type === 'win' && !aids ? 'Griglia perfetta al Cruciverba N° ' + S.n + ' (' + S.p.title + ') di Quizzotti, in ' + fmtTime(S.elapsed) + ' e senza aiuti. Ci provi?'
+                share: type === 'win' && !aids ? 'Griglia perfetta al Cruciverba N° ' + G.n + ' (' + G.p.title + ') di Quizzotti: ' + fmtTime(time) + ', zero aiuti, voto ' + voto + '. Ci provi?'
                     : type === 'win'
-                    ? 'Ho chiuso il Cruciverba N° ' + S.n + ' (' + S.p.title + ') di Quizzotti in ' + fmtTime(S.elapsed) + (aids ? ' con ' + aids + (aids === 1 ? ' aiuto' : ' aiuti') : ' senza aiuti') + '. Ci provi?'
-                    : 'Al Cruciverba N° ' + S.n + ' di Quizzotti ho azzeccato ' + mine + ' parole su ' + tot + '. Fai di meglio?',
+                        ? 'Ho chiuso il Cruciverba N° ' + G.n + ' (' + G.p.title + ') di Quizzotti in ' + fmtTime(time) + ' con ' + aids + (aids === 1 ? ' aiuto' : ' aiuti') + ', voto ' + voto + '. Ci provi?'
+                        : 'Al Cruciverba N° ' + G.n + ' (' + G.p.title + ') di Quizzotti ho alzato bandiera bianca a ' + mine + ' parole su ' + tot + '. Fai di meglio?',
                 retryLabel: 'Torna alle schede',
                 onRetry: backToList,
                 secondary: nx ? { label: 'Prossimo cruciverba: N° ' + nx.n, icon: 'arrow', onClick: function () { open(nx.n); } } : null
             });
-            QZ.say((type === 'win' ? 'Griglia completata in ' : type === 'checked' ? 'Verifica fatta dopo ' : 'Partita finita dopo ') + timeWords(S.elapsed) + '. Schede completate: ' + doneN + ' su ' + SCHEDE.length + '.');
-        }, type === 'win' ? 1100 : 0);
+            QZ.say((type === 'win' ? 'Griglia completata in ' : 'Partita finita dopo ') + timeWords(time) + '. Schede completate: ' + doneN + ' su ' + SCHEDE.length + '.');
+        }, delay != null ? delay : (QZ.reducedMotion() ? 600 : 1900));
     }
 
     /** La griglia risolta in piccolo, nel resoconto. */

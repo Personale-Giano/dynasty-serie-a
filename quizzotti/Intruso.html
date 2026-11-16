@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>L'Intruso · Quizzotti</title>
-<meta name="description" content="Sei nomi del calcio, cinque hanno qualcosa in comune e uno no. Trova l'intruso prima che scada il tempo: oltre 200 round, tre vite, sfida a due sullo stesso telefono.">
+<meta name="description" content="Sei nomi del calcio, cinque hanno qualcosa in comune e uno no. Trova l'intruso prima che scada il tempo: quasi 300 round, tre vite, sfida a due sullo stesso telefono.">
 <link rel="canonical" href="https://quizotti.altervista.org/quizzotti/Intruso.html">
 <meta property="og:url" content="https://quizotti.altervista.org/quizzotti/Intruso.html">
 <meta name="theme-color" content="#07090b">
@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   .intro { grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px) { .intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
@@ -33,6 +33,15 @@
   .ix-setup .segmented { flex-wrap: nowrap; }
   .ix-setup .segmented button { flex: 1 1 0; min-width: 0; min-height: 48px; padding: 0 6px; font-size: 16px; }
   .ix-names { margin-top: 18px; }
+
+  /* carriera sotto il fischio d'inizio */
+  .ix-career { max-width: 520px; }
+  .ix-career .label { display: block; margin-bottom: 8px; font-size: 12px; }
+  .ix-career .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 480px) { .ix-career .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .ix-career .stat { padding: 10px 12px; min-width: 0; }
+  .ix-career .stat__label { font-size: 10px; letter-spacing: .12em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ix-career .stat__value { font-size: 24px; }
 
   .ix-game { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); max-width: 860px; margin: 0 auto; }
 
@@ -62,6 +71,29 @@
   .ix-item .answer__key { position: absolute; top: 6px; left: 6px; width: 26px; height: 26px; margin: 0; font-size: 15px; }
   .ix-item .answer__text { display: grid; place-items: center; padding: 30px 10px 14px; font-size: clamp(17px, 4.4vw, 21px); line-height: 1.15; hyphens: auto; }
   @media (min-width: 720px) { .ix-item.answer { min-height: 112px; } }
+
+  /* telefoni bassi (iPhone SE e simili): si recupera spazio perche' la terza fila resti in vista */
+  @media (orientation: portrait) and (max-height: 620px) {
+    .ix-head { padding: 10px 14px; gap: 2px; }
+    .ix-head .question { font-size: 20px; }
+    .ix-item.answer { min-height: 78px; }
+    .ix-item .answer__text { padding: 26px 8px 10px; }
+  }
+
+  /* telefono in orizzontale: tabellone e caselle compatti, le sei caselle restano tutte in vista */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .ix-game { gap: 8px; }
+    .ix-board .board__cell { padding-block: 4px; }
+    .ix-board .board__label { font-size: 9px; }
+    .ix-board__big, .ix-board__mid { font-size: 22px; }
+    .ix-lives .ico { width: 18px; height: 18px; }
+    .ix-head { padding: 8px 14px; gap: 2px; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; }
+    .ix-head .question { font-size: 18px; }
+    .ix-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+    .ix-item.answer { min-height: 58px; }
+    .ix-item .answer__text { padding: 8px 10px 8px 38px; font-size: 16px; }
+    .ix-item .answer__key { top: 50%; transform: translateY(-50%); }
+  }
 
   /* il verdetto dopo ogni round */
   .ix-reveal { padding: 16px 18px 18px; display: grid; gap: 10px; }
@@ -109,6 +141,15 @@
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
         </div>
         <p class="small muted mt-2" id="start-record"></p>
+        <div id="start-career" class="ix-career mt-2" hidden>
+          <h2 class="label">La tua carriera da solo</h2>
+          <div class="stats">
+            <div class="stat"><div class="stat__label">Partite</div><div class="stat__value" id="c-games">0</div></div>
+            <div class="stat"><div class="stat__label">Intrusi scovati</div><div class="stat__value" id="c-found">0</div></div>
+            <div class="stat"><div class="stat__label">Precisione</div><div class="stat__value" id="c-pct">-</div></div>
+            <div class="stat"><div class="stat__label">Serie record</div><div class="stat__value" id="c-streak">0</div></div>
+          </div>
+        </div>
       </div>
       <div class="stack" style="--gap:22px;align-items:center">
         <div class="medal" id="medal"></div>
@@ -181,8 +222,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-intruso.js?v=95249c34" defer></script>
-<script src="assets/games/intruso.js?v=a6c41e34" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-intruso.js?v=71d542c3" defer></script>
+<script src="assets/games/intruso.js?v=40f573f2" defer></script>
 </body>
 </html>

@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   [data-game="giocatoredelgiorno"] { --accent: #ffd23f; --accent-2: #ffe68f; --accent-rgb: 255, 210, 63; --accent-ink: #ffd23f; --on-accent: #07090b; }
 
@@ -123,6 +123,33 @@
   .gd-next .led { font-size: 28px; }
 
   .gd-end-extra { display: grid; gap: 16px; margin-top: 20px; }
+
+  /* scelta del mazzo per l'allenamento */
+  .gd-pools { display: grid; gap: 8px; margin-top: 12px; }
+  .gd-pool {
+    display: grid; gap: 2px; width: 100%; min-height: 56px; padding: 10px 14px; text-align: left; cursor: pointer;
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: var(--r); font: inherit;
+  }
+  .gd-pool b { font-family: var(--font-display); font-weight: 800; font-size: 17px; }
+  .gd-pool span { font-size: 14px; color: var(--text-2); }
+  .gd-pool.is-last { border-color: var(--line-2); border-left: 3px solid var(--accent); }
+  .gd-pool:focus-visible, .gd-arch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (hover: hover) { .gd-pool:hover, .gd-arch:hover { background: var(--panel-3); } }
+
+  /* archivio dei giorni passati */
+  .gd-arch-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; max-height: min(55vh, 420px); overflow-y: auto; }
+  .gd-arch {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 10px; width: 100%; min-height: 48px;
+    padding: 10px 12px; text-align: left; cursor: pointer; font: inherit; color: var(--text);
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--r-sm);
+  }
+  .gd-arch__n { font-family: var(--font-led); font-size: 18px; color: var(--led); }
+  .gd-arch__d { font-size: 14px; color: var(--text-2); }
+  .gd-arch__s { font-size: 13px; font-weight: 700; color: var(--text-2); white-space: nowrap; }
+  .gd-arch.is-win .gd-arch__s { color: var(--led-green); }
+  .gd-arch.is-lost .gd-arch__s { color: var(--led-red); }
+  #arch-btn[hidden] { display: none; }
+  .gd-avg { font-family: var(--font-led); font-size: 17px; color: var(--text); }
   .gd-end-extra .gd-mini { justify-content: center; }
 </style>
 </head>
@@ -135,10 +162,11 @@
       <div data-stagger>
         <span class="eyebrow">Gioco 13 · Da solo</span>
         <h1 class="intro__title">Il Calciatore <em>del Giorno</em></h1>
-        <p class="intro__lead">Ogni giorno c'è un calciatore segreto, lo stesso per tutti. Hai sei nomi a disposizione: a ogni tentativo le caselle ti dicono quanto sei vicino. Poi lo racconti al gruppo, senza fare spoiler.</p>
+        <p class="intro__lead">Ogni giorno c'è un calciatore segreto, lo stesso per tutti. Hai sei nomi da spendere: a ogni tentativo nazionale, campionato, squadra, ruolo, età e valore ti dicono se ti stai scaldando. Poi lo racconti al gruppo, senza fare spoiler.</p>
         <div class="row mt-3">
           <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
           <button class="btn btn--lg" type="button" id="train-btn"></button>
+          <button class="btn btn--lg btn--ghost" type="button" id="arch-btn" hidden></button>
         </div>
         <p class="small muted mt-2" id="start-info" aria-live="polite"></p>
         <div class="card gd-today mt-3" id="today" hidden></div>
@@ -179,10 +207,11 @@
       <div class="gd-legend" aria-hidden="true">
         <span><i class="is-hit"></i>uguale</span>
         <span><i class="is-near"></i>vicino</span>
-        <span><b>↑ ↓</b> il segreto è più vecchio / vale di più (o il contrario)</span>
+        <span><b>↑</b> il segreto è più vecchio / vale di più</span>
+        <span><b>↓</b> più giovane / vale di meno</span>
       </div>
 
-      <div class="gd-rows" id="g-rows" aria-live="polite"></div>
+      <div class="gd-rows" id="g-rows"></div>
 
       <div class="gd-foot">
         <p class="small muted" style="margin:0" id="g-mode"></p>
@@ -196,8 +225,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-giocatoredelgiorno.js?v=2af66e8a" defer></script>
-<script src="assets/games/giocatoredelgiorno.js?v=bcdb3cfd" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-giocatoredelgiorno.js?v=27cd6cac" defer></script>
+<script src="assets/games/giocatoredelgiorno.js?v=48390f04" defer></script>
 </body>
 </html>

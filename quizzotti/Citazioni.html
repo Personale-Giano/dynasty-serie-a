@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Chi l'ha detto · Quizzotti</title>
-<meta name="description" content="Indovina il campione o l'allenatore dietro le frasi più celebri del calcio. Scrivi il nome o usa le opzioni: oltre 150 citazioni da riconoscere.">
+<meta name="description" content="Indovina il campione o l'allenatore dietro le frasi più celebri del calcio. Scrivi il nome o usa le opzioni: oltre 180 citazioni da riconoscere, dalla panchina, dal campo e dalla tribuna.">
 <link rel="canonical" href="https://quizotti.altervista.org/quizzotti/Citazioni.html">
 <meta property="og:url" content="https://quizotti.altervista.org/quizzotti/Citazioni.html">
 <meta name="theme-color" content="#07090b">
@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
 <style>
   .intro { grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 900px) { .intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
@@ -40,7 +40,14 @@
   .ch-board__n small { font-size: .6em; color: #a07a2e; text-shadow: none; }
   .ch-board__score { font-size: clamp(32px, 6vw, 50px); }
   .ch-board .streak { border: 0; padding: 0; background: none; }
-  @media (max-width: 559px) { .ch-board__cell--streak { display: none; } }
+  /* sul telefono la serie lascia il posto al tempo; senza tempo resta */
+  @media (max-width: 559px) { .ch-board.has-timer .ch-board__cell--streak { display: none; } }
+  .ch-setup__wide { grid-column: 1 / -1; }
+  .ch-setup .segmented button { white-space: nowrap; }
+  @media (max-width: 380px) { #set-cat button { font-size: 15px; padding: 0 2px; } }
+  .ch-cat-note { margin: 8px 0 0; color: var(--text-2); }
+  .ch-arch { margin: 18px 0 0; color: var(--text-2); }
+  .ch-arch b { font-family: var(--font-led); font-weight: 700; font-size: 18px; color: var(--led); }
 
   /* ---- il maxischermo dello stadio: la frase in grande ---- */
   .ch-screen {
@@ -72,6 +79,7 @@
   /* il verdetto si accende in alto a destra, lontano dalla frase */
   .ch-screen__stamp { position: absolute; right: 12px; top: 6px; width: 0; height: 0; }
   .ch-screen__stamp .qz-stamp { left: auto; right: 0; top: 0; transform: none; }
+  .ch-screen.is-judged #g-num { visibility: hidden; }
 
   /* ---- la risposta scritta ---- */
   .ch-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: stretch; }
@@ -146,6 +154,7 @@
       <div class="ch-setup">
         <div class="field"><span class="label" id="lbl-len">Frasi per partita</span><div id="set-len" aria-labelledby="lbl-len"></div></div>
         <div class="field"><span class="label" id="lbl-time">Tempo</span><div id="set-time" aria-labelledby="lbl-time"></div></div>
+        <div class="field ch-setup__wide"><span class="label" id="lbl-cat">Chi parla</span><div id="set-cat" aria-labelledby="lbl-cat" aria-describedby="cat-note"></div><p class="small muted ch-cat-note" id="cat-note"></p></div>
       </div>
     </div>
   </section>
@@ -154,7 +163,7 @@
   <section class="screen" id="s-game">
     <h1 class="sr-only">Chi l'ha detto: la partita</h1>
     <div class="ch-game">
-      <div class="board ch-board">
+      <div class="board ch-board" id="g-board">
         <div class="board__cell" id="timer-cell"><span class="board__label">Tempo</span><div id="timer-host"></div></div>
         <div class="board__cell"><span class="board__label">Frase</span><span class="led ch-board__n" id="g-count">01<small>/10</small></span></div>
         <div class="board__cell board__cell--grow"><span class="board__label">Punti</span><span class="led ch-board__score" id="g-score">0</span></div>
@@ -205,8 +214,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e4b44bef" defer></script>
-<script src="assets/db-citazioni.js?v=a24a0d89" defer></script>
-<script src="assets/games/citazioni.js?v=4a45bdcb" defer></script>
+<script src="assets/qz.js?v=e367d67c" defer></script>
+<script src="assets/db-citazioni.js?v=186df8f0" defer></script>
+<script src="assets/games/citazioni.js?v=fd43b15d" defer></script>
 </body>
 </html>
