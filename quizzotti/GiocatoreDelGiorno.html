@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Il Calciatore del Giorno · Quizzotti</title>
+<meta name="description" content="Ogni giorno un calciatore segreto, uguale per tutti. Sei tentativi: nazionale, campionato, squadra, ruolo, età e valore ti dicono se ti stai avvicinando. Poi condividi il risultato.">
+<link rel="canonical" href="https://quizotti.altervista.org/quizzotti/GiocatoreDelGiorno.html">
+<meta property="og:url" content="https://quizotti.altervista.org/quizzotti/GiocatoreDelGiorno.html">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="Il Calciatore del Giorno · Quizzotti">
+<meta property="og:description" content="Un calciatore segreto al giorno, uguale per tutti. Sei tentativi per trovarlo, e poi lo racconti agli amici.">
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/logo2.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<style>
+  [data-game="giocatoredelgiorno"] { --accent: #ffd23f; --accent-2: #ffe68f; --accent-rgb: 255, 210, 63; --accent-ink: #ffd23f; --on-accent: #07090b; }
+
+  .intro { grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
+
+  /* colori delle caselle: verde = uguale, ambra = vicino, spenta = niente */
+  .gd { --hit: var(--led-green); --near: var(--led); }
+
+  /* il riepilogo di oggi sulla copertina */
+  .gd-today { padding: 18px; }
+  .gd-today__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .gd-today__title { font-size: 22px; margin: 0; }
+  .gd-today__body { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); margin-top: 14px; }
+  @media (min-width: 720px) { .gd-today__body { grid-template-columns: auto minmax(0, 1fr); align-items: center; } }
+
+  /* la mini griglia (quadratini come quelli che si condividono) */
+  .gd-mini { display: grid; gap: 4px; justify-content: start; }
+  .gd-mini__row { display: grid; grid-template-columns: repeat(6, 22px); gap: 4px; }
+  .gd-mini__row i { height: 22px; border-radius: 4px; background: #1b2227; border: 1px solid var(--line); }
+  .gd-mini__row i.is-hit { background: var(--led-green); border-color: var(--led-green); }
+  .gd-mini__row i.is-near { background: var(--led); border-color: var(--led); }
+
+  /* la scheda del calciatore svelato */
+  .gd-card { display: grid; gap: 8px; padding: 14px 16px; background: #000; border: 1px solid var(--line-2); border-left: 3px solid var(--accent); border-radius: var(--r); text-align: left; }
+  .gd-card__name { font-family: var(--font-display); font-weight: 900; font-size: clamp(22px, 5vw, 30px); line-height: 1.05; }
+  .gd-card__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* tabellone in alto */
+  .gd-board__n { font-size: clamp(26px, 6vw, 40px); }
+  .gd-board__try { font-size: clamp(26px, 6vw, 40px); }
+  .gd-board__try small { font-size: .55em; color: #a07a2e; text-shadow: none; }
+  .gd-board__clock { font-size: clamp(20px, 4.4vw, 30px); color: #c99a3a; }
+  .gd-board .board__cell { padding-inline: 14px; }
+  @media (max-width: 419px) { .gd-board .board__cell { padding-inline: 10px; } .gd-board .board__label { letter-spacing: .1em; } }
+
+  .gd-game { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); max-width: 860px; margin: 0 auto; }
+
+  /* la ricerca del nome con i suggerimenti */
+  .gd-search { padding: 16px; display: grid; gap: 10px; }
+  .gd-combo { position: relative; }
+  .gd-combo .input { min-height: 54px; font-size: 18px; }
+  .gd-list {
+    position: absolute; z-index: 40; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 4px; list-style: none;
+    background: var(--panel-2); border: 1px solid var(--line-2); border-radius: var(--r); max-height: min(52vh, 360px); overflow-y: auto;
+  }
+  .gd-list[hidden] { display: none; }
+  .gd-opt { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-height: 46px; padding: 10px 12px; border-radius: var(--r-sm); cursor: pointer; }
+  .gd-opt__name { font-weight: 700; color: var(--text); }
+  .gd-opt__name mark { background: none; color: var(--accent-ink); }
+  .gd-opt__team { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gd-opt[aria-selected="true"], .gd-opt:hover { background: var(--panel-3); }
+  .gd-opt[aria-selected="true"] { outline: 1px solid var(--accent); }
+  .gd-empty { padding: 12px; color: var(--muted); font-size: 15px; }
+
+  .gd-hint { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .gd-hint__text { font-weight: 700; color: var(--text); }
+  .gd-hint__text b { font-family: var(--font-led); font-size: 22px; color: var(--accent-ink); }
+
+  .gd-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--text-2); }
+  .gd-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .gd-legend i { width: 14px; height: 14px; border-radius: 3px; background: #1b2227; border: 1px solid var(--line-2); }
+  .gd-legend i.is-hit { background: var(--led-green); border-color: var(--led-green); }
+  .gd-legend i.is-near { background: var(--led); border-color: var(--led); }
+
+  /* le righe dei tentativi: l'ultimo in alto */
+  .gd-rows { display: grid; gap: 12px; }
+  .gd-row { display: grid; gap: 6px; }
+  .gd-row__head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+  .gd-row__n { flex: none; font-family: var(--font-led); font-size: 16px; color: var(--led); text-shadow: var(--led-glow); }
+  .gd-row__name { font-family: var(--font-display); font-weight: 800; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gd-tiles { display: grid; gap: 5px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (min-width: 640px) { .gd-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+  .gd-tile {
+    display: grid; align-content: center; justify-items: center; gap: 3px; min-height: 60px; padding: 6px 4px;
+    border-radius: var(--r-sm); background: #11161a; border: 1px solid var(--line); text-align: center; color: var(--text-2);
+  }
+  .gd-tile__k { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .75; }
+  .gd-tile__v { font-weight: 800; font-size: clamp(12px, 3.4vw, 14px); line-height: 1.12; overflow-wrap: break-word; max-width: 100%; }
+  .gd-tile__a { font-family: var(--font-led); font-size: 15px; line-height: 1; }
+  .gd-tile.is-hit { background: var(--led-green); border-color: var(--led-green); color: #04170c; }
+  .gd-tile.is-near { background: var(--led); border-color: var(--led); color: #1a1100; }
+  .gd-tile.is-in { animation: qz-led-on .5s steps(6, jump-end) both; animation-delay: calc(var(--i, 0) * 110ms); }
+  @media (prefers-reduced-motion: reduce) { .gd-tile.is-in { animation: none; } }
+
+  .gd-left { font-size: 14px; color: var(--muted); }
+  .gd-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+
+  /* statistiche e distribuzione dei tentativi */
+  .gd-stats { display: grid; gap: 14px; }
+  .gd-stats .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .gd-stats .stat { padding: 10px 8px; text-align: center; }
+  .gd-stats .stat__label { font-size: 10px; letter-spacing: .1em; }
+  .gd-dist { display: grid; gap: 5px; }
+  .gd-dist__row { display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: center; gap: 8px; }
+  .gd-dist__n { font-family: var(--font-led); font-size: 16px; color: var(--text-2); text-align: right; }
+  .gd-dist__bar { min-width: 26px; width: var(--w, 0%); padding: 3px 8px; border-radius: 4px; background: var(--panel-3); color: var(--text); font-family: var(--font-led); font-size: 15px; text-align: right; }
+  .gd-dist__row.is-now .gd-dist__bar { background: var(--accent); color: var(--on-accent); }
+  .gd-next { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 10px; }
+  .gd-next .led { font-size: 28px; }
+
+  .gd-end-extra { display: grid; gap: 16px; margin-top: 20px; }
+  .gd-end-extra .gd-mini { justify-content: center; }
+</style>
+</head>
+<body data-game="giocatoredelgiorno">
+<main id="app" class="qz-main gd" tabindex="-1">
+
+  <!-- ============ INIZIO ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Gioco 13 · Da solo</span>
+        <h1 class="intro__title">Il Calciatore <em>del Giorno</em></h1>
+        <p class="intro__lead">Ogni giorno c'è un calciatore segreto, lo stesso per tutti. Hai sei nomi a disposizione: a ogni tentativo le caselle ti dicono quanto sei vicino. Poi lo racconti al gruppo, senza fare spoiler.</p>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
+          <button class="btn btn--lg" type="button" id="train-btn"></button>
+        </div>
+        <p class="small muted mt-2" id="start-info" aria-live="polite"></p>
+        <div class="card gd-today mt-3" id="today" hidden></div>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3" id="start-stats" hidden></div>
+  </section>
+
+  <!-- ============ PARTITA ============ -->
+  <section class="screen" id="s-game">
+    <h1 class="sr-only" id="g-h1">Il Calciatore del Giorno: la partita</h1>
+    <div class="gd-game">
+      <div class="board gd-board">
+        <div class="board__cell"><span class="board__label" id="g-nlabel">Partita</span><span class="led gd-board__n" id="g-n">N° 1</span></div>
+        <div class="board__cell"><span class="board__label">Tentativo</span><span class="led gd-board__try" id="g-try">1<small>/6</small></span></div>
+        <div class="board__cell board__cell--grow"><span class="board__label" id="g-clock-label">Il prossimo tra</span><span class="led gd-board__clock" id="g-clock" data-countdown>--:--:--</span></div>
+      </div>
+
+      <div class="card card--glow gd-search">
+        <label class="label" for="g-input" id="g-label">Chi è? Scrivi un nome o un cognome</label>
+        <div class="gd-combo">
+          <input class="input" id="g-input" type="text" autocomplete="off" autocapitalize="words" spellcheck="false"
+                 role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="g-list" aria-describedby="g-left"
+                 placeholder="Es. Barella, Yamal, Kane…">
+          <ul class="gd-list" id="g-list" role="listbox" aria-label="Calciatori trovati" hidden></ul>
+        </div>
+        <div class="gd-hint" id="g-hint" hidden></div>
+        <p class="gd-left" id="g-left"></p>
+      </div>
+
+      <div class="gd-legend" aria-hidden="true">
+        <span><i class="is-hit"></i>uguale</span>
+        <span><i class="is-near"></i>vicino</span>
+        <span><b>↑ ↓</b> il segreto è più vecchio / vale di più (o il contrario)</span>
+      </div>
+
+      <div class="gd-rows" id="g-rows" aria-live="polite"></div>
+
+      <div class="gd-foot">
+        <p class="small muted" style="margin:0" id="g-mode"></p>
+        <button class="btn btn--ghost btn--sm" type="button" id="g-quit"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
+
+</main>
+
+<script src="assets/qz.js?v=e4b44bef" defer></script>
+<script src="assets/db-giocatoredelgiorno.js?v=2af66e8a" defer></script>
+<script src="assets/games/giocatoredelgiorno.js?v=bcdb3cfd" defer></script>
+</body>
+</html>

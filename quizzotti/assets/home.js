@@ -17,7 +17,7 @@
 
     grid.innerHTML = QZ.GAMES.map(function (g, i) {
         var plays = profile.gamesPlayed[g.id] || 0;
-        return '<a class="game" href="' + g.file + '" data-kind="' + g.kind + '" style="--i:' + i + ';--tilt:' + TILTS[i] + 'deg;--c:' + g.color + ';--c-2:' + g.color2 + '">' +
+        return '<a class="game" href="' + g.file + '" data-kind="' + g.kind + '" style="--i:' + i + ';--tilt:' + TILTS[i % TILTS.length] + 'deg;--c:' + g.color + ';--c-2:' + g.color2 + '">' +
             '<div class="game__band"><span class="game__num">N° ' + String(i + 1).padStart(2, '0') + '</span>' +
             '<span class="game__icon" style="color:' + g.on + '">' + QZ.icon(g.icon) + '</span></div>' +
             (plays ? '<span class="note game__best">giocato ' + (plays === 1 ? 'una volta' : plays + ' volte') + '</span>' : '') +
@@ -39,7 +39,14 @@
         'Derby delle Parole: chi la sa, tira in porta',
         'Sfida dei Budget: il presidente ha chiuso i cordoni della borsa',
         'Jeopardy: la doppia posta è nascosta da qualche parte',
-        'Cruciverba: doppia papera in finale di Champions, sei lettere'
+        'Cruciverba: doppia papera in finale di Champions, sei lettere',
+        'Calciatore del Giorno: oggi tocca a uno nuovo, e domani pure',
+        'Sopra o Sotto: il valore stimato non guarda in faccia nessuno',
+        'Caduta Libera: la botola si apre anche se passi troppo',
+        'Quattro per Quattro: ne manca uno, come sempre',
+        "L'Intruso: cinque sono amici, il sesto è un imbucato",
+        'La Catena: da Baggio al codino è un attimo',
+        'Bingo della Partita: il palo vale una casella'
     ];
     var items = news.map(function (n) { return '<span>' + QZ.esc(n) + '</span>'; }).join('');
     QZ.$('#ticker').innerHTML = items + items;

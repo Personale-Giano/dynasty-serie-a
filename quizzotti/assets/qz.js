@@ -1,6 +1,6 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Motore condiviso
-   Un solo script per home e 11 giochi: header/menu/footer generati da qui
+   Un solo script per home e 18 giochi: header/menu/footer generati da qui
    (niente piu' HTML duplicato in ogni pagina), icone SVG inline (niente
    Font Awesome), suoni sintetizzati, profilo XP, timer, effetti e
    componenti UI. Ogni pagina dichiara il suo gioco con <body data-game="id">.
@@ -25,7 +25,14 @@
         { id: 'bomba', file: 'Bomba.html', name: 'Bomba', short: 'Bomba', icon: 'bomb', color: '#ff4b3a', color2: '#ffa094', on: '#07090b', rgb: '255, 75, 58', players: '2+ giocatori', kind: 'party', desc: 'Un tema e una bomba che passa di mano in mano. Quando scoppia, qualcuno ci resta.', tags: ['Turni', 'Tempo', 'Eliminazione'] },
         { id: 'sfidaeredita', file: 'sfidaEredita.html', name: 'Derby delle Parole', short: 'Derby', icon: 'ball', color: '#3ddc84', color2: '#9cf0c0', on: '#07090b', rgb: '61, 220, 132', players: '2 squadre', kind: 'party', desc: 'Una definizione, le lettere che spuntano piano piano. Chi la sa, tira in porta.', tags: ['Definizioni', 'Squadre', 'Voce'] },
         { id: 'giocatoributget', file: 'GiocatoriBudget.html', name: 'Sfida dei Budget', short: 'Budget', icon: 'coins', color: '#c6f04d', color2: '#e0f8a0', on: '#07090b', rgb: '198, 240, 77', players: '1-6 giocatori', kind: 'party', desc: 'Fai mercato a occhio: i prezzi sono nascosti e il presidente non perdona.', tags: ['Mercato', 'Strategia', 'Budget'] },
-        { id: 'cruciverba', file: 'Cruciverba.html', name: 'Cruciverba', short: 'Cruciverba', icon: 'xword', color: '#ff6ad5', color2: '#ffb3ea', on: '#07090b', rgb: '255, 106, 213', players: 'Da solo', kind: 'quiz', desc: 'Il cruciverba del calcio: definizioni cattive, incroci e una griglia nuova a ogni partita.', tags: ['Parole', 'Enigmistica', 'Griglia nuova'] }
+        { id: 'cruciverba', file: 'Cruciverba.html', name: 'Cruciverba', short: 'Cruciverba', icon: 'xword', color: '#ff6ad5', color2: '#ffb3ea', on: '#07090b', rgb: '255, 106, 213', players: 'Da solo', kind: 'quiz', desc: 'Il cruciverba del calcio: definizioni cattive, incroci e una griglia nuova a ogni partita.', tags: ['Parole', 'Enigmistica', 'Griglia nuova'] },
+        { id: 'sopraosotto', file: 'SopraOSotto.html', name: 'Sopra o Sotto', short: 'Sopra o Sotto', icon: 'updown', color: '#5ee0a0', color2: '#a8f0cc', on: '#07090b', rgb: '94, 224, 160', players: 'Da solo', kind: 'quiz', desc: 'Due calciatori, un solo prezzo da indovinare: chi vale di più? Una serie finché non sbagli.', tags: ['Valori', 'Serie', 'Veloce'] },
+        { id: 'giocatoredelgiorno', file: 'GiocatoreDelGiorno.html', name: 'Il Calciatore del Giorno', short: 'Del Giorno', icon: 'calendar', color: '#ffd23f', color2: '#ffe68f', on: '#07090b', rgb: '255, 210, 63', players: 'Da solo', kind: 'quiz', desc: 'Un calciatore segreto al giorno, uguale per tutti. Sei tentativi, e poi lo racconti agli amici.', tags: ['Ogni giorno', 'Indizi', 'Da condividere'] },
+        { id: 'cadutalibera', file: 'CadutaLibera.html', name: 'Caduta Libera', short: 'Caduta Libera', icon: 'zap', color: '#ff8a3d', color2: '#ffc193', on: '#07090b', rgb: '255, 138, 61', players: 'Da solo', kind: 'quiz', desc: 'Tre risposte, pochi secondi. Se sbagli o passi, il pavimento si apre sotto i piedi.', tags: ['Quiz', 'A tempo', 'Botole'] },
+        { id: 'quattro', file: 'QuattroPerQuattro.html', name: 'Quattro per Quattro', short: '4 per 4', icon: 'layers', color: '#7c9cff', color2: '#b8c8ff', on: '#07090b', rgb: '124, 156, 255', players: 'Da solo', kind: 'quiz', desc: 'Sedici nomi, quattro gruppi nascosti. Hai quattro errori per scoprire cosa li lega.', tags: ['Gruppi', 'Schede', 'Logica'] },
+        { id: 'intruso', file: 'Intruso.html', name: 'L\'Intruso', short: 'L\'Intruso', icon: 'eye', color: '#ff5fa2', color2: '#ffa8cc', on: '#07090b', rgb: '255, 95, 162', players: 'Da solo', kind: 'quiz', desc: 'Sei nomi e uno non c\'entra niente. Trovalo prima che scada il tempo.', tags: ['Veloce', 'Logica', 'Serie'] },
+        { id: 'catena', file: 'Catena.html', name: 'La Catena', short: 'La Catena', icon: 'link', color: '#46c8c0', color2: '#9ae6e1', on: '#07090b', rgb: '70, 200, 192', players: '2 squadre', kind: 'party', desc: 'Una parola tira l\'altra: Baggio, codino, pallone d\'oro… Trova l\'anello mancante.', tags: ['Squadre', 'Parole', 'Collegamenti'] },
+        { id: 'bingo', file: 'Bingo.html', name: 'Bingo della Partita', short: 'Bingo', icon: 'ticket', color: '#e3e85a', color2: '#f1f4a6', on: '#07090b', rgb: '227, 232, 90', players: '2+ giocatori', kind: 'party', desc: 'Una cartella a testa e la partita in TV: rigore, palo, espulsione. Chi fa bingo per primo?', tags: ['Partita in TV', 'Cartelle', 'Con gli amici'] }
     ];
 
     QZ.game = function (id) {
@@ -115,6 +122,11 @@
         xword: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M15 3h6v6h-6z" fill="currentColor"/><path d="M3 15h6v6H3z" fill="currentColor"/>',
         search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
         dice: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 8h.01"/><path d="M16 8h.01"/><path d="M12 12h.01"/><path d="M8 16h.01"/><path d="M16 16h.01"/>',
+        updown: '<path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>',
+        calendar: '<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+        layers: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><path d="M7 7h.01"/><path d="M17 17h.01"/>',
+        link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+        ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
         wifi: '<path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/>'
     };
 

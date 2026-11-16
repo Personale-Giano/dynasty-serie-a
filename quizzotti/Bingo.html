@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bingo della Partita · Quizzotti</title>
+<meta name="description" content="Il bingo da fare davanti alla partita in TV: una cartella a testa con rigori, pali, gialli e frasi del telecronista. Chi fa riga e bingo per primo? Gratis su Quizzotti.">
+<link rel="canonical" href="https://quizotti.altervista.org/quizzotti/Bingo.html">
+<meta property="og:url" content="https://quizotti.altervista.org/quizzotti/Bingo.html">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="Bingo della Partita · Quizzotti">
+<meta property="og:description" content="Una cartella a testa e la partita in TV: rigore, palo, espulsione. Chi fa bingo per primo?">
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/logo2.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<style>
+  [data-game="bingo"] { --accent: #e3e85a; --accent-2: #f1f4a6; --accent-rgb: 227, 232, 90; --accent-ink: #e3e85a; --on-accent: #07090b; }
+
+  /* ---------- Impostazioni ---------- */
+  .bg-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 34px; }
+  @media (min-width: 900px) { .bg-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+  .bg-setup .field__hint { font-size: 15px; color: var(--text-2); }
+  .bg-code-input { max-width: 220px; font-family: var(--font-led); font-size: 28px; letter-spacing: .25em; text-transform: uppercase; text-align: center; }
+  .bg-resume { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 22px; padding: 14px 16px; background: #000; border: 1px solid var(--line-2); border-left: 5px solid var(--accent); border-radius: var(--r-lg); }
+  .bg-resume p { flex: 1 1 220px; margin: 0; color: var(--text-2); }
+  .bg-resume b { display: block; color: var(--text); font-size: 18px; }
+
+  /* ---------- La cartella ---------- */
+  .bg-card { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; padding: 6px; background: #000; border: 1px solid var(--line-2); border-radius: var(--r-lg); }
+  .bg-cell {
+    position: relative; display: grid; place-items: center; min-width: 0; min-height: 86px; padding: 14px 4px 8px;
+    border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel-2); color: var(--text);
+    font-family: var(--font-body); font-stretch: 80%; font-weight: 700; font-size: 13px; line-height: 1.12; text-align: center;
+    overflow-wrap: break-word; hyphens: auto; transition: background .12s, color .12s, border-color .12s;
+  }
+  button.bg-cell { cursor: pointer; }
+  button.bg-cell:hover { border-color: var(--line-2); }
+  button.bg-cell:focus-visible { z-index: 1; outline-offset: 2px; }
+  .bg-cell__pips { position: absolute; top: 5px; left: 6px; display: flex; gap: 2px; }
+  .bg-cell__pips i { width: 5px; height: 5px; border-radius: 50%; background: var(--line-2); }
+  .bg-cell__pips i.on { background: var(--led); }
+  .bg-cell[data-r="3"] { border-color: #4a4320; }
+  .bg-cell.is-on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .bg-cell.is-on .bg-cell__pips i { background: rgba(7, 9, 11, .25); }
+  .bg-cell.is-on .bg-cell__pips i.on { background: var(--on-accent); }
+  .bg-cell.is-on::after { content: ""; position: absolute; top: 5px; right: 6px; width: 10px; height: 6px; border-left: 2.5px solid var(--on-accent); border-bottom: 2.5px solid var(--on-accent); transform: rotate(-45deg); }
+  .bg-cell.is-line { box-shadow: 0 0 0 2px var(--led-green); border-color: var(--led-green); }
+  .bg-card--big { max-width: 560px; margin: 0 auto; }
+  @media (min-width: 560px) { .bg-card--big .bg-cell { min-height: 108px; font-size: 16px; } }
+
+  /* ---------- Tabellone ---------- */
+  .bg-hud .board__cell { padding: 8px 10px; }
+  .bg-hud__main { flex: 1; }
+  .bg-hud .led { font-size: 30px; }
+  .bg-prize { min-width: 0; text-align: center; }
+  .bg-prize b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; color: var(--muted); }
+  .bg-prize .bg-lamp { display: inline-block; width: 12px; height: 12px; margin: 0 auto 2px; border-radius: 50%; background: #000; border: 1px solid var(--line-2); }
+  .bg-prize.is-on .bg-lamp { background: var(--led-green); border-color: var(--led-green); box-shadow: 0 0 8px rgba(61, 220, 132, .6); animation: qz-led-on .35s linear both; }
+  .bg-prize.is-on b { color: var(--text); }
+  @media (max-width: 400px) { .bg-hud .board__cell { padding: 8px 6px; } .bg-hud .led { font-size: 26px; } }
+
+  /* ---------- Cartelle per tutti ---------- */
+  .bg-table { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  @media (min-width: 900px) { .bg-table { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: start; } .bg-table__side { position: sticky; top: 80px; } }
+  .bg-sec-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 10px; }
+  .bg-sec-head h2 { font-size: 20px; font-weight: 900; text-transform: uppercase; letter-spacing: .02em; }
+  .bg-sec-head span { font-size: 14px; color: var(--text-2); }
+
+  .bg-players { display: grid; gap: 8px; }
+  .bg-player {
+    --c: var(--accent); display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px 12px;
+    background: #000; border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: var(--r); text-align: left; color: var(--text);
+  }
+  .bg-player:hover { border-color: var(--line-2); border-left-color: var(--c); }
+  .bg-player__name { flex: 1; min-width: 0; }
+  .bg-player__name b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 18px; font-weight: 800; }
+  .bg-player__name small { font-size: 13px; color: var(--text-2); }
+  .bg-player__name small .bg-tag { margin-left: 4px; color: var(--led-green); font-weight: 700; }
+  .bg-mini { flex: none; display: grid; grid-template-columns: repeat(4, 8px); gap: 2px; }
+  .bg-mini i { width: 8px; height: 8px; border-radius: 2px; background: var(--panel-3); }
+  .bg-mini i.on { background: var(--accent); }
+  .bg-mini i.line { background: var(--led-green); }
+  .bg-player__count { flex: none; min-width: 52px; text-align: right; font-family: var(--font-led); font-size: 22px; color: var(--led); text-shadow: var(--led-glow); }
+
+  .bg-tools { display: flex; gap: 8px; margin-bottom: 12px; }
+  .bg-tools .input { flex: 1; min-width: 0; min-height: 48px; font-size: 16px; }
+  .bg-group { margin-top: 14px; }
+  .bg-group h3 { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--text-2); }
+  .bg-evs { display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); overflow: hidden; }
+  .bg-ev {
+    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 54px; padding: 6px 12px; border: 0; border-bottom: 1px solid var(--line);
+    background: transparent; color: var(--text); text-align: left; font-weight: 600; font-size: 16px; line-height: 1.2; transition: background .12s;
+  }
+  .bg-ev:last-child { border-bottom: 0; }
+  .bg-ev:hover { background: var(--panel-2); }
+  .bg-ev:focus-visible { position: relative; z-index: 1; outline-offset: -5px; }
+  .bg-ev__box { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; background: #000; border: 1px solid var(--line-2); }
+  .bg-ev__box .ico { width: 18px; height: 18px; stroke-width: 3.2; color: var(--on-accent); opacity: 0; }
+  .bg-ev__txt { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .bg-ev__who { flex: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 3px; max-width: 64px; }
+  .bg-ev__who i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); }
+  .bg-ev[aria-pressed="true"] { background: rgba(var(--accent-rgb), .1); }
+  .bg-ev[aria-pressed="true"] .bg-ev__txt { color: var(--accent-ink); font-weight: 800; }
+  .bg-ev[aria-pressed="true"] .bg-ev__box { background: var(--accent); border-color: var(--accent); }
+  .bg-ev[aria-pressed="true"] .bg-ev__box .ico { opacity: 1; }
+  .bg-empty { padding: 16px; color: var(--text-2); }
+
+  .bg-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 22px; }
+  @media (min-width: 560px) { .bg-actions { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } }
+
+  /* ---------- La mia cartella ---------- */
+  .bg-mine { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; max-width: 600px; margin: 0 auto; }
+  .bg-code { font-family: var(--font-led); font-size: 30px; letter-spacing: .14em; color: var(--led); text-shadow: var(--led-glow); }
+  .bg-mine__tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .bg-mine__tools .btn { min-height: 52px; padding: 0 10px; font-size: 15px; }
+
+  /* ---------- La cartella a schermo intero ---------- */
+  .bg-full { position: fixed; inset: 0; z-index: 900; display: flex; flex-direction: column; background: var(--bg); overflow-y: auto; padding: max(12px, env(safe-area-inset-top)) 12px max(16px, env(safe-area-inset-bottom)); }
+  .bg-full[hidden] { display: none; }
+  .bg-full__in { width: 100%; max-width: 640px; margin: 0 auto; display: grid; gap: 12px; }
+  .bg-full__top { display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; background: #000; border: 1px solid var(--line-2); border-top: 4px solid var(--c, var(--accent)); border-radius: var(--r-lg); }
+  .bg-full__top h2 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: clamp(24px, 7vw, 34px); font-weight: 900; text-transform: uppercase; }
+  .bg-full__top .bg-code { font-size: 22px; }
+  .bg-full__status { text-align: center; color: var(--text-2); min-height: 1.4em; }
+  .bg-full__nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .bg-full .bg-cell { min-height: 92px; font-size: 14px; }
+  @media (min-width: 560px) { .bg-full .bg-cell { min-height: 118px; font-size: 17px; } }
+  body.bg-locked { overflow: hidden; }
+
+  @media (prefers-reduced-motion: reduce) { .bg-cell, .bg-ev { transition: none; } }
+</style>
+</head>
+<body data-game="bingo">
+<main id="app" class="qz-main" tabindex="-1">
+
+  <!-- ============ INIZIO ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Gioco 18 · Party, 2+ giocatori</span>
+        <h1 class="intro__title">Bingo della <em>Partita</em></h1>
+        <p class="intro__lead">Accendete la TV, prendete una cartella a testa e aspettate il palo, il giallo al decimo minuto e il telecronista che urla «clamoroso». Chi fa riga per primo ha ragione per tutta la settimana.</p>
+        <div class="bg-resume" id="resume" hidden>
+          <p><b>C'è una partita in corso</b><span id="resume-txt"></span></p>
+          <button class="btn btn--primary" type="button" id="resume-btn"></button>
+        </div>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
+        </div>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-setup">
+      <div class="card stack" style="--gap:16px">
+        <div class="field">
+          <span class="label" id="lbl-mode">Come giocate</span>
+          <div id="opt-mode" aria-labelledby="lbl-mode"></div>
+          <p class="field__hint" id="mode-hint"></p>
+        </div>
+        <div class="field" id="code-field" hidden>
+          <label for="code-in">Hai già un codice?</label>
+          <input class="input bg-code-input" id="code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="····">
+          <p class="field__hint">Lascialo vuoto per una cartella nuova. Con lo stesso codice esce sempre la stessa cartella.</p>
+        </div>
+      </div>
+      <div class="card" id="players-host"></div>
+    </div>
+  </section>
+
+  <!-- ============ CARTELLE PER TUTTI ============ -->
+  <section class="screen" id="s-table">
+    <h1 class="sr-only">Bingo della Partita, cartelle per tutti</h1>
+    <div class="board bg-hud" id="table-hud">
+      <div class="board__cell bg-hud__main"><span class="board__label">Segnati</span><span class="led" id="t-count">0</span></div>
+      <div class="board__cell bg-prize" id="t-p-riga"><span class="board__label">Riga</span><span class="bg-lamp" aria-hidden="true"></span><b>—</b></div>
+      <div class="board__cell bg-prize" id="t-p-doppia"><span class="board__label">Doppia</span><span class="bg-lamp" aria-hidden="true"></span><b>—</b></div>
+      <div class="board__cell bg-prize" id="t-p-bingo"><span class="board__label">Bingo</span><span class="bg-lamp" aria-hidden="true"></span><b>—</b></div>
+    </div>
+    <div class="bg-table mt-2">
+      <div class="bg-table__side">
+        <div class="bg-sec-head"><h2>Le cartelle</h2><span>Tocca un nome per vederla grande</span></div>
+        <div class="bg-players" id="t-players"></div>
+      </div>
+      <div>
+        <div class="bg-sec-head"><h2>Cos'è successo?</h2><span>Tocca quando succede, ritocca per togliere</span></div>
+        <div class="bg-tools">
+          <input class="input" type="search" id="t-filter" placeholder="Cerca un evento" aria-label="Cerca un evento" autocomplete="off">
+          <button class="btn" type="button" id="t-undo"></button>
+        </div>
+        <div id="t-events" aria-label="Eventi delle cartelle"></div>
+      </div>
+    </div>
+    <div class="bg-actions">
+      <button class="btn btn--primary btn--lg" type="button" id="t-end"></button>
+      <button class="btn btn--ghost btn--lg" type="button" id="t-new"></button>
+    </div>
+  </section>
+
+  <!-- ============ LA MIA CARTELLA ============ -->
+  <section class="screen" id="s-mine">
+    <h1 class="sr-only">Bingo della Partita, la mia cartella</h1>
+    <div class="bg-mine">
+      <div class="board bg-hud" id="mine-hud">
+        <div class="board__cell bg-hud__main"><span class="board__label">Codice cartella</span><span class="bg-code" id="m-code"></span></div>
+        <div class="board__cell"><span class="board__label">Segnati</span><span class="led" id="m-count">0</span></div>
+        <div class="board__cell"><span class="board__label">Righe</span><span class="led" id="m-lines">0</span></div>
+      </div>
+      <div class="bg-card bg-card--big" id="m-card" role="group" aria-label="La tua cartella"></div>
+      <p class="small muted center" id="m-hint"></p>
+      <div class="bg-mine__tools">
+        <button class="btn" type="button" id="m-undo"></button>
+        <button class="btn" type="button" id="m-check"></button>
+      </div>
+      <div class="bg-actions" style="margin-top:6px">
+        <button class="btn btn--primary btn--lg" type="button" id="m-end"></button>
+        <button class="btn btn--ghost btn--lg" type="button" id="m-new"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
+
+</main>
+
+<script src="assets/qz.js?v=e4b44bef" defer></script>
+<script src="assets/db-bingo.js?v=bae46250" defer></script>
+<script src="assets/games/bingo.js?v=4c16b8bc" defer></script>
+</body>
+</html>

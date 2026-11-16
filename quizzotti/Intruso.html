@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>L'Intruso · Quizzotti</title>
+<meta name="description" content="Sei nomi del calcio, cinque hanno qualcosa in comune e uno no. Trova l'intruso prima che scada il tempo: oltre 200 round, tre vite, sfida a due sullo stesso telefono.">
+<link rel="canonical" href="https://quizotti.altervista.org/quizzotti/Intruso.html">
+<meta property="og:url" content="https://quizotti.altervista.org/quizzotti/Intruso.html">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="L'Intruso · Quizzotti">
+<meta property="og:description" content="Sei nomi e uno non c'entra niente. Lo trovi prima che scada il tempo?">
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/logo2.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<style>
+  .intro { grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
+
+  /* impostazioni prima del fischio */
+  .ix-form { padding: 18px 18px 20px; }
+  .ix-form__title { font-size: 24px; padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .ix-setup { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .ix-setup { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .ix-setup .segmented { flex-wrap: nowrap; }
+  .ix-setup .segmented button { flex: 1 1 0; min-width: 0; min-height: 48px; padding: 0 6px; font-size: 16px; }
+  .ix-names { margin-top: 18px; }
+
+  .ix-game { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); max-width: 860px; margin: 0 auto; }
+
+  /* tabellone: tempo, round, punti, vite */
+  .ix-board .board__cell { padding-inline: 14px; }
+  .ix-board__big { font-size: clamp(28px, 6.4vw, 44px); }
+  .ix-board__mid { font-size: clamp(24px, 5vw, 34px); }
+  .ix-board__who { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #8a949b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 14ch; }
+  .ix-lives { display: flex; gap: 4px; justify-content: flex-end; }
+  .ix-lives .ico { width: 24px; height: 24px; color: var(--led-red); fill: var(--led-red); filter: drop-shadow(0 0 4px rgba(255, 75, 58, .55)); transition: opacity .2s, transform .2s; }
+  .ix-lives .ico.is-off { opacity: .18; fill: none; filter: none; color: #555; }
+  .ix-lives .ico.is-lost { animation: ix-lost .5s steps(4, jump-end) both; }
+  @keyframes ix-lost { 0%, 50% { opacity: 1; transform: scale(1.25); } 25%, 75% { opacity: .2; } }
+  @media (max-width: 419px) {
+    .ix-board .board__cell { padding-inline: 9px; }
+    .ix-board .board__label { letter-spacing: .1em; }
+    .ix-lives .ico { width: 19px; height: 19px; }
+  }
+
+  .ix-head { padding: 14px 18px; display: grid; gap: 6px; }
+  .ix-head .question { font-size: clamp(22px, 4vw, 30px); }
+
+  /* le sei caselle: 2x3 sul telefono, 3x2 dal tablet in su */
+  .ix-grid { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 720px) { .ix-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
+  .ix-item.answer { min-height: 96px; flex-direction: column; align-items: stretch; gap: 0; padding: 0; text-align: center; }
+  .ix-item .answer__key { position: absolute; top: 6px; left: 6px; width: 26px; height: 26px; margin: 0; font-size: 15px; }
+  .ix-item .answer__text { display: grid; place-items: center; padding: 30px 10px 14px; font-size: clamp(17px, 4.4vw, 21px); line-height: 1.15; hyphens: auto; }
+  @media (min-width: 720px) { .ix-item.answer { min-height: 112px; } }
+
+  /* il verdetto dopo ogni round */
+  .ix-reveal { padding: 16px 18px 18px; display: grid; gap: 10px; }
+  .ix-reveal.is-ok { border-left: 4px solid var(--led-green); }
+  .ix-reveal.is-bad { border-left: 4px solid var(--led-red); }
+  .ix-reveal__verdict { font-family: var(--font-led); font-size: 28px; line-height: 1; text-transform: uppercase; }
+  .ix-reveal.is-ok .ix-reveal__verdict { color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .5); }
+  .ix-reveal.is-bad .ix-reveal__verdict { color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .5); }
+  .ix-reveal__rule { font-family: var(--font-display); font-weight: 800; font-size: clamp(19px, 3.6vw, 24px); line-height: 1.2; }
+  .ix-reveal__why { color: var(--text-2); margin: 0; }
+  .ix-reveal__row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+  .ix-auto { height: 4px; background: #000; border-radius: 2px; overflow: hidden; }
+  .ix-auto i { display: block; height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0); }
+  .ix-auto.is-run i { animation: ix-auto var(--auto, 5s) linear both; }
+  @keyframes ix-auto { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+  /* passaggio di mano nella sfida a due */
+  .ix-pass { padding: 26px 20px; text-align: center; display: grid; gap: 14px; justify-items: center; }
+  .ix-pass__name { font-family: var(--font-display); font-weight: 900; font-size: clamp(30px, 7vw, 46px); line-height: 1.05; color: var(--accent-ink); overflow-wrap: anywhere; }
+
+  .ix-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  .ix-foot .kbd-hint { margin: 0; }
+
+  /* ripasso a fine partita */
+  .ix-review { margin-top: 22px; display: grid; gap: 10px; }
+  .ix-review h2 { font-size: 22px; }
+  .ix-review__card { padding: 14px 16px; display: grid; gap: 6px; }
+  .ix-review__items { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ix-review__items .chip { font-size: 13px; }
+  .ix-review__rule { font-weight: 800; }
+  .ix-review__why { margin: 0; color: var(--text-2); font-size: 15px; }
+</style>
+</head>
+<body data-game="intruso">
+<main id="app" class="qz-main" tabindex="-1">
+
+  <!-- ============ INIZIO ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Gioco 16 · Da solo</span>
+        <h1 class="intro__title">L'<em>Intruso</em></h1>
+        <p class="intro__lead">Sei nomi sul tabellone. Cinque hanno qualcosa in comune, uno è lì per sbaglio. Tu hai pochi secondi per indicarlo col dito, prima che l'arbitro fischi.</p>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
+        </div>
+        <p class="small muted mt-2" id="start-record"></p>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card ix-form mt-4">
+      <h2 class="ix-form__title">Come giochiamo</h2>
+      <div class="ix-setup">
+        <div class="field"><span class="label" id="lbl-pace">Ritmo · 15, 10 o 6 secondi</span><div id="set-pace" aria-labelledby="lbl-pace"></div></div>
+        <div class="field"><span class="label" id="lbl-after">Dopo ogni round</span><div id="set-after" aria-labelledby="lbl-after"></div></div>
+        <div class="field"><span class="label" id="lbl-mode">Chi gioca</span><div id="set-mode" aria-labelledby="lbl-mode"></div></div>
+      </div>
+      <div class="ix-names" id="set-names" hidden></div>
+    </div>
+  </section>
+
+  <!-- ============ PARTITA ============ -->
+  <section class="screen" id="s-game">
+    <h1 class="sr-only">L'Intruso: la partita</h1>
+    <div class="ix-game">
+      <div class="board ix-board" id="g-board">
+        <div class="board__cell"><span class="board__label">Tempo</span><span class="led ix-board__big" id="g-clock" role="timer" aria-live="off">--</span></div>
+        <div class="board__cell"><span class="board__label">Round</span><span class="led ix-board__mid" id="g-round">01</span></div>
+        <div class="board__cell"><span class="board__label">Punti</span><span class="led ix-board__mid" id="g-score">0</span><span class="ix-board__who" id="g-who" hidden></span></div>
+        <div class="board__cell board__cell--grow"><span class="board__label">Vite</span><div class="ix-lives" id="g-lives" aria-label="Vite"></div></div>
+      </div>
+
+      <div class="timer-bar" id="g-bar"><div class="timer-bar__fill"></div></div>
+
+      <div id="g-play">
+        <div class="card card--glow ix-head">
+          <span class="eyebrow" id="g-cat"></span>
+          <h2 class="question" id="g-question">Chi è l'intruso?</h2>
+        </div>
+        <div class="ix-grid mt-2" id="g-grid" role="group" aria-label="I sei nomi"></div>
+      </div>
+
+      <div class="card ix-reveal" id="g-reveal" hidden>
+        <span class="ix-reveal__verdict" id="r-verdict"></span>
+        <span class="label">Il legame dei cinque</span>
+        <p class="ix-reveal__rule" id="r-rule"></p>
+        <p class="ix-reveal__why" id="r-why"></p>
+        <div class="ix-auto" id="r-auto" hidden><i></i></div>
+        <div class="ix-reveal__row">
+          <span class="small muted" id="r-pts"></span>
+          <button class="btn btn--primary" type="button" id="r-next"></button>
+        </div>
+      </div>
+
+      <div class="card card--glow ix-pass" id="g-pass" hidden>
+        <span class="eyebrow">Passa il telefono</span>
+        <div class="ix-pass__name" id="p-name"></div>
+        <p class="muted" id="p-info"></p>
+        <button class="btn btn--primary btn--lg" type="button" id="p-go"></button>
+      </div>
+
+      <div class="ix-foot">
+        <p class="small kbd-hint">Tastiera: <span class="kbd">1</span>…<span class="kbd">6</span> per scegliere, <span class="kbd">Invio</span> per andare avanti</p>
+        <button class="btn btn--ghost btn--sm" type="button" id="g-quit"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
+
+</main>
+
+<script src="assets/qz.js?v=e4b44bef" defer></script>
+<script src="assets/db-intruso.js?v=95249c34" defer></script>
+<script src="assets/games/intruso.js?v=a6c41e34" defer></script>
+</body>
+</html>

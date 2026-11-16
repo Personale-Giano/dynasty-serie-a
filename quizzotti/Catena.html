@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La Catena · Quizzotti</title>
+<meta name="description" content="Gioco a squadre con le catene di parole: otto parole legate una all'altra, si vedono solo la prima e l'ultima. Indovina gli anelli mancanti prima degli avversari. Gratis su Quizzotti.">
+<link rel="canonical" href="https://quizotti.altervista.org/quizzotti/Catena.html">
+<meta property="og:url" content="https://quizotti.altervista.org/quizzotti/Catena.html">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="La Catena · Quizzotti">
+<meta property="og:description" content="Baggio, codino, pallone d'oro… Una parola tira l'altra: due squadre a caccia degli anelli mancanti.">
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/logo2.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=80a3ea7c">
+<style>
+  /* colore del gioco (dal registro QZ.GAMES), finche' qz.css non ha la sua riga */
+  [data-game="catena"] { --accent: #46c8c0; --accent-2: #9ae6e1; --accent-rgb: 70, 200, 192; --accent-ink: #46c8c0; --on-accent: #07090b; }
+  .ct-wrap { max-width: 640px; margin: 0 auto; }
+  .ct-setup, .ct-opt { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); }
+  .ct-opt { gap: 8px; }
+  #teams-host .stepper { display: none; }
+
+  /* ---------- Tabellone: le due squadre e i punti ---------- */
+  .ct-sb { background: #000; border: 1px solid var(--line-2); border-radius: var(--r-lg); overflow: hidden; }
+  .ct-sb__head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 7px 12px 6px; border-bottom: 1px solid var(--line); font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #7d878f; }
+  .ct-sb__head b { font-family: var(--font-led); font-weight: 400; font-size: 16px; letter-spacing: 0; color: var(--led); text-shadow: var(--led-glow); }
+  .ct-sb__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .ct-team { --c: var(--accent); display: grid; gap: 4px; min-width: 0; padding: 9px 12px 11px; transition: background .2s; }
+  .ct-team + .ct-team { border-left: 1px solid var(--line); text-align: right; }
+  .ct-team__side { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #6c767d; }
+  .ct-team + .ct-team .ct-team__side { justify-content: flex-end; }
+  .ct-team__side em { width: 8px; height: 8px; border-radius: 50%; background: #1a2a20; }
+  .ct-team.is-active .ct-team__side { color: var(--led-green); }
+  .ct-team.is-active .ct-team__side em { background: var(--led-green); box-shadow: 0 0 6px rgba(61, 220, 132, .7); }
+  .ct-team__name { display: flex; align-items: center; gap: 7px; min-width: 0; font-family: var(--font-display); font-weight: 900; font-size: 17px; line-height: 1.05; text-transform: uppercase; }
+  .ct-team + .ct-team .ct-team__name { flex-direction: row-reverse; }
+  .ct-team__name i { flex: none; width: 4px; height: 17px; border-radius: 1px; background: var(--c); }
+  .ct-team__name span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ct-team__pts { font-family: var(--font-led); font-size: clamp(34px, 10vw, 48px); line-height: 1; color: #8a6a2a; font-variant-numeric: tabular-nums; }
+  .ct-team.is-active { background: #0c0f12; box-shadow: inset 0 -3px 0 var(--c); }
+  .ct-team.is-active .ct-team__pts { color: var(--led); text-shadow: var(--led-glow); }
+
+  /* ---------- La catena: otto righe di celle a LED ---------- */
+  .ct-chain { --tw: 30px; position: relative; display: grid; gap: 0; padding: 10px 8px; background: #000; border: 1px solid var(--line-2); border-radius: var(--r-lg); }
+  .ct-row { position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; gap: 6px; width: 100%; min-height: 44px; padding: 4px 6px; margin: 0; border: 1px solid transparent; border-radius: var(--r); background: none; color: inherit; font: inherit; text-align: left; }
+  /* il filo che lega una parola all'altra */
+  .ct-row + .ct-row::before { content: ""; position: absolute; left: 16px; top: -5px; width: 2px; height: 10px; background: #2a2216; }
+  .ct-row.is-solved + .ct-row.is-solved::before, .ct-row.is-end + .ct-row.is-solved::before, .ct-row.is-solved + .ct-row.is-end::before { background: var(--led-green); box-shadow: 0 0 4px rgba(61, 220, 132, .6); }
+  .ct-row__n { font-family: var(--font-led); font-size: 15px; color: #6c767d; text-align: center; }
+  .ct-word { display: flex; flex-wrap: nowrap; gap: 3px; min-width: 0; }
+  .ct-t { flex: none; width: var(--tw); height: calc(var(--tw) * 1.12); display: grid; place-items: center; border-radius: var(--r-sm); background: radial-gradient(circle, #2a2216 1.1px, transparent 1.5px) 50% 50% / 5px 5px, #0b0906; font-family: var(--font-led); font-size: calc(var(--tw) * .78); line-height: 1; color: var(--led); text-shadow: var(--led-glow); }
+  .ct-t.is-gap { width: calc(var(--tw) * .45); background: none; }
+  .ct-t.is-on { animation: qz-led-on .3s linear both; }
+  .ct-row.is-end .ct-t { color: var(--text); text-shadow: none; }
+  .ct-row.is-solved .ct-t { color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .55); animation: qz-led-on .3s linear both; animation-delay: calc(var(--i, 0) * 30ms); }
+  .ct-row.is-gave .ct-t { color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .55); }
+  button.ct-row { cursor: pointer; border-color: var(--line); background: #07090b; }
+  button.ct-row:hover { border-color: var(--line-2); }
+  button.ct-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .ct-row.is-target { border-color: var(--accent); background: #0c1213; box-shadow: inset 3px 0 0 var(--accent); }
+  .ct-row.is-target .ct-row__n { color: var(--accent-ink); }
+  .ct-row__tag { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-family: var(--font-led); font-size: 14px; color: var(--accent-ink); }
+  .ct-row:not(.is-target) .ct-row__tag { color: #6c767d; }
+
+  /* ---------- Turno, valore, presentatore ---------- */
+  .ct-turn { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+  .ct-turn__who { --c: var(--accent); font-family: var(--font-display); font-weight: 900; font-size: 20px; line-height: 1.1; text-transform: uppercase; }
+  .ct-turn__who span { box-shadow: inset 0 -.14em 0 var(--c); }
+  .ct-value { display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 10px; background: #000; border: 1px solid var(--line-2); border-radius: var(--r); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #7d878f; }
+  .ct-value b { font-family: var(--font-led); font-size: 24px; font-weight: 400; letter-spacing: 0; color: var(--led); text-shadow: var(--led-glow); }
+  .ct-dir { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ct-dir .btn { min-height: 46px; }
+  .ct-dir .btn[aria-pressed="true"] { --b-bg: var(--accent); --b-fg: var(--on-accent); --b-bd: var(--accent); }
+
+  .ct-feed { min-height: 46px; display: flex; align-items: center; padding: 8px 12px; background: #000; border: 1px solid var(--line-2); border-radius: var(--r); font-family: var(--font-led); font-size: 17px; line-height: 1.3; color: var(--led); text-shadow: var(--led-glow); overflow-wrap: anywhere; }
+  .ct-feed.is-ok { color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .5); }
+  .ct-feed.is-bad { color: var(--led-red); text-shadow: 0 0 6px rgba(255, 75, 58, .55); }
+
+  .ct-host { display: grid; gap: 12px; }
+  #peek { white-space: nowrap; }
+  .ct-host__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .ct-sol { display: grid; gap: 4px; padding: 12px; background: var(--panel-2); border: 1px dashed var(--line-2); border-radius: var(--r); }
+  .ct-sol__word { font-family: var(--font-display); font-weight: 900; font-size: 26px; line-height: 1.05; letter-spacing: .02em; color: var(--text); }
+  .ct-sol__why { color: var(--text-2); font-size: 15px; }
+  .ct-ref { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ct-ref .btn { min-height: 58px; font-size: 19px; }
+  .ct-form { display: flex; gap: 8px; }
+  .ct-form .input { flex: 1; min-width: 0; text-transform: uppercase; font-family: var(--font-display); font-weight: 800; font-size: 19px; }
+  .ct-form .input::placeholder { text-transform: none; font-family: var(--font-body); font-weight: 400; font-size: 16px; }
+  .ct-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 10px; }
+
+  /* ---------- Fine catena: il riepilogo dei legami ---------- */
+  .ct-recap { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+  .ct-recap li { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr); gap: 2px 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .ct-recap li:last-child { border-bottom: 0; }
+  .ct-recap b { font-family: var(--font-display); font-weight: 900; text-transform: uppercase; }
+  .ct-recap span { color: var(--text-2); font-size: 15px; }
+  .ct-recap em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--muted); grid-column: 1 / -1; }
+
+  @media (max-width: 479px) {
+    .ct-team { padding: 8px 9px 10px; }
+    .ct-team__name { font-size: 14px; }
+    .ct-chain { padding: 8px 4px; }
+    .ct-row { grid-template-columns: 18px minmax(0, 1fr); gap: 4px; padding: 4px; }
+    .ct-row + .ct-row::before { left: 12px; }
+    .ct-ref .btn { font-size: 17px; }
+  }
+  @media (min-width: 900px) { #s-start .intro { align-items: start; } #s-start .intro > .stack { position: sticky; top: calc(var(--header-h) + 32px); } }
+</style>
+</head>
+<body data-game="catena">
+<main id="app" class="qz-main" tabindex="-1">
+
+  <!-- ============ INIZIO + IMPOSTAZIONI ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Gioco 17 · Due squadre</span>
+        <h1 class="intro__title">La <em>Catena</em></h1>
+        <p class="intro__lead">Otto parole, una attaccata all'altra: Baggio porta al pallone, il pallone all'oro, l'oro al nero. Si vedono solo la prima e l'ultima. In mezzo, sei anelli da trovare prima degli avversari. Chi tiene il telefono fa il presentatore.</p>
+        <div class="card mt-3">
+          <div class="ct-setup">
+            <div id="teams-host"></div>
+            <div class="ct-opt">
+              <span class="label" id="lbl-n">Quante catene</span>
+              <div id="opt-n" aria-labelledby="lbl-n"></div>
+            </div>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
+        </div>
+        <p class="small muted mt-2" id="start-record"></p>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PARTITA ============ -->
+  <section class="screen" id="s-game">
+    <div class="ct-wrap stack" style="--gap:14px">
+      <div class="ct-sb" role="group" aria-label="Tabellone">
+        <div class="ct-sb__head"><span>La Catena</span><span>Catena <b id="sb-n">1/5</b></span></div>
+        <div class="ct-sb__row">
+          <div class="ct-team" id="t0">
+            <div class="ct-team__side"><em></em>Casa</div>
+            <div class="ct-team__name"><i></i><span data-name></span></div>
+            <div class="ct-team__pts" data-pts>0</div>
+          </div>
+          <div class="ct-team" id="t1">
+            <div class="ct-team__side">Ospiti<em></em></div>
+            <div class="ct-team__name"><i></i><span data-name></span></div>
+            <div class="ct-team__pts" data-pts>0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ct-chain" id="chain" role="group" aria-label="La catena di parole"></div>
+
+      <!-- in gioco -->
+      <div id="play" class="stack" style="--gap:12px">
+        <div class="ct-turn">
+          <h2 class="ct-turn__who" id="turn-who" tabindex="-1"></h2>
+          <span class="ct-value">Vale <b id="value">10</b></span>
+        </div>
+        <div class="ct-dir" id="dir" role="group" aria-label="Da che parte attaccare la catena">
+          <button class="btn" type="button" id="dir-top" aria-pressed="true"></button>
+          <button class="btn" type="button" id="dir-bottom" aria-pressed="false"></button>
+        </div>
+        <div class="ct-feed" id="feed" aria-live="polite"></div>
+        <div class="card ct-host">
+          <div class="ct-host__top">
+            <span class="label">Il presentatore</span>
+            <button class="btn btn--sm" type="button" id="peek" aria-expanded="false" aria-controls="sol"></button>
+          </div>
+          <div class="ct-sol" id="sol" hidden>
+            <span class="ct-sol__word" id="sol-word"></span>
+            <span class="ct-sol__why" id="sol-why"></span>
+          </div>
+          <div class="ct-ref" role="group" aria-label="Verdetto del presentatore">
+            <button class="btn btn--ok" type="button" id="ok"></button>
+            <button class="btn btn--bad" type="button" id="ko"></button>
+          </div>
+          <form class="ct-form" id="form" autocomplete="off">
+            <label class="sr-only" for="guess">Oppure scrivete la risposta</label>
+            <input class="input" id="guess" maxlength="30" placeholder="Oppure scrivetela qui" autocapitalize="characters" spellcheck="false" enterkeyhint="send">
+            <button class="btn" type="submit" id="try"></button>
+          </form>
+        </div>
+        <div class="ct-tools">
+          <button class="btn btn--sm" type="button" id="give"></button>
+          <button class="btn btn--ghost btn--sm" type="button" id="quit"></button>
+        </div>
+        <p class="small muted center kbd-hint">Da tastiera: <span class="kbd">G</span> giusto · <span class="kbd">X</span> sbagliato · <span class="kbd">↑</span> <span class="kbd">↓</span> lato · <span class="kbd">V</span> soluzione · <span class="kbd">/</span> scrivi</p>
+      </div>
+
+      <!-- catena chiusa -->
+      <div id="done" class="stack" style="--gap:14px" hidden>
+        <div class="card card--glow">
+          <span class="eyebrow" id="done-eyebrow"></span>
+          <h2 id="done-title" tabindex="-1" style="margin:6px 0 10px"></h2>
+          <ul class="ct-recap" id="recap"></ul>
+        </div>
+        <button class="btn btn--primary btn--xl btn--block" type="button" id="next"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
+
+</main>
+
+<script src="assets/qz.js?v=e4b44bef" defer></script>
+<script src="assets/db-catena.js?v=7abbc99f" defer></script>
+<script src="assets/games/catena.js?v=18177f88" defer></script>
+</body>
+</html>

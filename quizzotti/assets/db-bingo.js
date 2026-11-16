@@ -1,0 +1,141 @@
+/* ==========================================================================
+   QUIZZOTTI — Database: Bingo della Partita
+   Eventi che possono succedere in una partita vista in TV.
+   text   : breve, deve stare in una casella piccola (max 40 caratteri)
+   rarity : 1 succede quasi sempre, 2 piu' o meno una partita su due, 3 raro
+   cat    : Campo, Arbitro e VAR, Panchina, Telecronaca e TV, Tifosi
+   g      : (facoltativo) argomento: in una cartella ce n'e' al massimo uno
+            per argomento, cosi' non ci sono eventi che si escludono a vicenda
+            o che arrivano tutti insieme con lo stesso episodio.
+   Ogni evento vale per tutte e due le squadre. Conta solo quello che passa
+   in diretta dal fischio d'inizio ai saluti di fine partita.
+   ATTENZIONE: aggiungere, togliere o riordinare voci cambia le cartelle
+   generate dai codici (il generatore pesca da questo elenco).
+   ========================================================================== */
+
+const bingoEvents = [
+  // ========== CAMPO ==========
+  { text: "Calcio d'angolo nei primi 15'", rarity: 1, cat: "Campo" },
+  { text: "Tiro alto sopra la traversa", rarity: 1, cat: "Campo" },
+  { text: "Parata in tuffo del portiere", rarity: 1, cat: "Campo" },
+  { text: "Punizione dal limite dell'area", rarity: 1, cat: "Campo" },
+  { text: "Punizione che sbatte sulla barriera", rarity: 1, cat: "Campo" },
+  { text: "Gol nel secondo tempo", rarity: 1, cat: "Campo" },
+  { text: "Almeno due gol in partita", rarity: 1, cat: "Campo" },
+  { text: "Tiro deviato in calcio d'angolo", rarity: 1, cat: "Campo" },
+  { text: "Giocatore a terra, entrano i medici", rarity: 1, cat: "Campo" },
+  { text: "Il portiere respinge di pugno", rarity: 1, cat: "Campo" },
+  { text: "Gol di testa", rarity: 2, cat: "Campo" },
+  { text: "Gol da fuori area", rarity: 2, cat: "Campo" },
+  { text: "Palo o traversa", rarity: 2, cat: "Campo", g: "legni" },
+  { text: "Gol su calcio d'angolo", rarity: 2, cat: "Campo" },
+  { text: "Segnano tutte e due le squadre", rarity: 2, cat: "Campo" },
+  { text: "Almeno quattro gol in partita", rarity: 2, cat: "Campo" },
+  { text: "Gol di un giocatore entrato dopo", rarity: 2, cat: "Campo" },
+  { text: "Gol nei primi 15 minuti", rarity: 2, cat: "Campo", g: "pt" },
+  { text: "0-0 a fine primo tempo", rarity: 2, cat: "Campo", g: "pt" },
+  { text: "Gol di un difensore", rarity: 2, cat: "Campo" },
+  { text: "Scontro di teste, gioco fermo", rarity: 2, cat: "Campo" },
+  { text: "Rimessa laterale lunga in area", rarity: 2, cat: "Campo" },
+  { text: "Autogol", rarity: 3, cat: "Campo" },
+  { text: "Doppietta di un giocatore", rarity: 3, cat: "Campo" },
+  { text: "Gol su punizione diretta", rarity: 3, cat: "Campo" },
+  { text: "Gol nei primi 5 minuti", rarity: 3, cat: "Campo", g: "pt" },
+  { text: "Gol nel recupero del 2° tempo", rarity: 3, cat: "Campo" },
+  { text: "Gol nel recupero del 1° tempo", rarity: 3, cat: "Campo", g: "pt" },
+  { text: "Rimonta: vince chi era sotto", rarity: 3, cat: "Campo" },
+  { text: "Salvataggio sulla linea di porta", rarity: 3, cat: "Campo" },
+  { text: "Due legni nella stessa partita", rarity: 3, cat: "Campo", g: "legni" },
+  { text: "Due gol in meno di due minuti", rarity: 3, cat: "Campo" },
+  { text: "Il portiere va a saltare in area", rarity: 3, cat: "Campo" },
+  { text: "Giocatore con la testa fasciata", rarity: 3, cat: "Campo" },
+  { text: "Segna il capitano", rarity: 3, cat: "Campo" },
+  { text: "Rigore sbagliato o parato", rarity: 3, cat: "Campo", g: "rigore" },
+  { text: "Giocatore con la maschera protettiva", rarity: 3, cat: "Campo" },
+
+  // ========== ARBITRO E VAR ==========
+  { text: "Fuorigioco fischiato", rarity: 1, cat: "Arbitro e VAR" },
+  { text: "Ammonizione nel primo tempo", rarity: 1, cat: "Arbitro e VAR" },
+  { text: "Gialli per tutte e due le squadre", rarity: 1, cat: "Arbitro e VAR" },
+  { text: "Spray per segnare la barriera", rarity: 1, cat: "Arbitro e VAR" },
+  { text: "Capannello attorno all'arbitro", rarity: 1, cat: "Arbitro e VAR" },
+  { text: "Recupero di 3+ minuti nel 2° tempo", rarity: 1, cat: "Arbitro e VAR", g: "rec2" },
+  { text: "Rigore assegnato", rarity: 2, cat: "Arbitro e VAR", g: "rigore" },
+  { text: "L'arbitro va a rivedere al monitor", rarity: 2, cat: "Arbitro e VAR" },
+  { text: "Il VAR annulla un gol", rarity: 2, cat: "Arbitro e VAR", g: "annullato" },
+  { text: "Gol annullato per fuorigioco", rarity: 2, cat: "Arbitro e VAR", g: "annullato" },
+  { text: "Almeno sei ammonizioni", rarity: 2, cat: "Arbitro e VAR" },
+  { text: "Recupero di 5+ minuti nel 2° tempo", rarity: 2, cat: "Arbitro e VAR", g: "rec2" },
+  { text: "Recupero di 3+ minuti nel 1° tempo", rarity: 2, cat: "Arbitro e VAR" },
+  { text: "Il pallone colpisce l'arbitro", rarity: 2, cat: "Arbitro e VAR" },
+  { text: "Ammonito uno entrato dalla panchina", rarity: 2, cat: "Arbitro e VAR" },
+  { text: "Cartellino rosso", rarity: 3, cat: "Arbitro e VAR" },
+  { text: "Ammonizione nei primi 10 minuti", rarity: 3, cat: "Arbitro e VAR" },
+  { text: "Rigore concesso dopo il VAR", rarity: 3, cat: "Arbitro e VAR", g: "rigore" },
+  { text: "Il VAR toglie un rigore", rarity: 3, cat: "Arbitro e VAR", g: "rigore" },
+  { text: "Due rigori nella stessa partita", rarity: 3, cat: "Arbitro e VAR", g: "rigore" },
+  { text: "Ammonito un portiere", rarity: 3, cat: "Arbitro e VAR" },
+  { text: "Giallo per simulazione", rarity: 3, cat: "Arbitro e VAR" },
+  { text: "Giallo per la maglia tolta", rarity: 3, cat: "Arbitro e VAR" },
+
+  // ========== PANCHINA ==========
+  { text: "Doppio cambio nello stesso momento", rarity: 1, cat: "Panchina" },
+  { text: "Primo cambio prima del 60'", rarity: 1, cat: "Panchina" },
+  { text: "Un cambio dopo l'85'", rarity: 1, cat: "Panchina" },
+  { text: "Una squadra fa tutti e 5 i cambi", rarity: 1, cat: "Panchina" },
+  { text: "Inquadrano le riserve che si scaldano", rarity: 1, cat: "Panchina" },
+  { text: "Allenatore che urla indicazioni", rarity: 1, cat: "Panchina" },
+  { text: "Cambio tra primo e secondo tempo", rarity: 2, cat: "Panchina" },
+  { text: "Triplo cambio nello stesso momento", rarity: 2, cat: "Panchina" },
+  { text: "Cambio per infortunio", rarity: 2, cat: "Panchina" },
+  { text: "Esce il capitano: fascia a un altro", rarity: 2, cat: "Panchina" },
+  { text: "Stretta di mano tra gli allenatori", rarity: 2, cat: "Panchina" },
+  { text: "Cambio nel primo tempo", rarity: 3, cat: "Panchina" },
+  { text: "Allenatore ammonito", rarity: 3, cat: "Panchina" },
+  { text: "Allenatore con il cappellino", rarity: 3, cat: "Panchina" },
+  { text: "Inquadrano la lavagnetta tattica", rarity: 3, cat: "Panchina" },
+
+  // ========== TELECRONACA E TV ==========
+  { text: "Replay al rallentatore di un fallo", rarity: 1, cat: "Telecronaca e TV" },
+  { text: "Grafica del possesso palla", rarity: 1, cat: "Telecronaca e TV" },
+  { text: "Parla l'inviato a bordocampo", rarity: 1, cat: "Telecronaca e TV" },
+  { text: "Il telecronista ricorda un ex", rarity: 1, cat: "Telecronaca e TV" },
+  { text: "Annunciano il migliore in campo", rarity: 1, cat: "Telecronaca e TV" },
+  { text: "Replay del gol da un'altra camera", rarity: 1, cat: "Telecronaca e TV" },
+  { text: "Il telecronista dice «che partita!»", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Il telecronista dice «clamoroso»", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Il telecronista dice «mamma mia»", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Mostrano le linee del fuorigioco", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Nominano il fantacalcio", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Danno il risultato di un altro campo", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Il telecronista sbaglia un nome", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Inquadrano un vip in tribuna", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Inquadrano il presidente in tribuna", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Annunciano il numero di spettatori", rarity: 2, cat: "Telecronaca e TV" },
+  { text: "Il telecronista dice «zona Cesarini»", rarity: 3, cat: "Telecronaca e TV" },
+  { text: "Il commento tecnico: «ai miei tempi»", rarity: 3, cat: "Telecronaca e TV" },
+  { text: "«Gol dell'ex» in telecronaca", rarity: 3, cat: "Telecronaca e TV" },
+  { text: "Annunciano un esordio in Serie A", rarity: 3, cat: "Telecronaca e TV" },
+  { text: "Problemi tecnici alla diretta", rarity: 3, cat: "Telecronaca e TV" },
+
+  // ========== TIFOSI ==========
+  { text: "Striscione inquadrato in TV", rarity: 1, cat: "Tifosi" },
+  { text: "Esultanza sotto la curva", rarity: 1, cat: "Tifosi" },
+  { text: "Tifoso con le mani nei capelli", rarity: 1, cat: "Tifosi" },
+  { text: "Inquadrano il settore ospiti", rarity: 1, cat: "Tifosi" },
+  { text: "La squadra va a salutare la curva", rarity: 1, cat: "Tifosi" },
+  { text: "Inquadrano un bambino sugli spalti", rarity: 1, cat: "Tifosi" },
+  { text: "Fumogeni o torce accese", rarity: 2, cat: "Tifosi" },
+  { text: "Fischi a un ex in campo", rarity: 2, cat: "Tifosi" },
+  { text: "Applausi a chi esce sostituito", rarity: 2, cat: "Tifosi" },
+  { text: "Tifoso inquadrato con un cartello", rarity: 2, cat: "Tifosi" },
+  { text: "Fischi a fine primo tempo", rarity: 2, cat: "Tifosi" },
+  { text: "Bandierone in curva inquadrato", rarity: 2, cat: "Tifosi" },
+  { text: "Ola sugli spalti", rarity: 3, cat: "Tifosi" },
+  { text: "Invasione di campo", rarity: 3, cat: "Tifosi" },
+  { text: "Gioco fermo per cori o oggetti", rarity: 3, cat: "Tifosi" },
+  { text: "Inquadrano la mascotte", rarity: 3, cat: "Tifosi" },
+  { text: "Inquadrano un tifoso travestito", rarity: 3, cat: "Tifosi" }
+];
+
+if (typeof module !== "undefined" && module.exports) { module.exports = { bingoEvents }; }
