@@ -1217,6 +1217,10 @@
   }
 
 
+  // Prezzo degli spin: era +12% (1.12); poi abbassato del 25% su richiesta (1.12 x 0.75 = 0.84).
+  // Usato anche dal rimborso di resolvePendingSpin, così i due conti restano uguali.
+  const SPIN_PRICE_MULT = 0.84;
+
   // Affaticamento dello scout: ogni spin comprato nella stessa finestra pre-stagione
   // costa il 30% in più dell'ultimo (standard e marquee condividono il contatore). Uno o
   // due spin restano accessibili, ripetere l'intera rosa in una sola estate diventa
@@ -1234,7 +1238,7 @@
     const n = Math.max(0, (ctx.spinsBought || 0) - 1);
     let refund = Number.isFinite(ctx._spinCost) && ctx._spinCost > 0 ? ctx._spinCost : null;
     if (refund == null) {
-      const w = DIVS[ctx.div].spin * 1.12 * Math.pow(1.3, n) * diffOf(null, ctx).scoutCostMult;
+      const w = DIVS[ctx.div].spin * SPIN_PRICE_MULT * Math.pow(1.3, n) * diffOf(null, ctx).scoutCostMult;
       refund = w >= 1e6 ? Math.round(w / 1e5) * 1e5 : w >= 1e5 ? Math.round(w / 5e3) * 5e3 : Math.round(w / 1e3) * 1e3;
     }
     ctx.budget += refund;
@@ -1246,10 +1250,9 @@
 
   function spinCostNow(premium) {
     const base = premium ? divOf().premium : divOf().spin;
-    // +12% su ogni spin (normale o di lusso, ogni categoria/difficoltà): un rialzo leggero e
-    // uniforme, non tocca la curva di scalata (Math.pow(1.3, ...)) né i costi base per
-    // categoria in DIVS, un solo punto invece di 6 righe da toccare a mano.
-    const w = base * 1.12 * Math.pow(1.3, S.spinsBought || 0) * diffOf().scoutCostMult;
+    // SPIN_PRICE_MULT vale per ogni spin (normale o di lusso, ogni categoria/difficoltà): non tocca
+    // la curva di scalata (Math.pow(1.3, ...)) né i costi base per categoria in DIVS.
+    const w = base * SPIN_PRICE_MULT * Math.pow(1.3, S.spinsBought || 0) * diffOf().scoutCostMult;
     if (w >= 1e6) return Math.round(w / 1e5) * 1e5;
     if (w >= 1e5) return Math.round(w / 5e3) * 5e3;
     return Math.round(w / 1e3) * 1e3;
