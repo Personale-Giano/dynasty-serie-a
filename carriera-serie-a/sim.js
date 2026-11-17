@@ -1114,6 +1114,7 @@
   // Un'offerta è un vero premio sul 30% del valore di svincolo, quindi incassare è
   // redditizio ma perdi il giocatore. Arrotondata a una cifra tonda.
   const OFFER_FEE_CAP_MULT = 1;
+  const OFFER_STAR_STEP = 0.35;   // +35% di tetto per ogni punto di overall oltre il massimo dello spin di lusso
   function offerFee(p, ctx = S) {
     // Era 0.95-1.5 volte il valore: vendere a chiunque offrisse e ricomprare con gli spin
     // moltiplicava la cassa finale per 15 (banco di prova). Ora 0.7-1.05: resta un affare
@@ -1123,7 +1124,13 @@
     // sopra, oltre si incassa solo un decimo): il valore segue lo stipendio, che cresce in modo
     // esponenziale con l'overall, mentre lo spin costa un prezzo fisso — vendere ogni stella e
     // ripescarne un'altra con uno spin rendeva più del suo costo anche dieci volte.
-    const cap = DIVS[Math.min(DIVS.length - 1, ctx.div + 1)].premium * OFFER_FEE_CAP_MULT;
+    // Chi supera il tetto dello spin di lusso della categoria (SPIN_CAPS) però non si ricompra
+    // con uno spin: lì il trucco non regge, e un 99 in Serie A valutato ~30M era assurdo. Il
+    // tetto sale del 35% per ogni punto oltre quel limite (Serie A: 92 -> 30M, 95 -> ~60M,
+    // 99 -> ~100M).
+    const spinCap = SPIN_CAPS[Math.min(SPIN_CAPS.length - 1, ctx.div)].premium;
+    const starMult = 1 + OFFER_STAR_STEP * Math.max(0, p.ovr - spinCap);
+    const cap = DIVS[Math.min(DIVS.length - 1, ctx.div + 1)].premium * OFFER_FEE_CAP_MULT * starMult;
     const v = raw <= cap ? raw : cap + (raw - cap) * 0.1;
     return v >= 1e6 ? Math.round(v / 1e5) * 1e5 : Math.round(v / 1e4) * 1e4;
   }
