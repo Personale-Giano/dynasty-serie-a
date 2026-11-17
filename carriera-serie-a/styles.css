@@ -1850,3 +1850,13 @@ input::placeholder{ color:#6f7277; }
   /* la classifica laterale finisce sopra la barra dei bottoni, non sotto */
   #owSeasonScreen .ow-col-table{ max-height:calc(100vh - 32px - 110px); }
 }
+
+/* Prestiti da decidere prima del via: riscatta o rilascia (loanDecisionHTML in ui.js). */
+.ow-loandecide{ margin:10px 0 12px; padding:12px 14px; background:var(--panel); border:1.5px solid var(--c1, var(--line)); border-radius:10px; }
+.ow-loandecide-title{ font:400 17px/1.1 var(--display); text-transform:uppercase; letter-spacing:.02em; color:var(--txt); margin-bottom:4px; }
+.ow-loandecide .ow-sub{ margin:0 0 8px; }
+.ow-loandecide-row{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:8px 0; border-top:1px solid var(--line); }
+.ow-loandecide-row .nm{ flex:1 1 120px; min-width:0; font-weight:700; color:var(--txt); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ow-loandecide-btns{ display:flex; gap:6px; flex:1 1 100%; }
+.ow-loandecide-btns .dyn-btn{ flex:1 1 0; width:auto; min-width:0; margin:0; min-height:40px; padding:6px 10px; font-size:13px; white-space:nowrap; }
+@media(min-width:560px){ .ow-loandecide-btns{ flex:0 0 auto; } .ow-loandecide-btns .dyn-btn{ flex:0 0 auto; } }

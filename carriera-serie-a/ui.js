@@ -2394,6 +2394,16 @@
       // di azione della riga stessa (Vendi/Rinnova/Riscatta), che hanno il loro handler.
       if ((el = on('.ow-player[data-pid]')) && !ev.target.closest('button')) { openPlayerDetail(+el.dataset.pid); return; }
 
+      // Rilascia un giocatore in prestito: torna subito al suo club (libera posto e stipendio),
+      // invece di aspettare l'avvio della stagione.
+      if ((el = on('[data-loanrel]'))) {
+        const p = S.squad.find((x) => x.pid === +el.dataset.loanrel && x.loan); if (!p) return;
+        S.squad = S.squad.filter((x) => x !== p);
+        if (S.captainPid === p.pid) S.captainPid = null;
+        toast(p.n + ' rilasciato: torna al suo club.');
+        renderBoard(); saveGame(); return;
+      }
+
       // La cessione è irreversibile: prima di eseguirla chiediamo conferma con l'overlay
       // (stesso pattern di "Vendi il club"/"Dimettiti"), per evitare che un tap sbagliato sul
       // 💷 nella lista rosa costi un giocatore per sempre.
@@ -2532,7 +2542,7 @@
         // "Vendi il club", con le condizioni ripetute in chiaro.
         const seasons = o.deadlineSeason - S.season;
         overlay(`<h2>Firmare con ${escapeHtml(o.name)}?</h2>
-          <p>Incassi <b>${fmtMoney(o.injection)}</b> subito e <b>${fmtMoney(o.yearly)}</b> ogni stagione. In cambio devi arrivare in <b>${DIVS[o.targetDiv].name}</b> entro ${seasons} stagion${seasons === 1 ? 'e' : 'i'} (stagione ${o.deadlineSeason}).</p>
+          <p>Incassi <b>${fmtMoney(o.injection)}</b> subito e <b>${fmtMoney(o.yearly)}</b> ogni stagione. In cambio, obiettivo: <b>${investorGoalText(o)}</b> entro ${seasons} stagion${seasons === 1 ? 'e' : 'i'} (stagione ${o.deadlineSeason}).</p>
           <div class="ow-warn" style="margin:0 0 14px;text-align:left">⚠️ Se non ci arrivi in tempo il fondo si ritira e rivuole <b>${fmtMoney(Math.round(o.injection * INVESTOR_FAIL_PENALTY / 1e4) * 1e4)}</b> (${Math.round(INVESTOR_FAIL_PENALTY * 100)}% dell'iniezione), con i tifosi delusi: può mandarti in rosso, e due stagioni di fila in rosso significano l'amministrazione controllata. Il patto non si può sciogliere.</div>
           <div class="dyn-modal-actions">
             <button class="dyn-btn dyn-btn-primary" id="ovInvGo">Firma il patto</button>
@@ -2543,7 +2553,7 @@
           closeOverlay();
           if (S.investorDeal || !(S.investorOpts || []).includes(o)) return;
           S.investorDeal = o; S.investorOpts = null; S.budget += o.injection;
-          toast(o.name + ' investe: +' + fmtMoney(o.injection) + ' subito. Obiettivo: ' + DIVS[o.targetDiv].name + ' entro la stagione ' + o.deadlineSeason + '.', 'success'); renderBoard(); saveGame();
+          toast(o.name + ' investe: +' + fmtMoney(o.injection) + ' subito. Obiettivo: ' + investorGoalText(o) + ' entro la stagione ' + o.deadlineSeason + '.', 'success'); renderBoard(); saveGame();
         };
         return;
       }
@@ -2836,7 +2846,7 @@
             <span class="wg">${fmtYr(p.wage)}</span>
           </span>
           ${fy ? `<button class="ow-renew" data-renew="${p.pid}" title="Offri un nuovo contratto">Rinnova</button>` : ''}
-          ${p.loan ? `<button class="ow-renew" data-buyback="${p.pid}" title="Riscatta a titolo definitivo, altrimenti torna al suo club a inizio stagione">💰 Riscatta · ${fmtMoney(loanBuybackFee(p))}</button>` : `<button class="ow-x" data-rel="${p.pid}" title="Vendi">💷</button>`}
+          ${p.loan ? `<button class="ow-renew" data-buyback="${p.pid}" title="Riscatta a titolo definitivo, altrimenti torna al suo club a inizio stagione">💰 Riscatta · ${fmtMoney(loanBuybackFee(p))}</button><button class="ow-x" data-loanrel="${p.pid}" title="Rilascia: torna subito al suo club">👋</button>` : `<button class="ow-x" data-rel="${p.pid}" title="Vendi">💷</button>`}
         </div>
       </div>`;
     }).join('') : '<div class="ow-sub" style="margin:10px 0">Nessun giocatore in questo ruolo.</div>';
@@ -2887,18 +2897,18 @@
           return `
           <div class="ow-invdeal">
             <div class="ow-invdeal-head"><b>${dl.name}</b><span class="ow-invdeal-badge ${left <= 1 ? 'urgent' : ''}">${left <= 0 ? 'ultima chiamata' : left + ' stagion' + (left === 1 ? 'e' : 'i') + ' rimast' + (left === 1 ? 'a' : 'e')}</span></div>
-            <div class="ow-invdeal-row"><span>Obiettivo</span><b>${DIVS[dl.targetDiv].name} entro la stagione ${dl.deadlineSeason}</b></div>
+            <div class="ow-invdeal-row"><span>Obiettivo</span><b>${investorGoalText(dl)} entro la stagione ${dl.deadlineSeason}</b></div>
             <div class="ow-invdeal-row"><span>Ogni stagione</span><b class="good">+${fmtMoney(dl.yearly)}</b></div>
             <div class="ow-invdeal-row"><span>Bonus se centri l'obiettivo</span><b class="good">+${fmtMoney(dl.completionBonus)}</b></div>
             <div class="ow-invdeal-row bad-row"><span>Se non arrivi in tempo</span><b class="bad">restituisci il doppio di quanto ricevuto all'inizio</b></div>
           </div>`;
         })() : (S.investorOpts && S.investorOpts.length) ? `
-          <div class="ow-sub">Un patto pluriennale serio: cassa subito e un top-up ogni stagione, in cambio di un obiettivo di categoria entro una scadenza — se non lo raggiungi in tempo, il fondo si ritira e pretende il doppio di quanto ha versato all'inizio: con la cassa in rosso rischi l'amministrazione controllata.</div>
+          <div class="ow-sub">Un patto pluriennale serio: cassa subito e un top-up ogni stagione, in cambio di un obiettivo (una categoria da raggiungere, in Serie A un traguardo nelle coppe europee) entro una scadenza — se non lo raggiungi in tempo, il fondo si ritira e pretende il doppio di quanto ha versato all'inizio: con la cassa in rosso rischi l'amministrazione controllata.</div>
           ${S.investorOpts.map((o, i) => {
             const seasons = o.deadlineSeason - S.season;
             return `<div class="ow-invoffer">
             <div class="ow-invdeal-head"><b>${o.name}</b><span class="money">+${fmtMoney(o.injection)} subito</span></div>
-            <div class="ow-invdeal-row"><span>Obiettivo</span><b>${DIVS[o.targetDiv].name} entro ${seasons} stagion${seasons === 1 ? 'e' : 'i'} (stagione ${o.deadlineSeason})</b></div>
+            <div class="ow-invdeal-row"><span>Obiettivo</span><b>${investorGoalText(o)} entro ${seasons} stagion${seasons === 1 ? 'e' : 'i'} (stagione ${o.deadlineSeason})</b></div>
             <div class="ow-invdeal-row"><span>Ogni stagione</span><b class="good">+${fmtMoney(o.yearly)}</b></div>
             <div class="ow-invdeal-row"><span>Bonus se centri l'obiettivo</span><b class="good">+${fmtMoney(o.completionBonus)}</b></div>
             <div class="ow-invdeal-row bad-row"><span>Se non arrivi in tempo</span><b class="bad">restituisci il doppio di quanto ricevuto all'inizio</b></div>
@@ -3064,7 +3074,8 @@
       ${crestOf(S, 'ow-board-crest')}
       <div class="dyn-top"><div class="dyn-top-title">Dirigenza${S.hardcore ? ' <span class="ow-invpill" style="display:inline-block;vertical-align:middle;font-size:11px;padding:2px 8px" title="Cessioni immediate, spin senza rimborso, niente rilancio sulle offerte, niente scorciatoie sulla cassa, +25% rischio infortuni, imprevisti negativi più pesanti, buonuscita staff al 50%">🔥 Hardcore</span>' : ''}</div><div class="dyn-top-sub">${S.owner} · ${S.club} · Stagione ${S.season} di ${S.maxSeasons || MAX_SEASONS}</div></div>
       ${ladderHTML()}
-      ${S.investorDeal ? (() => { const left = S.investorDeal.deadlineSeason - S.season; return `<div class="ow-invpill${left <= 1 ? ' urgent' : ''}" title="Fondo d'investimento: ${S.investorDeal.name}">🏦 Obiettivo fondo: ${DIVS[S.investorDeal.targetDiv].name} entro la stagione ${S.investorDeal.deadlineSeason} (${left <= 0 ? 'ultima chiamata' : 'mancano ' + left + ' stagion' + (left === 1 ? 'e' : 'i')})</div>`; })() : ''}
+      ${S.investorDeal ? (() => { const left = S.investorDeal.deadlineSeason - S.season; return `<div class="ow-invpill${left <= 1 ? ' urgent' : ''}" title="Fondo d'investimento: ${S.investorDeal.name}">🏦 Obiettivo fondo: ${investorGoalText(S.investorDeal)} entro la stagione ${S.investorDeal.deadlineSeason} (${left <= 0 ? 'ultima chiamata' : 'mancano ' + left + ' stagion' + (left === 1 ? 'e' : 'i')})</div>`; })() : ''}
+      ${loanDecisionHTML()}
       ${guideHTML(fyCount, broke)}
       <div class="ow-tabs" role="tablist" aria-label="Sezioni della dirigenza">${TABS.map((t) => `<button type="button" role="tab" aria-selected="${boardTab === t.key}" aria-controls="boardTabBody" tabindex="${boardTab === t.key ? 0 : -1}" class="ow-tab ${boardTab === t.key ? 'on' : ''}" data-tab="${t.key}">${t.label}${t.warn ? '<span class="dot" aria-hidden="true"></span><span class="sr-only"> (da controllare)</span>' : ''}</button>`).join('')}</div>
       <div id="boardTabBody" role="tabpanel" class="ow-tab-enter">${activeTab.html}</div>
@@ -3917,11 +3928,34 @@
   // si scoprono solo navigando le tab una per una (contratti in scadenza, infortunati/
   // squalificati che rientrano a breve, offerte di mercato o del fondo d'investimento ancora
   // da decidere). Nessuno stato nuovo: legge solo campi già esistenti su S.
+  // Giocatori in prestito da decidere prima del via: o li riscatti o li rilasci. Chi resta
+  // in sospeso torna comunque al suo club all'avvio della stagione (startSeason).
+  function loanDecisionHTML() {
+    if (!S || S.seasonActive) return '';
+    const loans = S.squad.filter((p) => p.loan);
+    if (!loans.length) return '';
+    return `<div class="ow-loandecide">
+      <div class="ow-loandecide-title">🔁 Prestiti da decidere</div>
+      <div class="ow-sub">Riscattalo per tenerlo, oppure rilascialo. Se non scegli, torna al suo club quando inizia la stagione.</div>
+      ${loans.map((p) => `<div class="ow-loandecide-row">
+        <span class="ovr" style="${ovrBadge(p.ovr)}">${p.ovr}</span>
+        <span class="postag postag-${p.pos}">${p.pos}</span>
+        <span class="nm">${flagOf(p)}${escapeHtml(p.n)}</span>
+        <span class="ow-loandecide-btns">
+          <button class="dyn-btn dyn-btn-primary" data-buyback="${p.pid}">💰 Riscatta · ${fmtMoney(loanBuybackFee(p))}</button>
+          <button class="dyn-btn" data-loanrel="${p.pid}">👋 Rilascia</button>
+        </span>
+      </div>`).join('')}
+    </div>`;
+  }
+
   function buildReminders() {
     if (!S || !S.squad) return [];
     const items = [];
     const expiring = S.squad.filter((p) => !p.loan && finalYear(p));
     if (expiring.length) items.push({ icon: '📄', text: (expiring.length === 1 ? expiring[0].n + ' è' : expiring.length + ' giocatori sono') + ' in scadenza di contratto: rinnova o li perdi a parametro zero.' });
+    const loans = S.seasonActive ? [] : S.squad.filter((p) => p.loan);
+    if (loans.length) items.push({ icon: '🔁', text: (loans.length === 1 ? loans[0].n + ' è' : loans.length + ' giocatori sono') + ' in prestito: riscatta o rilascia prima del via.' });
     const soonBack = S.squad.filter((p) => p.outWeeks > 0 && p.outWeeks <= 2);
     if (soonBack.length) items.push({ icon: '🚑', text: soonBack.map((p) => p.n + ' (' + p.outWeeks + ' settiman' + (p.outWeeks === 1 ? 'a' : 'e') + ')').join(', ') + ' torna' + (soonBack.length === 1 ? '' : 'no') + ' a breve dall\'infortunio.' });
     const suspended = S.squad.filter((p) => p.suspMatches > 0);

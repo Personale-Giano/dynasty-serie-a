@@ -1416,8 +1416,53 @@
   // controllata). Letta anche dal popup di conferma in ui.js.
   // Alzata a 2.5 (era 2.0) insieme ai tempi più stretti del patto cauto: il fondo era troppo facile.
   const INVESTOR_FAIL_PENALTY = 2.5;
+
+  // In Serie A non c'è una categoria più alta da raggiungere: il fondo punta sulle coppe
+  // europee. deal.goal = { type: 'qual', comp: 'ucl' } (qualificarsi alla Champions) oppure
+  // { type: 'win', comps: [...] } (vincere una delle coppe elencate). targetDiv resta 5
+  // (Serie A) per i salvataggi e i controlli che lo leggono già.
+  const EURO_GOAL_NAMES = { ucl: 'la Champions League', uel: "l'Europa League", conf: 'la Conference League' };
+  function investorGoalText(o) {
+    if (!o) return '';
+    const g = o.goal;
+    if (!g) return DIVS[o.targetDiv].name;
+    if (g.type === 'qual') return 'Qualificarsi per ' + EURO_GOAL_NAMES[g.comp];
+    return 'Vincere ' + g.comps.map((c) => EURO_GOAL_NAMES[c]).join(' o ');
+  }
+  // L'obiettivo europeo è centrato in questa stagione? qualTier ed euroWon/euroComp sono
+  // quelli calcolati da endSeason per la stagione appena chiusa.
+  function investorEuroGoalMet(goal, qualTier, euroWon, euroComp) {
+    if (goal.type === 'qual') return qualTier === goal.comp;
+    return !!euroWon && goal.comps.indexOf(euroComp) >= 0;
+  }
+  function investorEuroOffers(ctx, worth, diffMult) {
+    const mk = (name, goal, seasons, injFrac, yrFrac, bonusFrac) => ({
+      name, goal, targetDiv: DIVS.length - 1, deadlineSeason: ctx.season + seasons,
+      injection: Math.round(worth * injFrac * diffMult / 1e4) * 1e4,
+      yearly: Math.round(worth * yrFrac * diffMult / 1e4) * 1e4,
+      completionBonus: Math.round(worth * bonusFrac * diffMult / 1e4) * 1e4,
+    });
+    // la coppa che il club giocherà (o sta già giocando) quest'anno
+    const comp = ctx.euroCompNext || (ctx.euro ? ctx.euroComp : null);
+    // Cauto: entrare in Champions entro 2 stagioni (quarto posto, o vincere Europa League o
+    // Champions). Aggressivo: dipende da dove sei. Chi ha già la Champions deve vincerla in 3
+    // stagioni (il bonus più alto del gioco), chi gioca l'Europa League deve vincerla in 2,
+    // chi non ha coppe ha 3 stagioni per vincere l'Europa League o la Champions.
+    const cauto = mk(pick(INVESTOR_FUNDS), { type: 'qual', comp: 'ucl' }, 2, 0.05, 0.01, 0.1);
+    const aggressivo = comp === 'ucl'
+      ? mk(pick(INVESTOR_FUNDS), { type: 'win', comps: ['ucl'] }, 3, 0.09, 0.02, 0.3)
+      : comp === 'uel'
+        ? mk(pick(INVESTOR_FUNDS), { type: 'win', comps: ['uel', 'ucl'] }, 2, 0.08, 0.015, 0.2)
+        : mk(pick(INVESTOR_FUNDS), { type: 'win', comps: ['uel', 'ucl'] }, 3, 0.07, 0.015, 0.18);
+    if (aggressivo.name === cauto.name && INVESTOR_FUNDS.length > 1) aggressivo.name = INVESTOR_FUNDS.find((f) => f !== cauto.name);
+    return [cauto, aggressivo];
+  }
+
   function investorDealOffers(ctx = S) {
-    if (ctx.div >= DIVS.length - 1) return [];
+    if (ctx.div >= DIVS.length - 1) {
+      const w = computeWorth(ctx) - Math.round(Math.max(0, ctx.budget) * 0.8);
+      return investorEuroOffers(ctx, w, diffOf(null, ctx).sponsorMult);
+    }
     // Valore del club SENZA la cassa: computeWorth conta l'80% del contante, quindi più soldi
     // avevi più il fondo ne versava (iniezioni da 1.6 a 2.9 volte i ricavi di una stagione).
     const worth = computeWorth(ctx) - Math.round(Math.max(0, ctx.budget) * 0.8);
@@ -1740,6 +1785,8 @@
       const deal = (sp) => sp && typeof sp === 'object' && Number.isFinite(sp.perYear) && Number.isFinite(sp.left);
       ['sponsor', 'stadiumSponsor', 'techSponsor'].forEach((k) => { if (s[k] && !deal(s[k])) s[k] = null; });
       if (s.investorDeal && !(Number.isFinite(s.investorDeal.targetDiv) && Number.isFinite(s.investorDeal.deadlineSeason) && Number.isFinite(s.investorDeal.yearly))) s.investorDeal = null;
+      // obiettivo europeo (Serie A): deve essere uno dei due tipi conosciuti, con coppe valide
+      if (s.investorDeal && s.investorDeal.goal && !((s.investorDeal.goal.type === 'qual' && EURO_COMPS[s.investorDeal.goal.comp]) || (s.investorDeal.goal.type === 'win' && Array.isArray(s.investorDeal.goal.comps) && s.investorDeal.goal.comps.length && s.investorDeal.goal.comps.every((c) => EURO_COMPS[c])))) s.investorDeal = null;
       if (s.euro && !EURO_COMPS[s.euroComp]) { s.euro = false; s.euroComp = null; }
       if (s.euroCompNext && !EURO_COMPS[s.euroCompNext]) s.euroCompNext = null;
       // bacheca, storico, liste
@@ -3530,7 +3577,10 @@
       // cambia solo in advance(), quindi una promozione centrata proprio nell'anno della scadenza
       // risultava "obiettivo mancato" (con tanto di penale) pur avendolo raggiunto sul campo.
       const divAfter = clamp(ctx.div + (promoted ? 1 : 0) - (relegated ? 1 : 0), 0, DIVS.length - 1);
-      if (divAfter >= ctx.investorDeal.targetDiv) { investorCompleted = ctx.investorDeal; ctx.budget += investorCompleted.completionBonus; ctx.investorDeal = null; }
+      const goalMet = ctx.investorDeal.goal
+        ? investorEuroGoalMet(ctx.investorDeal.goal, qualTier, euroWon, ctx.euroComp)
+        : divAfter >= ctx.investorDeal.targetDiv;
+      if (goalMet) { investorCompleted = ctx.investorDeal; ctx.budget += investorCompleted.completionBonus; ctx.investorDeal = null; }
       else if (ctx.season >= ctx.investorDeal.deadlineSeason) {
         // Mancare l'obiettivo non porta più alla cessione forzata del club (troppo punitivo,
         // e comunque un destino che si vedeva solo a fine stagione): il fondo si ritira e
