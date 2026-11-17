@@ -914,7 +914,8 @@
     // basso derivato da d.avg) fa sì che un giocatore reale non sia più limitato più in
     // basso di uno generato allo stesso livello.
     const cap = SPIN_CAPS[S.div] || SPIN_CAPS[SPIN_CAPS.length - 1];
-    const band = premium ? { lo: d.avg + 5, hi: cap.premium } : { lo: d.avg, hi: cap.base };
+    // In Serie A il lusso parte da avg+8 (91), altrove da avg+5: in A un 88 non è un lusso.
+    const band = premium ? { lo: d.avg + (S.div === DIVS.length - 1 ? 8 : 5), hi: cap.premium } : { lo: d.avg, hi: cap.base };
     if (S.div === 5 && Math.random() < 1 / 12) {
       const icon = iconPlayer(role);
       if (icon) return icon;
@@ -929,7 +930,7 @@
     }
     let ovr;
     if (premium) {
-      ovr = gaussInt(d.avg + 10 + scout.bonus, clamp(3.0 + scout.varDelta, 1.6, 3.0));
+      ovr = gaussInt(d.avg + (S.div === DIVS.length - 1 ? 11 : 10) + scout.bonus, clamp(3.0 + scout.varDelta, 1.6, 3.0));
       if (Math.random() < 0.12 + scout.gem) ovr += 4 + rnd(4);   // lo scout scopre un gioiello
       ovr = clamp(ovr, band.lo, cap.premium);   // tetto massimo di categoria per il lusso
     } else {

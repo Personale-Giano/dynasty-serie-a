@@ -85,7 +85,9 @@
     { base: 90, premium: 95 },
     // Serie A: era { base: 95, premium: 105 }, sopra ogni rivale (media 83): con i soldi della
     // Serie A la rosa arrivava a 20 punti di forza sopra il campionato (banco di prova).
-    { base: 88, premium: 92 },
+    // Lusso alzato a 96 (era 92) e fascia minima avg+8 in sim.js: dalla terza stagione in A
+    // uscivano solo 88-90, nessuno interessante per una squadra già da quei livelli.
+    { base: 88, premium: 96 },
   ];
 
   // Il modulo scelto pesa davvero sulla partita: atk/def sono un piccolo delta aggiunto/
