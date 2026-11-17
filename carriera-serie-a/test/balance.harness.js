@@ -343,7 +343,7 @@ const sandbox = {
   navigator: { onLine: true },
   DynSound: null,
   // Stato del selettore stemma di ui.js, letto da startDynasty.
-  crestShape: 'shield', crestColors: ['#f0c869', '#7a4f16'],
+  crestSetup: { shape: 'shield', colors: ['#f0c869', '#7a4f16'], pattern: 'stripes', symbol: 'ball', text: 'trn' },
 };
 // Le funzioni di ui.js che il motore chiama a fine azione: qui non fanno nulla.
 ['toast', 'show', 'renderBoard', 'renderHud', 'renderCups', 'renderSeasonTarget', 'renderScouting', 'renderSeasonEnd', 'renderEnd',
