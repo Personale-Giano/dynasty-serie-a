@@ -142,6 +142,8 @@ const HARNESS_BODY = `
     greedy: function (st) { __active(st, { reserve: 0, maxSpins: 6, sellOffers: 'none', stadium: false, deal: true, ticket: 3 }); },
     // Come "sensible", ma vende SEMPRE a chi offre (dopo un rilancio) e ricompra con gli spin.
     trader: function (st) { __active(st, { reserve: 0.35, maxSpins: 4, sellOffers: 'all', stadium: true, deal: false }); },
+    // Il giocatore esperto: vende a chiunque offra e reinveste tutto SOLO in spin di lusso.
+    lusso: function (st) { __active(st, { reserve: 0.2, maxSpins: 6, sellOffers: 'all', stadium: true, deal: false, premiumOnly: true }); },
   };
 
   function __active(st, o) {
@@ -185,7 +187,7 @@ const HARNESS_BODY = `
       var est = Math.max(0, estSeasonRevenue());
       var cushion = o.reserve * Math.max(bill, est * 0.5);
       var freeNow = S.budget - bill - cushion;
-      var premium = freeNow > spinCostNow(true) * (o.reserve ? 2.5 : 1.05);
+      var premium = o.premiumOnly || freeNow > spinCostNow(true) * (o.reserve ? 2.5 : 1.05);
       var cost = spinCostNow(premium);
       if (freeNow < cost * (o.reserve ? 1.6 : 1.05)) break;
       var role = null;
