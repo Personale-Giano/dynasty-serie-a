@@ -13,9 +13,14 @@
     var PRIZES = [0, 100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 1000000];
     var SAFE = [5, 10];
     var LETTERS = ['A', 'B', 'C', 'D'];
-    var STATS_KEY = 'qz.cvem.stats';
+    /* Due versioni, un motore: calcio (CVEM.html) e cultura generale
+       (MilionarioNormale.html, data-game="milionario", dati in db-milionario.js). */
+    var NORMAL = !!document.body && document.body.getAttribute('data-game') === 'milionario';
+    var GID = NORMAL ? 'milionario' : 'cvem';
+    /* global milionarioData */
+    var STATS_KEY = 'qz.' + GID + '.stats';
     var CAT_LABEL = { Curiosita: 'Curiosità', Loghi: 'Colori e simboli' };
-    var FRIENDS = ['lo zio Franco, che non si perde una partita dal 1978', 'Gigi del bar sotto casa', 'tua cugina, abbonata in curva', 'il mister della tua squadra di calcetto', 'nonno Pino, che ha la Gazzetta di ogni lunedì', 'Marco, quello che vince sempre il fantacalcio'];
+    var FRIENDS = NORMAL ? ['zia Carla, che non si perde una puntata di un quiz dal 1985', 'il professore di lettere del liceo', 'tua cugina, che sa tutte le canzoni di Sanremo', 'nonno Pino, che ha letto tutta l\'enciclopedia', 'Giulia, quella che vince sempre al Trivial', 'Luca, che guarda documentari anche a colazione'] : ['lo zio Franco, che non si perde una partita dal 1978', 'Gigi del bar sotto casa', 'tua cugina, abbonata in curva', 'il mister della tua squadra di calcetto', 'nonno Pino, che ha la Gazzetta di ogni lunedì', 'Marco, quello che vince sempre il fantacalcio'];
 
     /* ---------- Pool domande: db-cvem + QUIZ_DB distribuito per difficolta' ---------- */
     // Il livello di una voce di QUIZ_DB dipende dal suo id (non dalla posizione nel file):
@@ -27,17 +32,18 @@
         for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
         return h;
     }
-    var pool = questions.map(function (q) {
-        return { level: q.level, text: q.question, options: LETTERS.map(function (l) { return q.options[l]; }), correct: LETTERS.indexOf(q.correctAnswer), cat: '' };
+    var CAT_ICON = NORMAL ? milionarioData.icons : {};
+    var pool = (NORMAL ? milionarioData.questions : questions).map(function (q) {
+        return { level: q.level, text: q.question, options: LETTERS.map(function (l) { return q.options[l]; }), correct: LETTERS.indexOf(q.correctAnswer), cat: q.cat || '' };
     });
-    if (typeof QUIZ_DB !== 'undefined') {
+    if (!NORMAL && typeof QUIZ_DB !== 'undefined') {
         QUIZ_DB.forEach(function (q) {
             if (!q.opzioni || q.opzioni.length !== 4) return; // i vero/falso non servono qui
             var b = BANDS[q.difficolta] || BANDS.medio;
             pool.push({ level: b[0] + (hash(q.id) % (b[1] - b[0] + 1)), text: q.domanda, options: q.opzioni.slice(), correct: q.risposta, cat: CAT_LABEL[q.categoria] || q.categoria });
         });
     }
-    var deck = new QZ.Deck('cvem', pool, function (q) { return q.text; });
+    var deck = new QZ.Deck(GID, pool, function (q) { return q.text; });
 
     /* ---------- Stato ---------- */
     var S = {};
@@ -46,11 +52,11 @@
     var $ = QZ.$;
 
     /* ---------- Markup statico ---------- */
-    $('#start-btn').innerHTML = 'Fischio d\'inizio' + QZ.icon('arrow');
+    $('#start-btn').innerHTML = (NORMAL ? 'Si comincia' : 'Fischio d\'inizio') + QZ.icon('arrow');
     $('#medal').innerHTML = QZ.icon('crown');
     $('#rules').innerHTML = [
         ['Quindici domande,', 'da €100 al milione. Più sali, più si fanno cattive.'],
-        ['Il tempo corre:', '30 secondi per le prime cinque, 40 fino alla decima, 50 per le ultime. Se scade, è fischio finale.'],
+        ['Il tempo corre:', '30 secondi per le prime cinque, 40 fino alla decima, 50 per le ultime. Se scade, ' + (NORMAL ? 'la partita finisce.' : 'è fischio finale.')],
         ['Due soglie sicure', 'a €1.000 e €32.000: se sbagli dopo, quei soldi non te li toglie nessuno.'],
         ['Quattro aiuti:', '50:50, pubblico, telefonata a casa e 15 secondi in più. Uno a testa, e mentre li usi il tempo si ferma.'],
         ['Puoi ritirarti', 'quando vuoi e incassare quello che hai vinto. Il coraggio è facoltativo.']
@@ -116,7 +122,7 @@
     }
     function paintCareer() {
         var c = career();
-        var best = QZ.profile.best('cvem');
+        var best = QZ.profile.best(GID);
         var parts = [];
         if (best) parts.push('Il tuo record: ' + best + (best === 1 ? ' domanda superata' : ' domande superate') + (c.best ? ', vincita più alta ' + money(c.best) : ''));
         if (c.games) parts.push(c.games + (c.games === 1 ? ' partita' : ' partite') + ', ' + money(c.won) + ' vinti in tutto' + (c.millions ? ', milionario ' + (c.millions === 1 ? 'una volta' : c.millions + ' volte') : ''));
@@ -165,7 +171,7 @@
         $('#q-safe').textContent = SAFE.indexOf(lv) >= 0 ? 'Soglia sicura' : lv === 15 ? 'Il milione' : '';
         $('#q-prize').textContent = money(PRIZES[lv]);
         QZ.fx.pop($('#q-prize'));
-        $('#q-cat').innerHTML = QZ.icon('ball') + QZ.esc(q.cat ? phase(lv) + ' · ' + q.cat : phase(lv));
+        $('#q-cat').innerHTML = QZ.icon(CAT_ICON[q.cat] || (NORMAL ? 'crown' : 'ball')) + QZ.esc(q.cat ? phase(lv) + ' · ' + q.cat : phase(lv));
         var qe = $('#question');
         qe.textContent = S.q.text;
         QZ.fx.replay(qe);
@@ -239,7 +245,7 @@
             }, 1500);
         } else {
             if (i >= 0) { answerEls[i].classList.add('is-wrong'); QZ.fx.stamp(answerEls[i], 'Fuorigioco', 'bad', { size: 22, x: 74, say: false }); }
-            else QZ.toast('Fischio finale: tempo scaduto.', { icon: 'clock', type: 'bad' });
+            else QZ.toast(NORMAL ? 'Tempo scaduto: la partita finisce qui.' : 'Fischio finale: tempo scaduto.', { icon: 'clock', type: 'bad' });
             S.timeout = i < 0;
             S.streak = 0;
             paintStreak();
@@ -411,7 +417,7 @@
         var prize = PRIZES[prizeLevel];
         var avg = S.times.length ? S.times.reduce(function (a, b) { return a + b; }, 0) / S.times.length : 0;
         var xp = reached * 15 + S.correct * 3 + (type === 'win' ? 100 : 0);
-        var r = QZ.profile.record('cvem', { xp: xp, label: money(prize) + ' · livello ' + reached + '/15', score: reached });
+        var r = QZ.profile.record(GID, { xp: xp, label: money(prize) + ' · livello ' + reached + '/15', score: reached });
 
         var c = career();
         var bestBefore = c.best;
@@ -447,7 +453,7 @@
             ],
             extraHTML: reviewHTML(),
             share: type === 'win'
-                ? 'Sono diventato milionario su Quizzotti: 15 domande di calcio su 15' + (used ? ', con ' + used + (used === 1 ? ' aiuto' : ' aiuti') : ' senza nemmeno un aiuto') + '. Riesci a battermi?'
+                ? 'Sono diventato milionario su Quizzotti: 15 domande' + (NORMAL ? ' di cultura generale' : ' di calcio') + ' su 15' + (used ? ', con ' + used + (used === 1 ? ' aiuto' : ' aiuti') : ' senza nemmeno un aiuto') + '. Riesci a battermi?'
                 : 'Chi Vuol Essere Milionario su Quizzotti: ' + money(prize) + ' vinti, livello ' + reached + '/15' + (type === 'quit' ? ' e ritiro prudente' : '') + '. Fai di meglio?',
             onRetry: start
         });

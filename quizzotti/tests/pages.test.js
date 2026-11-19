@@ -14,10 +14,10 @@ const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const engine = read('assets/qz.js');
 const games = [...engine.matchAll(/\{ id: '([a-z]+)', file: '([A-Za-z]+\.html)'(?:, engine: '([a-z]+)')?/g)].map((m) => ({ id: m[1], file: m[2], engine: m[3] }));
 
-test('il registro QZ.GAMES elenca 19 giochi con id e file unici', () => {
-    assert.equal(games.length, 19);
-    assert.equal(new Set(games.map((g) => g.id)).size, 19);
-    assert.equal(new Set(games.map((g) => g.file)).size, 19);
+test('il registro QZ.GAMES elenca 20 giochi con id e file unici', () => {
+    assert.equal(games.length, 20);
+    assert.equal(new Set(games.map((g) => g.id)).size, 20);
+    assert.equal(new Set(games.map((g) => g.file)).size, 20);
 });
 
 for (const g of games) {

@@ -39,6 +39,7 @@ const data = {
     words: 'readonly',
     jeopardyData: 'readonly',
     jeopardyNormaleData: 'readonly',
+    milionarioData: 'readonly',
     wordsList: 'readonly',
     playerImages: 'readonly',
     tabooWords: 'readonly',

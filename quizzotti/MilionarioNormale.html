@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Milionario normale · Quizzotti</title>
+<meta name="description" content="15 domande di cultura generale sempre più difficili: musica, rap, sport, animali, cinema, geografia e cucina. Quattro aiuti e un milione in palio.">
+<link rel="canonical" href="https://quizotti.altervista.org/quizzotti/MilionarioNormale.html">
+<meta property="og:url" content="https://quizotti.altervista.org/quizzotti/MilionarioNormale.html">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="Milionario normale · Quizzotti">
+<meta property="og:description" content="15 domande di cultura generale, quattro aiuti, un milione in palio.">
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/logo2.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=fd89e422">
+<style>
+  .cv-layout { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 980px) { .cv-layout { grid-template-columns: minmax(0, 1fr) 270px; align-items: start; } }
+
+  /* il tabellone in alto: tempo, domanda, premio */
+  .cv-board .timer-ring { --size: 70px; border-color: #12171b; }
+  .cv-board__q { font-size: clamp(26px, 4vw, 40px); }
+  .cv-board__prize { font-size: clamp(30px, 5.4vw, 54px); }
+  .cv-board__safe { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--led-green); }
+  .cv-board .streak { border: 0; padding: 0; background: none; }
+  @media (max-width: 559px) { .cv-board__cell--streak { display: none; } }
+
+  .cv-question { padding: 22px 24px 24px; }
+  .cv-question .eyebrow { margin-bottom: 10px; }
+
+  .cv-lifelines { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  .cv-life {
+    position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 64px; padding: 8px 4px;
+    border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); color: var(--text-2);
+    font-weight: 700; font-size: 13px; transition: background .15s, border-color .15s, color .15s;
+  }
+  .cv-life:hover:not(:disabled) { background: var(--panel-2); border-color: var(--line-2); color: var(--text); }
+  .cv-life__ico { font-family: var(--font-led); font-size: 20px; color: var(--text); display: grid; place-items: center; height: 24px; }
+  .cv-life__ico .ico { width: 20px; height: 20px; }
+  .cv-life:disabled { cursor: not-allowed; opacity: .35; }
+  .cv-life:disabled .cv-life__ico { text-decoration: line-through; }
+  .cv-life--quit { border-color: rgba(var(--ok-rgb), .55); color: var(--ok); }
+  .cv-life--quit .cv-life__ico { color: var(--ok); }
+  @media (max-width: 420px) { .cv-life { font-size: 11px; } .cv-question { padding: 18px 16px; } }
+
+  /* il montepremi: un tabellone verticale */
+  .cv-side { padding: 0; background: #000; border: 1px solid var(--line-2); box-shadow: none; }
+  .cv-side__title { padding: 10px 0 6px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #6c767d; }
+  .cv-ladder { list-style: none; margin: 0; padding: 0 8px 10px; display: flex; flex-direction: column-reverse; }
+  .cv-ladder li { display: flex; align-items: baseline; gap: 8px; padding: 3px 10px; font-family: var(--font-led); font-size: 19px; color: #5e4a1f; border-radius: var(--r-sm); }
+  .cv-ladder li span:first-child { width: 24px; }
+  .cv-ladder li i { flex: 1; }
+  .cv-ladder li.is-safe { color: #a07a2e; }
+  .cv-ladder li.is-safe span:last-child::after { content: " ◆"; font-size: 12px; }
+  .cv-ladder li.is-done { color: #3a3226; }
+  .cv-ladder li.is-now { color: #000; background: var(--led); box-shadow: 0 0 14px rgba(255, 182, 39, .45); }
+
+  @media (max-width: 979px) {
+    .cv-side { order: -1; }
+    .cv-side__title { display: none; }
+    .cv-ladder { flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; gap: 4px; padding: 6px; }
+    .cv-ladder::-webkit-scrollbar { display: none; }
+    .cv-ladder li { flex: none; scroll-snap-align: center; font-size: 17px; }
+    .cv-ladder li i { display: none; }
+  }
+
+  .cv-audience { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; align-items: end; height: 200px; margin-top: 12px; padding: 10px; background: #000; border: 1px solid var(--line-2); border-radius: var(--r); }
+  .cv-audience__col { display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; height: 100%; text-align: center; }
+  .cv-audience__col span:first-child { font-family: var(--font-led); font-size: 18px; color: var(--led); }
+  .cv-audience__track { flex: 1; display: flex; align-items: flex-end; }
+  .cv-audience__bar { width: 100%; height: 0; background: repeating-linear-gradient(180deg, var(--led) 0 6px, transparent 6px 9px); transition: height .9s var(--ease-out); }
+  .cv-audience__col span:last-child { font-family: var(--font-led); font-size: 22px; color: var(--text); }
+  .cv-audience__col.is-out { opacity: .3; }
+
+  /* a fine partita: le domande della scalata, con la risposta giusta */
+  .cv-review { padding: 0; text-align: left; }
+  .cv-review summary { cursor: pointer; padding: 14px 18px; min-height: 44px; font-weight: 800; color: var(--text); list-style-position: inside; }
+  .cv-review summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r); }
+  .cv-review ol { list-style: none; margin: 0; padding: 0 18px 16px; display: grid; gap: 12px; }
+  .cv-review li { display: flex; gap: 12px; align-items: flex-start; padding-top: 12px; border-top: 1px solid var(--line); }
+  .cv-review__lv { flex: none; min-width: 32px; font-family: var(--font-led); font-size: 18px; color: var(--led); }
+  .cv-review li.is-ko .cv-review__lv { color: var(--led-red); }
+  .cv-review__q { color: var(--text-2); font-size: 15px; overflow-wrap: anywhere; }
+  .cv-review__a { margin-top: 4px; font-weight: 700; color: var(--ok); overflow-wrap: anywhere; }
+  .cv-review__a::before { content: "✓ "; }
+  .cv-review__bad { margin-top: 2px; font-size: 14px; color: var(--text-2); }
+  #start-record { max-width: 46ch; }
+</style>
+</head>
+<body data-game="milionario">
+<main id="app" class="qz-main" tabindex="-1">
+
+  <!-- ============ INIZIO ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Gioco 20 · Da solo</span>
+        <h1 class="intro__title">Chi vuol essere <em>milionario?</em></h1>
+        <p class="intro__lead">Quindici domande di cultura generale, dalla più facile alla più cattiva: musica, sport, animali, cinema, geografia e cucina. Quattro aiuti, due soglie per salvarti e un milione di euro finti in palio. Il sudore, quello, è vero.</p>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
+        </div>
+        <p class="small muted mt-2" id="start-record"></p>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PARTITA ============ -->
+  <section class="screen" id="s-game">
+    <h1 class="sr-only">Chi vuol essere milionario: la partita</h1>
+    <div class="cv-layout">
+      <div class="stack" style="--gap:18px">
+        <div class="board cv-board">
+          <div class="board__cell"><span class="board__label">Tempo</span><div id="timer-host"></div></div>
+          <div class="board__cell"><span class="board__label">Domanda</span><span class="led cv-board__q" id="q-label">01/15</span><span class="cv-board__safe" id="q-safe"></span></div>
+          <div class="board__cell board__cell--grow"><span class="board__label">In palio</span><span class="led cv-board__prize" id="q-prize">€ 100</span></div>
+          <div class="board__cell cv-board__cell--streak"><span class="board__label">Serie</span><span class="streak" id="streak"></span></div>
+        </div>
+
+        <div class="card card--glow cv-question">
+          <span class="eyebrow" id="q-cat"></span>
+          <h2 class="question" id="question" aria-live="polite"></h2>
+        </div>
+
+        <div class="answers answers--2col" id="answers"></div>
+
+        <div class="cv-lifelines" id="lifelines"></div>
+        <p class="small center kbd-hint">Da tastiera: <span class="kbd">A</span><span class="kbd">B</span><span class="kbd">C</span><span class="kbd">D</span> oppure <span class="kbd">1</span>…<span class="kbd">4</span> per rispondere</p>
+      </div>
+
+      <aside class="cv-side card" aria-label="Montepremi">
+        <div class="cv-side__title">Montepremi</div>
+        <ol class="cv-ladder" id="ladder" tabindex="0" aria-label="Scala dei premi"></ol>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
+
+</main>
+
+<script src="assets/qz.js?v=493f2a9a" defer></script>
+<script src="assets/db-milionario.js?v=0d2763e0" defer></script>
+<script src="assets/games/cvem.js?v=b68da07c" defer></script>
+</body>
+</html>

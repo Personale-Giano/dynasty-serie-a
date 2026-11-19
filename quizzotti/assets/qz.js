@@ -1,6 +1,6 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Motore condiviso
-   Un solo script per home e 19 giochi: header/menu/footer generati da qui
+   Un solo script per home e 20 giochi: header/menu/footer generati da qui
    (niente piu' HTML duplicato in ogni pagina), icone SVG inline (niente
    Font Awesome), suoni sintetizzati, profilo XP, timer, effetti e
    componenti UI. Ogni pagina dichiara il suo gioco con <body data-game="id">.
@@ -15,7 +15,7 @@
        Registro giochi: unica fonte di verita' per home, launcher e profilo
        ------------------------------------------------------------------- */
     QZ.GAMES = [
-        { id: 'cvem', file: 'CVEM.html', name: 'Chi Vuol Essere Milionario', short: 'Milionario', icon: 'crown', color: '#ffb627', color2: '#ffd36e', on: '#07090b', rgb: '255, 182, 39', players: 'Da solo', kind: 'quiz', desc: 'Quindici domande, quattro aiuti, un milione di euro finti. Il sudore invece è vero.', tags: ['Quiz', 'Aiuti', '15 livelli'] },
+        { id: 'cvem', file: 'CVEM.html', name: 'Chi Vuol Essere Milionario Calcio', short: 'Milionario Calcio', icon: 'crown', color: '#ffb627', color2: '#ffd36e', on: '#07090b', rgb: '255, 182, 39', players: 'Da solo', kind: 'quiz', desc: 'Quindici domande, quattro aiuti, un milione di euro finti. Il sudore invece è vero.', tags: ['Quiz', 'Aiuti', '15 livelli'] },
         { id: 'jeopardy', file: 'Jeopardy.html', name: 'Jeopardy Calcio', short: 'Jeopardy Calcio', icon: 'grid', color: '#4d8dff', color2: '#9cc0ff', on: '#07090b', rgb: '77, 141, 255', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone a categorie per la serata con gli amici. Chi sbaglia, paga in punti.', tags: ['Squadre', 'Categorie', 'Punti'] },
         { id: 'avantiunaltro', file: 'AvantiUnAltro.html', name: 'Avanti un Altro', short: 'Avanti un Altro', icon: 'fastforward', color: '#ff7a2f', color2: '#ffb07f', on: '#07090b', rgb: '255, 122, 47', players: 'Da solo', kind: 'quiz', desc: 'Qui vince chi sbaglia: scegli sempre la risposta sbagliata. Facile a dirsi.', tags: ['Quiz', 'Al contrario', 'Velocità'] },
         { id: 'citazioni', file: 'Citazioni.html', name: "Chi l'ha detto", short: "Chi l'ha detto", icon: 'quote', color: '#b48cff', color2: '#d8c4ff', on: '#07090b', rgb: '180, 140, 255', players: 'Da solo', kind: 'quiz', desc: '«Zero tituli», «Why always me?»… Le frasi le conosci. Ma chi le ha dette?', tags: ['Frasi celebri', 'Quiz'] },
@@ -33,7 +33,8 @@
         { id: 'intruso', file: 'Intruso.html', name: 'L\'Intruso', short: 'L\'Intruso', icon: 'eye', color: '#ff5fa2', color2: '#ffa8cc', on: '#07090b', rgb: '255, 95, 162', players: 'Da solo', kind: 'quiz', desc: 'Sei nomi e uno non c\'entra niente. Trovalo prima che scada il tempo.', tags: ['Veloce', 'Logica', 'Serie'] },
         { id: 'catena', file: 'Catena.html', name: 'La Catena', short: 'La Catena', icon: 'link', color: '#46c8c0', color2: '#9ae6e1', on: '#07090b', rgb: '70, 200, 192', players: '2 squadre', kind: 'party', desc: 'Una parola tira l\'altra: Baggio, codino, pallone d\'oro… Trova l\'anello mancante.', tags: ['Squadre', 'Parole', 'Collegamenti'] },
         { id: 'bingo', file: 'Bingo.html', name: 'Bingo della Partita', short: 'Bingo', icon: 'ticket', color: '#e3e85a', color2: '#f1f4a6', on: '#07090b', rgb: '227, 232, 90', players: '2+ giocatori', kind: 'party', desc: 'Una cartella a testa e la partita in TV: rigore, palo, espulsione. Chi fa bingo per primo?', tags: ['Partita in TV', 'Cartelle', 'Con gli amici'] },
-        { id: 'jeopardynormale', file: 'JeopardyNormale.html', engine: 'jeopardy', name: 'Jeopardy normale', short: 'Jeopardy normale', icon: 'sparkles', color: '#20c997', color2: '#8fe8cc', on: '#07090b', rgb: '32, 201, 151', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone di cultura generale: musica italiana, rap, sport, animali, cinema, geografia e cucina. Con le foto.', tags: ['Squadre', 'Cultura generale', 'Foto'] }
+        { id: 'jeopardynormale', file: 'JeopardyNormale.html', engine: 'jeopardy', name: 'Jeopardy normale', short: 'Jeopardy normale', icon: 'sparkles', color: '#20c997', color2: '#8fe8cc', on: '#07090b', rgb: '32, 201, 151', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone di cultura generale: musica italiana, rap, sport, animali, cinema, geografia e cucina. Con le foto.', tags: ['Squadre', 'Cultura generale', 'Foto'] },
+        { id: 'milionario', file: 'MilionarioNormale.html', engine: 'cvem', name: 'Milionario normale', short: 'Milionario normale', icon: 'crown', color: '#e8b04a', color2: '#f3d08f', on: '#07090b', rgb: '232, 176, 74', players: 'Da solo', kind: 'quiz', desc: 'Il Milionario di cultura generale: musica, rap, sport, animali, cinema, geografia e cucina. Quattro aiuti, un milione finto.', tags: ['Quiz', 'Cultura generale', '15 livelli'] }
     ];
 
     QZ.game = function (id) {

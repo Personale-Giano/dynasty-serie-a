@@ -103,6 +103,7 @@
         'Sfida dei Budget: il presidente ha chiuso i cordoni della borsa',
         'Jeopardy: la doppia posta è nascosta da qualche parte',
         'Jeopardy normale: musica, rap, animali e cucina, con le foto',
+        'Milionario normale: un milione di euro finti in cultura generale',
         'Cruciverba: doppia papera in finale di Champions, sei lettere',
         'Calciatore del Giorno: oggi tocca a uno nuovo, e domani pure',
         'Sopra o Sotto: il valore di mercato non guarda in faccia nessuno',
