@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jeopardy normale · Quizzotti</title>
+<meta name="description" content="Il tabellone di cultura generale: musica italiana, rap, sport, animali, cinema, geografia e cucina, con le foto. Sfida i tuoi amici a squadre su Quizzotti.">
+<link rel="canonical" href="https://quizotti.altervista.org/quizzotti/JeopardyNormale.html">
+<meta property="og:url" content="https://quizotti.altervista.org/quizzotti/JeopardyNormale.html">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="Jeopardy normale · Quizzotti">
+<meta property="og:description" content="Scegli categoria e valore, rispondi e scala la classifica: il quiz a squadre di cultura generale.">
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/logo2.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=0dea09db">
+<style>
+  /* ---------- Impostazioni ---------- */
+  .jp-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 34px; }
+  @media (min-width: 900px) { .jp-setup { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } }
+  .jp-opts { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .switch { align-items: flex-start; font-weight: 500; color: var(--text-2); }
+  .switch b { color: var(--text); }
+  .switch input { flex: none; margin-top: 1px; }
+
+  /* le categorie: interruttori con la spia che si accende */
+  .jp-cats { display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); overflow: hidden; }
+  @media (min-width: 480px) { .jp-cats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .jp-cat:nth-child(odd) { border-right: 1px solid var(--line); } }
+  .jp-cat {
+    display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 6px 12px; border: 0; border-bottom: 1px solid var(--line);
+    background: transparent; text-align: left; font-weight: 600; font-size: 16px; color: var(--text-2); transition: background .12s, color .12s;
+  }
+  .jp-cat:hover { background: var(--panel-2); color: var(--text); }
+  /* nelle griglie il contorno del fuoco sta dentro la casella, sennò la vicina lo copre */
+  .jp-cat:focus-visible, .jp-cell:focus-visible { position: relative; z-index: 6; outline-offset: -5px; }
+  .jp-cat__lamp { flex: none; width: 16px; height: 16px; border-radius: var(--r-sm); background: #000; border: 1px solid var(--line-2); transition: background .15s, border-color .15s; }
+  .jp-cat[aria-pressed="true"] { color: var(--text); font-weight: 700; background: rgba(var(--accent-rgb), .06); }
+  .jp-cat[aria-pressed="true"] .jp-cat__lamp { background: var(--led); border-color: var(--led); box-shadow: 0 0 8px rgba(255, 182, 39, .55); }
+  .jp-cat.is-drawn .jp-cat__lamp { animation: qz-led-on .3s linear both; }
+  .jp-cats__foot { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+
+  /* ---------- I punteggi: una casella del tabellone per squadra ---------- */
+  .jp-scores { grid-template-columns: repeat(auto-fit, minmax(min(100%, 104px), 1fr)); gap: 8px; margin-bottom: 14px; }
+  .jp-scores .team { cursor: default; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 7px; padding: 8px 10px; }
+  .jp-scores .team__name { font-size: 14px; }
+  .jp-scores .team__score { grid-column: 1 / -1; font-size: 26px; text-align: right; }
+  @media (min-width: 760px) {
+    .jp-scores { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+    .jp-scores .team { display: flex; padding: 10px 14px; }
+    .jp-scores .team__name { font-size: 16px; }
+    .jp-scores .team__score { font-size: 30px; }
+  }
+
+  /* ---------- Il tabellone del turno: chi sceglie, tempo, caselle ---------- */
+  .jp-hud { margin-bottom: 14px; }
+  .jp-hud__who { flex: 1; min-width: 0; box-shadow: inset 0 3px 0 var(--c, var(--accent)); }
+  .jp-who { display: block; font-family: var(--font-display); font-weight: 900; font-size: clamp(22px, 5.4vw, 34px); line-height: 1; letter-spacing: -.01em; text-transform: uppercase; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .jp-hud .led { font-size: clamp(24px, 5vw, 32px); }
+  @media (max-width: 479px) { .jp-hud .board__cell { padding: 8px 10px; } }
+  /* i comandi di servizio stanno sotto il tabellone, fuori dai piedi */
+  .jp-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 16px; }
+
+  /* ---------- Il tabellone: una griglia di LED ---------- */
+  .jp-board { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; background: var(--line); border: 1px solid var(--line-2); border-radius: var(--r-lg); overflow: hidden; }
+  .jp-col { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 45ms); }
+  .jp-col__head {
+    grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 7px 12px;
+    background: var(--panel-2); border-left: 3px solid var(--accent); color: var(--text);
+    font-family: var(--font-display); font-weight: 800; font-size: 13px; line-height: 1.15; letter-spacing: .1em; text-transform: uppercase;
+  }
+  .jp-cell {
+    position: relative; min-height: 58px; padding: 0 2px; border: 0; background: #000;
+    font-family: var(--font-led); font-size: 24px; line-height: 1; color: var(--led); text-shadow: var(--led-glow); font-variant-numeric: tabular-nums;
+    transition: background .1s, color .1s;
+  }
+  .jp-cell:hover:not(:disabled) { background: #1c1608; }
+  .jp-cell:active:not(:disabled) { background: var(--led); color: #000; text-shadow: none; }
+  /* giocata: la casella si spegne e restano accese solo le iniziali di chi l'ha presa */
+  .jp-cell:disabled { cursor: default; background: #050607; }
+  .jp-cell.is-played { color: var(--c); font-size: 19px; letter-spacing: .04em; text-shadow: 0 0 6px currentcolor; }
+  .jp-cell.is-nobody { color: #4a3d22; text-shadow: none; }
+  .jp-cell.is-switch { animation: qz-led-on .45s linear both; }
+  @media (min-width: 760px) {
+    .jp-board { grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr)); max-width: calc(var(--cols, 5) * 240px); margin: 0 auto; }
+    .jp-col { grid-template-columns: minmax(0, 1fr); align-content: start; }
+    .jp-col__head { min-height: 64px; justify-content: center; text-align: center; padding: 8px 10px; font-size: 14px; border-left: 0; box-shadow: inset 0 -3px 0 var(--accent); }
+    .jp-cell { min-height: 78px; font-size: 38px; }
+    .jp-cell.is-played { font-size: 28px; }
+  }
+
+  /* ---------- La domanda sul maxischermo ---------- */
+  .jp-screen { position: relative; overflow: hidden; text-align: center; background: #000; border: 1px solid var(--line-2); border-left-color: var(--accent); border-radius: var(--r-lg); box-shadow: none; }
+  .jp-screen__top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); text-align: left; }
+  .jp-screen__cat { display: flex; align-items: center; gap: 8px; min-width: 0; font-family: var(--font-display); font-weight: 700; font-size: 13px; line-height: 1.2; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-ink); }
+  .jp-screen__cat .ico { width: 15px; height: 15px; }
+  .jp-screen__value { flex: none; display: grid; justify-items: end; gap: 3px; }
+  .jp-screen__value .led { font-size: clamp(30px, 7vw, 44px); }
+  .jp-screen__value.is-double .board__label { color: var(--led-red); }
+  .jp-screen__body { position: relative; padding: 32px 20px 30px; }
+  .jp-screen .question { margin: 0 auto; max-width: 28ch; }
+  /* la foto della domanda (Jeopardy normale: animali, geografia, cucina) */
+  .jp-photo { margin: -8px auto 20px; max-width: 420px; }
+  .jp-photo img { display: block; width: 100%; height: clamp(180px, 38vh, 300px); object-fit: contain; background: #0b0d10; border: 1px solid var(--line); border-radius: var(--r); }
+  .jp-photo__credit { display: inline-block; margin-top: 6px; font-size: 11px; color: var(--text-3, var(--text-2)); text-decoration: none; }
+  .jp-photo__credit:hover { text-decoration: underline; }
+  .jp-screen .timer-ring { margin: 22px auto 0; }
+  .jp-ans { padding: 14px 18px 22px; border-top: 1px solid var(--line); background: #06090a; animation: jp-unfold .3s var(--ease-out) both; }
+  .jp-ans__label { display: block; font-family: var(--font-led); font-size: 16px; color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .5); text-transform: uppercase; }
+  .jp-ans__text { font-family: var(--font-display); font-weight: 800; font-size: clamp(26px, 6vw, 38px); line-height: 1.05; margin-top: 6px; overflow-wrap: anywhere; text-wrap: balance; }
+  @keyframes jp-unfold { from { opacity: 0; transform: translateY(-8px); } }
+  .jp-steal { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; }
+  .jp-steal .btn { justify-content: flex-start; min-width: 0; text-align: left; line-height: 1.05; overflow-wrap: anywhere; text-transform: none; letter-spacing: 0; }
+  .jp-steal .btn--ghost { justify-content: center; text-transform: uppercase; letter-spacing: .04em; }
+  .jp-steal__title { font-family: var(--font-display); font-weight: 900; font-size: 30px; text-transform: uppercase; text-align: center; }
+  .jp-steal__title small { display: block; margin-top: 4px; font-family: var(--font-body); font-weight: 500; font-size: 15px; text-transform: none; color: var(--text-2); }
+
+  /* ---------- Correzione punteggi ---------- */
+  .jp-adjust { display: grid; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); }
+  .jp-adjust__row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  .jp-adjust__row:last-child { border-bottom: 0; }
+  .jp-adjust__name { font-weight: 800; min-width: 0; overflow-wrap: anywhere; }
+  .jp-adjust__name small { display: block; font-weight: 500; font-size: 13px; color: var(--text-2); }
+
+  /* ---------- Chi risponde, partita in sospeso ---------- */
+  .jp-q-who { display: flex; align-items: center; justify-content: center; gap: 8px; margin: -12px 0 14px; font-weight: 700; font-size: 15px; color: var(--text-2); }
+  .jp-q-who .team__dot { background: var(--c); }
+  .jp-resume { display: grid; gap: 10px; border-left: 3px solid var(--led); }
+  .jp-resume__txt { margin: 0; color: var(--text-2); overflow-wrap: anywhere; }
+
+  /* ---------- Gran finale ---------- */
+  .jp-final__sub { margin: 14px auto 0; max-width: 40ch; color: var(--text-2); font-size: 15px; }
+  .jp-final__sub:empty { display: none; }
+  .jp-screen--final .jp-screen__top .led { font-size: clamp(22px, 5vw, 30px); }
+  .jp-bets .jp-adjust__row { flex-wrap: wrap; }
+  .jp-bets .jp-adjust__name { flex: 1 1 140px; }
+  .jp-allin { min-width: 0; }
+  /* sul telefono il nome sta sopra, i comandi della puntata tutti in fila sotto */
+  @media (max-width: 559px) {
+    .jp-bets .jp-adjust__name { flex-basis: calc(100% - 22px); }
+    .jp-bets .jp-adjust__row > .btn:first-of-type { margin-left: 22px; }
+    .jp-allin { margin-left: auto; }
+  }
+  .jp-verdict { display: flex; gap: 8px; margin-left: auto; }
+  .jp-verdict .btn { gap: 6px; }
+  .jp-verdict .btn[data-v="1"][aria-pressed="true"] { --b-bg: #17804a; --b-fg: #fff; --b-bd: #17804a; }
+  .jp-verdict .btn[data-v="0"][aria-pressed="true"] { --b-bg: #c8302a; --b-fg: #fff; --b-bd: #c8302a; }
+  @media (max-width: 420px) {
+    .jp-bets .jp-adjust__row output { min-width: 60px; font-size: 20px; }
+    .jp-verdict { width: 100%; }
+    .jp-verdict .btn { flex: 1; justify-content: center; }
+  }
+  .jp-adjust__row output { min-width: 72px; padding: 6px 4px; text-align: center; font-family: var(--font-led); font-size: 24px; line-height: 1; color: var(--led); text-shadow: var(--led-glow); background: #000; border: 1px solid var(--line); border-radius: var(--r-sm); }
+</style>
+</head>
+<body data-game="jeopardynormale">
+<main id="app" class="qz-main" tabindex="-1">
+
+  <!-- ============ INIZIO ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Gioco 19 · Da 1 a 6 squadre</span>
+        <h1 class="intro__title">Il tabellone di <em>tutto</em></h1>
+        <p class="intro__lead">Cinque caselle per categoria, da 100 a 500 punti. Musica, sport, animali, cinema e altro: più alta la posta, più cattiva la domanda. Chi sbaglia paga, e gli altri ringraziano.</p>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="start-btn" data-autofocus></button>
+        </div>
+        <p class="note mt-2" id="start-record"></p>
+        <div class="card jp-resume mt-3" id="resume" hidden>
+          <span class="label">Partita in sospeso</span>
+          <p class="jp-resume__txt" id="resume-txt"></p>
+          <div class="row">
+            <button class="btn btn--primary" type="button" id="resume-go"></button>
+            <button class="btn btn--ghost" type="button" id="resume-drop"></button>
+          </div>
+        </div>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="jp-setup">
+      <div class="card" id="teams-host"></div>
+      <div class="card jp-opts">
+        <div class="field">
+          <div class="row row--between"><span class="label" id="cats-label">Categorie</span><button class="btn btn--sm" type="button" id="cats-random"></button></div>
+          <div class="jp-cats" id="cats" role="group" aria-labelledby="cats-label"></div>
+          <div class="jp-cats__foot"><span class="small muted" id="cats-hint"></span></div>
+        </div>
+        <div class="field"><span class="label" id="lbl-rounds">Durata</span><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
+        <div class="field"><span class="label" id="lbl-time">Tempo per rispondere</span><div id="opt-time" aria-labelledby="lbl-time"></div></div>
+        <div class="field"><span class="label" id="lbl-penalty">Chi sbaglia</span><div id="opt-penalty" aria-labelledby="lbl-penalty"></div></div>
+        <label class="switch"><input type="checkbox" id="opt-steal" checked><span><b>Rubata.</b> Se una squadra sbaglia, le altre possono soffiarle i punti.</span></label>
+        <label class="switch"><input type="checkbox" id="opt-double" checked><span><b>Doppia posta.</b> Una casella a sorpresa per tempo vale il doppio.</span></label>
+        <label class="switch"><input type="checkbox" id="opt-final" checked><span><b>Gran finale.</b> A tabellone pulito, un'ultima domanda: ognuno punta quanto vuole.</span></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TABELLONE + DOMANDA (punteggi condivisi) ============ -->
+  <div id="scorebar" hidden>
+    <div class="teams jp-scores" id="scores" role="group" aria-label="Punteggi"></div>
+  </div>
+
+  <section class="screen" id="s-board">
+    <div class="board jp-hud">
+      <div class="board__cell jp-hud__who" id="turn-cell"><span class="board__label" id="turn-label"></span><span class="jp-who" id="turn-who" aria-live="polite"></span></div>
+      <div class="board__cell" id="round-cell"><span class="board__label">Tempo</span><span class="led" id="round-led"></span></div>
+      <div class="board__cell"><span class="board__label">Caselle</span><span class="led" id="left-led"></span></div>
+    </div>
+    <div class="jp-board" id="board"></div>
+    <div class="jp-tools">
+      <button class="btn btn--sm" type="button" id="adjust-btn"></button>
+      <button class="btn btn--sm" type="button" id="end-btn"></button>
+    </div>
+  </section>
+
+  <section class="screen" id="s-q">
+    <div class="qz-main--narrow stack" style="--gap:18px;margin:0 auto">
+      <div class="jp-screen" id="q-card">
+        <div class="jp-screen__top">
+          <span class="jp-screen__cat" id="q-cat"></span>
+          <span class="jp-screen__value" id="q-value-box"><span class="board__label" id="q-value-label">In palio</span><span class="led" id="q-value"></span></span>
+        </div>
+        <div class="jp-screen__body" id="q-body">
+          <p class="jp-q-who" id="q-who" hidden><span class="team__dot" aria-hidden="true"></span><span class="sr-only">Risponde </span><span></span></p>
+          <figure class="jp-photo" id="q-img" hidden><img src="data:," alt="" decoding="async"><a class="jp-photo__credit" href="#" target="_blank" rel="noopener">Foto: Wikimedia Commons</a></figure>
+          <h2 class="question" id="q-text" aria-live="polite"></h2>
+          <div id="q-timer"></div>
+        </div>
+        <div class="jp-ans" id="q-ans" hidden>
+          <span class="jp-ans__label">La risposta</span>
+          <div class="jp-ans__text" id="q-ans-text"></div>
+        </div>
+      </div>
+      <div id="act-reveal">
+        <button class="btn btn--primary btn--xl btn--block" type="button" id="reveal-btn" data-autofocus></button>
+      </div>
+      <div id="act-judge" class="grid-2" hidden>
+        <button class="btn btn--bad btn--lg" type="button" id="ko-btn"></button>
+        <button class="btn btn--ok btn--lg" type="button" id="ok-btn"></button>
+      </div>
+      <div id="act-steal" class="stack" style="--gap:12px" hidden>
+        <p class="jp-steal__title">Chi la ruba?<small id="steal-sub"></small></p>
+        <div class="jp-steal" id="steal-list"></div>
+      </div>
+      <p class="small center kbd-hint" id="q-hint"></p>
+    </div>
+  </section>
+
+  <section class="screen" id="s-final">
+    <div class="qz-main--narrow stack" style="--gap:18px;margin:0 auto">
+      <div class="jp-screen jp-screen--final" id="f-card">
+        <div class="jp-screen__top">
+          <span class="jp-screen__cat" id="f-cat"></span>
+          <span class="jp-screen__value is-double"><span class="board__label">Gran finale</span><span class="led led--red" aria-hidden="true">PUNTATE</span></span>
+        </div>
+        <div class="jp-screen__body" id="f-body">
+          <h2 class="question" id="f-text" aria-live="polite"></h2>
+          <p class="jp-final__sub" id="f-sub"></p>
+          <div id="f-timer"></div>
+        </div>
+        <div class="jp-ans" id="f-ans" hidden>
+          <span class="jp-ans__label">La risposta</span>
+          <div class="jp-ans__text" id="f-ans-text"></div>
+        </div>
+      </div>
+      <div class="jp-adjust jp-bets" id="f-bets" role="group" aria-label="Puntate del gran finale"></div>
+      <button class="btn btn--primary btn--xl btn--block" type="button" id="f-go"></button>
+    </div>
+  </section>
+
+  <!-- ============ FINE ============ -->
+  <section class="screen" id="s-end"><div id="end-host" class="qz-main--narrow" style="margin:0 auto"></div></section>
+
+</main>
+
+<script src="assets/qz.js?v=3fefbb44" defer></script>
+<script src="assets/db-jeopardynormale.js?v=e85f76b9" defer></script>
+<script src="assets/games/jeopardy.js?v=fc97f7ed" defer></script>
+</body>
+</html>

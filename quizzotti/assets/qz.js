@@ -1,6 +1,6 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Motore condiviso
-   Un solo script per home e 18 giochi: header/menu/footer generati da qui
+   Un solo script per home e 19 giochi: header/menu/footer generati da qui
    (niente piu' HTML duplicato in ogni pagina), icone SVG inline (niente
    Font Awesome), suoni sintetizzati, profilo XP, timer, effetti e
    componenti UI. Ogni pagina dichiara il suo gioco con <body data-game="id">.
@@ -16,7 +16,7 @@
        ------------------------------------------------------------------- */
     QZ.GAMES = [
         { id: 'cvem', file: 'CVEM.html', name: 'Chi Vuol Essere Milionario', short: 'Milionario', icon: 'crown', color: '#ffb627', color2: '#ffd36e', on: '#07090b', rgb: '255, 182, 39', players: 'Da solo', kind: 'quiz', desc: 'Quindici domande, quattro aiuti, un milione di euro finti. Il sudore invece è vero.', tags: ['Quiz', 'Aiuti', '15 livelli'] },
-        { id: 'jeopardy', file: 'Jeopardy.html', name: 'Jeopardy', short: 'Jeopardy', icon: 'grid', color: '#4d8dff', color2: '#9cc0ff', on: '#07090b', rgb: '77, 141, 255', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone a categorie per la serata con gli amici. Chi sbaglia, paga in punti.', tags: ['Squadre', 'Categorie', 'Punti'] },
+        { id: 'jeopardy', file: 'Jeopardy.html', name: 'Jeopardy Calcio', short: 'Jeopardy Calcio', icon: 'grid', color: '#4d8dff', color2: '#9cc0ff', on: '#07090b', rgb: '77, 141, 255', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone a categorie per la serata con gli amici. Chi sbaglia, paga in punti.', tags: ['Squadre', 'Categorie', 'Punti'] },
         { id: 'avantiunaltro', file: 'AvantiUnAltro.html', name: 'Avanti un Altro', short: 'Avanti un Altro', icon: 'fastforward', color: '#ff7a2f', color2: '#ffb07f', on: '#07090b', rgb: '255, 122, 47', players: 'Da solo', kind: 'quiz', desc: 'Qui vince chi sbaglia: scegli sempre la risposta sbagliata. Facile a dirsi.', tags: ['Quiz', 'Al contrario', 'Velocità'] },
         { id: 'citazioni', file: 'Citazioni.html', name: "Chi l'ha detto", short: "Chi l'ha detto", icon: 'quote', color: '#b48cff', color2: '#d8c4ff', on: '#07090b', rgb: '180, 140, 255', players: 'Da solo', kind: 'quiz', desc: '«Zero tituli», «Why always me?»… Le frasi le conosci. Ma chi le ha dette?', tags: ['Frasi celebri', 'Quiz'] },
         { id: 'taboo', file: 'Taboo.html', name: 'Taboo', short: 'Taboo', icon: 'ban', color: '#ff4b5c', color2: '#ff98a2', on: '#07090b', rgb: '255, 75, 92', players: '2-6 squadre', kind: 'party', desc: 'Fai indovinare «Catenaccio» senza dire difesa, Italia e chiuso. Auguri.', tags: ['Squadre', 'Parole', 'Timer'] },
@@ -32,7 +32,8 @@
         { id: 'quattro', file: 'QuattroPerQuattro.html', name: 'Quattro per Quattro', short: '4 per 4', icon: 'layers', color: '#7c9cff', color2: '#b8c8ff', on: '#07090b', rgb: '124, 156, 255', players: 'Da solo', kind: 'quiz', desc: 'Sedici nomi, quattro gruppi nascosti. Hai quattro errori per scoprire cosa li lega.', tags: ['Gruppi', 'Schede', 'Logica'] },
         { id: 'intruso', file: 'Intruso.html', name: 'L\'Intruso', short: 'L\'Intruso', icon: 'eye', color: '#ff5fa2', color2: '#ffa8cc', on: '#07090b', rgb: '255, 95, 162', players: 'Da solo', kind: 'quiz', desc: 'Sei nomi e uno non c\'entra niente. Trovalo prima che scada il tempo.', tags: ['Veloce', 'Logica', 'Serie'] },
         { id: 'catena', file: 'Catena.html', name: 'La Catena', short: 'La Catena', icon: 'link', color: '#46c8c0', color2: '#9ae6e1', on: '#07090b', rgb: '70, 200, 192', players: '2 squadre', kind: 'party', desc: 'Una parola tira l\'altra: Baggio, codino, pallone d\'oro… Trova l\'anello mancante.', tags: ['Squadre', 'Parole', 'Collegamenti'] },
-        { id: 'bingo', file: 'Bingo.html', name: 'Bingo della Partita', short: 'Bingo', icon: 'ticket', color: '#e3e85a', color2: '#f1f4a6', on: '#07090b', rgb: '227, 232, 90', players: '2+ giocatori', kind: 'party', desc: 'Una cartella a testa e la partita in TV: rigore, palo, espulsione. Chi fa bingo per primo?', tags: ['Partita in TV', 'Cartelle', 'Con gli amici'] }
+        { id: 'bingo', file: 'Bingo.html', name: 'Bingo della Partita', short: 'Bingo', icon: 'ticket', color: '#e3e85a', color2: '#f1f4a6', on: '#07090b', rgb: '227, 232, 90', players: '2+ giocatori', kind: 'party', desc: 'Una cartella a testa e la partita in TV: rigore, palo, espulsione. Chi fa bingo per primo?', tags: ['Partita in TV', 'Cartelle', 'Con gli amici'] },
+        { id: 'jeopardynormale', file: 'JeopardyNormale.html', engine: 'jeopardy', name: 'Jeopardy normale', short: 'Jeopardy normale', icon: 'sparkles', color: '#20c997', color2: '#8fe8cc', on: '#07090b', rgb: '32, 201, 151', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone di cultura generale: musica italiana, rap, sport, animali, cinema, geografia e cucina. Con le foto.', tags: ['Squadre', 'Cultura generale', 'Foto'] }
     ];
 
     QZ.game = function (id) {
@@ -127,6 +128,11 @@
         layers: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><path d="M7 7h.01"/><path d="M17 17h.01"/>',
         link: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
         ticket: '<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>',
+        music: '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+        paw: '<circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z"/>',
+        film: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>',
+        globe: '<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>',
+        food: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
         wifi: '<path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/>'
     };
 

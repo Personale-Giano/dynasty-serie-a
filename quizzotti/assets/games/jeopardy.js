@@ -19,19 +19,29 @@
     var FINAL_MIN_BET = 500; // chi ha meno punti puo' comunque puntare fino a qui
     var $ = QZ.$;
 
+    /* ---------- Due tabelloni, un motore: calcio (Jeopardy.html) e cultura generale
+       (JeopardyNormale.html, data-game="jeopardynormale"). ---------- */
+    var NORMAL = document.body.getAttribute('data-game') === 'jeopardynormale';
+    var GID = NORMAL ? 'jeopardynormale' : 'jeopardy';
+    /* global jeopardyNormaleData */
+    var DATA = NORMAL ? jeopardyNormaleData : jeopardyData;
+    var CAT_ICON = {};
+    DATA.forEach(function (c) { CAT_ICON[c.category] = c.icon || 'ball'; });
+
     /* ---------- Pool domande ---------- */
-    var CATS = jeopardyData.map(function (c) { return c.category; });
+    var CATS = DATA.map(function (c) { return c.category; });
     var POOL = [];
-    jeopardyData.forEach(function (c) {
-        c.questions.forEach(function (q) { POOL.push({ cat: c.category, value: q.value, q: q.question, a: q.answer }); });
+    DATA.forEach(function (c) {
+        c.questions.forEach(function (q) { POOL.push({ cat: c.category, value: q.value, q: q.question, a: q.answer, img: q.img || null, src: q.src || null }); });
     });
-    var deck = new QZ.Deck('jeopardy', POOL, function (x) { return x.q; });
+    var deck = new QZ.Deck(GID, POOL, function (x) { return x.q; });
 
     function plural(n, one, many) { return QZ.fmt(n) + ' ' + (Math.abs(n) === 1 ? one : many); }
 
     function pretty(cat) {
         return String(cat).toLowerCase().split(' ').map(function (w, i) {
-            return i && /^(e|di|del|della|dei|la|il)$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1);
+            if (w === 'tv') return 'TV';
+            return i && /^(e|di|del|della|delle|dei|la|il|nel)$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1);
         }).join(' ');
     }
 
@@ -43,8 +53,8 @@
     }
 
     /* ---------- Impostazioni (ricordate tra le visite) ---------- */
-    var OPT_KEY = 'qz.jeopardy.opts';
-    var SAVE_KEY = 'qz.jeopardy.save';
+    var OPT_KEY = 'qz.' + GID + '.opts';
+    var SAVE_KEY = 'qz.' + GID + '.save';
     var opts = Object.assign({ rounds: 1, time: 0, penalty: true, steal: true, double: true, final: true, cats: null }, QZ.store.get(OPT_KEY, {}) || {});
     function saveOpts() { QZ.store.set(OPT_KEY, opts); }
 
@@ -52,7 +62,7 @@
     if (selected.length < MIN_CATS) selected = QZ.shuffle(CATS).slice(0, 5);
 
     /* ---------- Markup statico ---------- */
-    $('#start-btn').innerHTML = 'Fischio d\'inizio' + QZ.icon('arrow');
+    $('#start-btn').innerHTML = (NORMAL ? 'Si comincia' : 'Fischio d\'inizio') + QZ.icon('arrow');
     $('#medal').innerHTML = QZ.icon('grid');
     $('#rules').innerHTML = [
         ['A turno', 'ogni squadra sceglie una casella: categoria e valore.'],
@@ -64,13 +74,13 @@
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
     function paintRecord() {
-        var rec = QZ.profile.best('jeopardy');
+        var rec = QZ.profile.best(GID);
         // un record a zero o sotto zero non e' un traguardo da mostrare
         $('#start-record').textContent = rec > 0 ? 'record da battere: ' + QZ.fmt(rec) + ' punti' : '';
     }
     paintRecord();
 
-    var teamsList = QZ.playerList($('#teams-host'), { key: 'jeopardy', min: 1, max: 6, initial: 2, label: 'Squadra', title: 'Squadre (1-6)' });
+    var teamsList = QZ.playerList($('#teams-host'), { key: GID, min: 1, max: 6, initial: 2, label: 'Squadra', title: 'Squadre (1-6)' });
 
     $('#cats-random').innerHTML = QZ.icon('shuffle') + 'Pesca a caso';
     $('#cats').innerHTML = CATS.map(function (c, i) {
@@ -120,8 +130,8 @@
     $('#reveal-btn').innerHTML = QZ.icon('eye') + 'Scopri la risposta';
     $('#adjust-btn').innerHTML = QZ.icon('plus') + '<span>Correggi</span>';
     $('#adjust-btn').setAttribute('aria-label', 'Correggi i punteggi');
-    $('#end-btn').innerHTML = QZ.icon('whistle') + '<span>Fischia la fine</span>';
-    $('#end-btn').setAttribute('aria-label', 'Fischia la fine della partita');
+    $('#end-btn').innerHTML = QZ.icon(NORMAL ? 'flag' : 'whistle') + '<span>' + (NORMAL ? 'Chiudi la partita' : 'Fischia la fine') + '</span>';
+    $('#end-btn').setAttribute('aria-label', NORMAL ? 'Chiudi la partita e vai alla classifica' : 'Fischia la fine della partita');
 
     $('#q-timer').innerHTML = QZ.ringHTML();
     var ring = QZ.ring($('#q-timer .timer-ring'));
@@ -427,6 +437,19 @@
         return Object.keys(S.cells).filter(function (k) { return !S.cells[k].used; }).length;
     }
 
+    /** La foto della domanda (solo alcune categorie del Jeopardy normale). */
+    function photo(item) {
+        var fig = $('#q-img');
+        if (!fig) return;
+        fig.hidden = !item.img;
+        var img = fig.querySelector('img');
+        if (!item.img) { img.removeAttribute('src'); return; }
+        img.src = item.img;
+        img.alt = 'Foto della domanda';
+        var cr = fig.querySelector('a');
+        if (cr) { cr.hidden = !item.src; if (item.src) cr.href = item.src; }
+    }
+
     function openCell(k) {
         // il secondo tocco di un doppio tap su "Fischio d'inizio" cadrebbe su una casella appena comparsa
         if (S.phase !== 'board' || Date.now() < (S.readyAt || 0)) return;
@@ -442,7 +465,7 @@
         S.timeUp = false;
 
         QZ.$$('#q-card .qz-stamp').forEach(function (x) { x.remove(); });
-        $('#q-cat').innerHTML = QZ.icon('ball') + QZ.esc(pretty(cell.cat));
+        $('#q-cat').innerHTML = QZ.icon(CAT_ICON[cell.cat] || 'ball') + QZ.esc(pretty(cell.cat));
         var v = $('#q-value');
         // niente aria-label su uno span: il resto della frase e' testo nascosto
         v.innerHTML = QZ.fmt(S.q.points) + '<span class="sr-only"> punti</span>';
@@ -457,6 +480,7 @@
         who.querySelector('span:last-child').textContent = t.name;
         var qt = $('#q-text');
         qt.textContent = item.q;
+        photo(item);
         $('#q-ans').hidden = true;
         $('#q-ans-text').textContent = item.a;
         $('#act-reveal').hidden = false;
@@ -661,12 +685,12 @@
 
     function startFinal() {
         var cat = QZ.pick(S.cats);
-        var item = deck.draw(function (x) { return x.cat === cat && x.value === 500; }) || deck.draw(function (x) { return x.value === 500; });
+        var item = deck.draw(function (x) { return x.cat === cat && x.value === 500 && !x.img; }) || deck.draw(function (x) { return x.value === 500 && !x.img; });
         S.fin = { cat: item.cat, item: item, bets: S.teams.map(function () { return 0; }), res: S.teams.map(function () { return null; }) };
         S.phase = 'final-bet';
         save('final');
         QZ.$$('#f-card .qz-stamp').forEach(function (x) { x.remove(); });
-        $('#f-cat').innerHTML = QZ.icon('ball') + QZ.esc(pretty(item.cat));
+        $('#f-cat').innerHTML = QZ.icon(CAT_ICON[item.cat] || 'ball') + QZ.esc(pretty(item.cat));
         $('#f-text').textContent = 'Categoria: ' + pretty(item.cat) + '. Quanto ci puntate?';
         $('#f-sub').textContent = S.teams.length === 1
             ? 'Punta da 0 a tutti i tuoi punti (sotto i ' + FINAL_MIN_BET + ' puoi arrivare a ' + FINAL_MIN_BET + '). Se sbagli, la puntata la perdi.'
@@ -811,7 +835,7 @@
         var steals = S.teams.reduce(function (s, t) { return s + t.steals; }, 0);
         var solo = S.teams.length === 1;
         var xp = Math.min(150, 15 + S.asked * 3 + right * 2);
-        var r = QZ.profile.record('jeopardy', {
+        var r = QZ.profile.record(GID, {
             xp: xp,
             label: solo ? QZ.fmt(top.score) + ' punti' : (tie ? 'Pareggio a ' : 'Vince ' + top.name + ' con ') + QZ.fmt(top.score) + ' punti',
             score: top.score
@@ -841,8 +865,8 @@
                 return { name: t.name, score: t.score, color: t.color, sub: plural(t.right, 'giusta', 'giuste') + ' · ' + plural(t.wrong, 'sbagliata', 'sbagliate') + (t.steals ? ' · ' + plural(t.steals, 'rubata', 'rubate') : '') };
             }), function (s) { return QZ.fmt(s) + ' pt'; }) + '</div>',
             share: solo
-                ? 'Al Jeopardy del calcio su Quizzotti ho fatto ' + QZ.fmt(top.score) + ' punti: ' + plural(right, 'risposta giusta', 'risposte giuste') + ' su ' + asked + '. Tocca a te.'
-                : 'Jeopardy del calcio su Quizzotti, classifica finale: ' + ranked.map(function (t, i) { return (i + 1) + '. ' + t.name + ' ' + QZ.fmt(t.score); }).join(' · ') + '.',
+                ? (NORMAL ? 'Al Jeopardy' : 'Al Jeopardy del calcio') + ' su Quizzotti ho fatto ' + QZ.fmt(top.score) + ' punti: ' + plural(right, 'risposta giusta', 'risposte giuste') + ' su ' + asked + '. Tocca a te.'
+                : (NORMAL ? 'Jeopardy' : 'Jeopardy del calcio') + ' su Quizzotti, classifica finale: ' + ranked.map(function (t, i) { return (i + 1) + '. ' + t.name + ' ' + QZ.fmt(t.score); }).join(' · ') + '.',
             onRetry: start,
             secondary: { label: 'Cambia squadre', icon: 'users', onClick: function () { QZ.show('s-start'); paintResume(); paintRecord(); } }
         });

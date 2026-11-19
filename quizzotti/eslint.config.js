@@ -38,6 +38,7 @@ const data = {
     playersDatabase: 'readonly',
     words: 'readonly',
     jeopardyData: 'readonly',
+    jeopardyNormaleData: 'readonly',
     wordsList: 'readonly',
     playerImages: 'readonly',
     tabooWords: 'readonly',

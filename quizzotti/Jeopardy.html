@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Jeopardy · Quizzotti</title>
+<title>Jeopardy Calcio · Quizzotti</title>
 <meta name="description" content="Il tabellone a categorie di calcio: Serie A, Champions League, Mondiali, calciomercato e leggende. Sfida i tuoi amici a squadre su Quizzotti.">
 <link rel="canonical" href="https://quizotti.altervista.org/quizzotti/Jeopardy.html">
 <meta property="og:url" content="https://quizotti.altervista.org/quizzotti/Jeopardy.html">
@@ -11,7 +11,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Quizzotti">
 <meta property="og:locale" content="it_IT">
-<meta property="og:title" content="Jeopardy · Quizzotti">
+<meta property="og:title" content="Jeopardy Calcio · Quizzotti">
 <meta property="og:description" content="Scegli categoria e valore, rispondi e scala la classifica: il quiz a squadre a tema calcio.">
 <meta property="og:image" content="https://quizotti.altervista.org/quizzotti/logo2.png">
 <meta name="twitter:card" content="summary">
@@ -20,7 +20,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
-<link rel="stylesheet" href="assets/qz.css?v=e1177d49">
+<link rel="stylesheet" href="assets/qz.css?v=0dea09db">
 <style>
   /* ---------- Impostazioni ---------- */
   .jp-setup { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; margin-top: 34px; }
@@ -105,6 +105,11 @@
   .jp-screen__value.is-double .board__label { color: var(--led-red); }
   .jp-screen__body { position: relative; padding: 32px 20px 30px; }
   .jp-screen .question { margin: 0 auto; max-width: 28ch; }
+  /* la foto della domanda (Jeopardy normale: animali, geografia, cucina) */
+  .jp-photo { margin: -8px auto 20px; max-width: 420px; }
+  .jp-photo img { display: block; width: 100%; height: clamp(180px, 38vh, 300px); object-fit: contain; background: #0b0d10; border: 1px solid var(--line); border-radius: var(--r); }
+  .jp-photo__credit { display: inline-block; margin-top: 6px; font-size: 11px; color: var(--text-3, var(--text-2)); text-decoration: none; }
+  .jp-photo__credit:hover { text-decoration: underline; }
   .jp-screen .timer-ring { margin: 22px auto 0; }
   .jp-ans { padding: 14px 18px 22px; border-top: 1px solid var(--line); background: #06090a; animation: jp-unfold .3s var(--ease-out) both; }
   .jp-ans__label { display: block; font-family: var(--font-led); font-size: 16px; color: var(--led-green); text-shadow: 0 0 6px rgba(61, 220, 132, .5); text-transform: uppercase; }
@@ -230,6 +235,7 @@
         </div>
         <div class="jp-screen__body" id="q-body">
           <p class="jp-q-who" id="q-who" hidden><span class="team__dot" aria-hidden="true"></span><span class="sr-only">Risponde </span><span></span></p>
+          <figure class="jp-photo" id="q-img" hidden><img src="data:," alt="" decoding="async"><a class="jp-photo__credit" href="#" target="_blank" rel="noopener">Foto: Wikimedia Commons</a></figure>
           <h2 class="question" id="q-text" aria-live="polite"></h2>
           <div id="q-timer"></div>
         </div>
@@ -280,8 +286,8 @@
 
 </main>
 
-<script src="assets/qz.js?v=e367d67c" defer></script>
-<script src="assets/db-jeopardy.js?v=18212055" defer></script>
-<script src="assets/games/jeopardy.js?v=2a0f535d" defer></script>
+<script src="assets/qz.js?v=3fefbb44" defer></script>
+<script src="assets/db-jeopardy.js?v=69a43eae" defer></script>
+<script src="assets/games/jeopardy.js?v=fc97f7ed" defer></script>
 </body>
 </html>

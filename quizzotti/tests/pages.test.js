@@ -12,12 +12,12 @@ const ROOT = path.join(__dirname, '..');
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 
 const engine = read('assets/qz.js');
-const games = [...engine.matchAll(/\{ id: '([a-z]+)', file: '([A-Za-z]+\.html)'/g)].map((m) => ({ id: m[1], file: m[2] }));
+const games = [...engine.matchAll(/\{ id: '([a-z]+)', file: '([A-Za-z]+\.html)'(?:, engine: '([a-z]+)')?/g)].map((m) => ({ id: m[1], file: m[2], engine: m[3] }));
 
-test('il registro QZ.GAMES elenca 18 giochi con id e file unici', () => {
-    assert.equal(games.length, 18);
-    assert.equal(new Set(games.map((g) => g.id)).size, 18);
-    assert.equal(new Set(games.map((g) => g.file)).size, 18);
+test('il registro QZ.GAMES elenca 19 giochi con id e file unici', () => {
+    assert.equal(games.length, 19);
+    assert.equal(new Set(games.map((g) => g.id)).size, 19);
+    assert.equal(new Set(games.map((g) => g.file)).size, 19);
 });
 
 for (const g of games) {
@@ -27,7 +27,7 @@ for (const g of games) {
         assert.match(html, new RegExp(`<body[^>]*data-game="${g.id}"`), 'data-game mancante o diverso dal registro');
         assert.match(html, /src="assets\/qz\.js(\?v=[a-f0-9]+)?"/, 'non carica assets/qz.js');
         assert.match(html, /href="assets\/qz\.css(\?v=[a-f0-9]+)?"/, 'non carica assets/qz.css');
-        assert.match(html, new RegExp(`src="assets/games/${g.id}\\.js(\\?v=[a-f0-9]+)?"`), 'non carica il proprio script di gioco');
+        assert.match(html, new RegExp(`src="assets/games/${g.engine || g.id}\\.js(\\?v=[a-f0-9]+)?"`), 'non carica il proprio script di gioco');
         assert.doesNotMatch(html, /font-awesome|theme\.css|sfx\.js|profile\.js/, 'riferimento ad asset della v1');
     });
 }
@@ -76,7 +76,7 @@ test('ogni gioco del registro ha il suo colore in qz.css', () => {
 test('gli script di gioco sono JavaScript valido', () => {
     const vm = require('node:vm');
     for (const g of games) {
-        const file = `assets/games/${g.id}.js`;
+        const file = `assets/games/${g.engine || g.id}.js`; // engine: pagine che condividono il motore
         assert.doesNotThrow(() => new vm.Script(read(file), { filename: file }), `${file} non compila`);
     }
 });

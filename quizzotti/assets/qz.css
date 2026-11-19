@@ -86,6 +86,7 @@
 /* ---------- Il colore di ogni gioco ---------- */
 [data-game="cvem"] { --accent: #ffb627; --accent-2: #ffd36e; --accent-rgb: 255, 182, 39; --accent-ink: #ffb627; --on-accent: #07090b; }
 [data-game="jeopardy"] { --accent: #4d8dff; --accent-2: #9cc0ff; --accent-rgb: 77, 141, 255; --accent-ink: #7aaaff; --on-accent: #07090b; }
+[data-game="jeopardynormale"] { --accent: #20c997; --accent-2: #8fe8cc; --accent-rgb: 32, 201, 151; --accent-ink: #5edcb6; --on-accent: #07090b; }
 [data-game="avantiunaltro"] { --accent: #ff7a2f; --accent-2: #ffb07f; --accent-rgb: 255, 122, 47; --accent-ink: #ff8f4f; --on-accent: #07090b; }
 [data-game="citazioni"] { --accent: #b48cff; --accent-2: #d8c4ff; --accent-rgb: 180, 140, 255; --accent-ink: #c4a4ff; --on-accent: #07090b; }
 [data-game="taboo"] { --accent: #ff4b5c; --accent-2: #ff98a2; --accent-rgb: 255, 75, 92; --accent-ink: #ff6b79; --on-accent: #07090b; }
