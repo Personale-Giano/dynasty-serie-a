@@ -1,7 +1,7 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Jeopardy
-   Dati: assets/db-jeopardy.js (`jeopardyData`: 9 categorie x 90 domande,
-   18 per ciascun valore da 100 a 500).
+   Dati: assets/db-jeopardy.js (`jeopardyData`: 9 categorie x 100 domande) e
+   assets/db-jeopardynormale.js (`jeopardyNormaleData`: 14 categorie x 100), 20 per valore.
    Tabellone unico che si adatta allo schermo, categorie a scelta, domande
    che non si ripetono tra le partite, secondo tempo a punti doppi, casella
    "doppia posta", rubata, tempo per rispondere opzionale, gran finale a

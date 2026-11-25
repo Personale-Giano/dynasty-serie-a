@@ -72,12 +72,12 @@ test('db-intesavincente.js: parole senza duplicati', () => {
     noDuplicates(words, 'words');
 });
 
-test('db-jeopardy.js: 9 categorie x 90 domande, tutte con value 100-500', () => {
+test('db-jeopardy.js: 9 categorie x 100 domande, tutte con value 100-500', () => {
     const { jeopardyData } = load('db-jeopardy.js');
     assert.equal(jeopardyData.length, 9);
     const valoriAmmessi = [100, 200, 300, 400, 500];
     jeopardyData.forEach((cat) => {
-        assert.equal(cat.questions.length, 90, `categoria "${cat.category}" non ha 90 domande`);
+        assert.equal(cat.questions.length, 100, `categoria "${cat.category}" non ha 100 domande`);
         cat.questions.forEach((q) => {
             assert.ok(valoriAmmessi.includes(q.value), `valore non valido in "${cat.category}": ${q.value}`);
             assert.ok(q.question && q.answer, `domanda o risposta mancante in "${cat.category}"`);

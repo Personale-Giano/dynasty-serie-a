@@ -1,5 +1,5 @@
 /* Jeopardy normale (assets/db-jeopardynormale.js + il motore condiviso
-   assets/games/jeopardy.js): 9 categorie x 50 domande, 10 per valore, foto
+   assets/games/jeopardy.js): 14 categorie x 100 domande, 20 per valore, foto
    presenti sul disco, icone esistenti, id della pagina tutti al loro posto. */
 'use strict';
 
@@ -12,14 +12,14 @@ const root = path.join(__dirname, '..');
 const { jeopardyNormaleData } = require(path.join(root, 'assets', 'db-jeopardynormale.js'));
 const { jeopardyData } = require(path.join(root, 'assets', 'db-jeopardy.js'));
 
-test('db-jeopardynormale.js: 9 categorie, 10 domande per ogni valore da 100 a 500', () => {
-    assert.equal(jeopardyNormaleData.length, 9);
-    assert.equal(new Set(jeopardyNormaleData.map((c) => c.category)).size, 9);
+test('db-jeopardynormale.js: 14 categorie, 20 domande per ogni valore da 100 a 500', () => {
+    assert.equal(jeopardyNormaleData.length, 14);
+    assert.equal(new Set(jeopardyNormaleData.map((c) => c.category)).size, 14);
     for (const cat of jeopardyNormaleData) {
         for (const v of [100, 200, 300, 400, 500]) {
-            assert.equal(cat.questions.filter((q) => q.value === v).length, 10, `${cat.category} ${v}`);
+            assert.equal(cat.questions.filter((q) => q.value === v).length, 20, `${cat.category} ${v}`);
         }
-        assert.equal(cat.questions.length, 50, cat.category);
+        assert.equal(cat.questions.length, 100, cat.category);
     }
 });
 
@@ -49,7 +49,7 @@ test('db-jeopardynormale.js: ogni foto esiste ed ha il link alla fonte', () => {
             assert.match(q.src, /^https:\/\/commons\.wikimedia\.org\/wiki\/File:/, `fonte mancante: ${q.img}`);
         }
     }
-    assert.ok(n >= 40, `troppe poche foto: ${n}`);
+    assert.ok(n >= 100, `troppe poche foto: ${n}`);
 });
 
 test('db-jeopardynormale.js: ogni categoria ha un\'icona che esiste in qz.js', () => {

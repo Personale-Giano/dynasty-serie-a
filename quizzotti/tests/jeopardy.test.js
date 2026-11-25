@@ -13,11 +13,11 @@ const root = path.join(__dirname, '..');
 const { jeopardyData } = require(path.join(root, 'assets', 'db-jeopardy.js'));
 const TIERS = [100, 200, 300, 400, 500];
 
-test('db-jeopardy.js: almeno 15 domande per ogni casella (categoria + valore)', () => {
+test('db-jeopardy.js: 20 domande per ogni casella (categoria + valore)', () => {
     for (const cat of jeopardyData) {
         for (const t of TIERS) {
             const n = cat.questions.filter((q) => q.value === t).length;
-            assert.ok(n >= 15, `"${cat.category}" ${t}: solo ${n} domande`);
+            assert.equal(n, 20, `"${cat.category}" ${t}: ${n} domande invece di 20`);
         }
     }
 });

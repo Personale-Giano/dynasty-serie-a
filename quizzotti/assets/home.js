@@ -102,7 +102,7 @@
         'Derby delle Parole: chi la sa, tira in porta',
         'Sfida dei Budget: il presidente ha chiuso i cordoni della borsa',
         'Jeopardy: la doppia posta è nascosta da qualche parte',
-        'Jeopardy normale: musica, rap, animali e cucina, con le foto',
+        'Jeopardy normale: 14 categorie e 1.400 domande, con le foto',
         'Milionario normale: un milione di euro finti in cultura generale',
         'Cruciverba: doppia papera in finale di Champions, sei lettere',
         'Calciatore del Giorno: oggi tocca a uno nuovo, e domani pure',
