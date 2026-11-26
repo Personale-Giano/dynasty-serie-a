@@ -14,7 +14,8 @@ const Core = require(path.join('..', 'assets', 'games', 'giocatoredelgiorno.js')
 const ROLES = ['POR', 'DIF', 'CEN', 'ATT'];
 const CONTINENTS = ['Europa', 'Sudamerica', 'Nordamerica', 'Africa', 'Asia', 'Oceania'];
 const LEAGUES = ['Serie A', 'Premier League', 'Liga', 'Bundesliga', 'Ligue 1', 'Liga Portugal', 'Süper Lig',
-    'Eredivisie', 'Scottish Premiership', 'Saudi Pro League', 'MLS', 'Brasileirão'];
+    'Eredivisie', 'Scottish Premiership', 'Saudi Pro League', 'MLS', 'Brasileirão', 'Pro League', 'Qatar Stars League',
+    'Liga Profesional', 'Serie B', 'Championship', 'Altro'];
 
 test('almeno 350 calciatori, senza duplicati', () => {
     assert.ok(dailyPlayers.length >= 350, `solo ${dailyPlayers.length} calciatori`);

@@ -189,7 +189,7 @@ const questions = [
             { level: 10, question: "Quale allenatore ha guidato più partite di Serie A?", options: { A: "Giovanni Trapattoni", B: "Carlo Mazzone", C: "Nereo Rocco", D: "Nils Liedholm" }, correctAnswer: "B" },
             { level: 10, question: "Chi fu il primo a vincere il Mondiale sia da calciatore sia da commissario tecnico?", options: { A: "Franz Beckenbauer", B: "Didier Deschamps", C: "Johan Cruijff", D: "Mário Zagallo" }, correctAnswer: "D" },
             { level: 10, question: "Chi ha segnato in cinque finali di Coppa dei Campioni consecutive (1956-1960)?", options: { A: "Ferenc Puskás", B: "Paco Gento", C: "Alfredo Di Stéfano", D: "Eusébio" }, correctAnswer: "C" },
-            { level: 10, question: "Qual è lo stadio di calcio con la capienza maggiore in Europa?", options: { A: "Camp Nou", B: "Wembley", C: "San Siro", D: "Signal Iduna Park" }, correctAnswer: "A" },
+            { level: 10, question: "Quale stadio era il più capiente d'Europa prima dei lavori di ristrutturazione iniziati nel 2023?", options: { A: "Camp Nou", B: "Wembley", C: "San Siro", D: "Signal Iduna Park" }, correctAnswer: "A" },
             { level: 10, question: "Quante Coppe Italia aveva vinto la Juventus al termine della stagione 2023-24?", options: { A: "12", B: "13", C: "14", D: "15" }, correctAnswer: "D" },
             { level: 10, question: "Quale club ha vinto più Supercoppe europee (fino al 2025)?", options: { A: "Barcellona", B: "Real Madrid", C: "Milan", D: "Liverpool" }, correctAnswer: "B" },
             { level: 10, question: "Quale stadio è soprannominato 'La Catedral'?", options: { A: "San Mamés", B: "Maracanã", C: "Mestalla", D: "Wembley" }, correctAnswer: "A" },

@@ -65,7 +65,7 @@ test('i filtri tengono solo il campionato e il ruolo scelti', () => {
     const pool = G.buildPool(playersDatabase, { league: 'ITA', role: 'POR' });
     assert.ok(pool.length > 0);
     for (const p of pool) {
-        assert.equal(G.leagueOf(p.team), 'ITA');
+        assert.equal(G.leagueOfPlayer(p), 'ITA');
         assert.equal(p.role, 'POR');
     }
     assert.equal(G.leagueOf('Squadra inventata'), 'ROW');

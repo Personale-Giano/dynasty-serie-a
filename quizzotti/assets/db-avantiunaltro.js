@@ -57,7 +57,7 @@ const fullDatabase = [
       { q: "Quale squadra ha vinto la Coppa UEFA/Europa League per tre anni consecutivi?", a: "Siviglia", b: "Atlético Madrid", correct: "A" },
       { q: "Quale calciatore ha vinto più titoli di Serie A nella storia?", a: "Paolo Maldini", b: "Gianluigi Buffon", correct: "B" },
       { q: "Chi deteneva nel 2025 il record di cartellini rossi in carriera nella Liga?", a: "Sergio Ramos", b: "Pepe", correct: "A" },
-      { q: "Quale di questi due stadi può ospitare più spettatori?", a: "Stadio Giuseppe Meazza (San Siro)", b: "Camp Nou", correct: "B" },
+      { q: "Quale di questi due stadi aveva più posti prima dei lavori iniziati nel 2023?", a: "Stadio Giuseppe Meazza (San Siro)", b: "Camp Nou", correct: "B" },
       { q: "Chi ha collezionato più presenze in Bundesliga?", a: "Charly Körbel", b: "Oliver Kahn", correct: "A" },
       { q: "Quale nazionale aveva partecipato a più Mondiali senza mai vincerne uno, fino al 2022?", a: "Paesi Bassi", b: "Messico", correct: "B" },
       { q: "Quale club aveva vinto più volte la Coppa UEFA/Europa League fino al 2026?", a: "Siviglia", b: "Inter", correct: "A" },

@@ -44,6 +44,9 @@
     Object.keys(LEAGUES).forEach(function (k) { LEAGUES[k].forEach(function (t) { TEAM_LEAGUE[t] = k; }); });
 
     function leagueOf(team) { return TEAM_LEAGUE[team] || 'ROW'; }
+    // il campionato vero, quando il database lo dice (db-giocatoributget.js ha il campo league)
+    var BY_LEAGUE_NAME = { 'Serie A': 'ITA', 'Premier League': 'ENG', 'Liga': 'ESP', 'Bundesliga': 'GER', 'Ligue 1': 'FRA' };
+    function leagueOfPlayer(p) { return p.league ? (BY_LEAGUE_NAME[p.league] || 'ROW') : leagueOf(p.team); }
     function keyOf(p) { return p.name + '|' + p.team; }
 
     /** I giocatori in gioco con i filtri scelti, senza doppioni, dal piu' caro al meno caro. */
@@ -53,7 +56,7 @@
         db.forEach(function (p) {
             var k = keyOf(p);
             if (seen[k] || !(p.value > 0)) return;
-            if (opts.league && opts.league !== 'ALL' && leagueOf(p.team) !== opts.league) return;
+            if (opts.league && opts.league !== 'ALL' && leagueOfPlayer(p) !== opts.league) return;
             if (opts.role && p.role !== opts.role) return;
             seen[k] = 1;
             out.push(p);
@@ -173,7 +176,7 @@
     }
 
     var core = {
-        LEAGUES: LEAGUES, LEAGUE_NAMES: LEAGUE_NAMES, DECKS: DECKS, leagueOf: leagueOf, buildPool: buildPool, playable: playable,
+        LEAGUES: LEAGUES, LEAGUE_NAMES: LEAGUE_NAMES, DECKS: DECKS, leagueOf: leagueOf, leagueOfPlayer: leagueOfPlayer, buildPool: buildPool, playable: playable,
         playableRoles: playableRoles, level: level, nextPlayer: nextPlayer, firstPlayer: firstPlayer, answer: answer,
         fmtValue: fmtValue, fmtGoals: fmtGoals, diffText: diffText, ratio: ratio, surname: surname
     };

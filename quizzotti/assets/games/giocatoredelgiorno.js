@@ -220,25 +220,39 @@
        ===================================================================== */
     var $ = QZ.$;
     var GAME = 'giocatoredelgiorno';
-    var PLAYERS = dailyPlayers;
+    var PLAYERS = dailyPlayers;   // i calciatori del giorno: elenco congelato, decide l'ordine dei giorni
     var BY_NAME = {};
     PLAYERS.forEach(function (p) { BY_NAME[p.name] = p; });
+    // chi si puo' scrivere come tentativo: tutto il database dei calciatori (db-giocatoributget.js),
+    // non solo i calciatori del giorno. Il segreto resta sempre uno dei calciatori del giorno.
+    var GUESS = PLAYERS.slice();
+    if (typeof playersDatabase !== 'undefined') {
+        playersDatabase.forEach(function (p) {
+            if (BY_NAME[p.name] || !p.nation || !p.league || !p.born) return;
+            BY_NAME[p.name] = p;
+            GUESS.push(p);
+        });
+    }
+    var IS_DAILY = {};
+    PLAYERS.forEach(function (p) { IS_DAILY[p.name] = 1; });
     var KEY_DAY = 'qz.gdg.today';       // la partita di oggi (anche a meta')
     var KEY_STATS = 'qz.gdg.stats';     // statistiche e serie
     var KEY_HIST = 'qz.gdg.history';    // esito di ogni N° giocato: { "5": {w, t, h, a} }
     var KEY_POOL = 'qz.gdg.trainpool';  // ultimo mazzo scelto per l'allenamento
-    var trainDeck = new QZ.Deck(GAME + '.allenamento', PLAYERS, function (p) { return p.name; });
+    var trainDeck = new QZ.Deck(GAME + '.allenamento', GUESS, function (p) { return p.name; });
 
     // mazzi dell'allenamento
-    function count(fn) { return PLAYERS.filter(fn).length; }
+    function count(fn) { return GUESS.filter(fn).length; }
     var POOLS = {
-        all: { label: 'Tutti', short: 'tutti', test: function () { return true; } },
-        seriea: { label: 'Solo Serie A', short: 'solo Serie A', test: function (p) { return p.league === 'Serie A'; } },
-        big: { label: 'Solo i big', short: 'solo i big', test: function (p) { return p.value >= 30; } }
+        all: { label: 'I conosciuti', short: 'i conosciuti', test: function (p) { return !!IS_DAILY[p.name]; } },
+        seriea: { label: 'Solo Serie A', short: 'solo Serie A', test: function (p) { return p.league === 'Serie A' && (IS_DAILY[p.name] || p.value >= 4); } },
+        big: { label: 'Solo i big', short: 'solo i big', test: function (p) { return p.value >= 30; } },
+        tutto: { label: 'Tutto il database', short: 'tutto il database', test: function () { return true; } }
     };
-    POOLS.all.desc = PLAYERS.length + ' calciatori, dalla Serie A all\'Arabia';
+    POOLS.all.desc = count(POOLS.all.test) + ' calciatori famosi, gli stessi del gioco del giorno';
     POOLS.seriea.desc = count(POOLS.seriea.test) + ' calciatori del nostro campionato';
     POOLS.big.desc = count(POOLS.big.test) + ' nomi da copertina, valore da 30 milioni in su';
+    POOLS.tutto.desc = count(POOLS.tutto.test) + ' calciatori, anche i meno noti: per veri esperti';
 
     var S = { active: false };
     var sugg = [];      // suggerimenti mostrati
@@ -761,7 +775,7 @@
         return QZ.esc(name.slice(0, i)) + '<mark>' + QZ.esc(name.slice(i, i + qn.length)) + '</mark>' + QZ.esc(name.slice(i + qn.length));
     }
     function openList(q) {
-        sugg = Core.search(PLAYERS, q, excluded(), 8);
+        sugg = Core.search(GUESS, q, excluded(), 8);
         active = sugg.length ? 0 : -1;
         if (!sugg.length) {
             list.innerHTML = '<li class="gd-empty" role="presentation">Nessuno così nel nostro elenco. Controlla come l\'hai scritto, o prova un altro nome.</li>';

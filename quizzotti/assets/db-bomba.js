@@ -390,7 +390,6 @@ const topics = [
   { categoria: "Trofei e Storia", topic: "Squadre italiane che hanno vinto una coppa europea" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Serie B" },
   { categoria: "Trofei e Storia", topic: "Squadre retrocesse dalla Serie A negli ultimi vent'anni" },
-  { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Coppa del Re" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Coppa di Lega inglese" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Coppa di Germania" },
   { categoria: "Trofei e Storia", topic: "Squadre che hanno vinto la Coppa di Francia" },
