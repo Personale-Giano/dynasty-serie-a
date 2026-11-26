@@ -22,7 +22,7 @@ AddType font/woff2 .woff2
 
   # /quizzotti/index.html -> /quizzotti/ (solo se chiesto davvero, non per DirectoryIndex)
   RewriteCond %{THE_REQUEST} \s/+quizzotti/index\.html[?\s]
-  RewriteRule ^index\.html$ /quizzotti/ [R=301,L]
+  RewriteRule ^index\.html$ https://%{HTTP_HOST}/quizzotti/ [R=301,L]
 
   # cartelle di lavoro: non sono pagine del sito
   RewriteRule ^(scripts|tests|node_modules|\.github)(/|$) - [R=404,L]
