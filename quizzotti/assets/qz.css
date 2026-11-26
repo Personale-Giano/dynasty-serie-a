@@ -86,6 +86,7 @@
 /* ---------- Il colore di ogni gioco ---------- */
 [data-game="cvem"] { --accent: #ffb627; --accent-2: #ffd36e; --accent-rgb: 255, 182, 39; --accent-ink: #ffb627; --on-accent: #07090b; }
 [data-game="milionario"] { --accent: #e8b04a; --accent-2: #f3d08f; --accent-rgb: 232, 176, 74; --accent-ink: #f0c070; --on-accent: #07090b; }
+[data-game="nomicose"] { --accent: #ffa94d; --accent-2: #ffd2a3; --accent-rgb: 255, 169, 77; --accent-ink: #ffb870; --on-accent: #07090b; }
 [data-game="jeopardy"] { --accent: #4d8dff; --accent-2: #9cc0ff; --accent-rgb: 77, 141, 255; --accent-ink: #7aaaff; --on-accent: #07090b; }
 [data-game="jeopardynormale"] { --accent: #20c997; --accent-2: #8fe8cc; --accent-rgb: 32, 201, 151; --accent-ink: #5edcb6; --on-accent: #07090b; }
 [data-game="avantiunaltro"] { --accent: #ff7a2f; --accent-2: #ffb07f; --accent-rgb: 255, 122, 47; --accent-ink: #ff8f4f; --on-accent: #07090b; }

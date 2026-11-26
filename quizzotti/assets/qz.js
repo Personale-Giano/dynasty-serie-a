@@ -1,6 +1,6 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Motore condiviso
-   Un solo script per home e 20 giochi: header/menu/footer generati da qui
+   Un solo script per home e 21 giochi: header/menu/footer generati da qui
    (niente piu' HTML duplicato in ogni pagina), icone SVG inline (niente
    Font Awesome), suoni sintetizzati, profilo XP, timer, effetti e
    componenti UI. Ogni pagina dichiara il suo gioco con <body data-game="id">.
@@ -34,7 +34,8 @@
         { id: 'catena', file: 'Catena.html', name: 'La Catena', short: 'La Catena', icon: 'link', color: '#46c8c0', color2: '#9ae6e1', on: '#07090b', rgb: '70, 200, 192', players: '2 squadre', kind: 'party', desc: 'Una parola tira l\'altra: Baggio, codino, pallone d\'oro… Trova l\'anello mancante.', tags: ['Squadre', 'Parole', 'Collegamenti'] },
         { id: 'bingo', file: 'Bingo.html', name: 'Bingo della Partita', short: 'Bingo', icon: 'ticket', color: '#e3e85a', color2: '#f1f4a6', on: '#07090b', rgb: '227, 232, 90', players: '2+ giocatori', kind: 'party', desc: 'Una cartella a testa e la partita in TV: rigore, palo, espulsione. Chi fa bingo per primo?', tags: ['Partita in TV', 'Cartelle', 'Con gli amici'] },
         { id: 'jeopardynormale', file: 'JeopardyNormale.html', engine: 'jeopardy', name: 'Jeopardy normale', short: 'Jeopardy normale', icon: 'sparkles', color: '#20c997', color2: '#8fe8cc', on: '#07090b', rgb: '32, 201, 151', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone di cultura generale: 14 categorie e 1.400 domande, dalla musica alla storia, con le foto.', tags: ['Squadre', 'Cultura generale', 'Foto'] },
-        { id: 'milionario', file: 'MilionarioNormale.html', engine: 'cvem', name: 'Milionario normale', short: 'Milionario normale', icon: 'crown', color: '#e8b04a', color2: '#f3d08f', on: '#07090b', rgb: '232, 176, 74', players: 'Da solo', kind: 'quiz', desc: 'Il Milionario di cultura generale: musica, rap, sport, animali, cinema, geografia e cucina. Quattro aiuti, un milione finto.', tags: ['Quiz', 'Cultura generale', '15 livelli'] }
+        { id: 'milionario', file: 'MilionarioNormale.html', engine: 'cvem', name: 'Milionario normale', short: 'Milionario normale', icon: 'crown', color: '#e8b04a', color2: '#f3d08f', on: '#07090b', rgb: '232, 176, 74', players: 'Da solo', kind: 'quiz', desc: 'Il Milionario di cultura generale: musica, rap, sport, animali, cinema, geografia e cucina. Quattro aiuti, un milione finto.', tags: ['Quiz', 'Cultura generale', '15 livelli'] },
+        { id: 'nomicose', file: 'NomiCose.html', name: 'Nomi, Cose, Calcio', short: 'Nomi Cose Calcio', icon: 'list', color: '#ffa94d', color2: '#ffd2a3', on: '#07090b', rgb: '255, 169, 77', players: 'TV e telefoni, 2-12', kind: 'party', desc: 'Il Nomi Cose Città del calcio: esce la lettera, ognuno scrive dal suo telefono, la TV fa da tabellone.', tags: ['TV + telefoni', 'QR code', 'Categorie'] }
     ];
 
     QZ.game = function (id) {

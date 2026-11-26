@@ -40,6 +40,8 @@ const data = {
     jeopardyData: 'readonly',
     jeopardyNormaleData: 'readonly',
     milionarioData: 'readonly',
+    nomicoseData: 'readonly',
+    qrcode: 'readonly',
     wordsList: 'readonly',
     playerImages: 'readonly',
     tabooWords: 'readonly',

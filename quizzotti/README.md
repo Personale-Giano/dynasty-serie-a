@@ -1,6 +1,6 @@
 # Quizzotti v2
 
-20 minigiochi gratuiti (18 di calcio più Jeopardy normale e Milionario normale, di cultura generale), ispirati a format TV italiani (Chi Vuol Essere Milionario, Jeopardy, Avanti un Altro, Taboo, Intesa Vincente, Mr. White, L'Eredità…). HTML/CSS/JS statico, senza framework né bundler: si apre `index.html` e si gioca.
+21 minigiochi gratuiti (19 di calcio più Jeopardy normale e Milionario normale, di cultura generale), ispirati a format TV italiani (Chi Vuol Essere Milionario, Jeopardy, Avanti un Altro, Taboo, Intesa Vincente, Mr. White, L'Eredità…). HTML/CSS/JS statico, senza framework né bundler: si apre `index.html` e si gioca.
 
 La v2 è un rifacimento completo. L'identità visiva si chiama **"Riflettori"**: lo stadio di sera, con i fari, il prato e tutti i numeri sul tabellone a LED. Le regole di stile e di tono sono in [DESIGN.md](DESIGN.md): leggerlo prima di toccare una pagina.
 
@@ -19,6 +19,9 @@ npm run check   # test + lint JS + lint CSS
 ```
 index.html                 home (griglia giochi generata dal registro)
 CVEM.html, Jeopardy.html…  una pagina per gioco, con <body data-game="id">
+api/                       stanze di Nomi, Cose, Calcio (PHP 8.0 su Altervista): nomicose.php
+                           risponde a TV e telefoni, nomicose-core.php ha le regole; le stanze
+                           sono file JSON in api/stanze, protetti da .htaccess, durano 2 giorni
 assets/
   qz.css                   design system unico (token, componenti, animazioni)
   qz.js                    motore condiviso: registro giochi, header/launcher/footer,

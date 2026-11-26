@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nomi, Cose, Calcio · Quizzotti</title>
+<meta name="description" content="Il Nomi Cose Città del calcio: esce una lettera e tutti scrivono un calciatore, una squadra, un allenatore. La TV fa da tabellone, ognuno gioca dal suo telefono con il QR code.">
+<link rel="canonical" href="https://quizotti.altervista.org/quizzotti/NomiCose.html">
+<meta property="og:url" content="https://quizotti.altervista.org/quizzotti/NomiCose.html">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="Nomi, Cose, Calcio · Quizzotti">
+<meta property="og:description" content="Esce la lettera: calciatore, squadra, allenatore, stadio. La TV fa da tabellone, i telefoni da foglio.">
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/logo2.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="assets/qz.css?v=d5df0d00">
+<style>
+  /* ---------- Copertina ---------- */
+  .nc-join { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .nc-code-input { max-width: 170px; font-family: var(--font-led); font-size: 28px; letter-spacing: .25em; text-transform: uppercase; text-align: center; }
+
+  /* ---------- Sala d'attesa sulla TV ---------- */
+  .nc-lobby { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  @media (min-width: 960px) { .nc-lobby { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); align-items: start; } }
+  .nc-qr { display: grid; justify-items: center; gap: 12px; text-align: center; }
+  .nc-qr__img { width: min(100%, 300px); aspect-ratio: 1; padding: 12px; background: #fff; border-radius: var(--r); }
+  .nc-qr__img svg, .nc-qr__img img { display: block; width: 100%; height: 100%; }
+  .nc-qr__code { font-family: var(--font-led); font-size: clamp(44px, 7vw, 68px); line-height: 1; letter-spacing: .18em; color: var(--led); text-shadow: var(--led-glow); }
+  .nc-qr__url { font-size: 14px; color: var(--text-2); overflow-wrap: anywhere; }
+  .nc-sec { display: grid; gap: 12px; }
+  .nc-sec + .nc-sec { margin-top: 22px; }
+  .nc-sec h2 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-2); }
+
+  /* i giocatori: maglie colorate */
+  .nc-players { display: flex; flex-wrap: wrap; gap: 8px; }
+  .nc-player { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 12px 6px 8px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--panel-2); font-weight: 700; }
+  .nc-player .team__dot { background: var(--c); }
+  .nc-player.is-off { opacity: .45; }
+  .nc-player small { font-weight: 600; color: var(--text-2); }
+  .nc-player button { min-width: 28px; min-height: 28px; border: 0; border-radius: 50%; background: transparent; color: var(--text-2); }
+  .nc-player button:hover { color: var(--text); background: #000; }
+  .nc-empty { color: var(--text-2); }
+
+  /* categorie: interruttori come nel Jeopardy */
+  .nc-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 6px; }
+  .nc-cat { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); color: var(--text-2); font-weight: 600; text-align: left; }
+  .nc-cat__lamp { flex: none; width: 14px; height: 14px; border-radius: 3px; background: #000; border: 1px solid var(--line-2); }
+  .nc-cat[aria-pressed="true"] { color: var(--text); font-weight: 800; background: rgba(var(--accent-rgb), .08); border-color: rgba(var(--accent-rgb), .45); }
+  .nc-cat[aria-pressed="true"] .nc-cat__lamp { background: var(--accent); border-color: var(--accent); }
+  .nc-cat--custom { border-style: dashed; }
+  .nc-add { display: flex; gap: 8px; }
+  .nc-add .input { flex: 1; min-width: 0; }
+  .nc-opts { display: grid; gap: 14px; }
+
+  /* ---------- La lettera ---------- */
+  .nc-letter { display: grid; place-items: center; gap: 14px; min-height: 60vh; text-align: center; }
+  .nc-letter__big { font-family: var(--font-led); font-size: clamp(160px, 34vw, 320px); line-height: .9; color: var(--led); text-shadow: var(--led-glow); }
+  .nc-letter__big.is-spin { animation: nc-flick .09s steps(1) infinite; }
+  @keyframes nc-flick { 50% { opacity: .65; } }
+  .nc-letter__sub { font-family: var(--font-display); font-weight: 800; font-size: clamp(20px, 3vw, 30px); text-transform: uppercase; letter-spacing: .08em; }
+
+  /* ---------- Il round sulla TV ---------- */
+  .nc-hud { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+  .nc-hud__letter { display: grid; place-items: center; width: 96px; height: 96px; flex: none; border: 1px solid var(--line-2); border-radius: var(--r); background: #000; font-family: var(--font-led); font-size: 72px; color: var(--led); text-shadow: var(--led-glow); }
+  .nc-hud__info { flex: 1; min-width: 0; }
+  .nc-hud__info b { display: block; font-family: var(--font-display); font-size: clamp(22px, 3.4vw, 34px); font-weight: 900; text-transform: uppercase; line-height: 1.05; }
+  .nc-hud .timer-ring { --size: 96px; }
+  .nc-stop { padding: 12px 16px; border-radius: var(--r); background: var(--led-red, #e5484d); color: #fff; font-family: var(--font-display); font-weight: 900; font-size: clamp(20px, 3vw, 30px); text-transform: uppercase; text-align: center; animation: qz-rise .3s var(--ease-out) both; }
+  .nc-progress { display: grid; gap: 10px; }
+  .nc-prog { display: grid; grid-template-columns: minmax(90px, 200px) minmax(0, 1fr) auto; align-items: center; gap: 12px; font-weight: 700; }
+  .nc-prog__bar { height: 14px; border-radius: 999px; background: #000; border: 1px solid var(--line); overflow: hidden; }
+  .nc-prog__fill { height: 100%; width: 0; background: var(--c); transition: width .4s var(--ease-out); }
+  .nc-prog__n { font-family: var(--font-led); color: var(--led); min-width: 56px; text-align: right; }
+  .nc-catlist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+
+  /* ---------- Controllo e risultati: la tabella ---------- */
+  .nc-table-wrap { overflow-x: auto; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel); }
+  .nc-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .nc-table th, .nc-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .nc-table thead th { position: sticky; top: 0; background: var(--panel-2); font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .nc-table thead th .team__dot { background: var(--c); margin-right: 6px; }
+  .nc-table th[scope="row"] { font-weight: 800; color: var(--text-2); white-space: nowrap; }
+  .nc-ans { display: flex; align-items: flex-start; gap: 6px; width: 100%; min-height: 40px; padding: 4px 6px; border: 1px solid transparent; border-radius: var(--r-sm); background: transparent; color: var(--text); text-align: left; font-weight: 700; }
+  button.nc-ans:hover { border-color: var(--line-2); }
+  .nc-ans__t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .nc-ans__p { flex: none; font-family: var(--font-led); color: var(--led-green, #3ddc84); }
+  .nc-ans.is-dup .nc-ans__p { color: var(--led); }
+  .nc-ans.is-bad { color: var(--text-2); }
+  .nc-ans.is-bad .nc-ans__t { text-decoration: line-through; }
+  .nc-ans.is-bad .nc-ans__p { color: var(--led-red, #e5484d); }
+  .nc-ans.is-empty { color: var(--faint, #5b646c); font-weight: 500; }
+  .nc-ans small { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); text-decoration: none; }
+  .nc-ans.is-forced { border-color: rgba(var(--accent-rgb), .55); }
+  .nc-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--text-2); }
+  .nc-total td, .nc-total th { font-family: var(--font-led); font-size: 20px; color: var(--led); }
+  .nc-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
+  .nc-rank { margin-top: 18px; }
+
+  /* ---------- Resoconto finale ---------- */
+  .nc-awards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; margin-top: 18px; }
+  .nc-award { padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel); }
+  .nc-award span { display: block; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+  .nc-award b { display: block; margin-top: 4px; font-family: var(--font-display); font-size: 22px; font-weight: 900; overflow-wrap: anywhere; }
+  .nc-award small { display: block; margin-top: 2px; color: var(--text-2); }
+  .nc-gems { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+  /* ---------- Il telefono ---------- */
+  .nc-phone { max-width: 560px; margin: 0 auto; display: grid; gap: 16px; }
+  .nc-me { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel); box-shadow: inset 4px 0 0 var(--c); }
+  .nc-me b { flex: 1; min-width: 0; font-size: 18px; overflow-wrap: anywhere; }
+  .nc-me .led { font-size: 26px; }
+  .nc-sheet { display: grid; gap: 10px; }
+  .nc-field { display: grid; gap: 4px; }
+  .nc-field label { font-weight: 800; font-size: 15px; }
+  .nc-field .input { font-size: 19px; }
+  .nc-field.is-bad .input { border-color: var(--led-red, #e5484d); }
+  .nc-field__hint { font-size: 13px; color: var(--led-red, #e5484d); }
+  .nc-phone-hud { position: sticky; top: calc(var(--header-h, 56px) + 6px); z-index: 5; display: flex; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: var(--r); background: rgba(7, 9, 11, .94); backdrop-filter: blur(6px); }
+  .nc-phone-hud .nc-hud__letter { width: 58px; height: 58px; font-size: 44px; }
+  .nc-phone-hud .timer-ring { --size: 58px; }
+  .nc-phone-hud__txt { flex: 1; min-width: 0; font-weight: 700; color: var(--text-2); font-size: 14px; }
+  .nc-phone-hud__txt b { display: block; color: var(--text); font-size: 16px; }
+  .nc-saved { font-size: 13px; color: var(--text-2); text-align: center; }
+  .nc-vote { display: grid; gap: 14px; }
+  .nc-vote__cat { padding: 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); }
+  .nc-vote__cat h3 { margin: 0 0 8px; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
+  .nc-vote__row { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 0; border-top: 1px solid var(--line); }
+  .nc-vote__row:first-of-type { border-top: 0; }
+  .nc-vote__who { flex: none; width: 104px; font-size: 13px; line-height: 1.2; font-weight: 700; color: var(--text-2); overflow-wrap: anywhere; }
+  .nc-vote__t { flex: 1; min-width: 0; font-weight: 800; overflow-wrap: anywhere; }
+  .nc-vote__t.is-bad { text-decoration: line-through; color: var(--text-2); }
+  .nc-vote__row .btn { flex: none; }
+  .nc-vote__row .btn[aria-pressed="true"] { --b-bg: #c8302a; --b-fg: #fff; --b-bd: #c8302a; }
+  .nc-big-msg { padding: 26px 18px; text-align: center; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: #000; }
+  .nc-big-msg b { display: block; font-family: var(--font-display); font-weight: 900; font-size: clamp(26px, 7vw, 40px); text-transform: uppercase; line-height: 1.05; }
+  .nc-big-msg p { margin: 10px 0 0; color: var(--text-2); }
+  .nc-boss { display: grid; gap: 10px; padding: 14px; border: 1px dashed rgba(var(--accent-rgb), .55); border-radius: var(--r); }
+  .nc-boss > span { font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-ink); }
+</style>
+</head>
+<body data-game="nomicose">
+<main id="app" class="qz-main" tabindex="-1">
+
+  <!-- ============ COPERTINA ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Gioco 21 · TV e telefoni, da 2 a 12</span>
+        <h1 class="intro__title">Nomi, Cose, <em>Calcio</em></h1>
+        <p class="intro__lead">Esce una lettera e parte il cronometro: un calciatore, una squadra, un allenatore, uno stadio. La TV fa da tabellone, ognuno scrive dal suo telefono. Le risposte che hai solo tu valgono doppio.</p>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="create-btn" data-autofocus></button>
+        </div>
+        <p class="note mt-2" id="create-note">Apri questa pagina sulla TV o sul computer: i telefoni entrano col QR code.</p>
+        <div class="card mt-3">
+          <label class="label" for="code-in">Hai già il codice della stanza?</label>
+          <div class="nc-join mt-1">
+            <input class="input nc-code-input" id="code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="····">
+            <button class="btn" type="button" id="code-go"></button>
+          </div>
+        </div>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TV: SALA D'ATTESA ============ -->
+  <section class="screen" id="t-lobby">
+    <div class="nc-lobby">
+      <div class="card nc-qr">
+        <span class="label">Inquadra per entrare</span>
+        <div class="nc-qr__img" id="qr" aria-hidden="true"></div>
+        <div class="nc-qr__code" id="room-code" aria-label="Codice stanza"></div>
+        <div class="nc-qr__url" id="room-url"></div>
+      </div>
+      <div class="card">
+        <div class="nc-sec">
+          <h2 id="lbl-players">In campo</h2>
+          <div class="nc-players" id="t-players" role="list" aria-labelledby="lbl-players"></div>
+        </div>
+        <div class="nc-sec">
+          <div class="row row--between"><h2 id="lbl-cats">Categorie</h2><span class="small muted" id="cats-count"></span></div>
+          <div class="nc-cats" id="t-cats" role="group" aria-labelledby="lbl-cats"></div>
+          <div class="nc-add">
+            <input class="input" id="t-cat-in" maxlength="34" placeholder="Inventa una categoria: es. Ex giocatore della Juve" aria-label="Nuova categoria">
+            <button class="btn" type="button" id="t-cat-add"></button>
+          </div>
+        </div>
+        <div class="nc-sec nc-opts">
+          <h2>Regole</h2>
+          <div class="field"><span class="label" id="lbl-rounds">Round</span><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
+          <div class="field"><span class="label" id="lbl-time">Tempo per round</span><div id="opt-time" aria-labelledby="lbl-time"></div></div>
+          <label class="switch"><input type="checkbox" id="opt-stop"><span><b>Stop!</b> Chi riempie tutte le caselle può fermare il round: agli altri restano 10 secondi.</span></label>
+          <label class="switch"><input type="checkbox" id="opt-foreign"><span><b>Lettere straniere.</b> Nell'estrazione anche J, K, W e Y (Juventus, Klopp, Wembley…).</span></label>
+        </div>
+        <div class="nc-actions">
+          <button class="btn btn--primary btn--xl" type="button" id="t-start"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TV: LETTERA ============ -->
+  <section class="screen" id="t-letter">
+    <div class="nc-letter">
+      <span class="label" id="t-letter-round"></span>
+      <div class="nc-letter__big" id="t-letter-big" aria-live="polite"></div>
+      <div class="nc-letter__sub">Prendete il telefono</div>
+    </div>
+  </section>
+
+  <!-- ============ TV: ROUND IN CORSO ============ -->
+  <section class="screen" id="t-play">
+    <div class="nc-hud">
+      <div class="nc-hud__letter" id="t-play-letter"></div>
+      <div class="nc-hud__info"><span class="label" id="t-play-round"></span><b>Scrivete!</b></div>
+      <div id="t-timer"></div>
+    </div>
+    <div class="nc-stop" id="t-stop" hidden></div>
+    <div class="card mt-2">
+      <div class="nc-progress" id="t-progress" aria-label="Caselle riempite"></div>
+      <div class="nc-catlist" id="t-catlist"></div>
+    </div>
+    <div class="nc-actions"><button class="btn btn--sm btn--ghost" type="button" id="t-force"></button></div>
+  </section>
+
+  <!-- ============ TV: CONTROLLO ============ -->
+  <section class="screen" id="t-review">
+    <div class="section-head"><h2 id="t-review-title"></h2></div>
+    <p class="nc-legend" id="t-legend"></p>
+    <div class="nc-table-wrap mt-2"><table class="nc-table" id="t-review-table"></table></div>
+    <div class="nc-actions"><button class="btn btn--primary btn--xl" type="button" id="t-confirm"></button></div>
+  </section>
+
+  <!-- ============ TV: RISULTATI DEL ROUND ============ -->
+  <section class="screen" id="t-results">
+    <div class="section-head"><h2 id="t-results-title"></h2></div>
+    <div class="nc-table-wrap mt-2"><table class="nc-table" id="t-results-table"></table></div>
+    <div class="nc-rank" id="t-rank"></div>
+    <div class="card mt-3">
+      <div class="nc-sec">
+        <div class="row row--between"><h2 id="lbl-cats2">Categorie del prossimo round</h2><span class="small muted" id="cats-count2"></span></div>
+        <div class="nc-cats" id="t-cats2" role="group" aria-labelledby="lbl-cats2"></div>
+        <div class="nc-add">
+          <input class="input" id="t-cat-in2" maxlength="34" placeholder="Aggiungi una categoria" aria-label="Nuova categoria">
+          <button class="btn" type="button" id="t-cat-add2"></button>
+        </div>
+      </div>
+    </div>
+    <div class="nc-actions">
+      <button class="btn btn--primary btn--xl" type="button" id="t-next"></button>
+      <button class="btn btn--lg" type="button" id="t-end"></button>
+    </div>
+  </section>
+
+  <!-- ============ TV: RESOCONTO FINALE ============ -->
+  <section class="screen" id="t-final">
+    <div class="result" data-stagger>
+      <div class="result__badge" id="f-badge"></div>
+      <h1 class="result__title" id="f-title" tabindex="-1"></h1>
+      <p class="muted result__sub" id="f-sub"></p>
+    </div>
+    <div class="qz-main--narrow" style="margin:0 auto" id="f-podium"></div>
+    <div class="nc-awards" id="f-awards"></div>
+    <div class="section-head mt-4"><h2>Round per round</h2></div>
+    <div class="nc-table-wrap mt-2"><table class="nc-table" id="f-table"></table></div>
+    <div class="nc-actions">
+      <button class="btn btn--primary btn--lg" type="button" id="f-again"></button>
+      <button class="btn btn--lg" type="button" id="f-new"></button>
+      <a class="btn btn--ghost btn--lg" href="index.html#giochi" id="f-exit"></a>
+    </div>
+  </section>
+
+  <!-- ============ TELEFONO: ENTRA ============ -->
+  <section class="screen" id="p-join">
+    <div class="nc-phone">
+      <div class="nc-big-msg"><b id="p-join-code"></b><p>Stanza di Nomi, Cose, Calcio</p></div>
+      <div class="card stack" style="--gap:12px">
+        <label class="label" for="p-name">Il tuo nome</label>
+        <input class="input input--lg" id="p-name" maxlength="16" autocomplete="nickname" placeholder="Come ti chiamano al campetto" data-autofocus>
+        <button class="btn btn--primary btn--xl btn--block" type="button" id="p-join-btn"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TELEFONO: IN ATTESA / TRA UN ROUND E L'ALTRO ============ -->
+  <section class="screen" id="p-wait">
+    <div class="nc-phone">
+      <div class="nc-me" id="p-me"></div>
+      <div class="nc-big-msg"><b id="p-wait-title"></b><p id="p-wait-sub"></p></div>
+      <div id="p-round-pts"></div>
+      <div class="card nc-sec">
+        <h2>Categorie</h2>
+        <div class="nc-catlist" id="p-cats"></div>
+        <div class="nc-add">
+          <input class="input" id="p-cat-in" maxlength="34" placeholder="Proponi una categoria" aria-label="Nuova categoria">
+          <button class="btn" type="button" id="p-cat-add"></button>
+        </div>
+      </div>
+      <div class="nc-boss" id="p-boss" hidden>
+        <span>Sei il capitano: comandi tu</span>
+        <button class="btn btn--primary btn--lg btn--block" type="button" id="p-start"></button>
+        <button class="btn btn--block" type="button" id="p-end"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TELEFONO: IL FOGLIO ============ -->
+  <section class="screen" id="p-play">
+    <div class="nc-phone">
+      <div class="nc-phone-hud">
+        <div class="nc-hud__letter" id="p-letter"></div>
+        <div class="nc-phone-hud__txt" id="p-hud-txt"></div>
+        <div id="p-timer"></div>
+      </div>
+      <div class="nc-sheet" id="p-sheet"></div>
+      <p class="nc-saved" id="p-saved" aria-live="polite"></p>
+      <button class="btn btn--bad btn--xl btn--block" type="button" id="p-stop" hidden></button>
+    </div>
+  </section>
+
+  <!-- ============ TELEFONO: CONTROLLO ============ -->
+  <section class="screen" id="p-review">
+    <div class="nc-phone">
+      <div class="nc-big-msg"><b>Controllo</b><p>Tocca «Non vale» sulle risposte degli altri che secondo te sono sbagliate. Basta metà del tavolo per bocciarle.</p></div>
+      <div class="nc-vote" id="p-vote"></div>
+      <div class="nc-boss" id="p-boss2" hidden>
+        <span>Sei il capitano</span>
+        <button class="btn btn--primary btn--lg btn--block" type="button" id="p-confirm"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TELEFONO: FINE ============ -->
+  <section class="screen" id="p-final">
+    <div class="nc-phone">
+      <div class="nc-big-msg"><b id="p-final-title"></b><p id="p-final-sub"></p></div>
+      <div id="p-final-rank"></div>
+      <div class="nc-boss" id="p-boss3" hidden>
+        <span>Sei il capitano</span>
+        <button class="btn btn--primary btn--lg btn--block" type="button" id="p-again"></button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="assets/qz.js?v=aa5e65ca" defer></script>
+<script src="assets/db-nomicose.js?v=03b12399" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
+<script src="assets/games/nomicose.js?v=0ad28eee" defer></script>
+</body>
+</html>

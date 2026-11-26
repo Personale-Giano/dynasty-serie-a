@@ -104,6 +104,7 @@
         'Jeopardy: la doppia posta è nascosta da qualche parte',
         'Jeopardy normale: 14 categorie e 1.400 domande, con le foto',
         'Milionario normale: un milione di euro finti in cultura generale',
+        'Nomi, Cose, Calcio: la TV fa da tabellone, i telefoni da foglio',
         'Cruciverba: doppia papera in finale di Champions, sei lettere',
         'Calciatore del Giorno: oggi tocca a uno nuovo, e domani pure',
         'Sopra o Sotto: il valore di mercato non guarda in faccia nessuno',
