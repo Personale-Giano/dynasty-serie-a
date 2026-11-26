@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- la pagina la serve Apache per qualsiasi indirizzo sbagliato: i link partono sempre da /quizzotti/ -->
+<base href="/quizzotti/">
+<title>Fuorigioco: pagina non trovata · Quizzotti</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#07090b">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/qz.css?v=8d3462ca">
+<style>
+  .nf { text-align: center; padding-top: 24px; }
+  .nf__board { display: inline-flex; gap: 10px; padding: 14px 22px; margin: 6px 0 22px; background: #000; border: 1px solid var(--line-2); border-radius: var(--r-lg); }
+  .nf__board span { font-family: var(--font-led); font-weight: 800; font-size: clamp(64px, 18vw, 120px); line-height: 1; color: var(--led-red); text-shadow: 0 0 12px rgba(255, 75, 58, 0.45); }
+  .nf .row { justify-content: center; }
+</style>
+</head>
+<body>
+<main id="app" class="qz-main" tabindex="-1">
+  <section class="qz-text nf">
+    <span class="eyebrow">Errore 404</span>
+    <div class="nf__board" aria-hidden="true"><span>4</span><span>0</span><span>4</span></div>
+    <h1>Fuorigioco</h1>
+    <p>Questa pagina non c'è: forse il link è vecchio, forse il gioco ha cambiato nome. La partita però continua.</p>
+    <div class="row mt-3">
+      <a class="btn btn--primary btn--lg" href="./">Torna alla prima pagina</a>
+      <a class="btn btn--lg" href="GiocatoreDelGiorno.html">Il Calciatore del Giorno</a>
+    </div>
+  </section>
+</main>
+<script src="assets/qz.js?v=40f99e24" defer></script>
+</body>
+</html>

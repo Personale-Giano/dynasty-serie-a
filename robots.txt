@@ -2,5 +2,7 @@
 User-agent: *
 Allow: /
 Disallow: /carriera-serie-a/_data/
+# le stanze dei giochi TV + telefoni non sono pagine
+Disallow: /quizzotti/api/
 
 Sitemap: https://quizotti.altervista.org/sitemap.xml

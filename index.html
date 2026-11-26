@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>Quizzotti · Quiz di calcio gratis e Presidente Serie A</title>
-<meta name="description" content="Quizzotti: quiz di calcio gratis (Milionario, Cruciverba, Jeopardy, Taboo e altri) e Presidente Serie A, il gioco in cui compri un club e lo porti dalla Promozione alla Serie A.">
+<title>Giochi di calcio online gratis: quiz e Presidente Serie A · Quizzotti</title>
+<meta name="description" content="Giochi di calcio online gratis: i quiz di Quizzotti (Milionario, Caduta Libera, il Calciatore del Giorno cioè il Wordle del calcio, Taboo e altri) e Presidente Serie A, il gestionale in cui porti un club dalla Promozione alla Serie A.">
 <link rel="canonical" href="https://quizotti.altervista.org/">
 <meta property="og:url" content="https://quizotti.altervista.org/">
 <meta property="og:type" content="website">
@@ -12,11 +12,26 @@
 <meta property="og:locale" content="it_IT">
 <meta property="og:title" content="Quizzotti · Quiz di calcio gratis e Presidente Serie A">
 <meta property="og:description" content="Quiz di calcio gratis e la carriera da presidente: compra un club e portalo dalla Promozione alla Serie A.">
-<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/logo2.png">
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700&family=Inter:wght@400;500;600;700;800&display=swap" />
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/assets/og/quizzotti.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#07070a">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="quizzotti/assets/icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="quizzotti/assets/icons/apple-touch-icon.png">
+<!-- gli stessi caratteri di Quizzotti, ospitati sul sito (niente Google Fonts) -->
+<link rel="preload" href="quizzotti/assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+  @font-face{ font-family:Archivo; font-style:normal; font-weight:400 900; font-stretch:100%; font-display:swap;
+    src:url("quizzotti/assets/fonts/archivo-latin.woff2") format("woff2");
+    unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+  @font-face{ font-family:Archivo; font-style:normal; font-weight:400 900; font-stretch:100%; font-display:swap;
+    src:url("quizzotti/assets/fonts/archivo-latin-ext.woff2") format("woff2");
+    unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+  @font-face{ font-family:"Saira Semi Condensed"; font-style:normal; font-weight:800; font-display:swap;
+    src:url("quizzotti/assets/fonts/saira-800-latin.woff2") format("woff2");
+    unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
   *{ box-sizing:border-box; }
   :root{
     --bg:#07070a;
@@ -24,8 +39,9 @@
     --muted:#a89680;
     --gold:#d4af37;
     --line:#2a2218;
-    --sans:'Inter',system-ui,sans-serif;
-    --serif:'Fraunces','Georgia',serif;
+    --sans:'Archivo',system-ui,sans-serif;
+    --serif:'Archivo',system-ui,sans-serif;
+    --led:'Saira Semi Condensed','Archivo',sans-serif;
   }
   html,body{ height:100%; margin:0; }
   body{
@@ -98,7 +114,7 @@
   .hub-card.carriera{ border-color:#3c2c1a; }
   .hub-card.carriera:hover{ border-color:#c9902f; }
   .hub-eyebrow{
-    font-size:11px;
+    font-size:12px;
     font-weight:800;
     letter-spacing:.14em;
     text-transform:uppercase;
@@ -126,28 +142,34 @@
   }
   .quizzotti .hub-cta{ color:var(--gold); }
   .carriera .hub-cta{ color:#e7b559; }
+  .hub-list{ width:100%; max-width:820px; }
+  .hub-list h2{ font-family:var(--led); font-weight:800; font-size:22px; letter-spacing:.02em; text-transform:uppercase; color:var(--gold); margin:0 0 12px; }
+  .hub-list ul{ list-style:none; margin:0; padding:0; display:grid; gap:2px 22px; grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr)); }
+  .hub-list a{ display:block; padding:8px 0; color:var(--txt); font-weight:700; text-decoration:none; border-bottom:1px solid var(--line); }
+  .hub-list a:hover{ color:var(--gold); }
+  .hub-list span{ display:block; font-size:14px; font-weight:500; color:var(--muted); }
   footer{
     color:var(--muted);
-    font-size:12px;
+    font-size:13px;
     text-align:center;
   }
 </style>
 </head>
 <body>
   <div class="hub-head">
-    <h1>Due mondi, un solo pallone</h1>
+    <h1>Giochi di calcio online gratis: quiz e Presidente Serie A</h1>
     <p>Scegli come vuoi giocare: metti alla prova la tua cultura calcistica con i quiz di Quizzotti, oppure siediti in poltrona e costruisci la tua dinastia da presidente in Presidente&nbsp;·&nbsp;Serie&nbsp;A.</p>
   </div>
 
   <div class="hub-grid">
-    <a class="hub-card quizzotti" href="quizzotti/index.html">
+    <a class="hub-card quizzotti" href="quizzotti/">
       <div class="hub-eyebrow">Quiz &amp; minigiochi</div>
       <h2>Quizzotti</h2>
-      <p>21 minigiochi gratuiti, quasi tutti a tema calcio: il Calciatore del Giorno, Chi Vuol Essere Milionario, il Jeopardy e il Milionario di cultura generale, Caduta Libera, Taboo, il Bingo della Partita e altri.</p>
+      <p>22 minigiochi gratuiti, quasi tutti a tema calcio: il Calciatore del Giorno, Chi Vuol Essere Milionario, il Jeopardy e il Milionario di cultura generale, Caduta Libera, Taboo, il Bingo della Partita e altri.</p>
       <span class="hub-cta">Entra in Quizzotti →</span>
     </a>
 
-    <a class="hub-card carriera" href="carriera-serie-a/index.html">
+    <a class="hub-card carriera" href="carriera-serie-a/">
       <div class="hub-eyebrow">Gestionale di carriera</div>
       <h2>Presidente · Serie A</h2>
       <p>Rileva un club, gestisci il mercato e guida la tua squadra stagione dopo stagione nella tua dinastia da presidente.</p>
@@ -155,6 +177,22 @@
     </a>
   </div>
 
-  <footer>Quizzotti &amp; Presidente · Serie A</footer>
+  <nav class="hub-list" aria-labelledby="hub-list-t">
+    <h2 id="hub-list-t">I giochi più giocati</h2>
+    <ul>
+      <li><a href="quizzotti/GiocatoreDelGiorno.html">Il Calciatore del Giorno<span>Il Wordle del calcio, uno nuovo ogni giorno</span></a></li>
+      <li><a href="quizzotti/CVEM.html">Chi Vuol Essere Milionario Calcio<span>15 domande di calcio, quattro aiuti</span></a></li>
+      <li><a href="quizzotti/CadutaLibera.html">Caduta Libera<span>Quiz calcio a raffica, con le botole</span></a></li>
+      <li><a href="quizzotti/Taboo.html">Taboo calcio<span>Fai indovinare senza le parole vietate</span></a></li>
+      <li><a href="quizzotti/Cruciverba.html">Cruciverba del calcio<span>Schede a tema, definizioni cattive</span></a></li>
+      <li><a href="quizzotti/SopraOSotto.html">Sopra o Sotto<span>Chi vale di più sul mercato?</span></a></li>
+      <li><a href="quizzotti/MrWhite.html">Mr. White<span>Il gioco del bluff tra amici</span></a></li>
+      <li><a href="quizzotti/TuttiTV.html">Tutti contro la TV<span>Il quiz da salotto con i telefoni</span></a></li>
+      <li><a href="quizzotti/JeopardyNormale.html">Jeopardy normale<span>Quiz di cultura generale a squadre</span></a></li>
+      <li><a href="carriera-serie-a/">Presidente · Serie A<span>Dalla Promozione alla Serie A</span></a></li>
+    </ul>
+  </nav>
+
+  <footer>Quizzotti &amp; Presidente · Serie A · <a href="quizzotti/privacy.html" style="color:inherit">Privacy</a></footer>
 </body>
 </html>

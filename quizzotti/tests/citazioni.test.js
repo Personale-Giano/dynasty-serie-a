@@ -131,3 +131,35 @@ test('citazioni.js: ogni risposta giusta del database si indovina scrivendola pe
         if (!clash && norm(sur).length >= 4) assert.equal(G.judge(sur, q), 1, `cognome non accettato: ${q.correct}`);
     });
 });
+
+test('db-citazioni.js: nessuna frase contiene il nome di chi l\'ha detta', () => {
+    quotes.forEach((q) => {
+        const words = ' ' + norm(q.quote) + ' ';
+        norm(q.correct).split(' ').filter((t) => t.length >= 3).forEach((t) => {
+            assert.ok(!words.includes(' ' + t + ' '), `la frase "${q.quote}" contiene la risposta (${t})`);
+        });
+    });
+});
+
+const SRC = fs.readFileSync(path.join(__dirname, '..', 'assets', 'games', 'citazioni.js'), 'utf8');
+
+test('citazioni.js: un nome scritto e sbagliato costa la frase (niente opzioni di riserva)', () => {
+    const body = SRC.slice(SRC.indexOf('function submitTyped'), SRC.indexOf('function useInitials'));
+    const tail = body.slice(body.lastIndexOf('if (v === 2'));
+    assert.match(tail, /lose\('typed'\)/);
+    assert.doesNotMatch(tail, /showOptions\(\)/, 'dopo un tentativo a vuoto non devono aprirsi le opzioni');
+});
+
+test('citazioni.js: "Avanti la prossima" rimette il fuoco nel campo dentro il tocco', () => {
+    const m = SRC.match(/\$\('#g-next'\)\.addEventListener\('click', function \(\) \{([\s\S]*?)\r?\n {4}\}\);/);
+    assert.ok(m, 'gestore di #g-next non trovato');
+    assert.match(m[1], /\$\('#g-input'\)\.focus\(/);
+    assert.doesNotMatch(m[1], /setTimeout/);
+});
+
+test('citazioni.js: record separati per lunghezza e per tempo', () => {
+    assert.equal(G.recMode(10, 0), '10');
+    assert.equal(G.recMode(10, 30), '10t');
+    assert.notEqual(G.recMode(15, 30), G.recMode(15, 0));
+    assert.match(SRC, /QZ\.profile\.record\(GAME, \{[^}]*mode: recMode\(S\.len, S\.time\)/);
+});

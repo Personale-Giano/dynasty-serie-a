@@ -71,3 +71,32 @@ test('JeopardyNormale.html: usa il motore condiviso, il suo database e ha tutti 
     const missing = [...ids].filter((id) => !new RegExp(`id="${id}"`).test(html));
     assert.deepEqual(missing, []);
 });
+
+test('db-jeopardynormale.js: nessuna foto (e nessun monumento) in due categorie diverse', () => {
+    const where = new Map();
+    for (const cat of jeopardyNormaleData) {
+        for (const q of cat.questions) {
+            if (!q.img) continue;
+            const prev = where.get(q.img);
+            assert.ok(!prev || prev === cat.category, `${q.img} sia in ${prev} sia in ${cat.category}`);
+            where.set(q.img, cat.category);
+        }
+    }
+    // i soggetti che prima comparivano due volte: ora uno solo per categoria
+    const subjects = [/colosseo|anfiteatro flavio/i, /muraglia/i, /machu picchu|città inca\b/i, /chichén itzá|yucatán/i, /partenone/i, /statua della libertà|fiaccola alzata/i];
+    for (const re of subjects) {
+        const cats = new Set();
+        jeopardyNormaleData.forEach((c) => c.questions.forEach((q) => { if (re.test(q.question + ' ' + q.answer)) cats.add(c.category); }));
+        assert.ok(cats.size <= 1, `${re} in ${[...cats].join(' e ')}`);
+    }
+});
+
+test('db-jeopardynormale.js: niente domande a scelta tra due (acida o basica, prima il lampo o il tuono)', () => {
+    for (const cat of jeopardyNormaleData) {
+        for (const q of cat.questions) {
+            const ans = q.answer.replace(/\s*\(.*?\)\s*/g, ' ').trim().toLowerCase().replace(/^(il|la|lo|l'|i|gli|le|un|una|con|senza) /, '');
+            const binary = ans.length > 1 && / o /.test(q.question) && q.question.toLowerCase().includes(ans);
+            assert.ok(!binary, `domanda a scelta tra due: ${q.question}`);
+        }
+    }
+});

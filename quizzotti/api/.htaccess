@@ -1,0 +1,7 @@
+# Le domande di Tutti contro la TV (con le risposte giuste) le legge solo il PHP
+<Files "tuttitv-domande.json">
+  Require all denied
+  <IfModule !mod_authz_core.c>
+    Deny from all
+  </IfModule>
+</Files>

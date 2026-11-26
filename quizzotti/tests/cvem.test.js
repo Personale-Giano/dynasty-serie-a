@@ -106,3 +106,74 @@ test('cvem.js: il livello di una domanda di QUIZ_DB segue la sua difficolta', ()
         assert.ok(lv >= a && lv <= b, `${q.id} (${q.difficolta}) al livello ${lv}`);
     });
 });
+
+/* ---------- Revisione del 26 novembre 2026 ---------- */
+function loadHooks(gameAttr) {
+    let hooks = null;
+    const QZ = {
+        $: () => fakeEl(), $$: () => [], icon: () => '', esc: (s) => String(s), fmt: (n) => String(n),
+        ringHTML: () => '', ring: () => fakeEl(), pick: (a) => a[0],
+        Deck: function () { this.draw = () => null; },
+        store: { get: (k, f) => f, set() {} }, profile: { best: () => undefined }
+    };
+    const src = fs.readFileSync(path.join(__dirname, '..', 'assets', 'games', 'cvem.js'), 'utf8');
+    const body = { getAttribute: (a) => (a === 'data-game' ? gameAttr : null) };
+    const ctx = { QZ, questions, QUIZ_DB, milionarioData: { questions: [], icons: {} }, document: { body, addEventListener() {}, querySelector() { return null; } },
+        window: { __cvemTest: (h) => { hooks = h; } }, performance: { now: () => 0 } };
+    vm.createContext(ctx);
+    vm.runInContext(src, ctx, { filename: 'cvem.js' });
+    return hooks;
+}
+
+test('telefonata: il tono della frase non dipende da se l\'amico ci azzecca', () => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'assets', 'games', 'cvem.js'), 'utf8');
+    const conf = src.match(/var conf = ([^;]+);/);
+    assert.ok(conf, 'manca la frase dell\'amico');
+    assert.doesNotMatch(conf[1], /\bright\b|\bsay\b|correct/, 'il tono e\' legato all\'esito');
+    const h = loadHooks('cvem');
+    // a ogni livello escono sia frasi sicure sia frasi dubbie (QZ.pick finto prende la prima)
+    for (const lv of [1, 5, 6, 10, 11, 15]) {
+        const tones = new Set([0, 0.2, 0.4, 0.6, 0.8, 0.99].map((r) => h.phoneTone(lv, r)));
+        assert.ok(tones.has('Ci metto la mano sul fuoco') && tones.has('Non ne sono certo, ma direi'), `livello ${lv}: ${[...tones]}`);
+    }
+});
+
+test('dalla domanda 6 la risposta va confermata, e le regole lo dicono', () => {
+    const h = loadHooks('cvem');
+    assert.equal(h.FINAL_FROM, 6);
+    const src = fs.readFileSync(path.join(__dirname, '..', 'assets', 'games', 'cvem.js'), 'utf8');
+    assert.match(src, /risposta definitiva/);
+    // le regole non promettono che il tempo si fermi con 50:50 e +15 s
+    assert.doesNotMatch(src, /mentre li usi il tempo si ferma/);
+});
+
+test('db-cvem.js: la domanda da un milione si ragiona, non si tira a indovinare', () => {
+    const numeric = (q) => ['A', 'B', 'C', 'D'].every((l) => /^\d+$/.test(q.options[l]));
+    // quattro numeri che non sono anni (355/365/375/385): li si tira a indovinare
+    const close = questions.filter((q) => q.level === 15 && numeric(q) && ['A', 'B', 'C', 'D'].some((l) => Number(q.options[l]) < 1800));
+    assert.deepEqual(close.map((q) => q.question), []);
+});
+
+test('db-cvem.js: le domande facili stanno in basso, i fatti sui Mondiali arrivano al 2026', () => {
+    const lv = (frag) => {
+        const q = questions.find((x) => x.question.includes(frag));
+        assert.ok(q, `manca: ${frag}`);
+        return q.level;
+    };
+    ['rigore decisivo nella finale del Mondiale 1994', 'capocannoniere del Mondiale 1982', "celebre 'urlo'",
+        'capocannoniere del Mondiale 1990', 'arbitro italiano diresse la finale dei Mondiali 2002'].forEach((f) => {
+        const l = lv(f);
+        assert.ok(l >= 3 && l <= 6, `"${f}" al livello ${l}`);
+    });
+    assert.deepEqual(questions.filter((q) => /fino al 2022|dopo l'edizione 2022/.test(q.question)).map((q) => q.question), []);
+    const top = questions.find((q) => /miglior marcatore della storia dei Mondiali/.test(q.question));
+    assert.equal(top.options[top.correctAnswer], 'Kylian Mbappé'); // 22 gol dopo il 2026, Messi 21
+});
+
+test('CVEM.html e MilionarioNormale.html: pagina compatta sui telefoni bassi', () => {
+    for (const f of ['CVEM.html', 'MilionarioNormale.html']) {
+        const html = fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+        assert.match(html, /@media \(max-width: 719px\) and \(max-height: 760px\)/, f);
+        assert.match(html, /\.answer\.is-asking::after/, f);
+    }
+});

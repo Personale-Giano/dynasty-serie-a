@@ -202,3 +202,79 @@ test('classifica e testo da condividere', () => {
     assert.match(t, /\n3\. Ada 100\n/);
     assert.match(G.shareText([{ name: 'Ada', score: 1 }], 1), /1 round: vince Ada con 1 punto\./);
 });
+
+test('Mr. White gira: nessuno lo rifa\' prima che l\'abbiano fatto tutti', () => {
+    for (const [n, k] of [[3, 1], [4, 1], [5, 2], [7, 1], [9, 3]]) {
+        const times = new Array(n).fill(0);
+        for (let round = 1; round <= n * 3; round++) {
+            const bad = G.pickBad(times, k, Math.random);
+            assert.equal(new Set(bad).size, k);
+            bad.forEach((i) => times[i]++);
+            // in ogni momento le volte di ciascuno differiscono al massimo di uno
+            assert.ok(Math.max(...times) - Math.min(...times) <= 1, `${n} giocatori, round ${round}: ${times}`);
+        }
+    }
+    // l'Infiltrato si sceglie fuori dai Mr. White, sempre tra chi lo e' stato meno
+    assert.deepEqual(G.pickBad([0, 1, 0, 0], 1, () => 0.5, [0, 2]), [3]);
+    // salvataggi vecchi senza conteggio: valgono zero
+    assert.equal(G.pickBad([undefined, 2, 1], 1, Math.random)[0], 0);
+});
+
+test('con «Tutti» italiani e stranieri escono a testa o croce', () => {
+    const ita = new Set(mrwhiteData.italiani);
+    let nIta = 0;
+    const N = 4000;
+    for (let k = 0; k < N; k++) {
+        const f = G.poolFilter('tutti', ita, Math.random);
+        const pool = wordsList.filter(f.word);
+        assert.ok(pool.length > 100);
+        const w = pool[Math.floor(Math.random() * pool.length)];
+        if (ita.has(w)) nIta++;
+    }
+    assert.ok(nIta / N > 0.45 && nIta / N < 0.55, `italiani ${nIta} su ${N}`);
+    const it = G.poolFilter('italiani', ita, () => 0.9);
+    assert.ok(wordsList.filter(it.word).every((w) => ita.has(w)));
+    const st = G.poolFilter('stranieri', ita, () => 0.1);
+    assert.ok(wordsList.filter(st.word).every((w) => !ita.has(w)));
+    // coppie dell'Infiltrato: ce ne sono da tutti e due i lati
+    assert.ok(mrwhiteData.coppie.filter(G.poolFilter('tutti', ita, () => 0.1).pair).length >= 20);
+    assert.ok(mrwhiteData.coppie.filter(G.poolFilter('tutti', ita, () => 0.9).pair).length >= 20);
+});
+
+test('salvataggio a meta\' round: schermi, discussione ed esito si riprendono', () => {
+    const now = 1e12;
+    const game = {
+        cfg: G.sanitizeCfg({ rounds: 5, inf: true }), round: 3, done: 2,
+        stats: { caught: 1, guessed: 0, civOut: 1, infOut: 0 },
+        players: ['A', 'B', 'C', 'D', 'E'].map((n) => ({ name: n, color: '#000', score: 100, mwTimes: 1, mwWins: 0, infTimes: 0 }))
+    };
+    const R = {
+        word: 'Francesco Totti', infWord: 'Alessandro Del Piero', role: ['civ', 'mw', 'civ', 'inf', 'civ'],
+        alive: [true, true, true, true, true], order: [2, 3, 4, 0, 1], pos: 2, turn: 0, delta: [0, 0, 0, 0, 0], stage: 'reveal', end: null
+    };
+    const clone = (o) => JSON.parse(JSON.stringify(o));
+    const s = clone(G.snapshot(game, now, R));
+    assert.ok(G.validSave(s, now), 'giro degli schermi');
+    assert.equal(s.cur.word, 'Francesco Totti');
+    assert.deepEqual(s.cur.role, R.role);
+    const talk = clone(G.snapshot(game, now, Object.assign({}, R, { pos: 5, turn: 2, stage: 'talk', delta: [0, -50, 0, 0, 0] })));
+    assert.ok(G.validSave(talk, now), 'discussione');
+    const end = clone(G.snapshot(game, now, Object.assign({}, R, { pos: 5, turn: 1, stage: 'end', alive: [true, false, true, true, true], end: { winner: 'bad', how: 'guess', guesser: 1 } })));
+    assert.ok(G.validSave(end, now), 'esito deciso');
+    // primo round a meta': nessun round finito ancora
+    assert.ok(G.validSave(clone(G.snapshot(Object.assign({}, game, { round: 1, done: 0 }), now, R)), now));
+    const bad = (patch, why) => assert.ok(!G.validSave(Object.assign(clone(s), { cur: Object.assign(clone(s.cur), patch) }), now), why);
+    bad({ stage: 'boh' }, 'fase sconosciuta');
+    bad({ role: ['civ', 'civ', 'civ', 'civ', 'civ'] }, 'nessun Mr. White');
+    bad({ order: [0, 0, 1, 2, 3] }, 'ordine rotto');
+    bad({ pos: 5 }, 'giro degli schermi gia\' finito');
+    bad({ alive: [1, 1, 1, 1, 1] }, 'vivi non booleani');
+    bad({ infWord: null }, 'infiltrato senza calciatore');
+    bad({ stage: 'talk', pos: 5, turn: 1, alive: [true, false, true, false, true] }, 'discussione con il round gia\' chiuso');
+    bad({ stage: 'end', pos: 5, end: { winner: 'bad', how: 'guess' } }, 'ultimo tiro senza chi ha tirato');
+    assert.ok(!G.validSave(Object.assign(clone(s), { round: 2 }), now), 'round non coerente con quelli finiti');
+    // i salvataggi vecchi (senza round in corso e senza Infiltrato contato) restano buoni
+    const old = clone(G.snapshot(Object.assign({}, game, { round: 2 }), now));
+    old.players.forEach((p) => delete p.infTimes);
+    assert.ok(G.validSave(old, now));
+});

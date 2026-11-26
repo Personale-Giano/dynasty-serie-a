@@ -38,8 +38,10 @@ test('niente elenchi chiusi troppo corti (vincitori di Europei e Copa America so
 });
 
 test('impostazioni: valori vecchi o rovinati tornano ai predefiniti', () => {
-    assert.deepEqual(B.normCfg(null, CATS), { mode: 'points', rounds: 10, fuse: 'mid', cats: null });
-    assert.deepEqual(B.normCfg({ mode: 'elim', rounds: 15, fuse: 'long' }, CATS), { mode: 'elim', rounds: 15, fuse: 'long', cats: null });
+    assert.deepEqual(B.normCfg(null, CATS), { mode: 'points', rounds: 10, fuse: 'mid', level: 'easy', cats: null });
+    assert.deepEqual(B.normCfg({ mode: 'elim', rounds: 15, fuse: 'long' }, CATS), { mode: 'elim', rounds: 15, fuse: 'long', level: 'easy', cats: null });
+    assert.equal(B.normCfg({ level: 'hard' }, CATS).level, 'hard');
+    assert.equal(B.normCfg({ level: 'toString' }, CATS).level, 'easy');
     const c = B.normCfg({ mode: 'boh', rounds: 7, fuse: 'toString', cats: ['Stadi', 'Stadi', 'Inesistente'] }, CATS);
     assert.equal(c.mode, 'points');
     assert.equal(c.rounds, 10);
@@ -126,4 +128,47 @@ test('record del telefono: il primo round non fa notizia, poi si annunciano i nu
 
 test('secondi all\'italiana con la virgola', () => {
     assert.equal(B.secs(12345), '12,3 s');
+});
+
+/* ---------- Novembre 2026 (2): difficolta' dei temi e «Contestata» ---------- */
+test('ogni tema ha una difficolta\' 1-3 e ogni livello ha abbastanza temi', () => {
+    topics.forEach((t) => assert.ok([1, 2, 3].includes(t.diff), `diff mancante o sbagliata: ${t.topic}`));
+    for (const lv of Object.keys(B.LEVELS)) {
+        const n = topics.filter((t) => B.levelOk(t, lv)).length;
+        assert.ok(n >= 100, `livello ${lv}: solo ${n} temi`);
+    }
+    // con i facili e medi (predefinito) ogni categoria ha qualcosa da pescare
+    for (const c of CATS) assert.ok(topics.some((t) => t.categoria === c && B.levelOk(t, 'easy')), `${c}: nessun tema facile o medio`);
+});
+
+test('i temi impossibili nei 15-90 secondi sono difficili, i troppo piccoli o ambigui sono spariti', () => {
+    const d = (name) => (topics.find((t) => t.topic === name) || {}).diff;
+    assert.equal(d("Giocatori dell'Athletic Bilbao"), 3);
+    assert.equal(d('Stadi della Ligue 1'), 3);
+    assert.equal(d('Giocatori della Juventus'), 1);
+    assert.equal(d('Calciatori brasiliani'), 1);
+    for (const gone of ['Calciatori montenegrini', 'Calciatori macedoni', 'Calciatori Under 21 titolari in un grande club europeo', 'Liberi']) {
+        assert.ok(!topics.some((t) => t.topic === gone), `ancora presente: ${gone}`);
+    }
+    assert.ok(topics.some((t) => /^Liberi, il ruolo/.test(t.topic) && t.diff === 3), '"Liberi" riscritto senza ambiguita\'');
+});
+
+test('livelli: facili e medi, tutti, solo difficili', () => {
+    assert.ok(B.levelOk({ diff: 1 }, 'easy') && B.levelOk({ diff: 2 }, 'easy') && !B.levelOk({ diff: 3 }, 'easy'));
+    assert.ok(B.levelOk({ diff: 3 }, 'all') && B.levelOk({ diff: 1 }, 'all'));
+    assert.ok(B.levelOk({ diff: 3 }, 'hard') && !B.levelOk({ diff: 2 }, 'hard'));
+    assert.ok(B.levelOk({}, 'easy'), 'un tema senza diff vale come medio');
+    assert.ok(B.levelOk({ diff: 3 }, 'all') && !B.levelOk({ diff: 3 }, 'boh'), 'livello rotto = facili e medi');
+});
+
+test('Contestata: la bomba torna a chi l\'ha passata per ultimo', () => {
+    assert.equal(B.contestTo([]), -1);
+    assert.equal(B.contestTo(null), -1);
+    assert.equal(B.contestTo([2, 0, 1]), 1);
+    const js = require('node:fs').readFileSync(path.join(__dirname, '..', 'assets', 'games', 'bomba.js'), 'utf8');
+    assert.match(js, /S\.hist\.push\(G\.holder\)/);
+    assert.match(js, /function contest\(\)/);
+    const html = require('node:fs').readFileSync(path.join(__dirname, '..', 'Bomba.html'), 'utf8');
+    assert.match(html, /id="g-contest"/);
+    assert.match(html, /id="opt-level"/);
 });

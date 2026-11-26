@@ -76,9 +76,12 @@ test('la difficolta\' cresce: mazzo piu\' largo e valori piu\' vicini', () => {
         const a = G.level(n - 1), b = G.level(n);
         assert.ok(b.top >= a.top);
         assert.ok(b.minR <= a.minR);
-        assert.ok(b.minR >= 1.1);
+        assert.ok(b.minR >= 1.25);
     }
     assert.ok(G.level(0).minR >= 2.4);
+    // anche dopo cento risposte giuste non si scende sotto 1,25
+    assert.equal(G.level(100).minR, 1.25);
+    assert.equal(G.level(500).minR, G.MIN_RATIO);
 });
 
 test('serie simulate: mai valori uguali, mai lo stesso giocatore, risposta coerente', () => {
@@ -203,4 +206,220 @@ test('il confronto più stretto usa i cognomi giusti', () => {
     assert.equal(G.surname('Vinícius Jr.'), 'Vinícius Jr.');
     assert.equal(G.surname('Kim Min-jae'), 'Kim Min-jae');
     assert.equal(G.surname('Rodri'), 'Rodri');
+});
+
+/* ---------- A turni: stesso seme, stesse coppie ---------- */
+/** La serie di chi indovina sempre: le coppie viste, in ordine. */
+function perfectRun(pool, seed, scale, steps) {
+    const s = G.newSeries(pool, seed, scale);
+    const seen = [[s.left.name, s.right.name]];
+    for (let i = 0; i < steps; i++) {
+        s.streak++;
+        G.advance(s);
+        seen.push([s.left.name, s.right.name]);
+    }
+    return seen;
+}
+
+test('a turni tutti affrontano le stesse coppie (stesso seme)', () => {
+    const known = G.knownTest([]);
+    const pools = [
+        [G.buildPool(playersDatabase, { known }), 1],
+        [G.buildPool(playersDatabase, { league: 'ITA', role: 'DIF', known }), 1],
+        [G.buildPool(sosGoalsDatabase, {}), G.DECKS.gol.scale]
+    ];
+    for (const [pool, scale] of pools) {
+        for (const seed of [1, 42, 123456789, 4294967295]) {
+            const a = perfectRun(pool, seed, scale, 40);
+            const b = perfectRun(pool, seed, scale, 40);
+            assert.deepEqual(a, b, `seme ${seed}: sequenze diverse`);
+            // chi sbaglia prima ha visto un pezzo della stessa sequenza
+            assert.deepEqual(perfectRun(pool, seed, scale, 7), a.slice(0, 8));
+        }
+        // semi diversi, partite diverse
+        assert.notDeepEqual(perfectRun(pool, 1, scale, 10), perfectRun(pool, 2, scale, 10));
+    }
+});
+
+test('il generatore col seme e\' ripetibile e sta tra 0 e 1', () => {
+    const a = G.makeRng(99), b = G.makeRng(99);
+    for (let i = 0; i < 1000; i++) {
+        const x = a();
+        assert.equal(x, b());
+        assert.ok(x >= 0 && x < 1);
+    }
+});
+
+/* ---------- Valori di mercato: prima i nomi noti ---------- */
+const { dailyCalendar } = require(path.join('..', 'assets', 'db-giocatoredelgiorno.js'));
+
+test('mercato: i noti stanno davanti nel mazzo', () => {
+    const known = G.knownTest(dailyCalendar);
+    const pool = G.buildPool(playersDatabase, { known });
+    assert.ok(pool.known >= 800 && pool.known < pool.length, `noti: ${pool.known}`);
+    for (let i = 0; i < pool.length; i++) assert.equal(known(pool[i]), i < pool.known, `${pool[i].name} fuori posto`);
+    // stesso mazzo di prima, solo in un altro ordine
+    assert.equal(pool.length, G.buildPool(playersDatabase, {}).length);
+    assert.ok(known({ name: 'Luka Modrić', value: 4 }), 'Modric e\' noto anche se vale poco');
+    assert.ok(known({ name: 'Uno qualsiasi', value: 15 }));
+    assert.ok(!known({ name: 'Uno qualsiasi', value: 14 }));
+});
+
+test('mercato: nelle prime serie solo nomi noti, poi arrivano anche gli altri', () => {
+    const known = G.knownTest(dailyCalendar);
+    const pool = G.buildPool(playersDatabase, { known });
+    let unknownEarly = 0, unknownLate = 0, late = 0;
+    for (let run = 0; run < 40; run++) {
+        const s = G.newSeries(pool, 7000 + run, 1);
+        assert.ok(known(s.left) && known(s.right), 'prima coppia con uno sconosciuto');
+        for (let n = 1; n < 60; n++) {
+            s.streak = n;
+            G.advance(s);
+            if (n < G.KNOWN_ONLY && !known(s.right)) unknownEarly++;
+            if (n >= 45) { late++; if (!known(s.right)) unknownLate++; }
+        }
+    }
+    assert.equal(unknownEarly, 0, 'sconosciuti nelle prime serie');
+    assert.ok(unknownLate / late > 0.2, `in fondo troppo pochi sconosciuti: ${unknownLate}/${late}`);
+    // la parte del mazzo in gioco cresce con la serie
+    for (let n = 1; n < 60; n++) assert.ok(G.reach(pool, n) >= G.reach(pool, n - 1));
+    assert.equal(G.reach(pool, 0), pool.known);
+    assert.equal(G.reach(pool, 60), pool.length);
+});
+
+/* ---------- I mazzi storici nuovi ---------- */
+const fs = require('node:fs');
+const DBS = require(path.join('..', 'assets', 'db-sopraosotto.js'));
+const dbSource = fs.readFileSync(path.join(__dirname, '..', 'assets', 'db-sopraosotto.js'), 'utf8');
+const HIST = [
+    { key: 'gol', list: DBS.sosGoalsDatabase, min: 50 },
+    { key: 'presenze', list: DBS.sosAppsDatabase, min: 80 },
+    { key: 'nazionale', list: DBS.sosNationalGoalsDatabase, min: 80 },
+    { key: 'titoli', list: DBS.sosTitlesDatabase, min: 60 }
+];
+
+test('mazzi storici: voci complete, numeri interi positivi, nomi unici, ordinati', () => {
+    for (const { key, list, min } of HIST) {
+        assert.ok(list.length >= min, `${key}: solo ${list.length} voci`);
+        const names = list.map((p) => p.name);
+        assert.equal(new Set(names).size, names.length, `${key}: nome ripetuto`);
+        for (const p of list) {
+            assert.ok(p.name && p.team, `${key}: nome o riga sotto mancante`);
+            assert.ok(p.tag || p.role, `${key}: etichetta mancante per ${p.name}`);
+            assert.ok(Number.isInteger(p.value) && p.value > 0, `${key}: numero strano per ${p.name}: ${p.value}`);
+        }
+        for (let i = 1; i < list.length; i++) assert.ok(list[i - 1].value >= list[i].value, `${key}: ordine a ${list[i].name}`);
+        assert.ok(G.DECKS[key] && G.DECKS[key].label && G.DECKS[key].scale > 0);
+        assert.ok(G.playable(G.buildPool(list, {})), `${key}: non giocabile`);
+    }
+});
+
+test('mazzi storici: ognuno ha fonte e data scritte nel file', () => {
+    for (const name of ['sosAppsDatabase', 'sosNationalGoalsDatabase', 'sosTitlesDatabase']) {
+        const at = dbSource.indexOf('const ' + name);
+        const head = dbSource.slice(dbSource.lastIndexOf('/* ===', at), at);
+        assert.match(head, /Fonte: [^\n]*wikipedia\.org/, `${name}: fonte mancante`);
+        assert.match(head, /2026/, `${name}: data mancante`);
+    }
+});
+
+test('presenze: numeri noti, nessuno ancora in Serie A', () => {
+    const P = DBS.sosAppsDatabase;
+    const v = (n) => P.find((p) => p.name === n).value;
+    assert.equal(v('Gianluigi Buffon'), 657);
+    assert.equal(v('Paolo Maldini'), 647);
+    assert.equal(v('Francesco Totti'), 619);
+    assert.equal(Math.max(...P.map((p) => p.value)), 657);
+    const inSerieA = new Set(playersDatabase.filter((p) => p.league === 'Serie A').map((p) => p.name));
+    for (const p of P) {
+        assert.ok(!inSerieA.has(p.name), `${p.name} gioca ancora in Serie A`);
+        assert.match(p.tag, /^\d{4}-\d{4}$/, `${p.name}: anni strani`);
+        assert.ok(p.value >= 380 && p.value <= 657, `${p.name}: ${p.value}`);
+    }
+});
+
+test('gol in nazionale: dai 50 in su, i record giusti, chi gioca ancora e\' segnato', () => {
+    const N = DBS.sosNationalGoalsDatabase;
+    const v = (n) => N.find((p) => p.name === n).value;
+    assert.equal(N[0].name, 'Cristiano Ronaldo');
+    assert.equal(v('Ali Daei'), 108);
+    assert.equal(v('Pelé'), 77);
+    assert.equal(v('Ferenc Puskás'), 84);
+    for (const p of N) {
+        assert.ok(p.value >= 50, `${p.name}: meno di 50`);
+        assert.equal(!!p.active, /in attività/.test(p.team), `${p.name}: in attivita' o no?`);
+    }
+    assert.ok(N.filter((p) => p.active).length < N.length / 3, 'troppi ancora in attivita\'');
+});
+
+test('campionati vinti: i conti dei grandi club', () => {
+    const T = DBS.sosTitlesDatabase;
+    const v = (n) => T.find((p) => p.name === n).value;
+    assert.equal(v('Juventus'), 36);
+    assert.equal(v('Inter'), 21);
+    assert.equal(v('Milan'), 19);
+    assert.equal(v('Celtic'), 56);
+    assert.equal(v('Rangers'), 55);
+    assert.equal(v('Real Madrid'), 36);
+    assert.equal(v('Bayern Monaco'), 35);
+    for (const p of T) assert.match(p.team, /^ultimo titolo \d{4}(-\d{2}|-\d{4})?$/, `${p.name}: ${p.team}`);
+    assert.equal(G.fmtTitles(1), '1 titolo');
+    assert.equal(G.fmtTitles(36), '36 titoli');
+    assert.equal(G.fmtApps(1), '1 presenza');
+    assert.equal(G.diffText({ value: 657 }, { value: 647 }, G.fmtApps), '10 presenze in meno');
+});
+
+test('mazzi storici: serie lunghe, mai due numeri uguali in coppia', () => {
+    for (const { key, list } of HIST) {
+        const pool = G.buildPool(list, {});
+        const scale = G.DECKS[key].scale;
+        for (let run = 0; run < 25; run++) {
+            const s = G.newSeries(pool, 300 + run, scale);
+            assert.notEqual(s.left.value, s.right.value);
+            for (let n = 1; n < 70; n++) {
+                s.streak = n;
+                G.advance(s);
+                assert.ok(s.right, `${key}: nessun avversario`);
+                assert.notEqual(s.right.value, s.left.value, `${key}: ${s.left.name} e ${s.right.name} pari`);
+                assert.equal(G.answer(s.left, s.right), s.right.value > s.left.value ? 'up' : 'down');
+            }
+        }
+    }
+});
+
+/* ---------- Sfida un amico e Sopra o Sotto del giorno ---------- */
+test('le regole della sfida nel link: andata e ritorno', () => {
+    const cases = [
+        [{ deck: 'mercato', league: 'ALL', role: null }, 'mercato-all-any'],
+        [{ deck: 'mercato', league: 'ITA', role: 'POR' }, 'mercato-ita-por'],
+        [{ deck: 'gol', league: 'ALL', role: null }, 'gol']
+    ];
+    for (const [m, opt] of cases) {
+        assert.equal(G.optOf(m), opt);
+        assert.deepEqual(G.parseOpt(opt), m);
+    }
+    assert.deepEqual(G.parseOpt('boh-xyz-zzz'), { deck: 'mercato', league: 'ALL', role: null }, 'valori sconosciuti: quelli di base');
+    assert.deepEqual(G.parseOpt('mercato-row-att'), { deck: 'mercato', league: 'ROW', role: 'ATT' });
+});
+
+test('sfida e giorno: lo stesso seme da\' le stesse coppie a chiunque indovini', () => {
+    const SF = require(path.join('..', 'assets', 'sfida.js'));
+    const pool = G.buildPool(playersDatabase, { league: 'ALL', role: null });
+    const seed = SF.daySeed('sopraosotto', '2026-11-27');
+    const run = () => {
+        const s = G.newSeries(pool, seed, 1);
+        const seq = [s.left.name + '/' + s.right.name];
+        for (let i = 0; i < 30; i++) { s.streak++; G.advance(s); seq.push(s.right.name); }
+        return seq;
+    };
+    assert.deepEqual(run(), run());
+    const other = G.newSeries(pool, SF.daySeed('sopraosotto', '2026-11-28'), 1);
+    assert.notEqual(other.left.name + '/' + other.right.name, run()[0], 'il giorno dopo si cambia');
+});
+
+test('quadratini della serie del giorno', () => {
+    assert.equal(G.dailyGrid(3, true), '🟩🟩🟩🟥');
+    assert.equal(G.dailyGrid(0, true), '🟥');
+    assert.equal(G.dailyGrid(2, false), '🟩🟩', 'uscito da solo: niente rosso');
+    assert.equal(G.dailyGrid(25, true), '🟩'.repeat(20) + ' +5🟥');
 });

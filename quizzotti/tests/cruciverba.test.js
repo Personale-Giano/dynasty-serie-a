@@ -52,9 +52,11 @@ test('ogni scheda ha i due versi, misure da telefono e numerazione senza buchi',
     }
 });
 
-test('dal N° 11 ogni tema torna una seconda volta, senza doppioni tra le nuove', () => {
-    const second = cruciverbaSchede.slice(10).map((p) => p.tema);
-    assert.equal(new Set(second).size, second.length, 'un tema compare due volte tra le schede 11-20');
+test('ogni blocco di dieci schede (1-10, 11-20, 21-30...) ripassa i temi senza doppioni', () => {
+    for (let i = 0; i < cruciverbaSchede.length; i += 10) {
+        const block = cruciverbaSchede.slice(i, i + 10).map((p) => p.tema);
+        assert.equal(new Set(block).size, block.length, `un tema compare due volte tra le schede ${i + 1}-${i + block.length}`);
+    }
     const titles = cruciverbaSchede.map((p) => p.title);
     assert.equal(new Set(titles).size, titles.length, 'titoli ripetuti');
 });
@@ -62,4 +64,24 @@ test('dal N° 11 ogni tema torna una seconda volta, senza doppioni tra le nuove'
 test('le parole delle schede sono tutte nel database', () => {
     const db = new Set(cruciverba.map((x) => x.answer));
     cruciverbaSchede.forEach((p) => p.words.forEach((w) => assert.ok(db.has(w.answer), `N° ${p.n}: ${w.answer} manca dal database`)));
+});
+
+test('il registro dice il vero: schede fisse da risolvere, non una griglia nuova a ogni partita', () => {
+    const qz = fs.readFileSync(path.join(ROOT, 'assets', 'qz.js'), 'utf8');
+    const line = qz.split('\n').find((l) => /id: 'cruciverba'/.test(l));
+    assert.ok(line, 'manca il Cruciverba nel registro');
+    assert.ok(!/griglia nuova/i.test(line), 'il registro promette una griglia nuova a ogni partita, ma le schede sono fisse');
+    assert.match(line, /schede/i);
+});
+
+test('sul telefono la parola corrente sta in una striscia sopra la tastiera, con caselle tappabili', () => {
+    const html = fs.readFileSync(path.join(ROOT, 'Cruciverba.html'), 'utf8');
+    for (const id of ['xw-dock', 'xw-dcells', 'xw-dprev', 'xw-dnext', 'xw-dclue']) assert.ok(html.includes(`id="${id}"`), `manca #${id}`);
+    // la striscia e' un doppione visivo: il lettore di schermo usa il campo nascosto
+    assert.match(html, /class="xw-dock" id="xw-dock" aria-hidden="true"/);
+    assert.match(html, /@media \(max-width: 979px\)[\s\S]*body\.xw-play \.xw-dock/);
+    // si appoggia sulla tastiera (visualViewport) e la casella attiva resta in vista
+    assert.match(GAME, /visualViewport/);
+    assert.match(GAME, /function keepVisible\(\)/);
+    assert.match(GAME, /document\.body\.appendChild\(dockEl\)/, 'la striscia va fuori dalla schermata animata, o "fixed" non tiene');
 });

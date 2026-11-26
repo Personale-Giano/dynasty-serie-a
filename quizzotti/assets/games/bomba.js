@@ -12,6 +12,10 @@
    La partita si salva all'inizio di ogni round: se la pagina si ricarica (o
    si preme Indietro) si riprende dal round in corso. I record del telefono
    (scoppio piu' rapido, miccia piu' lunga, giro piu' lungo) restano salvati.
+   Ogni tema ha una difficolta' (diff 1-3 in db-bomba.js): nelle impostazioni
+   si sceglie se pescare tra facili e medi (predefinito), tra tutti o solo tra
+   i difficili. «Contestata» ripassa la bomba a chi l'ha appena passata, quando
+   la sua risposta era gia' stata detta o era sbagliata.
    La logica pura sta in `core` ed e' esportata per i test con Node.
    ========================================================================== */
 (function () {
@@ -20,6 +24,8 @@
     /* ---------- Logica pura (testata con Node) ---------- */
     var FUSES = { short: [15, 40], mid: [30, 90], long: [60, 120] };   // secondi (v1: 30-90)
     var ROUNDS = [5, 10, 15];
+    // difficolta' dei temi ammesse per livello scelto
+    var LEVELS = { easy: [1, 2], all: [1, 2, 3], hard: [3] };
     var SAVE_TTL = 12 * 3600 * 1000;   // una partita lasciata a meta' vale fino a 12 ore
 
     /** Impostazioni lette dalla memoria: valori vecchi o rovinati tornano ai predefiniti. */
@@ -29,6 +35,7 @@
             mode: raw.mode === 'elim' ? 'elim' : 'points',
             rounds: ROUNDS.indexOf(Number(raw.rounds)) >= 0 ? Number(raw.rounds) : 10,
             fuse: Object.prototype.hasOwnProperty.call(FUSES, raw.fuse) ? raw.fuse : 'mid',
+            level: Object.prototype.hasOwnProperty.call(LEVELS, raw.level) ? raw.level : 'easy',
             cats: null
         };
         if (Array.isArray(raw.cats) && cats) {
@@ -37,6 +44,15 @@
         }
         return c;
     }
+
+    /** Il tema va bene per il livello scelto? Un tema senza diff vale come medio. */
+    function levelOk(t, level) {
+        var d = t && [1, 2, 3].indexOf(t.diff) >= 0 ? t.diff : 2;
+        return (LEVELS[level] || LEVELS.easy).indexOf(d) >= 0;
+    }
+
+    /** Contestata: la bomba torna a chi l'ha passata per ultimo (-1 se nessuno l'ha ancora passata). */
+    function contestTo(hist) { return Array.isArray(hist) && hist.length ? hist[hist.length - 1] : -1; }
 
     /** Nomi uguali (anche con maiuscole diverse) diventano "Luca", "Luca 2"... senza scontrarsi con un "Luca 2" vero. */
     function dedupeNames(names) {
@@ -119,7 +135,7 @@
     function secs(ms) { return (ms / 1000).toFixed(1).replace('.', ',') + ' s'; }
     function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 
-    var core = { FUSES: FUSES, ROUNDS: ROUNDS, SAVE_TTL: SAVE_TTL, normCfg: normCfg, dedupeNames: dedupeNames, heat: heat, interval: interval, ranking: ranking, validSave: validSave, updateStats: updateStats, secs: secs };
+    var core = { FUSES: FUSES, ROUNDS: ROUNDS, LEVELS: LEVELS, SAVE_TTL: SAVE_TTL, normCfg: normCfg, levelOk: levelOk, contestTo: contestTo, dedupeNames: dedupeNames, heat: heat, interval: interval, ranking: ranking, validSave: validSave, updateStats: updateStats, secs: secs };
     if (typeof module !== 'undefined' && module.exports) { module.exports = core; return; }
 
     /* ======================================================================
@@ -144,7 +160,7 @@
     $('#rules').innerHTML = [
         ['Esce un tema', 'di calcio: giocatori di una squadra, stadi, allenatori…'],
         ['Dici una cosa valida,', 'premi «Passa» e molla il telefono al vicino.'],
-        ['Niente doppioni:', 'una risposta già detta o sbagliata non vale. Riprova, e in fretta.'],
+        ['Niente doppioni:', 'una risposta già detta o sbagliata non vale. Chi la sente preme «Contestata» e la bomba torna indietro, a chi l\'ha passata.'],
         ['La miccia è nascosta:', 'nessuno sa quando scoppia. Chi ce l\'ha in mano perde il round.'],
         ['Tema impossibile?', 'Si può cambiare, ma la miccia non si ferma: chi ce l\'ha resta in ballo.']
     ].map(function (r, i) {
@@ -156,6 +172,11 @@
     var MODE_DESC = {
         points: 'Quando scoppia, tutti gli altri prendono un punto. Vince chi ne ha di più alla fine.',
         elim: 'Chi resta con la bomba in mano è fuori. L\'ultimo in piedi vince.'
+    };
+    var LEVEL_DESC = {
+        easy: 'Temi facili e medi: tante risposte che vengono in mente a tutti.',
+        all: 'Tutti i temi, anche quelli da esperti (stadi della Ligue 1, giocatori dell\'Athletic Bilbao...).',
+        hard: 'Solo temi difficili: per chi il calcio lo mastica tutti i giorni.'
     };
     var FUSE_DESC = {
         short: 'Da 15 a 40 secondi: si parla poco e si passa tanto.',
@@ -169,9 +190,14 @@
         });
         QZ.segmented($('#opt-rounds'), ROUNDS.map(function (n) { return { label: String(n), value: n }; }), CFG.rounds, function (v) { CFG.rounds = v; saveCfg(); });
         QZ.segmented($('#opt-fuse'), [{ label: 'Corta', value: 'short' }, { label: 'Media', value: 'mid' }, { label: 'Lunga', value: 'long' }], CFG.fuse, function (v) { CFG.fuse = v; saveCfg(); paintFuse(); });
+        QZ.segmented($('#opt-level'), [{ label: 'Facili e medi', value: 'easy' }, { label: 'Tutti', value: 'all' }, { label: 'Difficili', value: 'hard' }], CFG.level, function (v) {
+            CFG.level = v; saveCfg(); paintLevel(); paintCats();
+        });
         paintMode();
         paintFuse();
+        paintLevel();
     }
+    function paintLevel() { $('#level-desc').textContent = LEVEL_DESC[CFG.level]; }
     function paintMode() {
         $('#mode-desc').textContent = MODE_DESC[CFG.mode];
         $('#rounds-wrap').hidden = CFG.mode !== 'points';
@@ -183,8 +209,7 @@
     var sel = new Set(CFG.cats || CATS);
     $('#cats-ico').innerHTML = QZ.icon('right');
     $('#cats').innerHTML = '<button type="button" data-all>Tutti</button>' + CATS.map(function (c) {
-        var n = topics.filter(function (t) { return t.categoria === c; }).length;
-        return '<button type="button" data-cat="' + QZ.esc(c) + '">' + QZ.esc(c) + ' <span>' + n + '</span></button>';
+        return '<button type="button" data-cat="' + QZ.esc(c) + '">' + QZ.esc(c) + ' <span></span></button>';
     }).join('');
     $('#cats').addEventListener('click', function (e) {
         var b = e.target.closest('button');
@@ -203,8 +228,13 @@
         saveCfg();
         paintCats();
     });
-    function poolSize() { return topics.filter(function (t) { return sel.has(t.categoria); }).length; }
+    function poolSize() { return topics.filter(function (t) { return sel.has(t.categoria) && levelOk(t, CFG.level); }).length; }
     function paintCats() {
+        // accanto a ogni categoria quanti temi ci sono al livello scelto
+        QZ.$$('#cats [data-cat]').forEach(function (b) {
+            var c = b.getAttribute('data-cat');
+            b.querySelector('span').textContent = topics.filter(function (t) { return t.categoria === c && levelOk(t, CFG.level); }).length;
+        });
         QZ.$$('#cats [data-cat]').forEach(function (b) { b.setAttribute('aria-pressed', String(sel.has(b.getAttribute('data-cat')))); });
         $('#cats [data-all]').setAttribute('aria-pressed', String(sel.size === CATS.length));
         $('#cats-label').textContent = (sel.size === CATS.length ? 'Temi: tutte le ' + CATS.length + ' categorie' : 'Temi: ' + sel.size + ' categori' + (sel.size === 1 ? 'a' : 'e') + ' su ' + CATS.length) + ' · ' + poolSize() + ' temi';
@@ -246,7 +276,7 @@
     }
     paintResume();
     function saveGame() {
-        QZ.store.set(SAVE_KEY, { v: 1, t: Date.now(), cfg: { mode: CFG.mode, rounds: CFG.rounds, fuse: CFG.fuse, cats: CFG.cats }, G: G });
+        QZ.store.set(SAVE_KEY, { v: 1, t: Date.now(), cfg: { mode: CFG.mode, rounds: CFG.rounds, fuse: CFG.fuse, level: CFG.level, cats: CFG.cats }, G: G });
     }
 
     /* ---------- Comandi ---------- */
@@ -255,6 +285,9 @@
     $('#rd-go').addEventListener('click', go);
     $('#g-pass').innerHTML = 'Passa la bomba' + QZ.icon('arrow');
     $('#g-pass').addEventListener('click', pass);
+    $('#g-contest').innerHTML = QZ.icon('back') + 'Contestata';
+    $('#g-contest').setAttribute('aria-label', 'Contestata: risposta già detta o sbagliata, la bomba torna a chi l\'ha passata');
+    $('#g-contest').addEventListener('click', contest);
     $('#g-skip').innerHTML = QZ.icon('shuffle') + 'Tema';
     $('#g-skip').setAttribute('aria-label', 'Cambia tema (la miccia continua)');
     $('#g-skip').addEventListener('click', skip);
@@ -315,7 +348,7 @@
         if (Date.now() - lastStart < 1000) return;
         lastStart = Date.now();
         // la partita ripresa si gioca con le sue impostazioni, e restano quelle anche dopo
-        CFG.mode = s.cfg.mode; CFG.rounds = s.cfg.rounds; CFG.fuse = s.cfg.fuse; CFG.cats = s.cfg.cats;
+        CFG.mode = s.cfg.mode; CFG.rounds = s.cfg.rounds; CFG.fuse = s.cfg.fuse; CFG.level = s.cfg.level; CFG.cats = s.cfg.cats;
         sel = new Set(CFG.cats || CATS);
         saveCfg();
         paintOptions();
@@ -339,7 +372,7 @@
 
     function showReady() {
         stopLoop();
-        S = { running: false, passes: 0, committed: false };
+        S = { running: false, passes: 0, committed: false, hist: [] };
         var h = G.players[G.holder];
         $('#rd-eyebrow').innerHTML = QZ.icon('flag') + roundLabel() + (CFG.mode === 'elim' ? ' · in campo ' + aliveIdx().length : '');
         $('#rd-title').innerHTML = nameHTML(h);
@@ -378,7 +411,9 @@
     }
 
     function drawTopic() {
-        var t = deck.draw(function (x) { return sel.has(x.categoria); }) || deck.draw();
+        // prima i temi del livello scelto; se nelle categorie scelte non ce n'e', si allarga
+        var t = deck.draw(function (x) { return sel.has(x.categoria) && levelOk(x, CFG.level); }) ||
+            deck.draw(function (x) { return sel.has(x.categoria); }) || deck.draw();
         S.topic = t;
         $('#g-cat').innerHTML = QZ.icon('ball') + QZ.esc(t.categoria);
         $('#g-topic').textContent = t.topic;
@@ -461,6 +496,7 @@
         $('#g-pause').setAttribute('aria-pressed', String(paused));
         $('#g-pass').disabled = paused || !!S.exploded || !S.running;
         $('#g-skip').disabled = !!S.exploded || !S.armed;
+        $('#g-contest').disabled = paused || !!S.exploded || !S.running || contestTo(S.hist) < 0;
         $('#g-quit').disabled = !!S.going && !S.armed;
     }
     // cambio app o schermo spento: la bomba si ferma
@@ -485,10 +521,33 @@
         S.passes++;
         G.passes++;
         $('#g-passes').textContent = pad(S.passes);
+        S.hist.push(G.holder);
         G.holder = nextAlive(G.holder);
         renderHolder(true);
+        paintPause();
         QZ.sound.whoosh();
         QZ.vibrate(15);
+    }
+    /** Contestata: la risposta era gia' stata detta o era sbagliata, la bomba torna indietro.
+        Il passaggio annullato non conta; si puo' contestare ancora piu' indietro. */
+    function contest() {
+        if (!S.running) return;
+        var back = contestTo(S.hist);
+        if (back < 0) return;
+        var now = performance.now();
+        if (now - (S.lastPass || 0) < 350) return;   // doppio tocco: si torna indietro di uno solo
+        S.lastPass = now;
+        S.hist.pop();
+        S.passes = Math.max(0, S.passes - 1);
+        G.passes = Math.max(0, G.passes - 1);
+        $('#g-passes').textContent = pad(S.passes);
+        G.holder = back;
+        renderHolder(true);
+        paintPause();
+        QZ.sound.wrong();
+        QZ.vibrate([40, 30, 40]);
+        QZ.toast('Contestata: la bomba torna a ' + G.players[back].name, { icon: 'back', type: 'bad', ms: 1600 });
+        QZ.say('Contestata. La bomba torna a ' + G.players[back].name + '.');
     }
     function skip() {
         if (S.exploded || S.closed || !S.armed) return;
@@ -704,6 +763,7 @@
             if ((k === ' ' || k === 'enter') && !onBtn) { e.preventDefault(); pass(); }
             else if (k === 'p') { e.preventDefault(); togglePause(); }
             else if (k === 's') { e.preventDefault(); skip(); }
+            else if (k === 'c') { e.preventDefault(); contest(); }
         } else if (scr.id === 's-ready' && (k === ' ' || k === 'enter') && !onBtn) {
             e.preventDefault(); go();
         }

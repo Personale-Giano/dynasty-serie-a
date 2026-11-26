@@ -6,15 +6,186 @@
    gruppo giusto = striscia colorata; tre su quattro = "Ne manca uno!";
    quattro errori e la scheda e' persa. Ogni scheda si gioca una volta:
    il risultato resta salvato per numero (qz.quattro.v1) e si rivede.
+   Scheda del giorno: dal 27 novembre 2026 ogni giorno (data di Roma) una
+   delle schede, uguale per tutti e con le caselle nello stesso ordine,
+   scelta da un giro mescolato a seme fisso: nessuna ripetizione finche' il
+   giro non finisce. Si gioca a parte (qz.quattro.daily.v1, per data): le
+   schede giocate normalmente non cambiano. Risultato a quadratini. La scheda
+   del giorno si apre anche da QuattroPerQuattro.html?giorno (il Giornale di
+   oggi), tiene i colori dei tentativi (rows, per i quadratini del Giornale) e
+   a fine partita va alle Leghe: QZ.leagues.submit('quattro', N°, { win, mistakes, found }).
+   Errata (quattroErrata in db-quattro.js): nelle schede pubblicate con un
+   nome valido per due gruppi, la quaterna "alternativa" non e' un errore.
+
+   La parte "Core" qui sotto non usa il DOM: i test la caricano con require().
    ========================================================================== */
-/* global quattroSchede */
+/* global quattroSchede, quattroErrata */
 (function () {
     'use strict';
 
+    /* =====================================================================
+       CORE (puro, testabile in Node)
+       ===================================================================== */
+    var Core = (function () {
+        var START = '2026-11-27';      // giorno della prima scheda del giorno
+        var SEED = 0x4C4C4E26;         // seme fisso dei giri
+        var DAY = 86400000;
+        var EMOJI = { 1: '🟩', 2: '🟨', 3: '🟦', 4: '🟥' };   // verde, giallo, blu, rosso
+        /* Le schede che entrano nella rotazione, giro per giro (un giro = tutte
+           le schede del mazzo, una al giorno, in ordine mescolato). Si possono
+           aggiungere righe { dalGiro: G, schede: N } SOLO per giri non ancora
+           cominciati, cosi' i giorni gia' passati non cambiano. */
+        var ROTAZIONI = [{ dalGiro: 0, schede: 100 }];
+
+        var fmtDate = null, fmtTime = null;
+        /** Data a Roma come 'AAAA-MM-GG' (Europe/Rome, ora legale compresa). */
+        function romeDate(d) {
+            d = d || new Date();
+            if (!fmtDate) fmtDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit' });
+            var o = {};
+            fmtDate.formatToParts(d).forEach(function (p) { o[p.type] = p.value; });
+            return o.year + '-' + o.month + '-' + o.day;
+        }
+        function utcOf(ymd) {
+            var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+            return Date.UTC(+m[1], +m[2] - 1, +m[3]);
+        }
+        function ymdOf(d) { return typeof d === 'string' ? d : romeDate(d); }
+        /** Giorni passati dal 27 novembre 2026 (0 = quel giorno; negativo prima). Date o 'AAAA-MM-GG'. */
+        function dayIndex(d) { return Math.round((utcOf(ymdOf(d)) - utcOf(START)) / DAY); }
+        /** Numero della scheda del giorno come la vede il giocatore (N° 1 il 27/11/2026; prima del via vale 1). */
+        function dailyNumber(d) { return Math.max(0, dayIndex(d)) + 1; }
+        /** Data della scheda del giorno N° num, 'AAAA-MM-GG'. */
+        function dateOf(num) { return new Date(utcOf(START) + (Math.max(1, num) - 1) * DAY).toISOString().slice(0, 10); }
+        /** 'AAAA-MM-GG' -> 'GG/MM/AAAA'. */
+        function itDate(ymd) { return ymd.slice(8, 10) + '/' + ymd.slice(5, 7) + '/' + ymd.slice(0, 4); }
+
+        /** Generatore pseudo-casuale a seme (mulberry32): stesso seme, stessa sequenza ovunque. */
+        function rng(seed) {
+            var a = seed >>> 0;
+            return function () {
+                a = (a + 0x6D2B79F5) >>> 0;
+                var t = a;
+                t = Math.imul(t ^ (t >>> 15), t | 1);
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+        function shuffleWith(arr, r) {
+            for (var i = arr.length - 1; i > 0; i--) {
+                var j = Math.floor(r() * (i + 1));
+                var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+            }
+            return arr;
+        }
+        function hash(s) {
+            var h = 2166136261;
+            for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+            return h >>> 0;
+        }
+
+        function poolFor(g) {
+            var n = ROTAZIONI[0].schede;
+            ROTAZIONI.forEach(function (r) { if (g >= r.dalGiro) n = r.schede; });
+            return n;
+        }
+        var giri = {};
+        /** Il giro numero g: i numeri di scheda 1..N mescolati. Tra un giro e l'altro la stessa scheda non capita due giorni di fila. */
+        function giro(g) {
+            if (giri[g]) return giri[g];
+            var a = [];
+            for (var i = 1; i <= poolFor(g); i++) a.push(i);
+            shuffleWith(a, rng((SEED + Math.imul(g + 1, 0x9E3779B1)) >>> 0));
+            if (g > 0 && a.length > 1) {
+                var prev = giro(g - 1);
+                if (a[0] === prev[prev.length - 1]) { var t = a[0]; a[0] = a[1]; a[1] = t; }
+            }
+            giri[g] = a;
+            return a;
+        }
+        /** Il numero (n) della scheda del giorno per una data (Date o 'AAAA-MM-GG'); prima del via, quella del primo giorno. */
+        function dailyIndex(d) {
+            var k = Math.max(0, dayIndex(d)), g = 0;
+            while (k >= poolFor(g)) { k -= poolFor(g); g++; }
+            return giro(g)[k];
+        }
+
+        /** Millisecondi alla prossima mezzanotte di Roma (giorni da 23 e 25 ore compresi). */
+        function msToNext(now) {
+            now = now || new Date();
+            if (!fmtTime) fmtTime = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+            var o = {};
+            fmtTime.formatToParts(now).forEach(function (p) { o[p.type] = +p.value; });
+            var ms = (86400 - (o.hour * 3600 + o.minute * 60 + o.second)) * 1000 - now.getMilliseconds();
+            var today = romeDate(now), t = now.getTime();
+            if (romeDate(new Date(t + ms)) === today) ms += 3600000;
+            else if (romeDate(new Date(t + ms - 3600000)) !== today) ms -= 3600000;
+            return Math.max(0, ms);
+        }
+
+        /** Le caselle della scheda del giorno: stesso ordine per tutti, diverso ogni giorno. */
+        function dailyOrder(voci, ymd) { return shuffleWith(voci.slice(), rng(hash('qq|' + ymd))); }
+
+        /** Serie di schede del giorno chiuse di fila fino a ymd (se oggi non e' ancora giocata, conta fino a ieri). */
+        function dailyStreak(done, ymd) {
+            var k = dayIndex(ymd), s = 0;
+            if (!done[dateOf(k + 1)]) k--;
+            for (; k >= 0; k--) {
+                var d = done[dateOf(k + 1)];
+                if (!d || !d.win) break;
+                s++;
+            }
+            return s;
+        }
+
+        /**
+         * Errata: la quaterna sel non e' il gruppo previsto ma ne soddisfa comunque l'etichetta?
+         * Restituisce { gruppo, anche (i nomi "fuori posto" scelti), nota } oppure null.
+         */
+        function errataMatch(errata, p, sel) {
+            var list = (errata && p && errata[p.n]) || [];
+            for (var i = 0; i < list.length; i++) {
+                var e = list[i], voci = p.gruppi[e.gruppo].voci;
+                var ok = sel.length === 4 && sel.every(function (v) { return voci.indexOf(v) >= 0 || e.anche.indexOf(v) >= 0; });
+                var extra = sel.filter(function (v) { return voci.indexOf(v) < 0; });
+                if (ok && extra.length) return { gruppo: e.gruppo, anche: extra, nota: e.nota };
+            }
+            return null;
+        }
+
+        function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+        /**
+         * Testo da condividere: niente nomi, solo i quadratini dei tentativi.
+         * tries: array di array di difficolta' (1-4); opt.daily: { num, ymd } per la scheda del giorno.
+         */
+        function shareText(p, tries, found, mistakes, opt) {
+            opt = opt || {};
+            var rows = tries.map(function (t) { return t.map(function (d) { return EMOJI[d]; }).join(''); });
+            var won = found === 4;
+            var head = opt.daily
+                ? 'Quattro per Quattro · Scheda del giorno N° ' + opt.daily.num + ' (' + itDate(opt.daily.ymd) + ')'
+                : 'Quattro per Quattro N° ' + p.n + ' · ' + p.titolo;
+            return head + '\n' + rows.join('\n') + '\n' +
+                (won ? (mistakes ? 'Chiusa con ' + plural(mistakes, 'errore', 'errori') + '.' : 'Zero errori.') : 'Persa con ' + found + ' gruppi su 4.') +
+                (opt.streak >= 2 ? ' Serie di ' + opt.streak + ' giorni.' : '') + ' Tu?';
+        }
+
+        return {
+            START: START, SEED: SEED, ROTAZIONI: ROTAZIONI, EMOJI: EMOJI,
+            romeDate: romeDate, dayIndex: dayIndex, dailyNumber: dailyNumber, dateOf: dateOf, itDate: itDate,
+            giro: giro, poolFor: poolFor, dailyIndex: dailyIndex, msToNext: msToNext, dailyOrder: dailyOrder,
+            dailyStreak: dailyStreak, errataMatch: errataMatch, shareText: shareText
+        };
+    })();
+
+    if (typeof module !== 'undefined' && module.exports) module.exports = Core;
+    if (typeof document === 'undefined' || typeof QZ === 'undefined') return;
+
     var STORE_KEY = 'qz.quattro.v1';
+    var DAILY_KEY = 'qz.quattro.daily.v1';      // scheda del giorno: { play: { data: partita }, done: { data: esito } }
+    var ERRATA = typeof quattroErrata !== 'undefined' && quattroErrata ? quattroErrata : {};
     var FILTER_KEY = 'qz.quattro.filter';      // solo comodita': filtro e tema scelti nella lista
     var MAX_ERR = 4;
-    var EMOJI = { 1: '🟩', 2: '🟨', 3: '🟦', 4: '🟥' };   // verde, giallo, blu, rosso
     var LIVELLO = { 1: 'facile', 2: 'medio', 3: 'difficile', 4: 'difficilissimo' };
     var TEMI = { 'serie-a': 'Serie A', azzurri: 'Azzurri', estero: 'Estero', storia: 'Storia', curiosita: 'Curiosità' };
 
@@ -31,6 +202,26 @@
         return { play: x.play || {}, done: x.done || {} };
     }
     function putStore(x) { QZ.store.set(STORE_KEY, x); }
+    /** Scheda del giorno: stesso formato, ma per data ('AAAA-MM-GG'). Delle partite in corso si tiene solo quella di oggi. */
+    function getDaily() {
+        var x = QZ.store.get(DAILY_KEY, null) || {};
+        return { play: x.play || {}, done: x.done || {} };
+    }
+    function putDaily(x) {
+        var today = Core.romeDate();
+        Object.keys(x.play).forEach(function (k) { if (k < Core.dateOf(Core.dailyNumber(today) - 1) && k !== (S && S.daily)) delete x.play[k]; });
+        QZ.store.set(DAILY_KEY, x);
+    }
+    /** L'archivio giusto per la partita aperta: le schede o la scheda del giorno. */
+    function storeOf(s) { return s && s.daily ? getDaily() : getStore(); }
+    function putOf(s, x) { if (s && s.daily) putDaily(x); else putStore(x); }
+    function keyOf(s) { return s.daily || s.n; }
+    function today() {
+        var ymd = Core.romeDate();
+        // prima del via (27/11/2026) niente partita: solo l'annuncio
+        if (Core.dayIndex(ymd) < 0) return { ymd: ymd, pre: true, p: null };
+        return { ymd: ymd, num: Core.dailyNumber(ymd), p: scheda(Core.dailyIndex(ymd)) };
+    }
     function nextOpen(after, st) {
         st = st || getStore();
         var list = SCHEDE.filter(function (p) { return !st.done[p.n]; });
@@ -102,11 +293,83 @@
     })), tema, function (v) { tema = v; saveFilter(); paintIntro(); });
     $('#qq-filter').setAttribute('aria-label', 'Mostra le schede');
     $('#qq-temi').setAttribute('aria-label', 'Filtra per tema');
+
+    /* ---------- La scheda del giorno (riquadro sopra le schede) ---------- */
+    var dailyEl = document.createElement('section');
+    dailyEl.className = 'card card--glow mt-4 qq-daily';
+    dailyEl.setAttribute('aria-labelledby', 'qq-daily-t');
+    dailyEl.style.cssText = 'display:grid;gap:10px;padding:18px 20px;border-top:3px solid var(--led)';
+    dailyEl.innerHTML =
+        '<p class="eyebrow" id="qq-daily-eyebrow"></p>' +
+        '<h2 id="qq-daily-t" style="font-size:24px;margin:0"></h2>' +
+        '<p class="muted" id="qq-daily-txt" style="margin:0"></p>' +
+        '<div class="row" style="--gap:8px"><button type="button" class="btn btn--primary" id="qq-daily-btn"></button>' +
+        '<button type="button" class="btn" id="qq-daily-share" hidden></button></div>' +
+        '<p class="small muted" id="qq-daily-next" style="margin:0"></p>';
+    var sheetsEl = $('.qq-sheets');
+    if (sheetsEl && sheetsEl.parentNode) sheetsEl.parentNode.insertBefore(dailyEl, sheetsEl);
+    $('#qq-daily-share').innerHTML = QZ.icon('share') + 'Condividi';
+    $('#qq-daily-btn').addEventListener('click', function () { openDaily(); });
+    $('#qq-daily-share').addEventListener('click', function () {
+        var t = today(), d = getDaily().done[t.ymd];
+        if (d && t.p) QZ.share(dailyShare(t, d), 'Quizzotti · Quattro per Quattro');
+    });
+    function dailyShare(t, d) {
+        return Core.shareText(t.p, (d.tries || []).map(function (x) { return x.map(function (gi) { return t.p.gruppi[gi].d; }); }),
+            d.solved.length, d.mistakes, { daily: { num: t.num, ymd: t.ymd }, streak: Core.dailyStreak(getDaily().done, t.ymd) });
+    }
+    function openDaily() {
+        var t = today();
+        if (t.p) open(t.p.n, t.ymd);
+    }
+    var dailyDay = null;
+    function paintDaily() {
+        var t = today();
+        dailyDay = t.ymd;
+        dailyEl.hidden = !t.p && !t.pre;
+        $('#qq-daily-btn').hidden = !t.p;
+        if (t.pre) {
+            $('#qq-daily-eyebrow').innerHTML = QZ.icon('calendar') + 'Scheda del giorno';
+            $('#qq-daily-t').textContent = 'Dal ' + Core.itDate(Core.START) + ', una al giorno';
+            $('#qq-daily-txt').textContent = 'Ogni giorno una scheda uguale per tutti, con le caselle nello stesso ordine: la giochi e confronti i quadratini con gli amici.';
+            $('#qq-daily-share').hidden = true;
+            paintCountdown();
+            return;
+        }
+        if (!t.p) return;
+        var dd = getDaily(), d = dd.done[t.ymd], play = !d && validPlay(t.p, dd.play[t.ymd]) ? dd.play[t.ymd] : null;
+        var streak = Core.dailyStreak(dd.done, t.ymd);
+        var already = getStore().done[t.p.n];
+        $('#qq-daily-eyebrow').innerHTML = QZ.icon('calendar') + 'Scheda del giorno · ' + Core.itDate(t.ymd);
+        $('#qq-daily-t').textContent = 'N° ' + t.num + ' del giorno · ' + t.p.titolo;
+        var txt;
+        if (d) txt = d.win ? 'Oggi l\'hai chiusa ' + (d.mistakes ? 'con ' + plural(d.mistakes, 'errore', 'errori') : 'senza errori') + '.' : 'Oggi ti è sfuggita: ' + plural(d.solved.length, 'gruppo trovato', 'gruppi trovati') + ' su quattro.';
+        else if (play) txt = 'In corso: ' + play.solved.length + ' gruppi su 4, ' + plural(play.mistakes || 0, 'errore', 'errori') + '.';
+        else txt = 'Tema ' + (TEMI[t.p.tema] || '') + ', è il N° ' + t.p.n + ' dell\'elenco. Uguale per tutti, caselle nello stesso ordine: poi confronti i quadratini.' +
+            (already ? ' L\'hai già giocata dall\'elenco: vale lo stesso, ma stavolta parti avvantaggiato.' : '');
+        if (streak) txt += ' Serie del giorno: ' + streak + '.';
+        $('#qq-daily-txt').textContent = txt;
+        $('#qq-daily-btn').innerHTML = (d ? 'Rivedi la scheda del giorno' : play ? 'Riprendi la scheda del giorno' : 'Gioca la scheda del giorno') + QZ.icon('arrow');
+        $('#qq-daily-share').hidden = !d || !(d.tries || []).length;
+        paintCountdown();
+    }
+    function paintCountdown() {
+        var ms = Core.msToNext(), h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000);
+        var k = Core.dayIndex(Core.romeDate());
+        $('#qq-daily-next').textContent = k < -1 ? '' : (k < 0 ? 'Si comincia tra ' : 'La prossima tra ') + (h ? h + ' h ' : '') + m + ' min.';
+    }
+    setInterval(function () {
+        if (S) return;
+        if (Core.romeDate() !== dailyDay) paintIntro(); else paintCountdown();
+    }, 30000);
+
     paintIntro();
+    // dal Giornale di oggi (QuattroPerQuattro.html?giorno): si apre subito la scheda del giorno
+    if (/[?&]giorno(=|&|$)/.test(window.location.search)) setTimeout(function () { if (!S) openDaily(); }, 200);
 
     // schede giocate in un'altra scheda del browser: la lista si aggiorna
     window.addEventListener('storage', function (e) {
-        if (e.key !== STORE_KEY && e.key !== null) return;
+        if (e.key !== STORE_KEY && e.key !== DAILY_KEY && e.key !== null) return;
         if (!S) paintIntro();
     });
 
@@ -124,6 +387,7 @@
 
     /* ---------- La copertina: le schede ---------- */
     function paintIntro() {
+        paintDaily();
         var st = getStore();
         var s = stats(st);
         $('#qq-count').textContent = s.played + '/' + SCHEDE.length;
@@ -190,14 +454,14 @@
 
     function backToList() {
         if (S && !S.done) save();
-        var n = S ? S.n : null;
+        var n = S ? S.n : null, wasDaily = !!(S && S.daily);
         S = null;
         paintIntro();
         QZ.show('s-start');
         if (n != null) {
             setTimeout(function () {
                 if (S) return;
-                var b = $('.qq-card[data-n="' + n + '"]');
+                var b = wasDaily ? $('#qq-daily-btn') : $('.qq-card[data-n="' + n + '"]');
                 if (b) { b.scrollIntoView({ block: 'center' }); b.focus({ preventScroll: true }); }
             }, QZ.reducedMotion() ? 60 : 280);
         }
@@ -206,44 +470,47 @@
     /* =====================================================================
        FLUSSO
        ===================================================================== */
-    function open(n) {
+    /** Apre la scheda n; con daily ('AAAA-MM-GG') la apre come scheda del giorno, salvata a parte. */
+    function open(n, daily) {
         if (S && S.busy) return;
         var p = scheda(n);
         if (!p) return;
-        var st = getStore();
         var group = {};
         p.gruppi.forEach(function (g, gi) { g.voci.forEach(function (v) { group[v] = gi; }); });
-        S = { n: n, p: p, group: group, sel: [], done: false, busy: false, review: null };
-        if (!st.done[n] && validPlay(p, st.play[n]) && endedPlay(st.play[n])) {
+        S = { n: n, p: p, group: group, sel: [], done: false, busy: false, review: null, daily: daily || null };
+        if (daily) S.num = Core.dailyNumber(daily);
+        var key = keyOf(S);
+        var st = storeOf(S);
+        if (!st.done[key] && validPlay(p, st.play[key]) && endedPlay(st.play[key])) {
             // la partita era finita ma il risultato non era stato scritto: lo si registra ora
-            var y = st.play[n];
+            var y = st.play[key];
             S.order = y.order.slice(); S.solved = y.solved.slice(); S.mistakes = y.mistakes || 0; S.tries = y.tries.slice(); S.guessed = (y.guessed || []).slice();
             commit(S.solved.length === 4);
-            st = getStore();
+            st = storeOf(S);
         }
-        if (st.done[n]) {
-            var d = st.done[n];
+        if (st.done[key]) {
+            var d = st.done[key];
             S.done = true;
             S.review = d;
             S.solved = d.solved.slice();
             S.mistakes = d.mistakes;
             S.tries = d.tries || [];
             S.order = [];
-        } else if (validPlay(p, st.play[n])) {
-            var x = st.play[n];
+        } else if (validPlay(p, st.play[key])) {
+            var x = st.play[key];
             S.order = x.order.slice();
             S.solved = x.solved.slice();
             S.mistakes = x.mistakes || 0;
             S.tries = x.tries.slice();
             S.guessed = (x.guessed || []).slice();
         } else {
-            S.order = QZ.shuffle(allVoci(p));
+            S.order = daily ? Core.dailyOrder(allVoci(p), daily) : QZ.shuffle(allVoci(p));
             S.solved = [];
             S.mistakes = 0;
             S.tries = [];
             S.guessed = [];
         }
-        $('#qq-title').textContent = 'N° ' + p.n + ' · ' + (TEMI[p.tema] || '') + ' · ' + p.titolo;
+        $('#qq-title').textContent = (daily ? 'Scheda del giorno N° ' + S.num + ' · ' + Core.itDate(daily) + ' · ' : 'N° ' + p.n + ' · ') + (TEMI[p.tema] || '') + ' · ' + p.titolo;
         $('#qq-n').textContent = 'N° ' + p.n;
         $('#qq-actions').hidden = S.done;
         $('#qq-back').hidden = S.done;
@@ -255,9 +522,10 @@
             S.solved.forEach(function (gi) { addStrip(gi, false, true); });
             p.gruppi.forEach(function (g, gi) { if (S.solved.indexOf(gi) < 0) addStrip(gi, true, true); });
             var d2 = S.review;
+            var chi = daily ? 'La scheda del giorno' : 'Il N° ' + p.n;
             $('#qq-review-txt').innerHTML = QZ.esc(d2.win
-                ? 'Il N° ' + p.n + ' l\'hai chiuso ' + (d2.mistakes ? 'con ' + plural(d2.mistakes, 'errore', 'errori') : 'senza nemmeno un errore') + '. Ogni scheda si gioca una volta sola: qui resta la soluzione, con i tuoi tentativi.'
-                : 'Il N° ' + p.n + ' ti è sfuggito: ' + plural(d2.solved.length, 'gruppo trovato', 'gruppi trovati') + ' su quattro. Le strisce tratteggiate sono quelle scoperte dal tabellone.') +
+                ? chi + ' l\'hai chius' + (daily ? 'a ' : 'o ') + (d2.mistakes ? 'con ' + plural(d2.mistakes, 'errore', 'errori') : 'senza nemmeno un errore') + '. ' + (daily ? 'Domani ne arriva un\'altra' : 'Ogni scheda si gioca una volta sola') + ': qui resta la soluzione, con i tuoi tentativi.'
+                : chi + ' ti è sfuggit' + (daily ? 'a' : 'o') + ': ' + plural(d2.solved.length, 'gruppo trovato', 'gruppi trovati') + ' su quattro. Le strisce tratteggiate sono quelle scoperte dal tabellone.') +
                 triesHTML(S.tries, p);
             $('#qq-share-2').hidden = !S.tries.length;
             $('#qq-hint').textContent = '';
@@ -414,6 +682,18 @@
             solve(best);
             return;
         }
+        // errata: quaterna giusta per l'etichetta, ma la scheda pubblicata metteva un nome altrove
+        var alt = Core.errataMatch(ERRATA, S.p, S.sel);
+        if (alt) {
+            S.tries.pop();
+            var who = alt.anche.join(' e ');
+            QZ.toast('Giusto anche così! ' + alt.nota + ' Ma in questa scheda ' + who + (alt.anche.length > 1 ? ' stanno' : ' sta') +
+                ' in un altro gruppo: niente errore, cerca la quaterna prevista.', { icon: 'info', ms: 7000 });
+            QZ.say('Combinazione valida anche questa, non conta come errore. ' + who + ' va in un altro gruppo.');
+            $('#qq-hint').textContent = 'Niente errore: ' + who + (alt.anche.length > 1 ? ' vanno' : ' va') + ' in un altro gruppo.';
+            save();
+            return;
+        }
         S.mistakes++;
         QZ.sound.wrong();
         QZ.vibrate(80);
@@ -492,10 +772,11 @@
 
     function save() {
         if (!S || S.done) return;
-        var st = getStore();
-        if (st.done[S.n]) return;                 // chiusa nel frattempo in un'altra scheda
-        st.play[S.n] = { order: S.order, solved: S.solved, mistakes: S.mistakes, tries: S.tries, guessed: S.guessed };
-        putStore(st);
+        var st = storeOf(S), key = keyOf(S);
+        if (st.done[key]) return;                 // chiusa nel frattempo in un'altra scheda
+        st.play[key] = { order: S.order, solved: S.solved, mistakes: S.mistakes, tries: S.tries, guessed: S.guessed };
+        if (S.daily) st.play[key].n = S.n;
+        putOf(S, st);
     }
 
     /* =====================================================================
@@ -510,14 +791,24 @@
         var p = S.p, n = S.n, found = S.solved.length, err = S.mistakes;
         var ratio = won ? QZ.clamp(1 - err * 0.14, 0, 1) : found * 0.12;
         S.ratio = ratio;
-        var st = getStore();
-        var first = !st.done[n];
-        delete st.play[n];
-        if (first) st.done[n] = { win: won, mistakes: err, solved: S.solved.slice(), tries: S.tries, ratio: Math.round(ratio * 1000) / 1000, date: Date.now() };
-        putStore(st);
+        var st = storeOf(S), key = keyOf(S);
+        var first = !st.done[key];
+        delete st.play[key];
+        if (first) {
+            st.done[key] = { win: won, mistakes: err, solved: S.solved.slice(), tries: S.tries, ratio: Math.round(ratio * 1000) / 1000, date: Date.now() };
+            if (S.daily) {
+                st.done[key].n = n;
+                // i colori dei tentativi: il Giornale di oggi fa i quadratini senza caricare le schede
+                st.done[key].rows = S.tries.map(function (t) { return t.map(function (gi) { return p.gruppi[gi].d; }); });
+            }
+        }
+        putOf(S, st);
+        // Leghe tra amici: la scheda del giorno entra da sola in classifica (vale il primo risultato)
+        if (first && S.daily && QZ.leagues) QZ.leagues.submit('quattro', S.num, { win: !!won, mistakes: err, found: found });
         S.rec = first ? QZ.profile.record('quattro', {
             xp: found * 8 + (won ? 30 : 0) + (won && !err ? 20 : 0),
-            label: 'N° ' + n + ' ' + p.titolo + ' · ' + (won ? 'chiusa con ' + plural(err, 'errore', 'errori') : 'persa, ' + found + '/4 gruppi'),
+            label: (S.daily ? 'Scheda del giorno N° ' + S.num + ' (' + Core.itDate(S.daily) + ')' : 'N° ' + n + ' ' + p.titolo) + ' · ' +
+                (won ? 'chiusa con ' + plural(err, 'errore', 'errori') : 'persa, ' + found + '/4 gruppi'),
             score: Math.round(ratio * 100)
         }) : null;
     }
@@ -559,10 +850,9 @@
 
     function shareText() {
         var p = S.p;
-        var rows = S.tries.map(function (t) { return t.map(function (gi) { return EMOJI[p.gruppi[gi].d]; }).join(''); });
-        var won = S.solved.length === 4 && S.mistakes < MAX_ERR;
-        return 'Quattro per Quattro N° ' + p.n + ' · ' + p.titolo + '\n' + rows.join('\n') + '\n' +
-            (won ? (S.mistakes ? 'Chiusa con ' + plural(S.mistakes, 'errore', 'errori') + '.' : 'Zero errori.') : 'Persa con ' + S.solved.length + ' gruppi su 4.') + ' Tu?';
+        var tries = S.tries.map(function (t) { return t.map(function (gi) { return p.gruppi[gi].d; }); });
+        return Core.shareText(p, tries, S.solved.length, S.mistakes, S.daily
+            ? { daily: { num: S.num, ymd: S.daily }, streak: Core.dailyStreak(getDaily().done, S.daily) } : null);
     }
 
     function triesHTML(tries, p) {
@@ -580,7 +870,8 @@
         var st = getStore();
         var played = SCHEDE.filter(function (x) { return st.done[x.n]; }).length;
         var s = stats(st);
-        var nx = nextOpen(n, st);
+        var nx = S.daily ? null : nextOpen(n, st);
+        var dstreak = S.daily ? Core.dailyStreak(getDaily().done, S.daily) : 0;
 
         var title, sub;
         if (won && !err) { title = 'Partita perfetta'; sub = 'Quattro gruppi, zero errori. Le trappole le hai viste arrivare da centrocampo.'; }
@@ -589,7 +880,8 @@
         else if (found >= 2) { title = 'Fuori ai rigori'; sub = 'Ne hai trovati ' + found + ' su quattro. Gli altri sono qui sotto: occhio alle trappole, la prossima volta.'; }
         else if (found === 1) { title = 'Partita in salita'; sub = 'Un gruppo solo prima del quarto errore. La soluzione è qui sotto: studiala e torna in campo.'; }
         else { title = 'Notte fonda'; sub = 'Nessun gruppo trovato. Capita anche ai migliori: la soluzione è qui sotto.'; }
-        if (won && s.streak >= 3) sub += ' E sono ' + s.streak + ' schede chiuse di fila' + (s.streak === s.best ? ': record personale.' : '.');
+        if (S.daily) { if (won && dstreak >= 2) sub += ' Serie del giorno: ' + dstreak + ' di fila.'; }
+        else if (won && s.streak >= 3) sub += ' E sono ' + s.streak + ' schede chiuse di fila' + (s.streak === s.best ? ': record personale.' : '.');
 
         var solHTML = '<div class="card qq-sol mt-3"><h2>Come è andata</h2>' +
             '<ul class="qq-legend" aria-hidden="true">' + [1, 2, 3, 4].map(function (d) { return '<li><i class="d' + d + '"></i>' + LIVELLO[d] + '</li>'; }).join('') + '</ul>' +
@@ -611,7 +903,7 @@
                 { label: 'Gruppi', value: found + '/4' },
                 { label: 'Errori', value: err + '/' + MAX_ERR },
                 { label: 'Tentativi', value: S.tries.length },
-                { label: 'Giocate', value: played + '/' + SCHEDE.length }
+                S.daily ? { label: 'Serie', value: dstreak } : { label: 'Giocate', value: played + '/' + SCHEDE.length }
             ],
             extraHTML: solHTML,
             share: shareText(),
@@ -619,6 +911,7 @@
             onRetry: backToList,
             secondary: nx ? { label: 'Prossima: N° ' + nx.n, icon: 'arrow', onClick: function () { open(nx.n); } } : null
         });
-        QZ.say((won ? 'Scheda chiusa' : 'Scheda persa') + ': ' + found + ' gruppi su 4, ' + plural(err, 'errore', 'errori') + '. Schede giocate: ' + played + ' su ' + SCHEDE.length + '.');
+        QZ.say((won ? 'Scheda chiusa' : 'Scheda persa') + ': ' + found + ' gruppi su 4, ' + plural(err, 'errore', 'errori') + '. ' +
+            (S.daily ? 'Serie del giorno: ' + dstreak + '.' : 'Schede giocate: ' + played + ' su ' + SCHEDE.length + '.'));
     }
 })();

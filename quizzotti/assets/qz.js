@@ -1,6 +1,6 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Motore condiviso
-   Un solo script per home e 21 giochi: header/menu/footer generati da qui
+   Un solo script per home e 22 giochi: header/menu/footer generati da qui
    (niente piu' HTML duplicato in ogni pagina), icone SVG inline (niente
    Font Awesome), suoni sintetizzati, profilo XP, timer, effetti e
    componenti UI. Ogni pagina dichiara il suo gioco con <body data-game="id">.
@@ -25,7 +25,7 @@
         { id: 'bomba', file: 'Bomba.html', name: 'Bomba', short: 'Bomba', icon: 'bomb', color: '#ff4b3a', color2: '#ffa094', on: '#07090b', rgb: '255, 75, 58', players: '2+ giocatori', kind: 'party', desc: 'Un tema e una bomba che passa di mano in mano. Quando scoppia, qualcuno ci resta.', tags: ['Turni', 'Tempo', 'Eliminazione'] },
         { id: 'sfidaeredita', file: 'sfidaEredita.html', name: 'Derby delle Parole', short: 'Derby', icon: 'ball', color: '#3ddc84', color2: '#9cf0c0', on: '#07090b', rgb: '61, 220, 132', players: '2 squadre', kind: 'party', desc: 'Una definizione, le lettere che spuntano piano piano. Chi la sa, tira in porta.', tags: ['Definizioni', 'Squadre', 'Voce'] },
         { id: 'giocatoributget', file: 'GiocatoriBudget.html', name: 'Sfida dei Budget', short: 'Budget', icon: 'coins', color: '#c6f04d', color2: '#e0f8a0', on: '#07090b', rgb: '198, 240, 77', players: '1-6 giocatori', kind: 'party', desc: 'Fai mercato a occhio: i prezzi sono nascosti e il presidente non perdona.', tags: ['Mercato', 'Strategia', 'Budget'] },
-        { id: 'cruciverba', file: 'Cruciverba.html', name: 'Cruciverba', short: 'Cruciverba', icon: 'xword', color: '#ff6ad5', color2: '#ffb3ea', on: '#07090b', rgb: '255, 106, 213', players: 'Da solo', kind: 'quiz', desc: 'Il cruciverba del calcio: definizioni cattive, incroci e una griglia nuova a ogni partita.', tags: ['Parole', 'Enigmistica', 'Griglia nuova'] },
+        { id: 'cruciverba', file: 'Cruciverba.html', name: 'Cruciverba', short: 'Cruciverba', icon: 'xword', color: '#ff6ad5', color2: '#ffb3ea', on: '#07090b', rgb: '255, 106, 213', players: 'Da solo', kind: 'quiz', desc: 'Il cruciverba del calcio: schede a tema da risolvere una per una, con definizioni cattive e incroci al millimetro.', tags: ['Parole', 'Enigmistica', 'Schede a tema'] },
         { id: 'sopraosotto', file: 'SopraOSotto.html', name: 'Sopra o Sotto', short: 'Sopra o Sotto', icon: 'updown', color: '#5ee0a0', color2: '#a8f0cc', on: '#07090b', rgb: '94, 224, 160', players: 'Da solo', kind: 'quiz', desc: 'Due calciatori, una domanda sola: chi vale di più sul mercato? Si va avanti finché non sbagli.', tags: ['Valori', 'Serie', 'Veloce'] },
         { id: 'giocatoredelgiorno', file: 'GiocatoreDelGiorno.html', name: 'Il Calciatore del Giorno', short: 'Del Giorno', icon: 'calendar', color: '#ffd23f', color2: '#ffe68f', on: '#07090b', rgb: '255, 210, 63', players: 'Da solo', kind: 'quiz', desc: 'Un calciatore segreto al giorno, uguale per tutti. Sei tentativi, e poi lo racconti agli amici.', tags: ['Ogni giorno', 'Indizi', 'Da condividere'], daily: true },
         { id: 'cadutalibera', file: 'CadutaLibera.html', name: 'Caduta Libera', short: 'Caduta Libera', icon: 'zap', color: '#ff8a3d', color2: '#ffc193', on: '#07090b', rgb: '255, 138, 61', players: 'Da solo', kind: 'quiz', desc: 'Tre risposte, pochi secondi. Se sbagli o passi, il pavimento si apre sotto i piedi.', tags: ['Quiz', 'A tempo', 'Botole'] },
@@ -35,7 +35,8 @@
         { id: 'bingo', file: 'Bingo.html', name: 'Bingo della Partita', short: 'Bingo', icon: 'ticket', color: '#e3e85a', color2: '#f1f4a6', on: '#07090b', rgb: '227, 232, 90', players: '2+ giocatori', kind: 'party', desc: 'Una cartella a testa e la partita in TV: rigore, palo, espulsione. Chi fa bingo per primo?', tags: ['Partita in TV', 'Cartelle', 'Con gli amici'] },
         { id: 'jeopardynormale', file: 'JeopardyNormale.html', engine: 'jeopardy', name: 'Jeopardy normale', short: 'Jeopardy normale', icon: 'sparkles', color: '#20c997', color2: '#8fe8cc', on: '#07090b', rgb: '32, 201, 151', players: '1-6 squadre', kind: 'party', desc: 'Il tabellone di cultura generale: 14 categorie e 1.400 domande, dalla musica alla storia, con le foto.', tags: ['Squadre', 'Cultura generale', 'Foto'] },
         { id: 'milionario', file: 'MilionarioNormale.html', engine: 'cvem', name: 'Milionario normale', short: 'Milionario normale', icon: 'crown', color: '#e8b04a', color2: '#f3d08f', on: '#07090b', rgb: '232, 176, 74', players: 'Da solo', kind: 'quiz', desc: 'Il Milionario di cultura generale: musica, rap, sport, animali, cinema, geografia e cucina. Quattro aiuti, un milione finto.', tags: ['Quiz', 'Cultura generale', '15 livelli'] },
-        { id: 'nomicose', file: 'NomiCose.html', name: 'Nomi, Cose, Calcio', short: 'Nomi Cose Calcio', icon: 'list', color: '#ffa94d', color2: '#ffd2a3', on: '#07090b', rgb: '255, 169, 77', players: 'TV e telefoni, 2-12', kind: 'party', desc: 'Il Nomi Cose Città del calcio: esce la lettera, ognuno scrive dal suo telefono, la TV fa da tabellone.', tags: ['TV + telefoni', 'QR code', 'Categorie'] }
+        { id: 'nomicose', file: 'NomiCose.html', name: 'Nomi, Cose, Calcio', short: 'Nomi Cose Calcio', icon: 'list', color: '#ffa94d', color2: '#ffd2a3', on: '#07090b', rgb: '255, 169, 77', players: 'TV e telefoni, 2-12', kind: 'party', desc: 'Il Nomi Cose Città del calcio: esce la lettera, ognuno scrive dal suo telefono, la TV fa da tabellone.', tags: ['TV + telefoni', 'QR code', 'Categorie'] },
+        { id: 'tuttitv', file: 'TuttiTV.html', name: 'Tutti contro la TV', short: 'Tutti contro la TV', icon: 'tv', color: '#d070ff', color2: '#e8b8ff', on: '#07090b', rgb: '208, 112, 255', players: 'TV e telefoni, 2-12', kind: 'party', desc: 'Il quiz da salotto: la domanda sulla TV, quattro bottoni colorati sul telefono. Vince chi sa ed è più veloce, tra imprevisti e punti doppi.', tags: ['TV + telefoni', 'QR code', 'Velocità'] }
     ];
 
     QZ.game = function (id) {
@@ -210,46 +211,75 @@
      * mai visti finche' il pool non si esaurisce, poi rimescola. Ricorda gli
      * ultimi estratti in localStorage, cosi' ricaricando la pagina non si
      * rivedono subito le stesse domande.
+     * In localStorage non salva le chiavi intere ma la loro impronta (FNV-1a a
+     * 32 bit in base 36, 6-7 caratteri): cosi' anche un mazzo da migliaia di
+     * carte (Taboo ne ha quasi 3.000) sta tutto in memoria fino all'ultima.
+     * Formato salvato: { v: 2, h: 'impronta,impronta,...' } in ordine di uscita;
+     * il vecchio formato (array di chiavi intere) viene letto e convertito.
      */
     QZ.Deck = function (key, items, keyFn) {
         this.key = 'qz.deck.' + key;
         this.items = items;
         this.keyFn = keyFn || function (x) { return typeof x === 'string' ? x : JSON.stringify(x); };
-        var seen = QZ.store.get(this.key, []);
-        seen = Array.isArray(seen) ? seen : [];
+        // ricorda almeno tutto il mazzo, con un tetto per non riempire lo storage
+        this.limit = Math.min(QZ.Deck.MAX, Math.max(QZ.Deck.MIN, (items && items.length) || 0));
+        this._h = typeof Map === 'function' ? new Map() : null;
+        var raw = QZ.store.get(this.key, null), seen = [];
+        if (Array.isArray(raw)) seen = raw.map(function (k) { return QZ.Deck.hash(String(k)); });
+        else if (raw && raw.v === 2 && typeof raw.h === 'string' && raw.h) seen = raw.h.split(',');
         this.seen = new Set(seen);
         this._last = seen.length ? seen[seen.length - 1] : null;
+    };
+    QZ.Deck.MIN = 1500;
+    QZ.Deck.MAX = 6000;
+    /** Impronta compatta di una chiave: FNV-1a 32 bit in base 36. */
+    QZ.Deck.hash = function (s) {
+        var h = 0x811c9dc5;
+        for (var i = 0; i < s.length; i++) {
+            h ^= s.charCodeAt(i);
+            h = Math.imul ? Math.imul(h, 0x01000193) : (h * 0x01000193) | 0;
+        }
+        return (h >>> 0).toString(36);
+    };
+    /** Impronta della carta (calcolata una volta sola per oggetto). */
+    QZ.Deck.prototype.id = function (x) {
+        if (this._h && x && typeof x === 'object') {
+            var c = this._h.get(x);
+            if (c == null) { c = QZ.Deck.hash(String(this.keyFn(x))); this._h.set(x, c); }
+            return c;
+        }
+        return QZ.Deck.hash(String(this.keyFn(x)));
     };
     QZ.Deck.prototype.draw = function (filterFn) {
         var self = this;
         var pool = this.items.filter(function (x) { return (!filterFn || filterFn(x)); });
         if (!pool.length) return null;
-        var fresh = pool.filter(function (x) { return !self.seen.has(self.keyFn(x)); });
+        var fresh = pool.filter(function (x) { return !self.seen.has(self.id(x)); });
         if (!fresh.length) {
-            pool.forEach(function (x) { self.seen.delete(self.keyFn(x)); });
+            pool.forEach(function (x) { self.seen.delete(self.id(x)); });
             // mazzo rimescolato: l'ultima carta uscita non torna subito in cima
             fresh = pool.length > 1 && this._last != null
-                ? pool.filter(function (x) { return self.keyFn(x) !== self._last; })
+                ? pool.filter(function (x) { return self.id(x) !== self._last; })
                 : pool;
             if (!fresh.length) fresh = pool;
         }
         var item = QZ.pick(fresh);
-        var k = this.keyFn(item);
+        var k = this.id(item);
         this._last = k;
         // reinserita in coda: il Set tiene l'ordine di uscita, le piu' vecchie si scartano per prime
         this.seen.delete(k);
         this.seen.add(k);
-        if (this.seen.size > 1500) {
-            var arr = Array.from(this.seen).slice(this.seen.size - 1500);
+        if (this.seen.size > this.limit) {
+            var arr = Array.from(this.seen).slice(this.seen.size - this.limit);
             this.seen = new Set(arr);
         }
-        QZ.store.set(this.key, Array.from(this.seen));
+        QZ.store.set(this.key, { v: 2, h: Array.from(this.seen).join(',') });
         return item;
     };
     /** Quante carte mai viste restano (con lo stesso filtro di draw). */
     QZ.Deck.prototype.remaining = function (filterFn) {
         var self = this;
-        return this.items.filter(function (x) { return (!filterFn || filterFn(x)) && !self.seen.has(self.keyFn(x)); }).length;
+        return this.items.filter(function (x) { return (!filterFn || filterFn(x)) && !self.seen.has(self.id(x)); }).length;
     };
 
     /* ---------------------------------------------------------------------
@@ -470,9 +500,13 @@
         /**
          * Registra una partita conclusa.
          * @param {string} gameId id del registro QZ.GAMES
-         * @param {{xp:number,label:string,score?:number,higherIsBetter?:boolean}} r
+         * Con r.mode il record si tiene per modalita' (chiave records['id:mode']):
+         * il record di una modalita' non si confronta con quello di un'altra.
+         * Senza mode resta il vecchio record unico (records[id], un numero).
+         * @param {{xp:number,label:string,score?:number,higherIsBetter?:boolean,mode?:string}} r
          * @returns {{xp:number, levelUp:boolean, newRecord:boolean, level:number}}
          */
+        function recKey(gameId, mode) { return mode ? gameId + ':' + mode : gameId; }
         function record(gameId, r) {
             r = r || {};
             var p = get();
@@ -486,10 +520,11 @@
             var newRecord = false;
             if (typeof r.score === 'number') {
                 var hib = r.higherIsBetter !== false;
-                var old = p.records[gameId];
+                var rk = recKey(gameId, r.mode);
+                var old = p.records[rk];
                 if (old == null || (hib ? r.score > old : r.score < old)) {
                     newRecord = old != null; // la prima partita non e' un "record battuto"
-                    p.records[gameId] = r.score;
+                    p.records[rk] = r.score;
                 }
             }
             QZ.store.set(KEY, p);
@@ -504,8 +539,97 @@
             }
             return { xp: xp, levelUp: after > before, newRecord: newRecord, level: after };
         }
-        function record_(gameId) { return get().records[gameId]; }
+        /** Record del gioco; con mode, quello di quella modalita' (undefined se non c'e'). */
+        function record_(gameId, mode) { return get().records[recKey(gameId, mode)]; }
         function reset() { QZ.store.set(KEY, empty()); renderBadge(); changed(); }
+
+        /* Esporta / importa: un codice da copiare su un altro telefono, senza server.
+           Dentro ci sono il profilo e i salvataggi dei giochi (chiavi qz.*), non i
+           mazzi gia' pescati (qz.deck.*), che sono tanti e si rifanno da soli. */
+        var CODE_PREFIX = 'QZ1.';
+        function storeKeys() {
+            var ls = global.localStorage, out = [];
+            try {
+                for (var i = 0; i < ls.length; i++) {
+                    var k = ls.key(i);
+                    if (k === KEY || (k && k.indexOf('qz.') === 0 && k.indexOf('qz.deck.') !== 0)) out.push(k);
+                }
+            } catch { /* storage non disponibile */ }
+            return out.sort();
+        }
+        function exportCode() {
+            var d = {};
+            storeKeys().forEach(function (k) {
+                try { var v = global.localStorage.getItem(k); if (v != null) d[k] = v; } catch { /* niente */ }
+            });
+            if (!d[KEY]) d[KEY] = JSON.stringify(get());
+            var json = JSON.stringify({ v: 1, d: d });
+            return CODE_PREFIX + global.btoa(global.unescape(encodeURIComponent(json)));
+        }
+        /** Legge un codice: restituisce { keys, level } se valido, altrimenti null. Con apply li scrive. */
+        function importCode(code, apply) {
+            var s = String(code || '').replace(/\s+/g, '');
+            if (s.indexOf(CODE_PREFIX) !== 0) return null;
+            var data;
+            try { data = JSON.parse(decodeURIComponent(global.escape(global.atob(s.slice(CODE_PREFIX.length))))); } catch { return null; }
+            if (!data || data.v !== 1 || !data.d || typeof data.d !== 'object') return null;
+            var keys = Object.keys(data.d).filter(function (k) {
+                return (k === KEY || (k.indexOf('qz.') === 0 && k.indexOf('qz.deck.') !== 0)) && typeof data.d[k] === 'string';
+            });
+            if (keys.indexOf(KEY) === -1) return null;
+            var prof;
+            try { prof = JSON.parse(data.d[KEY]); } catch { return null; }
+            if (!prof || typeof prof !== 'object' || Array.isArray(prof)) return null;
+            var info = { keys: keys.length, level: levelFor(Number(prof.totalXP) > 0 ? Number(prof.totalXP) : 0) };
+            if (!apply) return info;
+            // i salvataggi di questo telefono che il codice non ha vanno via: si prende il profilo com'e'
+            storeKeys().forEach(function (k) { if (keys.indexOf(k) === -1) QZ.store.remove(k); });
+            var ok = keys.every(function (k) {
+                try { global.localStorage.setItem(k, data.d[k]); return true; } catch { return false; }
+            });
+            renderBadge(true);
+            changed();
+            return ok ? info : null;
+        }
+        function openTransfer() {
+            var code = exportCode();
+            QZ.modal({
+                title: 'Esporta o importa',
+                html: '<p class="muted" style="margin-top:0">Per portare livello, bacheca e record su un altro telefono: copia questo codice e incollalo là, nella stessa finestra. Non passa da nessun server.</p>' +
+                    '<label class="label" for="qz-code-out">Il codice di questo telefono</label>' +
+                    '<textarea class="profile-code mt-1" id="qz-code-out" readonly rows="3"></textarea>' +
+                    '<div class="profile-io"><button class="btn btn--sm" type="button" data-copy>' + QZ.icon('check') + 'Copia il codice</button></div>' +
+                    '<label class="label mt-2" style="display:block" for="qz-code-in">Hai un codice da un altro telefono?</label>' +
+                    '<textarea class="profile-code mt-1" id="qz-code-in" rows="3" placeholder="Incolla qui il codice che comincia con QZ1." spellcheck="false" autocomplete="off"></textarea>' +
+                    '<div class="profile-io"><button class="btn btn--sm" type="button" data-import>' + QZ.icon('refresh') + 'Importa il codice</button></div>' +
+                    '<p class="small faint mt-2">Importare sostituisce il profilo e i salvataggi di questo telefono.</p>',
+                actions: [{ label: 'Chiudi', primary: true }],
+                onOpen: function (m) {
+                    var out = m.querySelector('#qz-code-out');
+                    out.value = code;
+                    m.querySelector('[data-copy]').addEventListener('click', function () {
+                        out.select();
+                        var done = function () { QZ.toast('Codice copiato', { icon: 'check', type: 'ok' }); };
+                        var legacy = function () {
+                            try { if (doc.execCommand && doc.execCommand('copy')) { done(); return; } } catch { /* niente */ }
+                            QZ.toast('Selezionalo e copialo a mano', { icon: 'x', type: 'bad' });
+                        };
+                        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(done, legacy);
+                        else legacy();
+                    });
+                    m.querySelector('[data-import]').addEventListener('click', function () {
+                        var val = m.querySelector('#qz-code-in').value;
+                        var info = importCode(val, false);
+                        if (!info) { QZ.toast('Codice non valido: controlla di averlo copiato tutto', { icon: 'x', type: 'bad' }); return; }
+                        QZ.confirm('Il codice porta un profilo di livello ' + info.level + '. Sostituisce quello di questo telefono: si va?', { okLabel: 'Importa' }).then(function (ok) {
+                            if (!ok) return;
+                            if (importCode(val, true)) QZ.toast('Profilo importato. Bentornato in campo.', { icon: 'check', type: 'ok' });
+                            else QZ.toast('Non sono riuscito a salvare tutto su questo telefono', { icon: 'x', type: 'bad' });
+                        });
+                    });
+                }
+            });
+        }
 
         function renderBadge(bump) {
             var b = doc.getElementById('qz-level');
@@ -545,11 +669,12 @@
                 '<div class="row row--between mt-2"><span class="label">La bacheca</span><span class="note" style="font-size:16px">' + (got === QZ.GAMES.length ? 'TUTTI ACCESI' : got + '/' + QZ.GAMES.length + ' ACCESI') + '</span></div>' +
                 '<div class="album">' + album + '</div>' +
                 (rows ? '<div class="profile-games">' + rows + '</div>' : '<p class="muted mt-2">La bacheca è ancora spenta: ogni gioco che provi accende il suo posto.</p>') +
-                '<p class="small faint mt-2">Tutto resta su questo telefono. Niente account, niente server.</p>';
+                '<p class="small faint mt-2">Tutto resta su questo telefono. Niente account, niente server: per cambiare telefono c’è «Esporta / Importa».</p>';
             QZ.modal({
                 title: 'Il tuo profilo',
                 html: body,
                 actions: [
+                    { label: 'Esporta / Importa', ghost: true, icon: 'refresh', onClick: function () { openTransfer(); return false; } },
                     { label: 'Azzera tutto', ghost: true, onClick: function () {
                         return QZ.confirm('Spegnere la bacheca e azzerare livello e record? Non si torna indietro.', { okLabel: 'Azzera', danger: true }).then(function (ok) {
                             if (ok) { reset(); QZ.toast('Profilo azzerato. Si riparte da capo.', { icon: 'refresh' }); }
@@ -559,7 +684,7 @@
                 ]
             });
         }
-        return { get: get, record: record, best: record_, reset: reset, open: open, renderBadge: renderBadge, level: function () { return levelFor(get().totalXP); } };
+        return { get: get, record: record, best: record_, reset: reset, open: open, renderBadge: renderBadge, exportCode: exportCode, importCode: importCode, level: function () { return levelFor(get().totalXP); } };
     })();
 
     /* ---------------------------------------------------------------------
@@ -1261,7 +1386,7 @@
             '<button type="button" class="btn btn--primary btn--lg" data-retry>' + QZ.icon('refresh') + (QZ.esc(o.retryLabel || 'Rigioca')) + '</button>' +
             (o.secondary ? '<button type="button" class="btn btn--lg" data-secondary>' + (o.secondary.icon ? QZ.icon(o.secondary.icon) : '') + QZ.esc(o.secondary.label) + '</button>' : '') +
             (o.share ? '<button type="button" class="btn btn--lg" data-share>' + QZ.icon('share') + 'Condividi</button>' : '') +
-            '<a class="btn btn--ghost btn--lg" href="index.html#giochi">' + QZ.icon('grid') + 'Cambia gioco</a>' +
+            '<a class="btn btn--ghost btn--lg" href="./#giochi">' + QZ.icon('grid') + 'Cambia gioco</a>' +
             '</div>';
         var titleEl = host.querySelector('.result__title');
         titleEl.textContent = o.title || '';
@@ -1296,6 +1421,122 @@
     };
 
     /* ---------------------------------------------------------------------
+       Leghe tra amici (Leghe.html, api/leghe.php). A fine partita del giorno
+       (mai in allenamento o archivio) il gioco chiama
+         QZ.leagues.submit('giocatoredelgiorno', 11, { win: true, tries: 3, hints: 0 })
+       e il risultato va da solo a tutte le leghe del telefono; i punti li conta
+       il server. Senza leghe non parte nessuna richiesta, ma il risultato resta
+       in qz.leghe.sent (due giorni): se entri in una lega piu' tardi, ci arriva
+       comunque. Se manca la rete si riprova al prossimo caricamento di pagina.
+       Niente account: un gettone segreto per telefono (qz.leghe.tok).
+       ------------------------------------------------------------------- */
+    QZ.leagues = (function () {
+        var API = 'api/leghe.php';
+        var K_TOK = 'qz.leghe.tok', K_LIST = 'qz.leghe.list', K_SENT = 'qz.leghe.sent';
+        var KEEP_MS = 2 * 86400000, MAX_SENT = 20, MAX_LEAGUES = 10;
+        var CODE_RE = /^[ABCDEFGHJKMNPQRSTUVWXYZ2-9]{6}$/;
+        var busy = null;
+
+        function tok() {
+            var t = QZ.store.get(K_TOK, '');
+            if (typeof t === 'string' && /^[a-f0-9]{32}$/.test(t)) return t;
+            var a = new Uint8Array(16);
+            global.crypto.getRandomValues(a);
+            t = Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+            QZ.store.set(K_TOK, t);
+            return t;
+        }
+        /** Le leghe di questo telefono: [{ code, name, mid, nick }]. */
+        function list() {
+            var l = QZ.store.get(K_LIST, []);
+            return Array.isArray(l) ? l.filter(function (x) { return x && CODE_RE.test(x.code); }) : [];
+        }
+        function save(l) { QZ.store.set(K_LIST, l.slice(0, MAX_LEAGUES)); }
+        function add(entry) {
+            var l = list().filter(function (x) { return x.code !== entry.code; });
+            l.unshift({ code: entry.code, name: String(entry.name || ''), mid: String(entry.mid || ''), nick: String(entry.nick || '') });
+            save(l);
+        }
+        function remove(code) { save(list().filter(function (x) { return x.code !== code; })); }
+
+        function post(body) {
+            body.tok = tok();
+            return global.fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), cache: 'no-store', keepalive: true })
+                .then(function (r) {
+                    return r.json().catch(function () { return { err: 'Risposta del server non valida' }; })
+                        .then(function (d) { if (r.status >= 500 && !d.err) d.err = 'Server non disponibile'; d.status = r.status; return d; });
+                });
+        }
+
+        function sentAll() {
+            var s = QZ.store.get(K_SENT, []);
+            var now = Date.now();
+            return Array.isArray(s) ? s.filter(function (x) { return x && typeof x.g === 'string' && Array.isArray(x.to) && now - x.at < KEEP_MS; }) : [];
+        }
+        /** Risultati recenti che qualche lega del telefono non ha ancora ricevuto. */
+        function pending() {
+            var codes = list().map(function (x) { return x.code; });
+            return sentAll().filter(function (x) { return codes.some(function (c) { return x.to.indexOf(c) < 0; }); });
+        }
+
+        /** Manda i risultati in sospeso; risolve con { sent: leghe raggiunte, names }. */
+        function flush() {
+            if (busy) return busy.then(flush);
+            var todo = pending();
+            if (!todo.length || typeof global.fetch !== 'function') return Promise.resolve({ sent: 0, names: [] });
+            var reached = {};
+            busy = todo.reduce(function (p, x) {
+                return p.then(function () {
+                    var codes = list().map(function (l) { return l.code; }).filter(function (c) { return x.to.indexOf(c) < 0; });
+                    if (!codes.length) return null;
+                    return post({ a: 'submit', codes: codes, game: x.g, n: x.n, result: x.r }).then(function (d) {
+                        if (!d || !d.res) return;   // rete o server giu': si riprova la prossima volta
+                        var all = QZ.store.get(K_SENT, []);
+                        all.forEach(function (y) {
+                            if (y.g !== x.g || y.n !== x.n) return;
+                            Object.keys(d.res).forEach(function (c) {
+                                var r = d.res[c] || {};
+                                // ok, doppio, chiuso, non membro: comunque non si rimanda
+                                if (r.ok || r.dup || r.err) { if (y.to.indexOf(c) < 0) y.to.push(c); }
+                                if (r.ok) reached[c] = 1;
+                            });
+                        });
+                        QZ.store.set(K_SENT, all);
+                    });
+                }).catch(function () { /* niente rete: resta in sospeso */ });
+            }, Promise.resolve()).then(function () {
+                busy = null;
+                var names = list().filter(function (l) { return reached[l.code]; }).map(function (l) { return l.name; });
+                return { sent: names.length, names: names };
+            });
+            return busy;
+        }
+
+        /**
+         * Fine della partita del giorno: gameId come in QZ.GAMES, n = N° della partita,
+         * result = oggetto piccolo del gioco (il server sa come contarlo). Conta il primo invio.
+         * opts.quiet: niente avviso. Risolve con { sent, names }.
+         */
+        function submit(gameId, n, result, opts) {
+            opts = opts || {};
+            if (typeof gameId !== 'string' || !/^[a-z0-9]{2,24}$/.test(gameId) || !(n >= 1) || Math.floor(n) !== n) return Promise.resolve({ sent: 0, names: [] });
+            var all = sentAll();
+            if (!all.some(function (x) { return x.g === gameId && x.n === n; })) {
+                all.push({ g: gameId, n: n, r: result || {}, at: Date.now(), to: [] });
+                QZ.store.set(K_SENT, all.slice(-MAX_SENT));
+            }
+            return flush().then(function (res) {
+                if (res.sent && !opts.quiet && QZ.toast) {
+                    QZ.toast(res.sent === 1 ? 'Risultato in classifica nella lega «' + res.names[0] + '»' : 'Risultato in classifica in ' + res.sent + ' leghe', { icon: 'users', ms: 3200 });
+                }
+                return res;
+            });
+        }
+
+        return { API: API, CODE_RE: CODE_RE, tok: tok, list: list, add: add, remove: remove, save: save, post: post, submit: submit, flush: flush, pending: pending };
+    })();
+
+    /* ---------------------------------------------------------------------
        Shell: sfondo, header, launcher giochi, footer
        ------------------------------------------------------------------- */
     function buildShell() {
@@ -1313,7 +1554,7 @@
             '<div class="qz-bg__tower qz-bg__tower--l">' + '<i></i>'.repeat(8) + '</div><div class="qz-bg__tower qz-bg__tower--r">' + '<i></i>'.repeat(8) + '</div>' +
             '<div class="qz-bg__pitch"></div></div>' +
             '<header class="qz-header"><div class="qz-header__bar">' +
-            '<a class="qz-brand" href="index.html" aria-label="Quizzotti, torna alla prima pagina">' +
+            '<a class="qz-brand" href="./" aria-label="Quizzotti, torna alla prima pagina">' +
             '<img src="logo1-96.webp" alt="" width="44" height="44" decoding="async">' +
             '<span class="qz-brand__text"><span class="qz-brand__name">Quiz<b>zotti</b></span>' +
             '<span class="qz-brand__tag">' + (g ? 'Gioco ' + String(QZ.GAMES.indexOf(g) + 1).padStart(2, '0') + ' · ' + QZ.esc(g.name) : QZ.esc(today) + ' · edizione n° ' + (played + 1)) + '</span></span>' +
@@ -1343,7 +1584,8 @@
                             '<span class="qz-tile__meta">' + QZ.esc(x.kind === 'quiz' && x.tags && x.tags.length ? x.tags.slice(0, 2).join(' · ') : x.players) + '</span></a>';
                     }).join('') + '</div>';
             }).join('') +
-            (isHome ? '' : '<a class="btn btn--ghost btn--block mt-2" href="index.html">' + QZ.icon('home') + 'Torna alla prima pagina</a>') +
+            '<a class="btn btn--ghost btn--block mt-2" href="Leghe.html">' + QZ.icon('users') + 'Leghe tra amici</a>' +
+            (isHome ? '' : '<a class="btn btn--ghost btn--block mt-2" href="./">' + QZ.icon('home') + 'Torna alla prima pagina</a>') +
             '</div></div>');
         body.appendChild(launcher);
 
@@ -1351,8 +1593,9 @@
             '<footer class="qz-footer"><div class="qz-footer__inner">' +
             '<span class="qz-footer__sign">Si gioca sotto i riflettori. Niente app, niente account.</span>' +
             '<nav class="qz-footer__links" aria-label="Collegamenti">' +
-            '<a href="index.html">Prima pagina</a><a href="index.html#giochi">Tutti i giochi</a>' +
+            '<a href="./">Prima pagina</a><a href="./#giochi">Tutti i giochi</a><a href="Leghe.html">Leghe</a>' +
             '<a href="../carriera-serie-a/">Presidente · Serie A</a>' +
+            '<a href="privacy.html">Privacy</a>' +
             '</nav>' +
             '<span>Quizzotti © ' + new Date().getFullYear() + '</span>' +
             '</div></footer>');
@@ -1392,6 +1635,9 @@
         var app = doc.getElementById('app');
         if (app && !app.hasAttribute('tabindex')) app.setAttribute('tabindex', '-1');
 
+        // risultati dei giochi del giorno rimasti senza rete: si riprova con calma
+        if (QZ.leagues.pending().length) setTimeout(function () { QZ.leagues.flush(); }, 2500);
+
         // Anelli timer gia' presenti nel markup
         QZ.$$('.timer-ring').forEach(QZ.ring);
 
@@ -1401,6 +1647,23 @@
             if (b && !b.disabled && !b.hasAttribute('data-silent')) QZ.sound.click();
         });
     }
+
+    /* ---------------------------------------------------------------------
+       Service worker (sw.js): il sito si puo' installare e i giochi da soli
+       vanno anche senza rete. Le risorse di questa pagina sono arrivate prima
+       che il service worker esistesse: gliele si passa, cosi' le tiene da parte.
+       ------------------------------------------------------------------- */
+    function registerSW() {
+        var sw = navigator.serviceWorker;
+        if (!sw || !/^https?:$/.test(global.location.protocol)) return;
+        sw.register('sw.js').then(function () { return sw.ready; }).then(function (reg) {
+            var urls = [global.location.href.split('#')[0]];
+            try { performance.getEntriesByType('resource').forEach(function (e) { urls.push(e.name); }); } catch { /* niente elenco */ }
+            if (reg.active) reg.active.postMessage({ type: 'qz-cache', urls: urls });
+        }).catch(function () { /* senza service worker il sito funziona lo stesso */ });
+    }
+    if (doc.readyState === 'complete') registerSW();
+    else global.addEventListener('load', registerSW);
 
     if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', buildShell);
     else buildShell();

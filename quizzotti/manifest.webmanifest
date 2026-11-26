@@ -1,0 +1,25 @@
+{
+  "id": "/quizzotti/",
+  "name": "Quizzotti · Giochi di calcio online",
+  "short_name": "Quizzotti",
+  "description": "Giochi e quiz di calcio gratis, da soli o in compagnia: il Calciatore del Giorno (il Wordle del calcio), Milionario, Taboo, Caduta Libera e altri.",
+  "lang": "it",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07090b",
+  "theme_color": "#07090b",
+  "categories": ["games", "entertainment", "sports"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Il Calciatore del Giorno", "short_name": "Del Giorno", "url": "GiocatoreDelGiorno.html", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Chi Vuol Essere Milionario Calcio", "short_name": "Milionario", "url": "CVEM.html", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Taboo calcio", "short_name": "Taboo", "url": "Taboo.html", "icons": [{ "src": "assets/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

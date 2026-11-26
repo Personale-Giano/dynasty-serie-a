@@ -1,727 +1,816 @@
 /* ==========================================================================
    QUIZZOTTI — Database: Il Calciatore del Giorno
-   712 calciatori conosciuti che giocano oggi (stagione 2026-27).
-   Squadra, ruolo e valore (milioni di euro) sono presi pari pari da
-   assets/db-giocatoributget.js (rose controllate a novembre 2026): il test
-   tests/giocatoredelgiorno.test.js verifica che coincidano.
-   nation = nazionale per cui gioca; league = campionato 2026-27 della squadra
-   (neopromosse e retrocesse della stagione 2025-26 gia' considerate);
-   born = anno di nascita.
+   Il calendario: un nome per ogni partita, nell'ordine dei giorni.
+   dailyCalendar[0] e' il N° 1 (16 novembre 2026), dailyCalendar[1] il N° 2, e
+   cosi' via. I dati del calciatore (squadra, ruolo, valore, nazionale,
+   campionato, anno di nascita) si prendono da assets/db-giocatoributget.js:
+   ogni nome qui deve esistere li', scritto uguale (lo verifica il test).
+
+   REGOLE (il gioco e' online, i giorni passati non devono cambiare):
+   - non si toglie, non si sposta e non si rinomina nessun nome gia' in lista;
+   - i nuovi giorni si aggiungono SOLO IN FONDO, senza ripetere nomi gia' usati;
+   - quando la lista finisce il calendario ricomincia dall'inizio (il giorno
+     dopo l'ultimo torna il N° 1): 786 nomi = calendario fino al
+     9 gen 2029. Meglio aggiungerne altri prima.
+
+   Come e' fatto: i N° 1-12 sono quelli usciti col vecchio sistema (lista
+   mescolata a seme fisso, abbandonata il 26 novembre 2026). Dal N° 13 solo
+   calciatori famosi: valore da 18 milioni in su nel database grande (in
+   Premier solo i 190 piu' noti, per non farla pesare troppo) piu' un elenco
+   di campioni e nomi da Serie A con valore basso (Modric, Cristiano Ronaldo,
+   Messi, Neymar, Lewandowski, De Bruyne, Salah, Benzema, Dybala...).
+   Mescolati a seme fisso e distribuiti in proporzione tra i campionati (Serie A
+   circa 1 giorno su 5, Premier 1 su 4), mai la stessa squadra in tre giorni
+   vicini; nel primo anno i nomi piu' noti.
    ========================================================================== */
 
-const dailyPlayers = [
-  {name: "Lautaro Martínez", role: "ATT", team: "Inter", value: 85, nation: "Argentina", continent: "Sudamerica", league: "Serie A", born: 1997},
-  {name: "Alessandro Bastoni", role: "DIF", team: "Inter", value: 65, nation: "Italia", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Nicolò Barella", role: "CEN", team: "Inter", value: 50, nation: "Italia", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Marcus Thuram", role: "ATT", team: "Inter", value: 50, nation: "Francia", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Benjamin Pavard", role: "DIF", team: "Inter", value: 12, nation: "Francia", continent: "Europa", league: "Serie A", born: 1996},
-  {name: "Federico Dimarco", role: "DIF", team: "Inter", value: 50, nation: "Italia", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Yann Bisseck", role: "DIF", team: "Inter", value: 50, nation: "Germania", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Carlos Augusto", role: "DIF", team: "Inter", value: 23, nation: "Brasile", continent: "Sudamerica", league: "Serie A", born: 1999},
-  {name: "Hakan Çalhanoğlu", role: "CEN", team: "Inter", value: 16, nation: "Turchia", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "Henrikh Mkhitaryan", role: "CEN", team: "Inter", value: 3, nation: "Armenia", continent: "Europa", league: "Serie A", born: 1989},
-  {name: "Piotr Zieliński", role: "CEN", team: "Inter", value: 10, nation: "Polonia", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "Manuel Akanji", role: "DIF", team: "Inter", value: 17, nation: "Svizzera", continent: "Europa", league: "Serie A", born: 1995},
-  {name: "Francesco Pio Esposito", role: "ATT", team: "Inter", value: 50, nation: "Italia", continent: "Europa", league: "Serie A", born: 2005},
-  {name: "Petar Sučić", role: "CEN", team: "Inter", value: 45, nation: "Croazia", continent: "Europa", league: "Serie A", born: 2003},
-  {name: "John Stones", role: "DIF", team: "Inter", value: 12, nation: "Inghilterra", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "Curtis Jones", role: "CEN", team: "Inter", value: 35, nation: "Inghilterra", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Ivan Provedel", role: "POR", team: "Inter", value: 3, nation: "Italia", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "Christian Pulisic", role: "ATT", team: "Milan", value: 35, nation: "Stati Uniti", continent: "Nordamerica", league: "Serie A", born: 1998},
-  {name: "Mike Maignan", role: "POR", team: "Milan", value: 20, nation: "Francia", continent: "Europa", league: "Serie A", born: 1995},
-  {name: "Luka Modrić", role: "CEN", team: "Milan", value: 4, nation: "Croazia", continent: "Europa", league: "Serie A", born: 1985},
-  {name: "Adrien Rabiot", role: "CEN", team: "Milan", value: 18, nation: "Francia", continent: "Europa", league: "Serie A", born: 1995},
-  {name: "Fikayo Tomori", role: "DIF", team: "Milan", value: 10, nation: "Inghilterra", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Matteo Gabbia", role: "DIF", team: "Milan", value: 17, nation: "Italia", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Ruben Loftus-Cheek", role: "CEN", team: "Milan", value: 9, nation: "Inghilterra", continent: "Europa", league: "Serie A", born: 1996},
-  {name: "Yunus Musah", role: "CEN", team: "Milan", value: 18, nation: "Stati Uniti", continent: "Nordamerica", league: "Serie A", born: 2002},
-  {name: "Gonçalo Ramos", role: "ATT", team: "Milan", value: 50, nation: "Portogallo", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Strahinja Pavlović", role: "DIF", team: "Milan", value: 40, nation: "Serbia", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Alexis Saelemaekers", role: "DIF", team: "Milan", value: 18, nation: "Belgio", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Pervis Estupiñán", role: "DIF", team: "Milan", value: 12, nation: "Ecuador", continent: "Sudamerica", league: "Serie A", born: 1998},
-  {name: "Ardon Jashari", role: "CEN", team: "Milan", value: 22, nation: "Svizzera", continent: "Europa", league: "Serie A", born: 2002},
-  {name: "Koni De Winter", role: "DIF", team: "Milan", value: 25, nation: "Belgio", continent: "Europa", league: "Serie A", born: 2002},
-  {name: "Kenan Yıldız", role: "ATT", team: "Juventus", value: 75, nation: "Turchia", continent: "Europa", league: "Serie A", born: 2005},
-  {name: "Nick Woltemade", role: "ATT", team: "Juventus", value: 50, nation: "Germania", continent: "Europa", league: "Serie A", born: 2002},
-  {name: "Gleison Bremer", role: "DIF", team: "Juventus", value: 35, nation: "Brasile", continent: "Sudamerica", league: "Serie A", born: 1997},
-  {name: "Federico Gatti", role: "DIF", team: "Juventus", value: 10, nation: "Italia", continent: "Europa", league: "Serie A", born: 1998},
-  {name: "Andrea Cambiaso", role: "DIF", team: "Juventus", value: 15, nation: "Italia", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Manuel Locatelli", role: "CEN", team: "Juventus", value: 25, nation: "Italia", continent: "Europa", league: "Serie A", born: 1998},
-  {name: "Weston McKennie", role: "CEN", team: "Juventus", value: 30, nation: "Stati Uniti", continent: "Nordamerica", league: "Serie A", born: 1998},
-  {name: "Khéphren Thuram", role: "CEN", team: "Juventus", value: 35, nation: "Francia", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Douglas Luiz", role: "CEN", team: "Juventus", value: 18, nation: "Brasile", continent: "Sudamerica", league: "Serie A", born: 1998},
-  {name: "Francisco Conceição", role: "ATT", team: "Juventus", value: 30, nation: "Portogallo", continent: "Europa", league: "Serie A", born: 2002},
-  {name: "Arkadiusz Milik", role: "ATT", team: "Juventus", value: 1.5, nation: "Polonia", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "Jhon Lucumí", role: "DIF", team: "Juventus", value: 22, nation: "Colombia", continent: "Sudamerica", league: "Serie A", born: 1998},
-  {name: "Nicolás González", role: "ATT", team: "Juventus", value: 22, nation: "Argentina", continent: "Sudamerica", league: "Serie A", born: 1998},
-  {name: "Randal Kolo Muani", role: "ATT", team: "Juventus", value: 30, nation: "Francia", continent: "Europa", league: "Serie A", born: 1998},
-  {name: "Edon Zhegrova", role: "ATT", team: "Juventus", value: 10, nation: "Kosovo", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Teun Koopmeiners", role: "CEN", team: "Juventus", value: 14, nation: "Paesi Bassi", continent: "Europa", league: "Serie A", born: 1998},
-  {name: "Guglielmo Vicario", role: "POR", team: "Juventus", value: 12, nation: "Italia", continent: "Europa", league: "Serie A", born: 1996},
-  {name: "Pape Matar Sarr", role: "CEN", team: "Juventus", value: 30, nation: "Senegal", continent: "Africa", league: "Serie A", born: 2002},
-  {name: "Daniele Rugani", role: "DIF", team: "Juventus", value: 2, nation: "Italia", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "Zeki Çelik", role: "DIF", team: "Juventus", value: 14, nation: "Turchia", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Jérémie Boga", role: "ATT", team: "Juventus", value: 8, nation: "Costa d'Avorio", continent: "Africa", league: "Serie A", born: 1997},
-  {name: "Kevin De Bruyne", role: "CEN", team: "Napoli", value: 8, nation: "Belgio", continent: "Europa", league: "Serie A", born: 1991},
-  {name: "Alex Meret", role: "POR", team: "Napoli", value: 8, nation: "Italia", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Giovanni Di Lorenzo", role: "DIF", team: "Napoli", value: 8, nation: "Italia", continent: "Europa", league: "Serie A", born: 1993},
-  {name: "Amir Rrahmani", role: "DIF", team: "Napoli", value: 10, nation: "Kosovo", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "Mathías Olivera", role: "DIF", team: "Napoli", value: 15, nation: "Uruguay", continent: "Sudamerica", league: "Serie A", born: 1997},
-  {name: "Stanislav Lobotka", role: "CEN", team: "Napoli", value: 10, nation: "Slovacchia", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "André-Frank Zambo Anguissa", role: "CEN", team: "Napoli", value: 15, nation: "Camerun", continent: "Africa", league: "Serie A", born: 1995},
-  {name: "Scott McTominay", role: "CEN", team: "Napoli", value: 40, nation: "Scozia", continent: "Europa", league: "Serie A", born: 1996},
-  {name: "Billy Gilmour", role: "CEN", team: "Napoli", value: 20, nation: "Scozia", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Matteo Politano", role: "ATT", team: "Napoli", value: 5, nation: "Italia", continent: "Europa", league: "Serie A", born: 1993},
-  {name: "Leonardo Spinazzola", role: "DIF", team: "Napoli", value: 4, nation: "Italia", continent: "Europa", league: "Serie A", born: 1993},
-  {name: "Vanja Milinković-Savić", role: "POR", team: "Napoli", value: 15, nation: "Serbia", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Lorenzo Lucca", role: "ATT", team: "Napoli", value: 20, nation: "Italia", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Rasmus Højlund", role: "ATT", team: "Napoli", value: 60, nation: "Danimarca", continent: "Europa", league: "Serie A", born: 2003},
-  {name: "Noa Lang", role: "ATT", team: "Napoli", value: 20, nation: "Paesi Bassi", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "David Neres", role: "ATT", team: "Napoli", value: 18, nation: "Brasile", continent: "Sudamerica", league: "Serie A", born: 1997},
-  {name: "Mile Svilar", role: "POR", team: "Roma", value: 35, nation: "Serbia", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Gianluca Mancini", role: "DIF", team: "Roma", value: 15, nation: "Italia", continent: "Europa", league: "Serie A", born: 1996},
-  {name: "Evan Ndicka", role: "DIF", team: "Roma", value: 35, nation: "Costa d'Avorio", continent: "Africa", league: "Serie A", born: 1999},
-  {name: "Mario Hermoso", role: "DIF", team: "Roma", value: 7, nation: "Spagna", continent: "Europa", league: "Serie A", born: 1995},
-  {name: "Bryan Cristante", role: "CEN", team: "Roma", value: 7, nation: "Italia", continent: "Europa", league: "Serie A", born: 1995},
-  {name: "Lorenzo Pellegrini", role: "CEN", team: "Roma", value: 8, nation: "Italia", continent: "Europa", league: "Serie A", born: 1996},
-  {name: "Manu Koné", role: "CEN", team: "Roma", value: 60, nation: "Francia", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Paulo Dybala", role: "ATT", team: "Roma", value: 5, nation: "Argentina", continent: "Sudamerica", league: "Serie A", born: 1993},
-  {name: "Donyell Malen", role: "ATT", team: "Roma", value: 55, nation: "Paesi Bassi", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Marten de Roon", role: "CEN", team: "Roma", value: 3, nation: "Paesi Bassi", continent: "Europa", league: "Serie A", born: 1991},
-  {name: "Leonardo Balerdi", role: "DIF", team: "Roma", value: 18, nation: "Argentina", continent: "Sudamerica", league: "Serie A", born: 1999},
-  {name: "Nahuel Molina", role: "DIF", team: "Roma", value: 15, nation: "Argentina", continent: "Sudamerica", league: "Serie A", born: 1998},
-  {name: "Giacomo Raspadori", role: "ATT", team: "Atalanta", value: 22, nation: "Italia", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Isak Hien", role: "DIF", team: "Atalanta", value: 22, nation: "Svezia", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Sead Kolašinac", role: "DIF", team: "Atalanta", value: 4, nation: "Bosnia ed Erzegovina", continent: "Europa", league: "Serie A", born: 1993},
-  {name: "Davide Zappacosta", role: "DIF", team: "Atalanta", value: 4, nation: "Italia", continent: "Europa", league: "Serie A", born: 1992},
-  {name: "Mario Pašalić", role: "CEN", team: "Atalanta", value: 6, nation: "Croazia", continent: "Europa", league: "Serie A", born: 1995},
-  {name: "Charles De Ketelaere", role: "ATT", team: "Atalanta", value: 35, nation: "Belgio", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Gianluca Scamacca", role: "ATT", team: "Atalanta", value: 25, nation: "Italia", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Nikola Krstović", role: "ATT", team: "Atalanta", value: 30, nation: "Montenegro", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Lazar Samardžić", role: "CEN", team: "Atalanta", value: 16, nation: "Serbia", continent: "Europa", league: "Serie A", born: 2002},
-  {name: "Odilon Kossounou", role: "DIF", team: "Atalanta", value: 15, nation: "Costa d'Avorio", continent: "Africa", league: "Serie A", born: 2001},
-  {name: "Raoul Bellanova", role: "DIF", team: "Atalanta", value: 15, nation: "Italia", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Nicola Zalewski", role: "DIF", team: "Atalanta", value: 20, nation: "Polonia", continent: "Europa", league: "Serie A", born: 2002},
-  {name: "Eljif Elmas", role: "CEN", team: "Atalanta", value: 13, nation: "Macedonia del Nord", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Franck Kessié", role: "CEN", team: "Atalanta", value: 12, nation: "Costa d'Avorio", continent: "Africa", league: "Serie A", born: 1996},
-  {name: "El Bilal Touré", role: "ATT", team: "Parma", value: 13, nation: "Mali", continent: "Africa", league: "Serie A", born: 2001},
-  {name: "Kamaldeen Sulemana", role: "ATT", team: "Atalanta", value: 17, nation: "Ghana", continent: "Africa", league: "Serie A", born: 2002},
-  {name: "Nico Paz", role: "CEN", team: "Como", value: 80, nation: "Argentina", continent: "Sudamerica", league: "Serie A", born: 2004},
-  {name: "Moise Kean", role: "ATT", team: "Como", value: 32, nation: "Italia", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Martin Baturina", role: "CEN", team: "Como", value: 55, nation: "Croazia", continent: "Europa", league: "Serie A", born: 2003},
-  {name: "Robert Sánchez", role: "POR", team: "Como", value: 15, nation: "Spagna", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Samuele Ricci", role: "CEN", team: "Como", value: 22, nation: "Italia", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Trevoh Chalobah", role: "DIF", team: "Como", value: 35, nation: "Inghilterra", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Matteo Darmian", role: "DIF", team: "Bologna", value: 1.5, nation: "Italia", continent: "Europa", league: "Serie A", born: 1989},
-  {name: "Łukasz Skorupski", role: "POR", team: "Bologna", value: 2, nation: "Polonia", continent: "Europa", league: "Serie A", born: 1991},
-  {name: "Lewis Ferguson", role: "CEN", team: "Bologna", value: 14, nation: "Scozia", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Artem Dovbyk", role: "ATT", team: "Bologna", value: 15, nation: "Ucraina", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Riccardo Orsolini", role: "ATT", team: "Bologna", value: 15, nation: "Italia", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Federico Bernardeschi", role: "ATT", team: "Bologna", value: 4, nation: "Italia", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "Emil Holm", role: "DIF", team: "Bologna", value: 10, nation: "Svezia", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Arthur Theate", role: "DIF", team: "Bologna", value: 15, nation: "Belgio", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Nikola Moro", role: "CEN", team: "Bologna", value: 7, nation: "Croazia", continent: "Europa", league: "Serie A", born: 1998},
-  {name: "Nicolò Fagioli", role: "CEN", team: "Fiorentina", value: 16, nation: "Italia", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "David de Gea", role: "POR", team: "Fiorentina", value: 4, nation: "Spagna", continent: "Europa", league: "Serie A", born: 1990},
-  {name: "Marin Pongračić", role: "DIF", team: "Fiorentina", value: 7, nation: "Croazia", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Radu Drăgușin", role: "DIF", team: "Fiorentina", value: 16, nation: "Romania", continent: "Europa", league: "Serie A", born: 2002},
-  {name: "Willy Gnonto", role: "ATT", team: "Fiorentina", value: 16, nation: "Italia", continent: "Europa", league: "Serie A", born: 2003},
-  {name: "Franco Mastantuono", role: "ATT", team: "Fiorentina", value: 45, nation: "Argentina", continent: "Sudamerica", league: "Serie A", born: 2007},
-  {name: "Pedro Gonçalves", role: "CEN", team: "Fiorentina", value: 25, nation: "Portogallo", continent: "Europa", league: "Serie A", born: 1998},
-  {name: "Davide Frattesi", role: "CEN", team: "Lazio", value: 22, nation: "Italia", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Adam Marušić", role: "DIF", team: "Lazio", value: 3, nation: "Montenegro", continent: "Europa", league: "Serie A", born: 1992},
-  {name: "Manuel Lazzari", role: "DIF", team: "Lazio", value: 2, nation: "Italia", continent: "Europa", league: "Serie A", born: 1993},
-  {name: "Danilo Cataldi", role: "CEN", team: "Lazio", value: 4, nation: "Italia", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "Mattia Zaccagni", role: "CEN", team: "Lazio", value: 8, nation: "Italia", continent: "Europa", league: "Serie A", born: 1995},
-  {name: "Nicolò Rovella", role: "CEN", team: "Lazio", value: 23, nation: "Italia", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Gustav Isaksen", role: "ATT", team: "Lazio", value: 15, nation: "Danimarca", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Albert Gudmundsson", role: "ATT", team: "Lazio", value: 12, nation: "Islanda", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Andrea Pinamonti", role: "ATT", team: "Lazio", value: 15, nation: "Italia", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Christos Mandas", role: "POR", team: "Lazio", value: 10, nation: "Grecia", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Josip Šutalo", role: "DIF", team: "Lazio", value: 12, nation: "Croazia", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Kenneth Taylor", role: "CEN", team: "Lazio", value: 25, nation: "Paesi Bassi", continent: "Europa", league: "Serie A", born: 2002},
-  {name: "Giovanni Simeone", role: "ATT", team: "Torino", value: 7, nation: "Argentina", continent: "Sudamerica", league: "Serie A", born: 1995},
-  {name: "Duván Zapata", role: "ATT", team: "Torino", value: 3, nation: "Colombia", continent: "Sudamerica", league: "Serie A", born: 1991},
-  {name: "Nikola Vlašić", role: "CEN", team: "Torino", value: 10, nation: "Croazia", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Cesare Casadei", role: "CEN", team: "Torino", value: 15, nation: "Italia", continent: "Europa", league: "Serie A", born: 2003},
-  {name: "Che Adams", role: "ATT", team: "Torino", value: 5, nation: "Scozia", continent: "Europa", league: "Serie A", born: 1996},
-  {name: "Nathan Patterson", role: "DIF", team: "Torino", value: 5, nation: "Scozia", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "Ardian Ismajli", role: "DIF", team: "Torino", value: 5, nation: "Albania", continent: "Europa", league: "Serie A", born: 1996},
-  {name: "Stephan El Shaarawy", role: "ATT", team: "Genoa", value: 2, nation: "Italia", continent: "Europa", league: "Serie A", born: 1992},
-  {name: "Johan Vásquez", role: "DIF", team: "Genoa", value: 14, nation: "Messico", continent: "Nordamerica", league: "Serie A", born: 1998},
-  {name: "Djibril Sow", role: "CEN", team: "Genoa", value: 8, nation: "Svizzera", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Nicolò Zaniolo", role: "ATT", team: "Udinese", value: 15, nation: "Italia", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "David Alaba", role: "DIF", team: "Udinese", value: 3, nation: "Austria", continent: "Europa", league: "Serie A", born: 1992},
-  {name: "Christian Kabasele", role: "DIF", team: "Udinese", value: 1, nation: "Belgio", continent: "Europa", league: "Serie A", born: 1991},
-  {name: "Sandi Lovrić", role: "CEN", team: "Udinese", value: 4, nation: "Slovenia", continent: "Europa", league: "Serie A", born: 1998},
-  {name: "Jesper Karlström", role: "CEN", team: "Udinese", value: 4, nation: "Svezia", continent: "Europa", league: "Serie A", born: 1995},
-  {name: "Lassana Coulibaly", role: "CEN", team: "Lecce", value: 2, nation: "Mali", continent: "Africa", league: "Serie A", born: 1996},
-  {name: "Yerry Mina", role: "DIF", team: "Cagliari", value: 3, nation: "Colombia", continent: "Sudamerica", league: "Serie A", born: 1994},
-  {name: "Harry Winks", role: "CEN", team: "Cagliari", value: 3, nation: "Inghilterra", continent: "Europa", league: "Serie A", born: 1996},
-  {name: "Roberto Gagliardini", role: "CEN", team: "Cagliari", value: 1.5, nation: "Italia", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "Daniel Maldini", role: "ATT", team: "Cagliari", value: 9, nation: "Italia", continent: "Europa", league: "Serie A", born: 2001},
-  {name: "M'Bala Nzola", role: "ATT", team: "Cagliari", value: 3, nation: "Angola", continent: "Africa", league: "Serie A", born: 1996},
-  {name: "Domenico Berardi", role: "ATT", team: "Sassuolo", value: 7, nation: "Italia", continent: "Europa", league: "Serie A", born: 1994},
-  {name: "Nemanja Matić", role: "CEN", team: "Sassuolo", value: 1.5, nation: "Serbia", continent: "Europa", league: "Serie A", born: 1988},
-  {name: "Duje Ćaleta-Car", role: "DIF", team: "Sassuolo", value: 3, nation: "Croazia", continent: "Europa", league: "Serie A", born: 1996},
-  {name: "Kristian Thorstvedt", role: "CEN", team: "Sassuolo", value: 10, nation: "Norvegia", continent: "Europa", league: "Serie A", born: 1999},
-  {name: "Jay Idzes", role: "DIF", team: "Sassuolo", value: 14, nation: "Indonesia", continent: "Asia", league: "Serie A", born: 2000},
-  {name: "Arijanet Muric", role: "POR", team: "Sassuolo", value: 8, nation: "Kosovo", continent: "Europa", league: "Serie A", born: 1998},
-  {name: "Ismaël Koné", role: "CEN", team: "Sassuolo", value: 25, nation: "Canada", continent: "Nordamerica", league: "Serie A", born: 2002},
-  {name: "Sebastian Walukiewicz", role: "DIF", team: "Sassuolo", value: 5, nation: "Polonia", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Matteo Pessina", role: "CEN", team: "Monza", value: 5, nation: "Italia", continent: "Europa", league: "Serie A", born: 1997},
-  {name: "Romano Schmid", role: "CEN", team: "Frosinone", value: 15, nation: "Austria", continent: "Europa", league: "Serie A", born: 2000},
-  {name: "Bukayo Saka", role: "ATT", team: "Arsenal", value: 110, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Declan Rice", role: "CEN", team: "Arsenal", value: 120, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "William Saliba", role: "DIF", team: "Arsenal", value: 100, nation: "Francia", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Martin Ødegaard", role: "CEN", team: "Arsenal", value: 80, nation: "Norvegia", continent: "Europa", league: "Premier League", born: 1998},
-  {name: "Bruno Guimarães", role: "CEN", team: "Arsenal", value: 75, nation: "Brasile", continent: "Sudamerica", league: "Premier League", born: 1997},
-  {name: "Gabriel Magalhães", role: "DIF", team: "Arsenal", value: 75, nation: "Brasile", continent: "Sudamerica", league: "Premier League", born: 1997},
-  {name: "Martín Zubimendi", role: "CEN", team: "Arsenal", value: 65, nation: "Spagna", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Viktor Gyökeres", role: "ATT", team: "Arsenal", value: 55, nation: "Svezia", continent: "Europa", league: "Premier League", born: 1998},
-  {name: "Jurriën Timber", role: "DIF", team: "Arsenal", value: 70, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Eberechi Eze", role: "CEN", team: "Arsenal", value: 60, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1998},
-  {name: "Kai Havertz", role: "ATT", team: "Arsenal", value: 60, nation: "Germania", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Riccardo Calafiori", role: "DIF", team: "Arsenal", value: 65, nation: "Italia", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Mikel Merino", role: "CEN", team: "Arsenal", value: 25, nation: "Spagna", continent: "Europa", league: "Premier League", born: 1996},
-  {name: "Myles Lewis-Skelly", role: "DIF", team: "Arsenal", value: 65, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2006},
-  {name: "Kepa Arrizabalaga", role: "POR", team: "Arsenal", value: 5, nation: "Spagna", continent: "Europa", league: "Premier League", born: 1994},
-  {name: "David Raya", role: "POR", team: "Arsenal", value: 30, nation: "Spagna", continent: "Europa", league: "Premier League", born: 1995},
-  {name: "Ben White", role: "DIF", team: "Arsenal", value: 35, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Piero Hincapié", role: "DIF", team: "Arsenal", value: 50, nation: "Ecuador", continent: "Sudamerica", league: "Premier League", born: 2002},
-  {name: "Noni Madueke", role: "ATT", team: "Arsenal", value: 45, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Ezri Konsa", role: "DIF", team: "Arsenal", value: 50, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Alexander Isak", role: "ATT", team: "Liverpool", value: 90, nation: "Svezia", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Florian Wirtz", role: "CEN", team: "Liverpool", value: 85, nation: "Germania", continent: "Europa", league: "Premier League", born: 2003},
-  {name: "Ryan Gravenberch", role: "CEN", team: "Liverpool", value: 75, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Alexis Mac Allister", role: "CEN", team: "Liverpool", value: 70, nation: "Argentina", continent: "Sudamerica", league: "Premier League", born: 1998},
-  {name: "Dominik Szoboszlai", role: "CEN", team: "Liverpool", value: 100, nation: "Ungheria", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Hugo Ekitiké", role: "ATT", team: "Liverpool", value: 80, nation: "Francia", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Cody Gakpo", role: "ATT", team: "Liverpool", value: 75, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Bradley Barcola", role: "ATT", team: "Liverpool", value: 100, nation: "Francia", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Alisson Becker", role: "POR", team: "Liverpool", value: 15, nation: "Brasile", continent: "Sudamerica", league: "Premier League", born: 1992},
-  {name: "Giorgi Mamardashvili", role: "POR", team: "Liverpool", value: 28, nation: "Georgia", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Conor Bradley", role: "DIF", team: "Liverpool", value: 20, nation: "Irlanda del Nord", continent: "Europa", league: "Premier League", born: 2003},
-  {name: "Wataru Endō", role: "CEN", team: "Liverpool", value: 3, nation: "Giappone", continent: "Asia", league: "Premier League", born: 1993},
-  {name: "Federico Chiesa", role: "ATT", team: "Liverpool", value: 10, nation: "Italia", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Miloš Kerkez", role: "DIF", team: "Liverpool", value: 35, nation: "Ungheria", continent: "Europa", league: "Premier League", born: 2003},
-  {name: "Kostas Tsimikas", role: "DIF", team: "Liverpool", value: 5, nation: "Grecia", continent: "Europa", league: "Premier League", born: 1996},
-  {name: "Virgil van Dijk", role: "DIF", team: "Liverpool", value: 15, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 1991},
-  {name: "Joe Gomez", role: "DIF", team: "Liverpool", value: 11, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Jeremie Frimpong", role: "DIF", team: "Liverpool", value: 30, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Ronald Araújo", role: "DIF", team: "Liverpool", value: 25, nation: "Uruguay", continent: "Sudamerica", league: "Premier League", born: 1999},
-  {name: "Erling Haaland", role: "ATT", team: "Manchester City", value: 220, nation: "Norvegia", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Phil Foden", role: "CEN", team: "Manchester City", value: 65, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Enzo Fernández", role: "CEN", team: "Manchester City", value: 120, nation: "Argentina", continent: "Sudamerica", league: "Premier League", born: 2001},
-  {name: "Joško Gvardiol", role: "DIF", team: "Manchester City", value: 75, nation: "Croazia", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Antoine Semenyo", role: "ATT", team: "Manchester City", value: 80, nation: "Ghana", continent: "Africa", league: "Premier League", born: 2000},
-  {name: "Jérémy Doku", role: "ATT", team: "Manchester City", value: 75, nation: "Belgio", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Rúben Dias", role: "DIF", team: "Manchester City", value: 50, nation: "Portogallo", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Elliot Anderson", role: "CEN", team: "Manchester City", value: 120, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Marc Guéhi", role: "DIF", team: "Manchester City", value: 75, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Gianluigi Donnarumma", role: "POR", team: "Manchester City", value: 45, nation: "Italia", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Gerónimo Rulli", role: "POR", team: "Manchester City", value: 5, nation: "Argentina", continent: "Sudamerica", league: "Premier League", born: 1992},
-  {name: "Rayan Cherki", role: "CEN", team: "Manchester City", value: 110, nation: "Francia", continent: "Europa", league: "Premier League", born: 2003},
-  {name: "Abdukodir Khusanov", role: "DIF", team: "Manchester City", value: 50, nation: "Uzbekistan", continent: "Asia", league: "Premier League", born: 2004},
-  {name: "Rico Lewis", role: "DIF", team: "Manchester City", value: 25, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2004},
-  {name: "Mateo Kovačić", role: "CEN", team: "Manchester City", value: 10, nation: "Croazia", continent: "Europa", league: "Premier League", born: 1994},
-  {name: "Rayan Aït-Nouri", role: "DIF", team: "Manchester City", value: 35, nation: "Algeria", continent: "Africa", league: "Premier League", born: 2001},
-  {name: "Matheus Nunes", role: "DIF", team: "Manchester City", value: 45, nation: "Portogallo", continent: "Europa", league: "Premier League", born: 1998},
-  {name: "Iliman Ndiaye", role: "ATT", team: "Manchester City", value: 65, nation: "Senegal", continent: "Africa", league: "Premier League", born: 2000},
-  {name: "Matheus Cunha", role: "ATT", team: "Manchester United", value: 75, nation: "Brasile", continent: "Sudamerica", league: "Premier League", born: 1999},
-  {name: "Benjamin Šeško", role: "ATT", team: "Manchester United", value: 75, nation: "Slovenia", continent: "Europa", league: "Premier League", born: 2003},
-  {name: "Carlos Baleba", role: "CEN", team: "Manchester United", value: 65, nation: "Camerun", continent: "Africa", league: "Premier League", born: 2004},
-  {name: "Patrick Dorgu", role: "DIF", team: "Manchester United", value: 35, nation: "Danimarca", continent: "Europa", league: "Premier League", born: 2004},
-  {name: "Harry Maguire", role: "DIF", team: "Manchester United", value: 8, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1993},
-  {name: "Luke Shaw", role: "DIF", team: "Manchester United", value: 8, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1995},
-  {name: "Diogo Dalot", role: "DIF", team: "Manchester United", value: 30, nation: "Portogallo", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Mason Mount", role: "CEN", team: "Manchester United", value: 25, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Amad Diallo", role: "ATT", team: "Manchester United", value: 45, nation: "Costa d'Avorio", continent: "Africa", league: "Premier League", born: 2002},
-  {name: "Bryan Mbeumo", role: "ATT", team: "Manchester United", value: 75, nation: "Camerun", continent: "Africa", league: "Premier League", born: 1999},
-  {name: "Matthijs de Ligt", role: "DIF", team: "Manchester United", value: 25, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Lisandro Martínez", role: "DIF", team: "Manchester United", value: 45, nation: "Argentina", continent: "Sudamerica", league: "Premier League", born: 1998},
-  {name: "Noussair Mazraoui", role: "DIF", team: "Manchester United", value: 18, nation: "Marocco", continent: "Africa", league: "Premier League", born: 1997},
-  {name: "Kobbie Mainoo", role: "CEN", team: "Manchester United", value: 75, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2005},
-  {name: "Manuel Ugarte", role: "CEN", team: "Manchester United", value: 20, nation: "Uruguay", continent: "Sudamerica", league: "Premier League", born: 2001},
-  {name: "Joshua Zirkzee", role: "ATT", team: "Manchester United", value: 20, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Marcus Rashford", role: "ATT", team: "Manchester United", value: 35, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Youri Tielemans", role: "CEN", team: "Manchester United", value: 40, nation: "Belgio", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Cole Palmer", role: "CEN", team: "Chelsea", value: 110, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Moisés Caicedo", role: "CEN", team: "Chelsea", value: 100, nation: "Ecuador", continent: "Sudamerica", league: "Premier League", born: 2001},
-  {name: "Estêvão", role: "ATT", team: "Chelsea", value: 80, nation: "Brasile", continent: "Sudamerica", league: "Premier League", born: 2007},
-  {name: "Morgan Rogers", role: "CEN", team: "Chelsea", value: 120, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "João Pedro", role: "ATT", team: "Chelsea", value: 100, nation: "Brasile", continent: "Sudamerica", league: "Premier League", born: 2001},
-  {name: "Pedro Neto", role: "ATT", team: "Chelsea", value: 60, nation: "Portogallo", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Romeo Lavia", role: "CEN", team: "Chelsea", value: 25, nation: "Belgio", continent: "Europa", league: "Premier League", born: 2004},
-  {name: "Levi Colwill", role: "DIF", team: "Chelsea", value: 50, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2003},
-  {name: "Reece James", role: "DIF", team: "Chelsea", value: 60, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Jorrel Hato", role: "DIF", team: "Chelsea", value: 45, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2006},
-  {name: "Emiliano Martínez", role: "POR", team: "Chelsea", value: 10, nation: "Argentina", continent: "Sudamerica", league: "Premier League", born: 1992},
-  {name: "Danny Welbeck", role: "ATT", team: "Chelsea", value: 3, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1990},
-  {name: "Jordan Henderson", role: "CEN", team: "Chelsea", value: 1, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1990},
-  {name: "Sandro Tonali", role: "CEN", team: "Tottenham", value: 90, nation: "Italia", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Omar Marmoush", role: "ATT", team: "Tottenham", value: 50, nation: "Egitto", continent: "Africa", league: "Premier League", born: 1999},
-  {name: "Micky van de Ven", role: "DIF", team: "Tottenham", value: 50, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Xavi Simons", role: "CEN", team: "Tottenham", value: 40, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2003},
-  {name: "Mohammed Kudus", role: "CEN", team: "Tottenham", value: 45, nation: "Ghana", continent: "Africa", league: "Premier League", born: 2000},
-  {name: "Rodrigo Bentancur", role: "CEN", team: "Tottenham", value: 17, nation: "Uruguay", continent: "Sudamerica", league: "Premier League", born: 1997},
-  {name: "Andrew Robertson", role: "DIF", team: "Tottenham", value: 7, nation: "Scozia", continent: "Europa", league: "Premier League", born: 1994},
-  {name: "Mykhailo Mudryk", role: "ATT", team: "Tottenham", value: 15, nation: "Ucraina", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Ben Davies", role: "DIF", team: "Tottenham", value: 3, nation: "Galles", continent: "Europa", league: "Premier League", born: 1993},
-  {name: "Lucas Bergvall", role: "CEN", team: "Tottenham", value: 40, nation: "Svezia", continent: "Europa", league: "Premier League", born: 2006},
-  {name: "Richarlison", role: "ATT", team: "Tottenham", value: 15, nation: "Brasile", continent: "Sudamerica", league: "Premier League", born: 1997},
-  {name: "Martin Dúbravka", role: "POR", team: "Tottenham", value: 0.5, nation: "Slovacchia", continent: "Europa", league: "Premier League", born: 1989},
-  {name: "Jan Paul van Hecke", role: "DIF", team: "Tottenham", value: 60, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Destiny Udogie", role: "DIF", team: "Tottenham", value: 25, nation: "Italia", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Pedro Porro", role: "DIF", team: "Tottenham", value: 45, nation: "Spagna", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Dejan Kulusevski", role: "CEN", team: "Tottenham", value: 13, nation: "Svezia", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "James Maddison", role: "CEN", team: "Tottenham", value: 17, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1996},
-  {name: "Dominic Solanke", role: "ATT", team: "Tottenham", value: 25, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Conor Gallagher", role: "CEN", team: "Tottenham", value: 32, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Malick Thiaw", role: "DIF", team: "Newcastle", value: 50, nation: "Germania", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Dan Burn", role: "DIF", team: "Newcastle", value: 4, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1992},
-  {name: "Fabian Schär", role: "DIF", team: "Newcastle", value: 3, nation: "Svizzera", continent: "Europa", league: "Premier League", born: 1991},
-  {name: "Harvey Barnes", role: "ATT", team: "Newcastle", value: 35, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Yoane Wissa", role: "ATT", team: "Newcastle", value: 25, nation: "RD Congo", continent: "Africa", league: "Premier League", born: 1996},
-  {name: "Nick Pope", role: "POR", team: "Newcastle", value: 3, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1992},
-  {name: "Aaron Ramsdale", role: "POR", team: "Southampton", value: 8, nation: "Inghilterra", continent: "Europa", league: "Championship", born: 1998},
-  {name: "Joelinton", role: "CEN", team: "Newcastle", value: 20, nation: "Brasile", continent: "Sudamerica", league: "Premier League", born: 1996},
-  {name: "Anthony Elanga", role: "ATT", team: "Newcastle", value: 35, nation: "Svezia", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Tammy Abraham", role: "ATT", team: "Aston Villa", value: 18, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Pau Torres", role: "DIF", team: "Aston Villa", value: 20, nation: "Spagna", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Tyrone Mings", role: "DIF", team: "Aston Villa", value: 3, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1993},
-  {name: "Ian Maatsen", role: "DIF", team: "Aston Villa", value: 35, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Boubacar Kamara", role: "CEN", team: "Aston Villa", value: 50, nation: "Francia", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "John McGinn", role: "CEN", team: "Aston Villa", value: 13, nation: "Scozia", continent: "Europa", league: "Premier League", born: 1994},
-  {name: "Ross Barkley", role: "CEN", team: "Aston Villa", value: 4, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1993},
-  {name: "Emiliano Buendía", role: "CEN", team: "Aston Villa", value: 16, nation: "Argentina", continent: "Sudamerica", league: "Premier League", born: 1996},
-  {name: "Victor Lindelöf", role: "DIF", team: "Aston Villa", value: 5, nation: "Svezia", continent: "Europa", league: "Premier League", born: 1994},
-  {name: "João Gomes", role: "CEN", team: "Aston Villa", value: 40, nation: "Brasile", continent: "Sudamerica", league: "Premier League", born: 2001},
-  {name: "Leon Bailey", role: "ATT", team: "Olympiacos", value: 9, nation: "Giamaica", continent: "Nordamerica", league: "Altro", born: 1997},
-  {name: "Alejandro Garnacho", role: "ATT", team: "Aston Villa", value: 22, nation: "Argentina", continent: "Sudamerica", league: "Premier League", born: 2004},
-  {name: "Matty Cash", role: "DIF", team: "Aston Villa", value: 22, nation: "Polonia", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Amadou Onana", role: "CEN", team: "Aston Villa", value: 40, nation: "Belgio", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Leon Goretzka", role: "CEN", team: "Aston Villa", value: 10, nation: "Germania", continent: "Europa", league: "Premier League", born: 1995},
-  {name: "Nicolas Jackson", role: "ATT", team: "Aston Villa", value: 45, nation: "Senegal", continent: "Africa", league: "Premier League", born: 2001},
-  {name: "Zion Suzuki", role: "POR", team: "Aston Villa", value: 30, nation: "Giappone", continent: "Asia", league: "Premier League", born: 2002},
-  {name: "Johan Manzambi", role: "CEN", team: "Aston Villa", value: 65, nation: "Svizzera", continent: "Europa", league: "Premier League", born: 2005},
-  {name: "Lewis Dunk", role: "DIF", team: "Brighton", value: 4, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1991},
-  {name: "Evan Ferguson", role: "ATT", team: "Brighton", value: 15, nation: "Irlanda", continent: "Europa", league: "Premier League", born: 2004},
-  {name: "Bart Verbruggen", role: "POR", team: "Brighton", value: 40, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Ferdi Kadıoğlu", role: "DIF", team: "Brighton", value: 40, nation: "Turchia", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Kaoru Mitoma", role: "ATT", team: "Brighton", value: 22, nation: "Giappone", continent: "Asia", league: "Premier League", born: 1997},
-  {name: "Yankuba Minteh", role: "ATT", team: "Brighton", value: 55, nation: "Gambia", continent: "Africa", league: "Premier League", born: 2004},
-  {name: "Matt O'Riley", role: "CEN", team: "Brighton", value: 18, nation: "Danimarca", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Pascal Groß", role: "CEN", team: "Brighton", value: 3, nation: "Germania", continent: "Europa", league: "Premier League", born: 1991},
-  {name: "Mats Wieffer", role: "CEN", team: "Brighton", value: 25, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Maxim De Cuyper", role: "DIF", team: "Brighton", value: 30, nation: "Belgio", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Diego Gómez", role: "CEN", team: "Brighton", value: 30, nation: "Paraguay", continent: "Sudamerica", league: "Premier League", born: 2003},
-  {name: "Adam Wharton", role: "CEN", team: "Crystal Palace", value: 75, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2004},
-  {name: "Yeremi Pino", role: "ATT", team: "Crystal Palace", value: 30, nation: "Spagna", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Ben Chilwell", role: "DIF", team: "Crystal Palace", value: 10, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1996},
-  {name: "Axel Disasi", role: "DIF", team: "Crystal Palace", value: 15, nation: "Francia", continent: "Europa", league: "Premier League", born: 1998},
-  {name: "Chris Richards", role: "DIF", team: "Crystal Palace", value: 28, nation: "Stati Uniti", continent: "Nordamerica", league: "Premier League", born: 2000},
-  {name: "Jefferson Lerma", role: "CEN", team: "Crystal Palace", value: 6, nation: "Colombia", continent: "Sudamerica", league: "Premier League", born: 1994},
-  {name: "Daichi Kamada", role: "CEN", team: "Crystal Palace", value: 10, nation: "Giappone", continent: "Asia", league: "Premier League", born: 1996},
-  {name: "Jean-Philippe Mateta", role: "ATT", team: "Crystal Palace", value: 30, nation: "Francia", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Jørgen Strand Larsen", role: "ATT", team: "Crystal Palace", value: 40, nation: "Norvegia", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Dean Henderson", role: "POR", team: "Crystal Palace", value: 28, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Ismaïla Sarr", role: "ATT", team: "Crystal Palace", value: 45, nation: "Senegal", continent: "Africa", league: "Premier League", born: 1998},
-  {name: "Quinten Timber", role: "CEN", team: "Crystal Palace", value: 25, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Óscar Mingueza", role: "DIF", team: "Crystal Palace", value: 15, nation: "Spagna", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "James Tarkowski", role: "DIF", team: "Everton", value: 5, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1992},
-  {name: "Vitaliy Mykolenko", role: "DIF", team: "Everton", value: 25, nation: "Ucraina", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Jordan Pickford", role: "POR", team: "Everton", value: 13, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1994},
-  {name: "Jack Grealish", role: "ATT", team: "Everton", value: 20, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1995},
-  {name: "Christian Nørgaard", role: "CEN", team: "Everton", value: 5, nation: "Danimarca", continent: "Europa", league: "Premier League", born: 1994},
-  {name: "Brennan Johnson", role: "ATT", team: "Everton", value: 25, nation: "Galles", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Morgan Gibbs-White", role: "CEN", team: "Nottingham Forest", value: 80, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Dan Ndoye", role: "ATT", team: "Nottingham Forest", value: 35, nation: "Svizzera", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Nikola Milenković", role: "DIF", team: "Nottingham Forest", value: 28, nation: "Serbia", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Neco Williams", role: "DIF", team: "Nottingham Forest", value: 32, nation: "Galles", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Ola Aina", role: "DIF", team: "Nottingham Forest", value: 18, nation: "Nigeria", continent: "Africa", league: "Premier League", born: 1996},
-  {name: "Ibrahim Sangaré", role: "CEN", team: "Nottingham Forest", value: 20, nation: "Costa d'Avorio", continent: "Africa", league: "Premier League", born: 1997},
-  {name: "Chris Wood", role: "ATT", team: "Nottingham Forest", value: 4, nation: "Nuova Zelanda", continent: "Oceania", league: "Premier League", born: 1991},
-  {name: "Matz Sels", role: "POR", team: "Nottingham Forest", value: 4, nation: "Belgio", continent: "Europa", league: "Premier League", born: 1992},
-  {name: "Igor Jesus", role: "ATT", team: "Nottingham Forest", value: 25, nation: "Brasile", continent: "Sudamerica", league: "Premier League", born: 2001},
-  {name: "Daniel Muñoz", role: "DIF", team: "Nottingham Forest", value: 22, nation: "Colombia", continent: "Sudamerica", league: "Premier League", born: 1996},
-  {name: "Xaver Schlager", role: "CEN", team: "Nottingham Forest", value: 15, nation: "Austria", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Michele Di Gregorio", role: "POR", team: "Bournemouth", value: 8, nation: "Italia", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Justin Kluivert", role: "CEN", team: "Bournemouth", value: 25, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Tyler Adams", role: "CEN", team: "Bournemouth", value: 30, nation: "Stati Uniti", continent: "Nordamerica", league: "Premier League", born: 1999},
-  {name: "Ryan Christie", role: "CEN", team: "Bournemouth", value: 8, nation: "Scozia", continent: "Europa", league: "Premier League", born: 1995},
-  {name: "António Silva", role: "DIF", team: "Bournemouth", value: 30, nation: "Portogallo", continent: "Europa", league: "Premier League", born: 2003},
-  {name: "Amine Adli", role: "ATT", team: "Bournemouth", value: 20, nation: "Marocco", continent: "Africa", league: "Premier League", born: 2000},
-  {name: "Ben Doak", role: "ATT", team: "Bournemouth", value: 15, nation: "Scozia", continent: "Europa", league: "Premier League", born: 2005},
-  {name: "Caoimhín Kelleher", role: "POR", team: "Brentford", value: 32, nation: "Irlanda", continent: "Europa", league: "Premier League", born: 1998},
-  {name: "Callum Wilson", role: "ATT", team: "Brentford", value: 4, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1992},
-  {name: "Nathan Collins", role: "DIF", team: "Brentford", value: 30, nation: "Irlanda", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Mikkel Damsgaard", role: "CEN", team: "Brentford", value: 30, nation: "Danimarca", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Kevin Schade", role: "ATT", team: "Brentford", value: 50, nation: "Germania", continent: "Europa", league: "Premier League", born: 2001},
-  {name: "Dango Ouattara", role: "ATT", team: "Brentford", value: 35, nation: "Burkina Faso", continent: "Africa", league: "Premier League", born: 2002},
-  {name: "Aaron Hickey", role: "DIF", team: "Brentford", value: 20, nation: "Scozia", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Samuel Chukwueze", role: "ATT", team: "Milan", value: 20, nation: "Nigeria", continent: "Africa", league: "Serie A", born: 1999},
-  {name: "Oscar Bobb", role: "ATT", team: "Fulham", value: 28, nation: "Norvegia", continent: "Europa", league: "Premier League", born: 2003},
-  {name: "Joachim Andersen", role: "DIF", team: "Fulham", value: 16, nation: "Danimarca", continent: "Europa", league: "Premier League", born: 1996},
-  {name: "Calvin Bassey", role: "DIF", team: "Fulham", value: 28, nation: "Nigeria", continent: "Africa", league: "Premier League", born: 1999},
-  {name: "Timothy Castagne", role: "DIF", team: "Fulham", value: 8, nation: "Belgio", continent: "Europa", league: "Premier League", born: 1995},
-  {name: "Alex Iwobi", role: "CEN", team: "Fulham", value: 20, nation: "Nigeria", continent: "Africa", league: "Premier League", born: 1996},
-  {name: "Bernd Leno", role: "POR", team: "Fulham", value: 6, nation: "Germania", continent: "Europa", league: "Premier League", born: 1992},
-  {name: "Antonee Robinson", role: "DIF", team: "Fulham", value: 22, nation: "Stati Uniti", continent: "Nordamerica", league: "Premier League", born: 1997},
-  {name: "Emile Smith Rowe", role: "CEN", team: "Fulham", value: 17, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Sander Berge", role: "CEN", team: "Fulham", value: 25, nation: "Norvegia", continent: "Europa", league: "Premier League", born: 1998},
-  {name: "Noah Okafor", role: "ATT", team: "Leeds", value: 32, nation: "Svizzera", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Jaka Bijol", role: "DIF", team: "Leeds", value: 20, nation: "Slovenia", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Gabriel Gudmundsson", role: "DIF", team: "Leeds", value: 25, nation: "Svezia", continent: "Europa", league: "Premier League", born: 1999},
-  {name: "Harry Wilson", role: "ATT", team: "Leeds", value: 22, nation: "Galles", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Daniel James", role: "ATT", team: "Leeds", value: 10, nation: "Galles", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Ethan Ampadu", role: "CEN", team: "Leeds", value: 35, nation: "Galles", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Joe Rodon", role: "DIF", team: "Leeds", value: 18, nation: "Galles", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Anton Stach", role: "CEN", team: "Leeds", value: 32, nation: "Germania", continent: "Europa", league: "Premier League", born: 1998},
-  {name: "Brenden Aaronson", role: "CEN", team: "Leeds", value: 22, nation: "Stati Uniti", continent: "Nordamerica", league: "Premier League", born: 2000},
-  {name: "Dominic Calvert-Lewin", role: "ATT", team: "Leeds", value: 25, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Ao Tanaka", role: "CEN", team: "Leeds", value: 15, nation: "Giappone", continent: "Asia", league: "Premier League", born: 1998},
-  {name: "Lukas Nmecha", role: "ATT", team: "Leeds", value: 10, nation: "Germania", continent: "Europa", league: "Premier League", born: 1998},
-  {name: "Ilia Gruev", role: "CEN", team: "Leeds", value: 12, nation: "Bulgaria", continent: "Europa", league: "Premier League", born: 2000},
-  {name: "Nordi Mukiele", role: "DIF", team: "Sunderland", value: 18, nation: "Francia", continent: "Europa", league: "Premier League", born: 1997},
-  {name: "Granit Xhaka", role: "CEN", team: "Sunderland", value: 8, nation: "Svizzera", continent: "Europa", league: "Premier League", born: 1992},
-  {name: "Habib Diarra", role: "CEN", team: "Sunderland", value: 35, nation: "Senegal", continent: "Africa", league: "Premier League", born: 2004},
-  {name: "Reinildo", role: "DIF", team: "Sunderland", value: 4, nation: "Mozambico", continent: "Africa", league: "Premier League", born: 1994},
-  {name: "Kevin Danso", role: "DIF", team: "Sunderland", value: 20, nation: "Austria", continent: "Europa", league: "Premier League", born: 1998},
-  {name: "Omar Alderete", role: "DIF", team: "Sunderland", value: 10, nation: "Paraguay", continent: "Sudamerica", league: "Premier League", born: 1996},
-  {name: "Brian Brobbey", role: "ATT", team: "Sunderland", value: 50, nation: "Paesi Bassi", continent: "Europa", league: "Premier League", born: 2002},
-  {name: "Thomas Meunier", role: "DIF", team: "Sunderland", value: 1.5, nation: "Belgio", continent: "Europa", league: "Premier League", born: 1991},
-  {name: "Julio Enciso", role: "CEN", team: "Ipswich", value: 30, nation: "Paraguay", continent: "Sudamerica", league: "Premier League", born: 2004},
-  {name: "Saša Lukić", role: "CEN", team: "Ipswich", value: 10, nation: "Serbia", continent: "Europa", league: "Premier League", born: 1996},
-  {name: "Daizen Maeda", role: "ATT", team: "Ipswich", value: 13, nation: "Giappone", continent: "Asia", league: "Premier League", born: 1997},
-  {name: "Taiwo Awoniyi", role: "ATT", team: "Coventry", value: 8, nation: "Nigeria", continent: "Africa", league: "Premier League", born: 1997},
-  {name: "Hidemasa Morita", role: "CEN", team: "Hull City", value: 6, nation: "Giappone", continent: "Asia", league: "Premier League", born: 1995},
-  {name: "Jack Butland", role: "POR", team: "Hull City", value: 1.5, nation: "Inghilterra", continent: "Europa", league: "Premier League", born: 1993},
-  {name: "Kylian Mbappé", role: "ATT", team: "Real Madrid", value: 200, nation: "Francia", continent: "Europa", league: "Liga", born: 1998},
-  {name: "Jude Bellingham", role: "CEN", team: "Real Madrid", value: 160, nation: "Inghilterra", continent: "Europa", league: "Liga", born: 2003},
-  {name: "Vinícius Jr.", role: "ATT", team: "Real Madrid", value: 130, nation: "Brasile", continent: "Sudamerica", league: "Liga", born: 2000},
-  {name: "Federico Valverde", role: "CEN", team: "Real Madrid", value: 90, nation: "Uruguay", continent: "Sudamerica", league: "Liga", born: 1998},
-  {name: "Arda Güler", role: "CEN", team: "Real Madrid", value: 100, nation: "Turchia", continent: "Europa", league: "Liga", born: 2005},
-  {name: "Aurélien Tchouaméni", role: "CEN", team: "Real Madrid", value: 70, nation: "Francia", continent: "Europa", league: "Liga", born: 2000},
-  {name: "Trent Alexander-Arnold", role: "DIF", team: "Real Madrid", value: 60, nation: "Inghilterra", continent: "Europa", league: "Liga", born: 1998},
-  {name: "Dean Huijsen", role: "DIF", team: "Real Madrid", value: 60, nation: "Spagna", continent: "Europa", league: "Liga", born: 2005},
-  {name: "Rodrygo", role: "ATT", team: "Real Madrid", value: 45, nation: "Brasile", continent: "Sudamerica", league: "Liga", born: 2001},
-  {name: "Ibrahima Konaté", role: "DIF", team: "Real Madrid", value: 45, nation: "Francia", continent: "Europa", league: "Liga", born: 1999},
-  {name: "Bernardo Silva", role: "CEN", team: "Real Madrid", value: 22, nation: "Portogallo", continent: "Europa", league: "Liga", born: 1994},
-  {name: "Thibaut Courtois", role: "POR", team: "Real Madrid", value: 15, nation: "Belgio", continent: "Europa", league: "Liga", born: 1992},
-  {name: "Denzel Dumfries", role: "DIF", team: "Real Madrid", value: 25, nation: "Paesi Bassi", continent: "Europa", league: "Liga", born: 1996},
-  {name: "Andriy Lunin", role: "POR", team: "Real Madrid", value: 12, nation: "Ucraina", continent: "Europa", league: "Liga", born: 1999},
-  {name: "Antonio Rüdiger", role: "DIF", team: "Real Madrid", value: 6, nation: "Germania", continent: "Europa", league: "Liga", born: 1993},
-  {name: "Endrick", role: "ATT", team: "Real Madrid", value: 40, nation: "Brasile", continent: "Sudamerica", league: "Liga", born: 2006},
-  {name: "Marc Cucurella", role: "DIF", team: "Real Madrid", value: 60, nation: "Spagna", continent: "Europa", league: "Liga", born: 1998},
-  {name: "Eduardo Camavinga", role: "CEN", team: "Real Madrid", value: 50, nation: "Francia", continent: "Europa", league: "Liga", born: 2002},
-  {name: "Éder Militão", role: "DIF", team: "Real Madrid", value: 18, nation: "Brasile", continent: "Sudamerica", league: "Liga", born: 1998},
-  {name: "Ferland Mendy", role: "DIF", team: "Real Madrid", value: 4, nation: "Francia", continent: "Europa", league: "Liga", born: 1995},
-  {name: "Brahim Díaz", role: "ATT", team: "Real Madrid", value: 35, nation: "Marocco", continent: "Africa", league: "Liga", born: 1999},
-  {name: "Lamine Yamal", role: "ATT", team: "Barcellona", value: 220, nation: "Spagna", continent: "Europa", league: "Liga", born: 2007},
-  {name: "Pedri", role: "CEN", team: "Barcellona", value: 150, nation: "Spagna", continent: "Europa", league: "Liga", born: 2002},
-  {name: "Rodri", role: "CEN", team: "Barcellona", value: 60, nation: "Spagna", continent: "Europa", league: "Liga", born: 1996},
-  {name: "Raphinha", role: "ATT", team: "Barcellona", value: 70, nation: "Brasile", continent: "Sudamerica", league: "Liga", born: 1996},
-  {name: "Pau Cubarsí", role: "DIF", team: "Barcellona", value: 100, nation: "Spagna", continent: "Europa", league: "Liga", born: 2007},
-  {name: "Fermín López", role: "CEN", team: "Barcellona", value: 110, nation: "Spagna", continent: "Europa", league: "Liga", born: 2003},
-  {name: "Jules Koundé", role: "DIF", team: "Barcellona", value: 55, nation: "Francia", continent: "Europa", league: "Liga", born: 1998},
-  {name: "Dani Olmo", role: "CEN", team: "Barcellona", value: 60, nation: "Spagna", continent: "Europa", league: "Liga", born: 1998},
-  {name: "Anthony Gordon", role: "ATT", team: "Barcellona", value: 80, nation: "Inghilterra", continent: "Europa", league: "Liga", born: 2001},
-  {name: "Karim Adeyemi", role: "ATT", team: "Barcellona", value: 40, nation: "Germania", continent: "Europa", league: "Liga", born: 2002},
-  {name: "Alejandro Balde", role: "DIF", team: "Barcellona", value: 40, nation: "Spagna", continent: "Europa", league: "Liga", born: 2003},
-  {name: "Frenkie de Jong", role: "CEN", team: "Barcellona", value: 25, nation: "Paesi Bassi", continent: "Europa", league: "Liga", born: 1997},
-  {name: "Andreas Christensen", role: "DIF", team: "Barcellona", value: 8, nation: "Danimarca", continent: "Europa", league: "Liga", born: 1996},
-  {name: "Gabriel Jesus", role: "ATT", team: "Barcellona", value: 17, nation: "Brasile", continent: "Sudamerica", league: "Liga", born: 1997},
-  {name: "Wojciech Szczęsny", role: "POR", team: "Barcellona", value: 1, nation: "Polonia", continent: "Europa", league: "Liga", born: 1990},
-  {name: "Eric García", role: "DIF", team: "Barcellona", value: 45, nation: "Spagna", continent: "Europa", league: "Liga", born: 2001},
-  {name: "Gavi", role: "CEN", team: "Barcellona", value: 25, nation: "Spagna", continent: "Europa", league: "Liga", born: 2004},
-  {name: "João Cancelo", role: "DIF", team: "Barcellona", value: 7, nation: "Portogallo", continent: "Europa", league: "Liga", born: 1994},
-  {name: "Dominik Livaković", role: "POR", team: "Barcellona", value: 4, nation: "Croazia", continent: "Europa", league: "Liga", born: 1995},
-  {name: "Julián Alvarez", role: "ATT", team: "Atlético Madrid", value: 110, nation: "Argentina", continent: "Sudamerica", league: "Liga", born: 2000},
-  {name: "Cristian Romero", role: "DIF", team: "Atlético Madrid", value: 40, nation: "Argentina", continent: "Sudamerica", league: "Liga", born: 1998},
-  {name: "Álex Baena", role: "ATT", team: "Atlético Madrid", value: 45, nation: "Spagna", continent: "Europa", league: "Liga", born: 2001},
-  {name: "Ademola Lookman", role: "ATT", team: "Atlético Madrid", value: 40, nation: "Nigeria", continent: "Africa", league: "Liga", born: 1997},
-  {name: "Lee Kang-in", role: "CEN", team: "Atlético Madrid", value: 35, nation: "Corea del Sud", continent: "Asia", league: "Liga", born: 2001},
-  {name: "Jonathan David", role: "ATT", team: "Atlético Madrid", value: 30, nation: "Canada", continent: "Nordamerica", league: "Liga", born: 2000},
-  {name: "Jan Oblak", role: "POR", team: "Atlético Madrid", value: 15, nation: "Slovenia", continent: "Europa", league: "Liga", born: 1993},
-  {name: "Koke", role: "CEN", team: "Atlético Madrid", value: 5, nation: "Spagna", continent: "Europa", league: "Liga", born: 1992},
-  {name: "Marcos Llorente", role: "DIF", team: "Atlético Madrid", value: 20, nation: "Spagna", continent: "Europa", league: "Liga", born: 1995},
-  {name: "Robin Le Normand", role: "DIF", team: "Atlético Madrid", value: 18, nation: "Spagna", continent: "Europa", league: "Liga", born: 1996},
-  {name: "Alexander Sørloth", role: "ATT", team: "Atlético Madrid", value: 15, nation: "Norvegia", continent: "Europa", league: "Liga", born: 1995},
-  {name: "Johnny Cardoso", role: "CEN", team: "Atlético Madrid", value: 20, nation: "Stati Uniti", continent: "Nordamerica", league: "Liga", born: 2001},
-  {name: "Juan Musso", role: "POR", team: "Atlético Madrid", value: 3, nation: "Argentina", continent: "Sudamerica", league: "Liga", born: 1994},
-  {name: "David Hancko", role: "DIF", team: "Atlético Madrid", value: 35, nation: "Slovacchia", continent: "Europa", league: "Liga", born: 1997},
-  {name: "Giuliano Simeone", role: "ATT", team: "Atlético Madrid", value: 40, nation: "Argentina", continent: "Sudamerica", league: "Liga", born: 2002},
-  {name: "Alejandro Grimaldo", role: "DIF", team: "Atlético Madrid", value: 20, nation: "Spagna", continent: "Europa", league: "Liga", born: 1995},
-  {name: "Morten Hjulmand", role: "CEN", team: "Atlético Madrid", value: 45, nation: "Danimarca", continent: "Europa", league: "Liga", born: 1999},
-  {name: "Nico Williams", role: "ATT", team: "Athletic Bilbao", value: 40, nation: "Spagna", continent: "Europa", league: "Liga", born: 2002},
-  {name: "Unai Simón", role: "POR", team: "Athletic Bilbao", value: 22, nation: "Spagna", continent: "Europa", league: "Liga", born: 1997},
-  {name: "Dani Vivian", role: "DIF", team: "Athletic Bilbao", value: 20, nation: "Spagna", continent: "Europa", league: "Liga", born: 1999},
-  {name: "Iñaki Williams", role: "ATT", team: "Athletic Bilbao", value: 8, nation: "Ghana", continent: "Africa", league: "Liga", born: 1994},
-  {name: "Aymeric Laporte", role: "DIF", team: "Athletic Bilbao", value: 8, nation: "Spagna", continent: "Europa", league: "Liga", born: 1994},
-  {name: "Takefusa Kubo", role: "ATT", team: "Real Sociedad", value: 20, nation: "Giappone", continent: "Asia", league: "Liga", born: 2001},
-  {name: "Mikel Oyarzabal", role: "ATT", team: "Real Sociedad", value: 25, nation: "Spagna", continent: "Europa", league: "Liga", born: 1997},
-  {name: "Álex Remiro", role: "POR", team: "Real Sociedad", value: 9, nation: "Spagna", continent: "Europa", league: "Liga", born: 1995},
-  {name: "Carlos Soler", role: "CEN", team: "Real Sociedad", value: 7, nation: "Spagna", continent: "Europa", league: "Liga", born: 1997},
-  {name: "Arsen Zakharyan", role: "CEN", team: "Real Sociedad", value: 8, nation: "Russia", continent: "Europa", league: "Liga", born: 2003},
-  {name: "Yangel Herrera", role: "CEN", team: "Real Sociedad", value: 6, nation: "Venezuela", continent: "Sudamerica", league: "Liga", born: 1998},
-  {name: "Luka Sučić", role: "CEN", team: "Real Sociedad", value: 15, nation: "Croazia", continent: "Europa", league: "Liga", born: 2002},
-  {name: "Orri Óskarsson", role: "ATT", team: "Real Sociedad", value: 20, nation: "Islanda", continent: "Europa", league: "Liga", born: 2004},
-  {name: "Gonçalo Guedes", role: "ATT", team: "Real Sociedad", value: 6, nation: "Portogallo", continent: "Europa", league: "Liga", born: 1996},
-  {name: "Gerard Moreno", role: "ATT", team: "Villarreal", value: 3, nation: "Spagna", continent: "Europa", league: "Liga", born: 1992},
-  {name: "Ayoze Pérez", role: "ATT", team: "Villarreal", value: 5, nation: "Spagna", continent: "Europa", league: "Liga", born: 1993},
-  {name: "Renato Veiga", role: "DIF", team: "Villarreal", value: 30, nation: "Portogallo", continent: "Europa", league: "Liga", born: 2003},
-  {name: "Juan Foyth", role: "DIF", team: "Villarreal", value: 8, nation: "Argentina", continent: "Sudamerica", league: "Liga", born: 1998},
-  {name: "Pape Gueye", role: "CEN", team: "Villarreal", value: 40, nation: "Senegal", continent: "Africa", league: "Liga", born: 1999},
-  {name: "Tajon Buchanan", role: "ATT", team: "Villarreal", value: 12, nation: "Canada", continent: "Nordamerica", league: "Liga", born: 1999},
-  {name: "Nicolas Pépé", role: "ATT", team: "Villarreal", value: 6, nation: "Costa d'Avorio", continent: "Africa", league: "Liga", born: 1995},
-  {name: "Georges Mikautadze", role: "ATT", team: "Villarreal", value: 40, nation: "Georgia", continent: "Europa", league: "Liga", born: 2000},
-  {name: "Logan Costa", role: "DIF", team: "Villarreal", value: 15, nation: "Capo Verde", continent: "Africa", league: "Liga", born: 2001},
-  {name: "Péter Gulácsi", role: "POR", team: "Villarreal", value: 1, nation: "Ungheria", continent: "Europa", league: "Liga", born: 1990},
-  {name: "Isco", role: "CEN", team: "Betis", value: 4, nation: "Spagna", continent: "Europa", league: "Liga", born: 1992},
-  {name: "Antony", role: "ATT", team: "Betis", value: 40, nation: "Brasile", continent: "Sudamerica", league: "Liga", born: 2000},
-  {name: "Giovani Lo Celso", role: "CEN", team: "Betis", value: 7, nation: "Argentina", continent: "Sudamerica", league: "Liga", born: 1996},
-  {name: "Dani Ceballos", role: "CEN", team: "Betis", value: 6, nation: "Spagna", continent: "Europa", league: "Liga", born: 1996},
-  {name: "Marc Bartra", role: "DIF", team: "Betis", value: 1, nation: "Spagna", continent: "Europa", league: "Liga", born: 1991},
-  {name: "Héctor Bellerín", role: "DIF", team: "Betis", value: 2, nation: "Spagna", continent: "Europa", league: "Liga", born: 1995},
-  {name: "Marc Roca", role: "CEN", team: "Betis", value: 4, nation: "Spagna", continent: "Europa", league: "Liga", born: 1996},
-  {name: "Pablo Fornals", role: "CEN", team: "Betis", value: 8, nation: "Spagna", continent: "Europa", league: "Liga", born: 1996},
-  {name: "Abde Ezzalzouli", role: "ATT", team: "Betis", value: 40, nation: "Marocco", continent: "Africa", league: "Liga", born: 2001},
-  {name: "Cucho Hernández", role: "ATT", team: "Betis", value: 18, nation: "Colombia", continent: "Sudamerica", league: "Liga", born: 1999},
-  {name: "Diego Llorente", role: "DIF", team: "Betis", value: 3, nation: "Spagna", continent: "Europa", league: "Liga", born: 1993},
-  {name: "Youssouf Fofana", role: "CEN", team: "Siviglia", value: 15, nation: "Francia", continent: "Europa", league: "Liga", born: 1999},
-  {name: "Odysseas Vlachodimos", role: "POR", team: "Siviglia", value: 3, nation: "Grecia", continent: "Europa", league: "Liga", born: 1994},
-  {name: "Rubén Vargas", role: "ATT", team: "Siviglia", value: 15, nation: "Svizzera", continent: "Europa", league: "Liga", born: 1998},
-  {name: "Chidera Ejuke", role: "ATT", team: "Siviglia", value: 4, nation: "Nigeria", continent: "Africa", league: "Liga", born: 1998},
-  {name: "Gabriel Suazo", role: "DIF", team: "Siviglia", value: 7, nation: "Cile", continent: "Sudamerica", league: "Liga", born: 1997},
-  {name: "José Gayà", role: "DIF", team: "Valencia", value: 4, nation: "Spagna", continent: "Europa", league: "Liga", born: 1995},
-  {name: "Mouctar Diakhaby", role: "DIF", team: "Valencia", value: 1.5, nation: "Guinea", continent: "Africa", league: "Liga", born: 1996},
-  {name: "Stole Dimitrievski", role: "POR", team: "Valencia", value: 2, nation: "Macedonia del Nord", continent: "Europa", league: "Liga", born: 1993},
-  {name: "Arnaut Danjuma", role: "ATT", team: "Valencia", value: 3, nation: "Paesi Bassi", continent: "Europa", league: "Liga", born: 1997},
-  {name: "Iago Aspas", role: "ATT", team: "Celta Vigo", value: 1.5, nation: "Spagna", continent: "Europa", league: "Liga", born: 1987},
-  {name: "Marcos Alonso", role: "DIF", team: "Celta Vigo", value: 1, nation: "Spagna", continent: "Europa", league: "Liga", born: 1990},
-  {name: "Borja Iglesias", role: "ATT", team: "Celta Vigo", value: 3, nation: "Spagna", continent: "Europa", league: "Liga", born: 1993},
-  {name: "Ionuț Radu", role: "POR", team: "Celta Vigo", value: 10, nation: "Romania", continent: "Europa", league: "Liga", born: 1997},
-  {name: "Altay Bayındır", role: "POR", team: "Celta Vigo", value: 4, nation: "Turchia", continent: "Europa", league: "Liga", born: 1998},
-  {name: "Williot Swedberg", role: "ATT", team: "Celta Vigo", value: 20, nation: "Svezia", continent: "Europa", league: "Liga", born: 2004},
-  {name: "Carl Starfelt", role: "DIF", team: "Celta Vigo", value: 5, nation: "Svezia", continent: "Europa", league: "Liga", born: 1995},
-  {name: "Ante Budimir", role: "ATT", team: "Osasuna", value: 3, nation: "Croazia", continent: "Europa", league: "Liga", born: 1991},
-  {name: "Andrei Rațiu", role: "DIF", team: "Rayo Vallecano", value: 24, nation: "Romania", continent: "Europa", league: "Liga", born: 1998},
-  {name: "Dani Carvajal", role: "DIF", team: "Getafe", value: 4, nation: "Spagna", continent: "Europa", league: "Liga", born: 1992},
-  {name: "Borja Mayoral", role: "ATT", team: "Getafe", value: 5, nation: "Spagna", continent: "Europa", league: "Liga", born: 1997},
-  {name: "Nemanja Gudelj", role: "CEN", team: "Getafe", value: 2, nation: "Serbia", continent: "Europa", league: "Liga", born: 1991},
-  {name: "Enes Ünal", role: "ATT", team: "Getafe", value: 7, nation: "Turchia", continent: "Europa", league: "Liga", born: 1997},
-  {name: "Orel Mangala", role: "CEN", team: "Getafe", value: 9, nation: "Belgio", continent: "Europa", league: "Liga", born: 1998},
-  {name: "Djené Dakonam", role: "DIF", team: "Getafe", value: 1.5, nation: "Togo", continent: "Africa", league: "Liga", born: 1991},
-  {name: "Marko Dmitrović", role: "POR", team: "Espanyol", value: 0.5, nation: "Serbia", continent: "Europa", league: "Liga", born: 1992},
-  {name: "Michael Olise", role: "ATT", team: "Bayern Monaco", value: 180, nation: "Francia", continent: "Europa", league: "Bundesliga", born: 2001},
-  {name: "Jamal Musiala", role: "CEN", team: "Bayern Monaco", value: 80, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 2003},
-  {name: "Luis Díaz", role: "ATT", team: "Bayern Monaco", value: 70, nation: "Colombia", continent: "Sudamerica", league: "Bundesliga", born: 1997},
-  {name: "Dayot Upamecano", role: "DIF", team: "Bayern Monaco", value: 75, nation: "Francia", continent: "Europa", league: "Bundesliga", born: 1998},
-  {name: "Harry Kane", role: "ATT", team: "Bayern Monaco", value: 60, nation: "Inghilterra", continent: "Europa", league: "Bundesliga", born: 1993},
-  {name: "Aleksandar Pavlović", role: "CEN", team: "Bayern Monaco", value: 90, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 2004},
-  {name: "Manuel Neuer", role: "POR", team: "Bayern Monaco", value: 4, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1986},
-  {name: "Jonathan Tah", role: "DIF", team: "Bayern Monaco", value: 28, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1996},
-  {name: "Kim Min-jae", role: "DIF", team: "Bayern Monaco", value: 20, nation: "Corea del Sud", continent: "Asia", league: "Bundesliga", born: 1996},
-  {name: "Konrad Laimer", role: "DIF", team: "Bayern Monaco", value: 32, nation: "Austria", continent: "Europa", league: "Bundesliga", born: 1997},
-  {name: "Alphonso Davies", role: "DIF", team: "Bayern Monaco", value: 45, nation: "Canada", continent: "Nordamerica", league: "Bundesliga", born: 2000},
-  {name: "Joshua Kimmich", role: "CEN", team: "Bayern Monaco", value: 35, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1995},
-  {name: "Serge Gnabry", role: "ATT", team: "Bayern Monaco", value: 18, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1995},
-  {name: "Josip Stanišić", role: "DIF", team: "Bayern Monaco", value: 40, nation: "Croazia", continent: "Europa", league: "Bundesliga", born: 2000},
-  {name: "Hiroki Itō", role: "DIF", team: "Bayern Monaco", value: 18, nation: "Giappone", continent: "Asia", league: "Bundesliga", born: 1999},
-  {name: "Ismael Saibari", role: "CEN", team: "Bayern Monaco", value: 55, nation: "Marocco", continent: "Africa", league: "Bundesliga", born: 2001},
-  {name: "Nico Schlotterbeck", role: "DIF", team: "Borussia Dortmund", value: 55, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1999},
-  {name: "Gregor Kobel", role: "POR", team: "Borussia Dortmund", value: 40, nation: "Svizzera", continent: "Europa", league: "Bundesliga", born: 1997},
-  {name: "Waldemar Anton", role: "DIF", team: "Borussia Dortmund", value: 18, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1996},
-  {name: "Ramy Bensebaini", role: "DIF", team: "Borussia Dortmund", value: 7, nation: "Algeria", continent: "Africa", league: "Bundesliga", born: 1995},
-  {name: "Julian Ryerson", role: "DIF", team: "Borussia Dortmund", value: 25, nation: "Norvegia", continent: "Europa", league: "Bundesliga", born: 1997},
-  {name: "Felix Nmecha", role: "CEN", team: "Borussia Dortmund", value: 65, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 2000},
-  {name: "Marcel Sabitzer", role: "CEN", team: "Borussia Dortmund", value: 6, nation: "Austria", continent: "Europa", league: "Bundesliga", born: 1994},
-  {name: "Serhou Guirassy", role: "ATT", team: "Borussia Dortmund", value: 32, nation: "Guinea", continent: "Africa", league: "Bundesliga", born: 1996},
-  {name: "Maximilian Beier", role: "ATT", team: "Borussia Dortmund", value: 35, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 2002},
-  {name: "Emre Can", role: "CEN", team: "Borussia Dortmund", value: 3, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1994},
-  {name: "Joey Veerman", role: "CEN", team: "Borussia Dortmund", value: 25, nation: "Paesi Bassi", continent: "Europa", league: "Bundesliga", born: 1998},
-  {name: "Daniel Svensson", role: "DIF", team: "Borussia Dortmund", value: 22, nation: "Svezia", continent: "Europa", league: "Bundesliga", born: 2002},
-  {name: "Lucas Vázquez", role: "DIF", team: "Bayer Leverkusen", value: 1.5, nation: "Spagna", continent: "Europa", league: "Bundesliga", born: 1991},
-  {name: "Edmond Tapsoba", role: "DIF", team: "Bayer Leverkusen", value: 35, nation: "Burkina Faso", continent: "Africa", league: "Bundesliga", born: 1999},
-  {name: "Robert Andrich", role: "CEN", team: "Bayer Leverkusen", value: 5, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1994},
-  {name: "Patrik Schick", role: "ATT", team: "Bayer Leverkusen", value: 18, nation: "Repubblica Ceca", continent: "Europa", league: "Bundesliga", born: 1996},
-  {name: "Malik Tillman", role: "CEN", team: "Bayer Leverkusen", value: 30, nation: "Stati Uniti", continent: "Nordamerica", league: "Bundesliga", born: 2002},
-  {name: "Aleix García", role: "CEN", team: "Bayer Leverkusen", value: 20, nation: "Spagna", continent: "Europa", league: "Bundesliga", born: 1997},
-  {name: "Victor Boniface", role: "ATT", team: "Bayer Leverkusen", value: 5, nation: "Nigeria", continent: "Africa", league: "Bundesliga", born: 2000},
-  {name: "Moussa Diaby", role: "ATT", team: "Bayer Leverkusen", value: 25, nation: "Francia", continent: "Europa", league: "Bundesliga", born: 1999},
-  {name: "Mark Flekken", role: "POR", team: "Bayer Leverkusen", value: 6, nation: "Paesi Bassi", continent: "Europa", league: "Bundesliga", born: 1993},
-  {name: "Christopher Nkunku", role: "ATT", team: "RB Lipsia", value: 25, nation: "Francia", continent: "Europa", league: "Bundesliga", born: 1997},
-  {name: "Willi Orban", role: "DIF", team: "RB Lipsia", value: 5, nation: "Ungheria", continent: "Europa", league: "Bundesliga", born: 1992},
-  {name: "David Raum", role: "DIF", team: "RB Lipsia", value: 25, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1998},
-  {name: "Lukas Klostermann", role: "DIF", team: "RB Lipsia", value: 4, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1996},
-  {name: "Benjamin Henrichs", role: "DIF", team: "RB Lipsia", value: 7, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1997},
-  {name: "Ridle Baku", role: "DIF", team: "RB Lipsia", value: 12, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1998},
-  {name: "Nicolas Seiwald", role: "CEN", team: "RB Lipsia", value: 25, nation: "Austria", continent: "Europa", league: "Bundesliga", born: 2001},
-  {name: "Christoph Baumgartner", role: "CEN", team: "RB Lipsia", value: 40, nation: "Austria", continent: "Europa", league: "Bundesliga", born: 1999},
-  {name: "Antonio Nusa", role: "ATT", team: "RB Lipsia", value: 45, nation: "Norvegia", continent: "Europa", league: "Bundesliga", born: 2005},
-  {name: "Johan Bakayoko", role: "ATT", team: "RB Lipsia", value: 20, nation: "Belgio", continent: "Europa", league: "Bundesliga", born: 2003},
-  {name: "Maximilian Mittelstädt", role: "DIF", team: "Stoccarda", value: 18, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1997},
-  {name: "Angelo Stiller", role: "CEN", team: "Stoccarda", value: 45, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 2001},
-  {name: "Chris Führich", role: "ATT", team: "Stoccarda", value: 12, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1998},
-  {name: "Ermedin Demirović", role: "ATT", team: "Stoccarda", value: 22, nation: "Bosnia ed Erzegovina", continent: "Europa", league: "Bundesliga", born: 1998},
-  {name: "Deniz Undav", role: "ATT", team: "Stoccarda", value: 22, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1996},
-  {name: "Jamie Leweling", role: "ATT", team: "Stoccarda", value: 40, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 2001},
-  {name: "Bilal El Khannouss", role: "CEN", team: "Stoccarda", value: 35, nation: "Marocco", continent: "Africa", league: "Bundesliga", born: 2004},
-  {name: "Robin Koch", role: "DIF", team: "Eintracht Francoforte", value: 10, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1996},
-  {name: "Mario Götze", role: "CEN", team: "Eintracht Francoforte", value: 3, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 1992},
-  {name: "Fares Chaïbi", role: "CEN", team: "Eintracht Francoforte", value: 15, nation: "Algeria", continent: "Africa", league: "Bundesliga", born: 2002},
-  {name: "Jonathan Burkardt", role: "ATT", team: "Eintracht Francoforte", value: 30, nation: "Germania", continent: "Europa", league: "Bundesliga", born: 2000},
-  {name: "Ritsu Dōan", role: "ATT", team: "Eintracht Francoforte", value: 17, nation: "Giappone", continent: "Asia", league: "Bundesliga", born: 1998},
-  {name: "Vitinha", role: "CEN", team: "Paris Saint-Germain", value: 140, nation: "Portogallo", continent: "Europa", league: "Ligue 1", born: 2000},
-  {name: "João Neves", role: "CEN", team: "Paris Saint-Germain", value: 140, nation: "Portogallo", continent: "Europa", league: "Ligue 1", born: 2004},
-  {name: "Ousmane Dembélé", role: "ATT", team: "Paris Saint-Germain", value: 100, nation: "Francia", continent: "Europa", league: "Ligue 1", born: 1997},
-  {name: "Khvicha Kvaratskhelia", role: "ATT", team: "Paris Saint-Germain", value: 140, nation: "Georgia", continent: "Europa", league: "Ligue 1", born: 2001},
-  {name: "Désiré Doué", role: "ATT", team: "Paris Saint-Germain", value: 120, nation: "Francia", continent: "Europa", league: "Ligue 1", born: 2005},
-  {name: "Achraf Hakimi", role: "DIF", team: "Paris Saint-Germain", value: 80, nation: "Marocco", continent: "Africa", league: "Ligue 1", born: 1998},
-  {name: "Nuno Mendes", role: "DIF", team: "Paris Saint-Germain", value: 80, nation: "Portogallo", continent: "Europa", league: "Ligue 1", born: 2002},
-  {name: "Willian Pacho", role: "DIF", team: "Paris Saint-Germain", value: 80, nation: "Ecuador", continent: "Sudamerica", league: "Ligue 1", born: 2001},
-  {name: "Matvey Safonov", role: "POR", team: "Paris Saint-Germain", value: 30, nation: "Russia", continent: "Europa", league: "Ligue 1", born: 1999},
-  {name: "Lucas Hernández", role: "DIF", team: "Paris Saint-Germain", value: 18, nation: "Francia", continent: "Europa", league: "Ligue 1", born: 1996},
-  {name: "Fabián Ruiz", role: "CEN", team: "Paris Saint-Germain", value: 30, nation: "Spagna", continent: "Europa", league: "Ligue 1", born: 1996},
-  {name: "Ferran Torres", role: "ATT", team: "Paris Saint-Germain", value: 55, nation: "Spagna", continent: "Europa", league: "Ligue 1", born: 2000},
-  {name: "Ilya Zabarnyi", role: "DIF", team: "Paris Saint-Germain", value: 40, nation: "Ucraina", continent: "Europa", league: "Ligue 1", born: 2002},
-  {name: "Lucas Digne", role: "DIF", team: "Paris Saint-Germain", value: 6, nation: "Francia", continent: "Europa", league: "Ligue 1", born: 1993},
-  {name: "Warren Zaïre-Emery", role: "CEN", team: "Paris Saint-Germain", value: 80, nation: "Francia", continent: "Europa", league: "Ligue 1", born: 2006},
-  {name: "Marquinhos", role: "DIF", team: "Paris Saint-Germain", value: 28, nation: "Brasile", continent: "Sudamerica", league: "Ligue 1", born: 1994},
-  {name: "Timothy Weah", role: "DIF", team: "Olympique Marsiglia", value: 20, nation: "Stati Uniti", continent: "Nordamerica", league: "Ligue 1", born: 2000},
-  {name: "Amine Gouiri", role: "ATT", team: "Olympique Marsiglia", value: 30, nation: "Algeria", continent: "Africa", league: "Ligue 1", born: 2000},
-  {name: "Nayef Aguerd", role: "DIF", team: "Olympique Marsiglia", value: 15, nation: "Marocco", continent: "Africa", league: "Ligue 1", born: 1996},
-  {name: "Pierre-Emile Højbjerg", role: "CEN", team: "Olympique Marsiglia", value: 15, nation: "Danimarca", continent: "Europa", league: "Ligue 1", born: 1995},
-  {name: "Emerson Palmieri", role: "DIF", team: "Olympique Marsiglia", value: 9, nation: "Italia", continent: "Europa", league: "Ligue 1", born: 1994},
-  {name: "Vanderson", role: "DIF", team: "Monaco", value: 18, nation: "Brasile", continent: "Sudamerica", league: "Ligue 1", born: 2001},
-  {name: "Denis Zakaria", role: "CEN", team: "Monaco", value: 25, nation: "Svizzera", continent: "Europa", league: "Ligue 1", born: 1996},
-  {name: "Lamine Camara", role: "CEN", team: "Monaco", value: 55, nation: "Senegal", continent: "Africa", league: "Ligue 1", born: 2004},
-  {name: "Takumi Minamino", role: "ATT", team: "Monaco", value: 10, nation: "Giappone", continent: "Asia", league: "Ligue 1", born: 1995},
-  {name: "Aleksandr Golovin", role: "CEN", team: "Monaco", value: 18, nation: "Russia", continent: "Europa", league: "Ligue 1", born: 1996},
-  {name: "Folarin Balogun", role: "ATT", team: "Monaco", value: 50, nation: "Stati Uniti", continent: "Nordamerica", league: "Ligue 1", born: 2001},
-  {name: "Ansu Fati", role: "ATT", team: "Monaco", value: 15, nation: "Spagna", continent: "Europa", league: "Ligue 1", born: 2002},
-  {name: "Lukáš Hrádecký", role: "POR", team: "Monaco", value: 1.5, nation: "Finlandia", continent: "Europa", league: "Ligue 1", born: 1989},
-  {name: "Eric Dier", role: "DIF", team: "Monaco", value: 4, nation: "Inghilterra", continent: "Europa", league: "Ligue 1", born: 1994},
-  {name: "Mohammed Salisu", role: "DIF", team: "Monaco", value: 10, nation: "Ghana", continent: "Africa", league: "Ligue 1", born: 1999},
-  {name: "Nicolás Tagliafico", role: "DIF", team: "Olympique Lione", value: 4, nation: "Argentina", continent: "Sudamerica", league: "Ligue 1", born: 1992},
-  {name: "Corentin Tolisso", role: "CEN", team: "Olympique Lione", value: 10, nation: "Francia", continent: "Europa", league: "Ligue 1", born: 1994},
-  {name: "Ernest Nuamah", role: "ATT", team: "Olympique Lione", value: 12, nation: "Ghana", continent: "Africa", league: "Ligue 1", born: 2003},
-  {name: "Loïs Openda", role: "ATT", team: "Olympique Lione", value: 25, nation: "Belgio", continent: "Europa", league: "Ligue 1", born: 2000},
-  {name: "Moussa Niakhaté", role: "DIF", team: "Olympique Lione", value: 15, nation: "Senegal", continent: "Africa", league: "Ligue 1", born: 1996},
-  {name: "Pavel Šulc", role: "CEN", team: "Olympique Lione", value: 20, nation: "Repubblica Ceca", continent: "Europa", league: "Ligue 1", born: 2000},
-  {name: "Tanner Tessmann", role: "CEN", team: "Olympique Lione", value: 10, nation: "Stati Uniti", continent: "Nordamerica", league: "Ligue 1", born: 2001},
-  {name: "Olivier Giroud", role: "ATT", team: "Lilla", value: 1, nation: "Francia", continent: "Europa", league: "Ligue 1", born: 1986},
-  {name: "Nabil Bentaleb", role: "CEN", team: "Lilla", value: 4, nation: "Algeria", continent: "Africa", league: "Ligue 1", born: 1994},
-  {name: "Hákon Arnar Haraldsson", role: "CEN", team: "Lilla", value: 30, nation: "Islanda", continent: "Europa", league: "Ligue 1", born: 2003},
-  {name: "Berke Özer", role: "POR", team: "Lilla", value: 12, nation: "Turchia", continent: "Europa", league: "Ligue 1", born: 2000},
-  {name: "Ayase Ueda", role: "ATT", team: "Lilla", value: 20, nation: "Giappone", continent: "Asia", league: "Ligue 1", born: 1998},
-  {name: "Hamza Igamane", role: "ATT", team: "Lilla", value: 18, nation: "Marocco", continent: "Africa", league: "Ligue 1", born: 2002},
-  {name: "Moïse Bombito", role: "DIF", team: "Nizza", value: 7, nation: "Canada", continent: "Nordamerica", league: "Ligue 1", born: 2000},
-  {name: "Jonathan Clauss", role: "DIF", team: "Nizza", value: 4, nation: "Francia", continent: "Europa", league: "Ligue 1", born: 1992},
-  {name: "Hicham Boudaoui", role: "CEN", team: "Nizza", value: 12, nation: "Algeria", continent: "Africa", league: "Ligue 1", born: 1999},
-  {name: "Mohamed Abdelmonem", role: "DIF", team: "Nizza", value: 2, nation: "Egitto", continent: "Africa", league: "Ligue 1", born: 1999},
-  {name: "João Palhinha", role: "CEN", team: "Benfica", value: 15, nation: "Portogallo", continent: "Europa", league: "Liga Portugal", born: 1995},
-  {name: "Clément Lenglet", role: "DIF", team: "Benfica", value: 4, nation: "Francia", continent: "Europa", league: "Liga Portugal", born: 1995},
-  {name: "Anatoliy Trubin", role: "POR", team: "Benfica", value: 20, nation: "Ucraina", continent: "Europa", league: "Liga Portugal", born: 2001},
-  {name: "Tomás Araújo", role: "DIF", team: "Benfica", value: 35, nation: "Portogallo", continent: "Europa", league: "Liga Portugal", born: 2002},
-  {name: "Fredrik Aursnes", role: "CEN", team: "Benfica", value: 15, nation: "Norvegia", continent: "Europa", league: "Liga Portugal", born: 1995},
-  {name: "Georgiy Sudakov", role: "CEN", team: "Benfica", value: 25, nation: "Ucraina", continent: "Europa", league: "Liga Portugal", born: 2002},
-  {name: "Vangelis Pavlidis", role: "ATT", team: "Benfica", value: 35, nation: "Grecia", continent: "Europa", league: "Liga Portugal", born: 1998},
-  {name: "Dodi Lukébakio", role: "ATT", team: "Benfica", value: 15, nation: "Belgio", continent: "Europa", league: "Liga Portugal", born: 1997},
-  {name: "Jhon Durán", role: "ATT", team: "Benfica", value: 15, nation: "Colombia", continent: "Sudamerica", league: "Liga Portugal", born: 2003},
-  {name: "Jakub Kamiński", role: "ATT", team: "Benfica", value: 17, nation: "Polonia", continent: "Europa", league: "Liga Portugal", born: 2002},
-  {name: "Leandro Barreiro", role: "CEN", team: "Benfica", value: 20, nation: "Lussemburgo", continent: "Europa", league: "Liga Portugal", born: 2000},
-  {name: "Rafa Silva", role: "ATT", team: "Benfica", value: 3, nation: "Portogallo", continent: "Europa", league: "Liga Portugal", born: 1993},
-  {name: "Diogo Costa", role: "POR", team: "Porto", value: 40, nation: "Portogallo", continent: "Europa", league: "Liga Portugal", born: 1999},
-  {name: "Chris Smalling", role: "DIF", team: "Porto", value: 1, nation: "Inghilterra", continent: "Europa", league: "Liga Portugal", born: 1989},
-  {name: "Jakub Kiwior", role: "DIF", team: "Porto", value: 40, nation: "Polonia", continent: "Europa", league: "Liga Portugal", born: 2000},
-  {name: "Jan Bednarek", role: "DIF", team: "Porto", value: 11, nation: "Polonia", continent: "Europa", league: "Liga Portugal", born: 1996},
-  {name: "Santiago Giménez", role: "ATT", team: "Porto", value: 18, nation: "Messico", continent: "Nordamerica", league: "Liga Portugal", born: 2001},
-  {name: "André Silva", role: "ATT", team: "Porto", value: 5, nation: "Portogallo", continent: "Europa", league: "Liga Portugal", born: 1995},
-  {name: "Hwang In-beom", role: "CEN", team: "Porto", value: 7, nation: "Corea del Sud", continent: "Asia", league: "Liga Portugal", born: 1996},
-  {name: "Gonçalo Inácio", role: "DIF", team: "Sporting Lisbona", value: 35, nation: "Portogallo", continent: "Europa", league: "Liga Portugal", born: 2001},
-  {name: "Zeno Debast", role: "DIF", team: "Sporting Lisbona", value: 25, nation: "Belgio", continent: "Europa", league: "Liga Portugal", born: 2003},
-  {name: "Maximiliano Araújo", role: "DIF", team: "Sporting Lisbona", value: 40, nation: "Uruguay", continent: "Sudamerica", league: "Liga Portugal", born: 2000},
-  {name: "Geny Catamo", role: "ATT", team: "Sporting Lisbona", value: 35, nation: "Mozambico", continent: "Africa", league: "Liga Portugal", born: 2001},
-  {name: "Fotis Ioannidis", role: "ATT", team: "Sporting Lisbona", value: 16, nation: "Grecia", continent: "Europa", league: "Liga Portugal", born: 2000},
-  {name: "Victor Osimhen", role: "ATT", team: "Galatasaray", value: 65, nation: "Nigeria", continent: "Africa", league: "Süper Lig", born: 1998},
-  {name: "Rafael Leão", role: "ATT", team: "Galatasaray", value: 40, nation: "Portogallo", continent: "Europa", league: "Süper Lig", born: 1999},
-  {name: "Mario Lemina", role: "CEN", team: "Galatasaray", value: 4, nation: "Gabon", continent: "Africa", league: "Süper Lig", born: 1993},
-  {name: "Wilfried Singo", role: "DIF", team: "Galatasaray", value: 20, nation: "Costa d'Avorio", continent: "Africa", league: "Süper Lig", born: 2000},
-  {name: "Uğurcan Çakır", role: "POR", team: "Galatasaray", value: 13, nation: "Turchia", continent: "Europa", league: "Süper Lig", born: 1996},
-  {name: "Davinson Sánchez", role: "DIF", team: "Galatasaray", value: 16, nation: "Colombia", continent: "Sudamerica", league: "Süper Lig", born: 1996},
-  {name: "Abdülkerim Bardakcı", role: "DIF", team: "Galatasaray", value: 6, nation: "Turchia", continent: "Europa", league: "Süper Lig", born: 1994},
-  {name: "Lucas Torreira", role: "CEN", team: "Galatasaray", value: 9, nation: "Uruguay", continent: "Sudamerica", league: "Süper Lig", born: 1996},
-  {name: "İlkay Gündoğan", role: "CEN", team: "Galatasaray", value: 1.5, nation: "Germania", continent: "Europa", league: "Süper Lig", born: 1990},
-  {name: "Barış Alper Yılmaz", role: "ATT", team: "Galatasaray", value: 30, nation: "Turchia", continent: "Europa", league: "Süper Lig", born: 2000},
-  {name: "Yunus Akgün", role: "ATT", team: "Galatasaray", value: 18, nation: "Turchia", continent: "Europa", league: "Süper Lig", born: 2000},
-  {name: "Leroy Sané", role: "ATT", team: "Galatasaray", value: 15, nation: "Germania", continent: "Europa", league: "Süper Lig", born: 1996},
-  {name: "Ederson Moraes", role: "POR", team: "Fenerbahçe", value: 8, nation: "Brasile", continent: "Sudamerica", league: "Süper Lig", born: 1993},
-  {name: "Romelu Lukaku", role: "ATT", team: "Fenerbahçe", value: 6, nation: "Belgio", continent: "Europa", league: "Süper Lig", born: 1993},
-  {name: "Matteo Guendouzi", role: "CEN", team: "Fenerbahçe", value: 27, nation: "Francia", continent: "Europa", league: "Süper Lig", born: 1999},
-  {name: "Marco Asensio", role: "ATT", team: "Fenerbahçe", value: 12, nation: "Spagna", continent: "Europa", league: "Süper Lig", born: 1996},
-  {name: "Vedat Muriqi", role: "ATT", team: "Fenerbahçe", value: 7, nation: "Kosovo", continent: "Europa", league: "Süper Lig", born: 1994},
-  {name: "Nathan Aké", role: "DIF", team: "Fenerbahçe", value: 10, nation: "Paesi Bassi", continent: "Europa", league: "Süper Lig", born: 1995},
-  {name: "Nélson Semedo", role: "DIF", team: "Fenerbahçe", value: 4, nation: "Portogallo", continent: "Europa", league: "Süper Lig", born: 1993},
-  {name: "Milan Škriniar", role: "DIF", team: "Fenerbahçe", value: 8, nation: "Slovacchia", continent: "Europa", league: "Süper Lig", born: 1995},
-  {name: "İsmail Yüksek", role: "CEN", team: "Fenerbahçe", value: 15, nation: "Turchia", continent: "Europa", league: "Süper Lig", born: 1999},
-  {name: "Kerem Aktürkoğlu", role: "ATT", team: "Fenerbahçe", value: 18, nation: "Turchia", continent: "Europa", league: "Süper Lig", born: 1998},
-  {name: "N'Golo Kanté", role: "CEN", team: "Fenerbahçe", value: 4, nation: "Francia", continent: "Europa", league: "Süper Lig", born: 1991},
-  {name: "Dušan Vlahović", role: "ATT", team: "Beşiktaş", value: 32, nation: "Serbia", continent: "Europa", league: "Süper Lig", born: 2000},
-  {name: "Leandro Trossard", role: "ATT", team: "Beşiktaş", value: 18, nation: "Belgio", continent: "Europa", league: "Süper Lig", born: 1994},
-  {name: "Wilfred Ndidi", role: "CEN", team: "Beşiktaş", value: 6, nation: "Nigeria", continent: "Africa", league: "Süper Lig", born: 1996},
-  {name: "Orkun Kökçü", role: "CEN", team: "Beşiktaş", value: 28, nation: "Turchia", continent: "Europa", league: "Süper Lig", born: 2000},
-  {name: "Emmanuel Agbadou", role: "DIF", team: "Beşiktaş", value: 14, nation: "Costa d'Avorio", continent: "Africa", league: "Süper Lig", born: 1997},
-  {name: "Julian Brandt", role: "CEN", team: "Ajax", value: 12, nation: "Germania", continent: "Europa", league: "Eredivisie", born: 1996},
-  {name: "Yves Bissouma", role: "CEN", team: "Ajax", value: 10, nation: "Mali", continent: "Africa", league: "Eredivisie", born: 1996},
-  {name: "Davy Klaassen", role: "CEN", team: "Ajax", value: 2, nation: "Paesi Bassi", continent: "Europa", league: "Eredivisie", born: 1993},
-  {name: "Thilo Kehrer", role: "DIF", team: "Ajax", value: 8, nation: "Germania", continent: "Europa", league: "Eredivisie", born: 1996},
-  {name: "Marc-André ter Stegen", role: "POR", team: "Ajax", value: 3, nation: "Germania", continent: "Europa", league: "Eredivisie", born: 1992},
-  {name: "Sofyan Amrabat", role: "CEN", team: "Ajax", value: 8, nation: "Marocco", continent: "Africa", league: "Eredivisie", born: 1996},
-  {name: "Viktor Tsygankov", role: "ATT", team: "Ajax", value: 15, nation: "Ucraina", continent: "Europa", league: "Eredivisie", born: 1997},
-  {name: "Steven Berghuis", role: "ATT", team: "Ajax", value: 2, nation: "Paesi Bassi", continent: "Europa", league: "Eredivisie", born: 1991},
-  {name: "Kasper Dolberg", role: "ATT", team: "Ajax", value: 7, nation: "Danimarca", continent: "Europa", league: "Eredivisie", born: 1997},
-  {name: "Simon Adingra", role: "ATT", team: "Ajax", value: 22, nation: "Costa d'Avorio", continent: "Africa", league: "Eredivisie", born: 2002},
-  {name: "Sergiño Dest", role: "DIF", team: "PSV", value: 22, nation: "Stati Uniti", continent: "Nordamerica", league: "Eredivisie", born: 2000},
-  {name: "Filip Kostić", role: "DIF", team: "PSV", value: 2, nation: "Serbia", continent: "Europa", league: "Eredivisie", born: 1992},
-  {name: "Ivan Perišić", role: "ATT", team: "PSV", value: 1, nation: "Croazia", continent: "Europa", league: "Eredivisie", born: 1989},
-  {name: "Ricardo Pepi", role: "ATT", team: "PSV", value: 30, nation: "Stati Uniti", continent: "Nordamerica", league: "Eredivisie", born: 2003},
-  {name: "Dennis Man", role: "ATT", team: "PSV", value: 12, nation: "Romania", continent: "Europa", league: "Eredivisie", born: 1998},
-  {name: "Lutsharel Geertruida", role: "DIF", team: "PSV", value: 20, nation: "Paesi Bassi", continent: "Europa", league: "Eredivisie", born: 2000},
-  {name: "Jerdy Schouten", role: "CEN", team: "PSV", value: 16, nation: "Paesi Bassi", continent: "Europa", league: "Eredivisie", born: 1997},
-  {name: "Kieran Tierney", role: "DIF", team: "Celtic", value: 6, nation: "Scozia", continent: "Europa", league: "Scottish Premiership", born: 1997},
-  {name: "Callum McGregor", role: "CEN", team: "Celtic", value: 1.5, nation: "Scozia", continent: "Europa", league: "Scottish Premiership", born: 1993},
-  {name: "Cameron Carter-Vickers", role: "DIF", team: "Celtic", value: 8, nation: "Stati Uniti", continent: "Nordamerica", league: "Scottish Premiership", born: 1997},
-  {name: "Sadio Mané", role: "ATT", team: "Al-Nassr", value: 6, nation: "Senegal", continent: "Africa", league: "Saudi Pro League", born: 1992},
-  {name: "Iñigo Martínez", role: "DIF", team: "Al-Nassr", value: 4, nation: "Spagna", continent: "Europa", league: "Saudi Pro League", born: 1991},
-  {name: "Cristiano Ronaldo", role: "ATT", team: "Al-Nassr", value: 10, nation: "Portogallo", continent: "Europa", league: "Saudi Pro League", born: 1985},
-  {name: "João Félix", role: "ATT", team: "Al-Nassr", value: 28, nation: "Portogallo", continent: "Europa", league: "Saudi Pro League", born: 1999},
-  {name: "Kingsley Coman", role: "ATT", team: "Al-Nassr", value: 20, nation: "Francia", continent: "Europa", league: "Saudi Pro League", born: 1996},
-  {name: "Bento", role: "POR", team: "Al-Nassr", value: 8, nation: "Brasile", continent: "Sudamerica", league: "Saudi Pro League", born: 1999},
-  {name: "Rúben Neves", role: "CEN", team: "Al-Hilal", value: 25, nation: "Portogallo", continent: "Europa", league: "Saudi Pro League", born: 1997},
-  {name: "Theo Hernández", role: "DIF", team: "Al-Hilal", value: 20, nation: "Francia", continent: "Europa", league: "Saudi Pro League", born: 1997},
-  {name: "Gabriel Martinelli", role: "ATT", team: "Al-Hilal", value: 45, nation: "Brasile", continent: "Sudamerica", league: "Saudi Pro League", born: 2001},
-  {name: "Ollie Watkins", role: "ATT", team: "Al-Hilal", value: 25, nation: "Inghilterra", continent: "Europa", league: "Saudi Pro League", born: 1995},
-  {name: "Yassine Bounou", role: "POR", team: "Al-Hilal", value: 3, nation: "Marocco", continent: "Africa", league: "Saudi Pro League", born: 1991},
-  {name: "Kalidou Koulibaly", role: "DIF", team: "Al-Hilal", value: 5, nation: "Senegal", continent: "Africa", league: "Saudi Pro League", born: 1991},
-  {name: "Sergej Milinković-Savić", role: "CEN", team: "Al-Hilal", value: 12, nation: "Serbia", continent: "Europa", league: "Saudi Pro League", born: 1995},
-  {name: "Houssem Aouar", role: "CEN", team: "Al-Ittihad", value: 8, nation: "Algeria", continent: "Africa", league: "Saudi Pro League", born: 1998},
-  {name: "Danilo Pereira", role: "CEN", team: "Al-Ittihad", value: 4, nation: "Portogallo", continent: "Europa", league: "Saudi Pro League", born: 1991},
-  {name: "Youssef En-Nesyri", role: "ATT", team: "Al-Ittihad", value: 17, nation: "Marocco", continent: "Africa", league: "Saudi Pro League", born: 1997},
-  {name: "Predrag Rajković", role: "POR", team: "Al-Ittihad", value: 7, nation: "Serbia", continent: "Europa", league: "Saudi Pro League", born: 1995},
-  {name: "Richard Ríos", role: "CEN", team: "Al-Ittihad", value: 25, nation: "Colombia", continent: "Sudamerica", league: "Saudi Pro League", born: 2000},
-  {name: "Karim Benzema", role: "ATT", team: "Svincolato", value: 3, nation: "Francia", continent: "Europa", league: "Altro", born: 1987},
-  {name: "Steven Bergwijn", role: "ATT", team: "Al-Ittihad", value: 10, nation: "Paesi Bassi", continent: "Europa", league: "Saudi Pro League", born: 1997},
-  {name: "Ivan Toney", role: "ATT", team: "Al-Ahli", value: 20, nation: "Inghilterra", continent: "Europa", league: "Saudi Pro League", born: 1996},
-  {name: "Merih Demiral", role: "DIF", team: "Al-Ahli", value: 12, nation: "Turchia", continent: "Europa", league: "Saudi Pro League", born: 1998},
-  {name: "Édouard Mendy", role: "POR", team: "Al-Ahli", value: 4, nation: "Senegal", continent: "Africa", league: "Saudi Pro League", born: 1992},
-  {name: "Roger Ibañez", role: "DIF", team: "Al-Ahli", value: 18, nation: "Brasile", continent: "Sudamerica", league: "Saudi Pro League", born: 1998},
-  {name: "Francisco Trincão", role: "ATT", team: "Al-Ahli", value: 40, nation: "Portogallo", continent: "Europa", league: "Saudi Pro League", born: 1999},
-  {name: "Lionel Messi", role: "ATT", team: "Inter Miami", value: 15, nation: "Argentina", continent: "Sudamerica", league: "MLS", born: 1987},
-  {name: "Rodrigo De Paul", role: "CEN", team: "Inter Miami", value: 14, nation: "Argentina", continent: "Sudamerica", league: "MLS", born: 1994},
-  {name: "Casemiro", role: "CEN", team: "Inter Miami", value: 6, nation: "Brasile", continent: "Sudamerica", league: "MLS", born: 1992},
-  {name: "Neymar", role: "ATT", team: "Santos", value: 8, nation: "Brasile", continent: "Sudamerica", league: "Brasileirão", born: 1992}
+const dailyCalendar = [
+  "João Félix",                  // N° 1 · 16 nov 2026
+  "Myles Lewis-Skelly",          // N° 2 · 17 nov 2026
+  "Alejandro Garnacho",          // N° 3 · 18 nov 2026
+  "Wataru Endō",                 // N° 4 · 19 nov 2026
+  "Jesper Karlström",            // N° 5 · 20 nov 2026
+  "Miloš Kerkez",                // N° 6 · 21 nov 2026
+  "Estêvão",                     // N° 7 · 22 nov 2026
+  "Achraf Hakimi",               // N° 8 · 23 nov 2026
+  "Predrag Rajković",            // N° 9 · 24 nov 2026
+  "Lewis Dunk",                  // N° 10 · 25 nov 2026
+  "Diego Gómez",                 // N° 11 · 26 nov 2026
+  "Maxim De Cuyper",             // N° 12 · 27 nov 2026
+  "Bukayo Saka",                 // N° 13 · 28 nov 2026
+  "Jamie Vardy",                 // N° 14 · 29 nov 2026
+  "Giacomo Raspadori",           // N° 15 · 30 nov 2026
+  "Alejandro Grimaldo",          // N° 16 · 1 dic 2026
+  "Felix Nmecha",                // N° 17 · 2 dic 2026
+  "Leon Goretzka",               // N° 18 · 3 dic 2026
+  "Ferran Torres",               // N° 19 · 4 dic 2026
+  "Ollie Watkins",               // N° 20 · 5 dic 2026
+  "Nicolò Zaniolo",              // N° 21 · 6 dic 2026
+  "Dean Henderson",              // N° 22 · 7 dic 2026
+  "Jan Oblak",                   // N° 23 · 8 dic 2026
+  "Jarell Quansah",              // N° 24 · 9 dic 2026
+  "Kieran Trippier",             // N° 25 · 10 dic 2026
+  "Marco Carnesecchi",           // N° 26 · 11 dic 2026
+  "Abdukodir Khusanov",          // N° 27 · 12 dic 2026
+  "Fabinho",                     // N° 28 · 13 dic 2026
+  "Mario Gila",                  // N° 29 · 14 dic 2026
+  "Ian Maatsen",                 // N° 30 · 15 dic 2026
+  "Senny Mayulu",                // N° 31 · 16 dic 2026
+  "Lamine Yamal",                // N° 32 · 17 dic 2026
+  "Serhou Guirassy",             // N° 33 · 18 dic 2026
+  "Yankuba Minteh",              // N° 34 · 19 dic 2026
+  "Andrea Belotti",              // N° 35 · 20 dic 2026
+  "Martin Baturina",             // N° 36 · 21 dic 2026
+  "Conor Bradley",               // N° 37 · 22 dic 2026
+  "N'Golo Kanté",                // N° 38 · 23 dic 2026
+  "Nico Williams",               // N° 39 · 24 dic 2026
+  "Lorenzo Lucca",               // N° 40 · 25 dic 2026
+  "Daniel Svensson",             // N° 41 · 26 dic 2026
+  "Honest Ahanor",               // N° 42 · 27 dic 2026
+  "Robin Risser",                // N° 43 · 28 dic 2026
+  "Neymar",                      // N° 44 · 29 dic 2026
+  "Yann Bisseck",                // N° 45 · 30 dic 2026
+  "Matt O'Riley",                // N° 46 · 31 dic 2026
+  "Marc Cucurella",              // N° 47 · 1 gen 2027
+  "Ismael Saibari",              // N° 48 · 2 gen 2027
+  "Georgiy Sudakov",             // N° 49 · 3 gen 2027
+  "Benjamin Šeško",              // N° 50 · 4 gen 2027
+  "Giovanni Di Lorenzo",         // N° 51 · 5 gen 2027
+  "Ángel Di María",              // N° 52 · 6 gen 2027
+  "Moisés Caicedo",              // N° 53 · 7 gen 2027
+  "Andy Diouf",                  // N° 54 · 8 gen 2027
+  "Matvey Safonov",              // N° 55 · 9 gen 2027
+  "Alejandro Balde",             // N° 56 · 10 gen 2027
+  "Christian Kofane",            // N° 57 · 11 gen 2027
+  "Mason Mount",                 // N° 58 · 12 gen 2027
+  "Tomás Araújo",                // N° 59 · 13 gen 2027
+  "Franck Kessié",               // N° 60 · 14 gen 2027
+  "Mikkel Damsgaard",            // N° 61 · 15 gen 2027
+  "Gabri Veiga",                 // N° 62 · 16 gen 2027
+  "Georges Mikautadze",          // N° 63 · 17 gen 2027
+  "Moussa Diaby",                // N° 64 · 18 gen 2027
+  "Davide Frattesi",             // N° 65 · 19 gen 2027
+  "Julio Enciso",                // N° 66 · 20 gen 2027
+  "Warren Zaïre-Emery",          // N° 67 · 21 gen 2027
+  "Matteo Guendouzi",            // N° 68 · 22 gen 2027
+  "Antonee Robinson",            // N° 69 · 23 gen 2027
+  "Gianluca Scamacca",           // N° 70 · 24 gen 2027
+  "Carlos Espí",                 // N° 71 · 25 gen 2027
+  "Castello Lukeba",             // N° 72 · 26 gen 2027
+  "Jarrod Bowen",                // N° 73 · 27 gen 2027
+  "Jordan Henderson",            // N° 74 · 28 gen 2027
+  "Matías Soulé",                // N° 75 · 29 gen 2027
+  "Alex Sandro",                 // N° 76 · 30 gen 2027
+  "Nordi Mukiele",               // N° 77 · 31 gen 2027
+  "Federico Valverde",           // N° 78 · 1 feb 2027
+  "David Alaba",                 // N° 79 · 2 feb 2027
+  "Malik Tillman",               // N° 80 · 3 feb 2027
+  "Amine Gouiri",                // N° 81 · 4 feb 2027
+  "Jaka Bijol",                  // N° 82 · 5 feb 2027
+  "Alessio Romagnoli",           // N° 83 · 6 feb 2027
+  "Teun Koopmeiners",            // N° 84 · 7 feb 2027
+  "Dango Ouattara",              // N° 85 · 8 feb 2027
+  "Antony",                      // N° 86 · 9 feb 2027
+  "Robert Lewandowski",          // N° 87 · 10 feb 2027
+  "Guéla Doué",                  // N° 88 · 11 feb 2027
+  "Anthony Elanga",              // N° 89 · 12 feb 2027
+  "Rasmus Højlund",              // N° 90 · 13 feb 2027
+  "Maximiliano Araújo",          // N° 91 · 14 feb 2027
+  "João Neves",                  // N° 92 · 15 feb 2027
+  "João Gomes",                  // N° 93 · 16 feb 2027
+  "John Stones",                 // N° 94 · 17 feb 2027
+  "Wojciech Szczęsny",           // N° 95 · 18 feb 2027
+  "Harry Kane",                  // N° 96 · 19 feb 2027
+  "Kingsley Coman",              // N° 97 · 20 feb 2027
+  "Noussair Mazraoui",           // N° 98 · 21 feb 2027
+  "Charles De Ketelaere",        // N° 99 · 22 feb 2027
+  "Marco Palestra",              // N° 100 · 23 feb 2027
+  "Victor Froholdt",             // N° 101 · 24 feb 2027
+  "Brahim Díaz",                 // N° 102 · 25 feb 2027
+  "Afonso Moreira",              // N° 103 · 26 feb 2027
+  "Willy Gnonto",                // N° 104 · 27 feb 2027
+  "Piero Hincapié",              // N° 105 · 28 feb 2027
+  "Vitinha",                     // N° 106 · 1 mar 2027
+  "Andreas Schjelderup",         // N° 107 · 2 mar 2027
+  "Charalampos Kostoulas",       // N° 108 · 3 mar 2027
+  "Samuel Chukwueze",            // N° 109 · 4 mar 2027
+  "Frenkie de Jong",             // N° 110 · 5 mar 2027
+  "Rúben Neves",                 // N° 111 · 6 mar 2027
+  "Neil El Aynaoui",             // N° 112 · 7 mar 2027
+  "Mikel Merino",                // N° 113 · 8 mar 2027
+  "Nicolò Barella",              // N° 114 · 9 mar 2027
+  "Diogo Costa",                 // N° 115 · 10 mar 2027
+  "Cole Palmer",                 // N° 116 · 11 mar 2027
+  "Ayase Ueda",                  // N° 117 · 12 mar 2027
+  "Bernardo Silva",              // N° 118 · 13 mar 2027
+  "Ivan Provedel",               // N° 119 · 14 mar 2027
+  "Maximilian Beier",            // N° 120 · 15 mar 2027
+  "Kai Havertz",                 // N° 121 · 16 mar 2027
+  "José Manuel López",           // N° 122 · 17 mar 2027
+  "Éderson",                     // N° 123 · 18 mar 2027
+  "Antoine Semenyo",             // N° 124 · 19 mar 2027
+  "Santiago Giménez",            // N° 125 · 20 mar 2027
+  "Karim Adeyemi",               // N° 126 · 21 mar 2027
+  "Luis Díaz",                   // N° 127 · 22 mar 2027
+  "Nicolas Jackson",             // N° 128 · 23 mar 2027
+  "Nick Woltemade",              // N° 129 · 24 mar 2027
+  "Pavel Šulc",                  // N° 130 · 25 mar 2027
+  "Mateo Retegui",               // N° 131 · 26 mar 2027
+  "Joshua Zirkzee",              // N° 132 · 27 mar 2027
+  "Raphinha",                    // N° 133 · 28 mar 2027
+  "Fikayo Tomori",               // N° 134 · 29 mar 2027
+  "Tijjani Reijnders",           // N° 135 · 30 mar 2027
+  "Jamal Musiala",               // N° 136 · 31 mar 2027
+  "Harvey Barnes",               // N° 137 · 1 apr 2027
+  "Douglas Luiz",                // N° 138 · 2 apr 2027
+  "Vitor Roque",                 // N° 139 · 3 apr 2027
+  "Bradley Barcola",             // N° 140 · 4 apr 2027
+  "Rodri",                       // N° 141 · 5 apr 2027
+  "Lucas Hernández",             // N° 142 · 6 apr 2027
+  "Igor Matanović",              // N° 143 · 7 apr 2027
+  "Lorenzo Pellegrini",          // N° 144 · 8 apr 2027
+  "Rico Lewis",                  // N° 145 · 9 apr 2027
+  "Victor Osimhen",              // N° 146 · 10 apr 2027
+  "Calvin Bassey",               // N° 147 · 11 apr 2027
+  "Federico Gatti",              // N° 148 · 12 apr 2027
+  "Isco",                        // N° 149 · 13 apr 2027
+  "William Gomes",               // N° 150 · 14 apr 2027
+  "Josip Stanišić",              // N° 151 · 15 apr 2027
+  "Leny Yoro",                   // N° 152 · 16 apr 2027
+  "Ilya Zabarnyi",               // N° 153 · 17 apr 2027
+  "Giovanni Simeone",            // N° 154 · 18 apr 2027
+  "Felipe Anderson",             // N° 155 · 19 apr 2027
+  "Joe Rodon",                   // N° 156 · 20 apr 2027
+  "Arda Güler",                  // N° 157 · 21 apr 2027
+  "Bilal El Khannouss",          // N° 158 · 22 apr 2027
+  "Koni De Winter",              // N° 159 · 23 apr 2027
+  "Stefan de Vrij",              // N° 160 · 24 apr 2027
+  "Noni Madueke",                // N° 161 · 25 apr 2027
+  "Nemanja Matić",               // N° 162 · 26 apr 2027
+  "Johan Manzambi",              // N° 163 · 27 apr 2027
+  "Kyle Walker",                 // N° 164 · 28 apr 2027
+  "Antonio Rüdiger",             // N° 165 · 29 apr 2027
+  "Mika Godts",                  // N° 166 · 30 apr 2027
+  "Deniz Undav",                 // N° 167 · 1 mag 2027
+  "Martin Ødegaard",             // N° 168 · 2 mag 2027
+  "Romelu Lukaku",               // N° 169 · 3 mag 2027
+  "Henrikh Mkhitaryan",          // N° 170 · 4 mag 2027
+  "Matheus Cunha",               // N° 171 · 5 mag 2027
+  "Yan Diomande",                // N° 172 · 6 mag 2027
+  "Simon Adingra",               // N° 173 · 7 mag 2027
+  "Alessandro Bastoni",          // N° 174 · 8 mag 2027
+  "Nico Schlotterbeck",          // N° 175 · 9 mag 2027
+  "Morgan Gibbs-White",          // N° 176 · 10 mag 2027
+  "Désiré Doué",                 // N° 177 · 11 mag 2027
+  "Danilo Santos",               // N° 178 · 12 mag 2027
+  "Daniel Maldini",              // N° 179 · 13 mag 2027
+  "Erling Haaland",              // N° 180 · 14 mag 2027
+  "Ibrahima Konaté",             // N° 181 · 15 mag 2027
+  "Nicolas Seiwald",             // N° 182 · 16 mag 2027
+  "Dušan Vlahović",              // N° 183 · 17 mag 2027
+  "Romeo Lavia",                 // N° 184 · 18 mag 2027
+  "Alex Meret",                  // N° 185 · 19 mag 2027
+  "Yoane Wissa",                 // N° 186 · 20 mag 2027
+  "Thomas Müller",               // N° 187 · 21 mag 2027
+  "Mikel Oyarzabal",             // N° 188 · 22 mag 2027
+  "Nicolò Fagioli",              // N° 189 · 23 mag 2027
+  "Aleksandar Pavlović",         // N° 190 · 24 mag 2027
+  "Ismaëlo Ganiou",              // N° 191 · 25 mag 2027
+  "Nico González",               // N° 192 · 26 mag 2027
+  "Joel Ordóñez",                // N° 193 · 27 mag 2027
+  "Benjamin Pavard",             // N° 194 · 28 mag 2027
+  "Ismaïla Sarr",                // N° 195 · 29 mag 2027
+  "Natan",                       // N° 196 · 30 mag 2027
+  "Hirving Lozano",              // N° 197 · 31 mag 2027
+  "Edin Džeko",                  // N° 198 · 1 giu 2027
+  "Carlos Augusto",              // N° 199 · 2 giu 2027
+  "Patrick Dorgu",               // N° 200 · 3 giu 2027
+  "Folarin Balogun",             // N° 201 · 4 giu 2027
+  "Vangelis Pavlidis",           // N° 202 · 5 giu 2027
+  "Alexander Isak",              // N° 203 · 6 giu 2027
+  "Strahinja Pavlović",          // N° 204 · 7 giu 2027
+  "Dani Olmo",                   // N° 205 · 8 giu 2027
+  "Alphonso Davies",             // N° 206 · 9 giu 2027
+  "Jørgen Strand Larsen",        // N° 207 · 10 giu 2027
+  "Jakub Kiwior",                // N° 208 · 11 giu 2027
+  "David de Gea",                // N° 209 · 12 giu 2027
+  "Andrey Santos",               // N° 210 · 13 giu 2027
+  "Marcos Llorente",             // N° 211 · 14 giu 2027
+  "Richard Ríos",                // N° 212 · 15 giu 2027
+  "Bryan Cristante",             // N° 213 · 16 giu 2027
+  "Jamie Leweling",              // N° 214 · 17 giu 2027
+  "Rúben Dias",                  // N° 215 · 18 giu 2027
+  "Willian Pacho",               // N° 216 · 19 giu 2027
+  "Marco Reus",                  // N° 217 · 20 giu 2027
+  "Kenan Yıldız",                // N° 218 · 21 giu 2027
+  "Manuel Ugarte",               // N° 219 · 22 giu 2027
+  "Thibaut Courtois",            // N° 220 · 23 giu 2027
+  "Rodrigo De Paul",             // N° 221 · 24 giu 2027
+  "Julian Ryerson",              // N° 222 · 25 giu 2027
+  "Dominik Szoboszlai",          // N° 223 · 26 giu 2027
+  "Andrea Cambiaso",             // N° 224 · 27 giu 2027
+  "Tyler Morton",                // N° 225 · 28 giu 2027
+  "Gabriel Martinelli",          // N° 226 · 29 giu 2027
+  "Sávio",                       // N° 227 · 30 giu 2027
+  "João Cancelo",                // N° 228 · 1 lug 2027
+  "Guglielmo Vicario",           // N° 229 · 2 lug 2027
+  "Joshua Kimmich",              // N° 230 · 3 lug 2027
+  "Quinten Timber",              // N° 231 · 4 lug 2027
+  "Karim Benzema",               // N° 232 · 5 lug 2027
+  "Pierre Kalulu",               // N° 233 · 6 lug 2027
+  "Geovany Quenda",              // N° 234 · 7 lug 2027
+  "Lee Kang-in",                 // N° 235 · 8 lug 2027
+  "Mohamed Salah",               // N° 236 · 9 lug 2027
+  "Nathaniel Brown",             // N° 237 · 10 lug 2027
+  "Mile Svilar",                 // N° 238 · 11 lug 2027
+  "Ezri Konsa",                  // N° 239 · 12 lug 2027
+  "Maghnes Akliouche",           // N° 240 · 13 lug 2027
+  "Jorginho",                    // N° 241 · 14 lug 2027
+  "Justin Kluivert",             // N° 242 · 15 lug 2027
+  "Nico Paz",                    // N° 243 · 16 lug 2027
+  "Jude Bellingham",             // N° 244 · 17 lug 2027
+  "Gregor Kobel",                // N° 245 · 18 lug 2027
+  "Kerem Aktürkoğlu",            // N° 246 · 19 lug 2027
+  "Jean-Philippe Mateta",        // N° 247 · 20 lug 2027
+  "Leonardo Balerdi",            // N° 248 · 21 lug 2027
+  "Reece James",                 // N° 249 · 22 lug 2027
+  "Nicolò Tresoldi",             // N° 250 · 23 lug 2027
+  "Anthony Gordon",              // N° 251 · 24 lug 2027
+  "Joaquín Panichelli",          // N° 252 · 25 lug 2027
+  "Curtis Jones",                // N° 253 · 26 lug 2027
+  "Antonio Nusa",                // N° 254 · 27 lug 2027
+  "Marcus Rashford",             // N° 255 · 28 lug 2027
+  "Marc-André ter Stegen",       // N° 256 · 29 lug 2027
+  "Wesley",                      // N° 257 · 30 lug 2027
+  "Levi Colwill",                // N° 258 · 31 lug 2027
+  "Alberto Moleiro",             // N° 259 · 1 ago 2027
+  "Wilfried Singo",              // N° 260 · 2 ago 2027
+  "Kim Min-jae",                 // N° 261 · 3 ago 2027
+  "Ayyoub Bouaddi",              // N° 262 · 4 ago 2027
+  "Luka Modrić",                 // N° 263 · 5 ago 2027
+  "Khvicha Kvaratskhelia",       // N° 264 · 6 ago 2027
+  "Thiago Silva",                // N° 265 · 7 ago 2027
+  "Pedro Neto",                  // N° 266 · 8 ago 2027
+  "Dean Huijsen",                // N° 267 · 9 ago 2027
+  "Donyell Malen",               // N° 268 · 10 ago 2027
+  "Angelo Stiller",              // N° 269 · 11 ago 2027
+  "Noah Okafor",                 // N° 270 · 12 ago 2027
+  "Ricardo Pepi",                // N° 271 · 13 ago 2027
+  "Francisco Conceição",         // N° 272 · 14 ago 2027
+  "António Silva",               // N° 273 · 15 ago 2027
+  "Williot Swedberg",            // N° 274 · 16 ago 2027
+  "Givairo Read",                // N° 275 · 17 ago 2027
+  "Olivier Giroud",              // N° 276 · 18 ago 2027
+  "Christoph Baumgartner",       // N° 277 · 19 ago 2027
+  "James Garner",                // N° 278 · 20 ago 2027
+  "Nicolò Rovella",              // N° 279 · 21 ago 2027
+  "Rafael Leão",                 // N° 280 · 22 ago 2027
+  "Brian Brobbey",               // N° 281 · 23 ago 2027
+  "Jules Koundé",                // N° 282 · 24 ago 2027
+  "Manuel Locatelli",            // N° 283 · 25 ago 2027
+  "Casemiro",                    // N° 284 · 26 ago 2027
+  "Ibrahim Maza",                // N° 285 · 27 ago 2027
+  "Conor Gallagher",             // N° 286 · 28 ago 2027
+  "Giorgio Scalvini",            // N° 287 · 29 ago 2027
+  "Igor Paixão",                 // N° 288 · 30 ago 2027
+  "Leandro Barreiro",            // N° 289 · 31 ago 2027
+  "Matías Fernández-Pardo",      // N° 290 · 1 set 2027
+  "Orri Óskarsson",              // N° 291 · 2 set 2027
+  "Waldemar Anton",              // N° 292 · 3 set 2027
+  "Mike Maignan",                // N° 293 · 4 set 2027
+  "Ethan Ampadu",                // N° 294 · 5 set 2027
+  "Rodrigo Zalazar",             // N° 295 · 6 set 2027
+  "Jonathan David",              // N° 296 · 7 set 2027
+  "Igor Jesus",                  // N° 297 · 8 set 2027
+  "Aleksandar Stanković",        // N° 298 · 9 set 2027
+  "Barış Alper Yılmaz",          // N° 299 · 10 set 2027
+  "Kaishu Sano",                 // N° 300 · 11 set 2027
+  "Sander Berge",                // N° 301 · 12 set 2027
+  "Denis Zakaria",               // N° 302 · 13 set 2027
+  "Riccardo Orsolini",           // N° 303 · 14 set 2027
+  "Luis Javier Suárez",          // N° 304 · 15 set 2027
+  "Ibrahim Mbaye",               // N° 305 · 16 set 2027
+  "Pablo Barrios",               // N° 306 · 17 set 2027
+  "André-Frank Zambo Anguissa",  // N° 307 · 18 set 2027
+  "Alexis Sánchez",              // N° 308 · 19 set 2027
+  "Dayot Upamecano",             // N° 309 · 20 set 2027
+  "Neco Williams",               // N° 310 · 21 set 2027
+  "Vanderson",                   // N° 311 · 22 set 2027
+  "Randal Kolo Muani",           // N° 312 · 23 set 2027
+  "Edinson Cavani",              // N° 313 · 24 set 2027
+  "Harry Wilson",                // N° 314 · 25 set 2027
+  "Denzel Dumfries",             // N° 315 · 26 set 2027
+  "Jonathan Tah",                // N° 316 · 27 set 2027
+  "Carlos Baleba",               // N° 317 · 28 set 2027
+  "Isak Hien",                   // N° 318 · 29 set 2027
+  "Theo Hernández",              // N° 319 · 30 set 2027
+  "Marc Bernal",                 // N° 320 · 1 ott 2027
+  "João Pedro",                  // N° 321 · 2 ott 2027
+  "Leandro Trossard",            // N° 322 · 3 ott 2027
+  "Diego Moreira",               // N° 323 · 4 ott 2027
+  "Hiroki Itō",                  // N° 324 · 5 ott 2027
+  "Murillo",                     // N° 325 · 6 ott 2027
+  "Aleksandr Golovin",           // N° 326 · 7 ott 2027
+  "Danilo",                      // N° 327 · 8 ott 2027
+  "Marcus Thuram",               // N° 328 · 9 ott 2027
+  "Boubacar Kamara",             // N° 329 · 10 ott 2027
+  "Gabriel Jesus",               // N° 330 · 11 ott 2027
+  "Mario Götze",                 // N° 331 · 12 ott 2027
+  "Hakim Ziyech",                // N° 332 · 13 ott 2027
+  "Elliot Anderson",             // N° 333 · 14 ott 2027
+  "Mario Pašalić",               // N° 334 · 15 ott 2027
+  "Unai Simón",                  // N° 335 · 16 ott 2027
+  "Ousmane Diomande",            // N° 336 · 17 ott 2027
+  "Ángel Correa",                // N° 337 · 18 ott 2027
+  "Nicola Zalewski",             // N° 338 · 19 ott 2027
+  "Fabián Ruiz",                 // N° 339 · 20 ott 2027
+  "Jonathan Burkardt",           // N° 340 · 21 ott 2027
+  "Matheus Nunes",               // N° 341 · 22 ott 2027
+  "Yann Sommer",                 // N° 342 · 23 ott 2027
+  "Gonçalo Ramos",               // N° 343 · 24 ott 2027
+  "Jorrel Hato",                 // N° 344 · 25 ott 2027
+  "Takefusa Kubo",               // N° 345 · 26 ott 2027
+  "Lionel Messi",                // N° 346 · 27 ott 2027
+  "Gianluca Mancini",            // N° 347 · 28 ott 2027
+  "Konstantinos Karetsas",       // N° 348 · 29 ott 2027
+  "Micky van de Ven",            // N° 349 · 30 ott 2027
+  "Hákon Arnar Haraldsson",      // N° 350 · 31 ott 2027
+  "Roger Ibañez",                // N° 351 · 1 nov 2027
+  "Granit Xhaka",                // N° 352 · 2 nov 2027
+  "Ruben Loftus-Cheek",          // N° 353 · 3 nov 2027
+  "Robin Le Normand",            // N° 354 · 4 nov 2027
+  "Ethan Nwaneri",               // N° 355 · 5 nov 2027
+  "Richarlison",                 // N° 356 · 6 nov 2027
+  "Ivan Toney",                  // N° 357 · 7 nov 2027
+  "Domenico Berardi",            // N° 358 · 8 nov 2027
+  "Cristian Romero",             // N° 359 · 9 nov 2027
+  "Gianluigi Donnarumma",        // N° 360 · 10 nov 2027
+  "Antoine Griezmann",           // N° 361 · 11 nov 2027
+  "Lucas Da Cunha",              // N° 362 · 12 nov 2027
+  "Timothy Weah",                // N° 363 · 13 nov 2027
+  "Diogo Dalot",                 // N° 364 · 14 nov 2027
+  "Christopher Nkunku",          // N° 365 · 15 nov 2027
+  "Zeno Debast",                 // N° 366 · 16 nov 2027
+  "Leonardo Spinazzola",         // N° 367 · 17 nov 2027
+  "Alisson Becker",              // N° 368 · 18 nov 2027
+  "Marc Pubill",                 // N° 369 · 19 nov 2027
+  "Luis Suárez",                 // N° 370 · 20 nov 2027
+  "Jobe Bellingham",             // N° 371 · 21 nov 2027
+  "Brennan Johnson",             // N° 372 · 22 nov 2027
+  "Moise Kean",                  // N° 373 · 23 nov 2027
+  "Marquinhos",                  // N° 374 · 24 nov 2027
+  "Leroy Sané",                  // N° 375 · 25 nov 2027
+  "David Raya",                  // N° 376 · 26 nov 2027
+  "Julián Alvarez",              // N° 377 · 27 nov 2027
+  "Máximo Perrone",              // N° 378 · 28 nov 2027
+  "Ermedin Demirović",           // N° 379 · 29 nov 2027
+  "Caoimhín Kelleher",           // N° 380 · 30 nov 2027
+  "Gianluca Prestianni",         // N° 381 · 1 dic 2027
+  "Gleison Bremer",              // N° 382 · 2 dic 2027
+  "Dani Vivian",                 // N° 383 · 3 dic 2027
+  "Youri Tielemans",             // N° 384 · 4 dic 2027
+  "Mason Greenwood",             // N° 385 · 5 dic 2027
+  "Lamine Camara",               // N° 386 · 6 dic 2027
+  "Matteo Politano",             // N° 387 · 7 dic 2027
+  "Jan Paul van Hecke",          // N° 388 · 8 dic 2027
+  "Konrad Laimer",               // N° 389 · 9 dic 2027
+  "Milan Škriniar",              // N° 390 · 10 dic 2027
+  "Joan García",                 // N° 391 · 11 dic 2027
+  "Mats Wieffer",                // N° 392 · 12 dic 2027
+  "Rodrigo Mora",                // N° 393 · 13 dic 2027
+  "İlkay Gündoğan",              // N° 394 · 14 dic 2027
+  "Maximilian Mittelstädt",      // N° 395 · 15 dic 2027
+  "Mateus Fernandes",            // N° 396 · 16 dic 2027
+  "Samuele Ricci",               // N° 397 · 17 dic 2027
+  "Esteban Lepaul",              // N° 398 · 18 dic 2027
+  "Marc Guéhi",                  // N° 399 · 19 dic 2027
+  "Roberto Firmino",             // N° 400 · 20 dic 2027
+  "Pierre-Emerick Aubameyang",   // N° 401 · 21 dic 2027
+  "Jesús Rodríguez",             // N° 402 · 22 dic 2027
+  "William Saliba",              // N° 403 · 23 dic 2027
+  "Said El Mala",                // N° 404 · 24 dic 2027
+  "Son Heung-min",               // N° 405 · 25 dic 2027
+  "Yerry Mina",                  // N° 406 · 26 dic 2027
+  "Matty Cash",                  // N° 407 · 27 dic 2027
+  "Abde Ezzalzouli",             // N° 408 · 28 dic 2027
+  "Yunus Akgün",                 // N° 409 · 29 dic 2027
+  "Hamza Igamane",               // N° 410 · 30 dic 2027
+  "Xavi Simons",                 // N° 411 · 31 dic 2027
+  "Manuel Neuer",                // N° 412 · 1 gen 2028
+  "Noa Lang",                    // N° 413 · 2 gen 2028
+  "Orkun Kökçü",                 // N° 414 · 3 gen 2028
+  "Ben White",                   // N° 415 · 4 gen 2028
+  "Rodrygo",                     // N° 416 · 5 gen 2028
+  "Pape Matar Sarr",             // N° 417 · 6 gen 2028
+  "Ivan Perišić",                // N° 418 · 7 gen 2028
+  "Mohammed Kudus",              // N° 419 · 8 gen 2028
+  "Johan Bakayoko",              // N° 420 · 9 gen 2028
+  "Arkadiusz Milik",             // N° 421 · 10 gen 2028
+  "Koke",                        // N° 422 · 11 gen 2028
+  "Maxence Lacroix",             // N° 423 · 12 gen 2028
+  "Samu Aghehowa",               // N° 424 · 13 gen 2028
+  "Ousmane Dembélé",             // N° 425 · 14 gen 2028
+  "Federico Bernardeschi",       // N° 426 · 15 gen 2028
+  "Mamadou Sangaré",             // N° 427 · 16 gen 2028
+  "Patrik Schick",               // N° 428 · 17 gen 2028
+  "Sadio Mané",                  // N° 429 · 18 gen 2028
+  "Pape Gueye",                  // N° 430 · 19 gen 2028
+  "Rio Ngumoha",                 // N° 431 · 20 gen 2028
+  "Billy Gilmour",               // N° 432 · 21 gen 2028
+  "Leandro Paredes",             // N° 433 · 22 gen 2028
+  "David Raum",                  // N° 434 · 23 gen 2028
+  "Enzo Fernández",              // N° 435 · 24 gen 2028
+  "Nuno Mendes",                 // N° 436 · 25 gen 2028
+  "Assane Diao",                 // N° 437 · 26 gen 2028
+  "Francisco Trincão",           // N° 438 · 27 gen 2028
+  "Vitaliy Mykolenko",           // N° 439 · 28 gen 2028
+  "Morten Hjulmand",             // N° 440 · 29 gen 2028
+  "Federico Dimarco",            // N° 441 · 30 gen 2028
+  "Yasin Ayari",                 // N° 442 · 31 gen 2028
+  "Marko Arnautović",            // N° 443 · 1 feb 2028
+  "Michael Olise",               // N° 444 · 2 feb 2028
+  "Kylian Mbappé",               // N° 445 · 3 feb 2028
+  "Mattia Zaccagni",             // N° 446 · 4 feb 2028
+  "Bart Verbruggen",             // N° 447 · 5 feb 2028
+  "Cristiano Ronaldo",           // N° 448 · 6 feb 2028
+  "Loïs Openda",                 // N° 449 · 7 feb 2028
+  "Adam Wharton",                // N° 450 · 8 feb 2028
+  "Aleix García",                // N° 451 · 9 feb 2028
+  "Nikola Krstović",             // N° 452 · 10 feb 2028
+  "Lutsharel Geertruida",        // N° 453 · 11 feb 2028
+  "Fermín López",                // N° 454 · 12 feb 2028
+  "James Maddison",              // N° 455 · 13 feb 2028
+  "Ardon Jashari",               // N° 456 · 14 feb 2028
+  "Memphis Depay",               // N° 457 · 15 feb 2028
+  "Mateo Kovačić",               // N° 458 · 16 feb 2028
+  "Joey Veerman",                // N° 459 · 17 feb 2028
+  "Lucas Høgsberg",              // N° 460 · 18 feb 2028
+  "Evan Ndicka",                 // N° 461 · 19 feb 2028
+  "Crysencio Summerville",       // N° 462 · 20 feb 2028
+  "Giorgi Mamardashvili",        // N° 463 · 21 feb 2028
+  "Andrei Rațiu",                // N° 464 · 22 feb 2028
+  "Serge Gnabry",                // N° 465 · 23 feb 2028
+  "Emiliano Martínez",           // N° 466 · 24 feb 2028
+  "Nicolás González",            // N° 467 · 25 feb 2028
+  "Hugo Lloris",                 // N° 468 · 26 feb 2028
+  "Johnny Cardoso",              // N° 469 · 27 feb 2028
+  "Alex Scott",                  // N° 470 · 28 feb 2028
+  "Trevoh Chalobah",             // N° 471 · 29 feb 2028
+  "Marco Asensio",               // N° 472 · 1 mar 2028
+  "Dilane Bakwa",                // N° 473 · 2 mar 2028
+  "Kevin Danso",                 // N° 474 · 3 mar 2028
+  "Finn Jeltsch",                // N° 475 · 4 mar 2028
+  "Stephan El Shaarawy",         // N° 476 · 5 mar 2028
+  "Anatoliy Trubin",             // N° 477 · 6 mar 2028
+  "Bruno Guimarães",             // N° 478 · 7 mar 2028
+  "David Hancko",                // N° 479 · 8 mar 2028
+  "Philippe Coutinho",           // N° 480 · 9 mar 2028
+  "Piotr Zieliński",             // N° 481 · 10 mar 2028
+  "Habib Diarra",                // N° 482 · 11 mar 2028
+  "Rômulo",                      // N° 483 · 12 mar 2028
+  "Gessime Yassine",             // N° 484 · 13 mar 2028
+  "Cucho Hernández",             // N° 485 · 14 mar 2028
+  "Dominic Solanke",             // N° 486 · 15 mar 2028
+  "Sergiño Dest",                // N° 487 · 16 mar 2028
+  "Pedro Gonçalves",             // N° 488 · 17 mar 2028
+  "Viktor Gyökeres",             // N° 489 · 18 mar 2028
+  "Leon Avdullahu",              // N° 490 · 19 mar 2028
+  "Gonçalo Inácio",              // N° 491 · 20 mar 2028
+  "Yunus Musah",                 // N° 492 · 21 mar 2028
+  "Eduardo Camavinga",           // N° 493 · 22 mar 2028
+  "Lucas Bergvall",              // N° 494 · 23 mar 2028
+  "Álvaro Morata",               // N° 495 · 24 mar 2028
+  "Jhon Lucumí",                 // N° 496 · 25 mar 2028
+  "Karim Coulibaly",             // N° 497 · 26 mar 2028
+  "Tyler Adams",                 // N° 498 · 27 mar 2028
+  "Fisnik Asllani",              // N° 499 · 28 mar 2028
+  "Sergej Milinković-Savić",     // N° 500 · 29 mar 2028
+  "David Neres",                 // N° 501 · 30 mar 2028
+  "Jérémy Doku",                 // N° 502 · 31 mar 2028
+  "Endrick",                     // N° 503 · 1 apr 2028
+  "Geny Catamo",                 // N° 504 · 2 apr 2028
+  "Matthijs de Ligt",            // N° 505 · 3 apr 2028
+  "Scott McTominay",             // N° 506 · 4 apr 2028
+  "Can Uzun",                    // N° 507 · 5 apr 2028
+  "Iago Aspas",                  // N° 508 · 6 apr 2028
+  "Kobbie Mainoo",               // N° 509 · 7 apr 2028
+  "Kalidou Koulibaly",           // N° 510 · 8 apr 2028
+  "Charlie Cresswell",           // N° 511 · 9 apr 2028
+  "Kevin De Bruyne",             // N° 512 · 10 apr 2028
+  "Aaron Hickey",                // N° 513 · 11 apr 2028
+  "Tom Bischof",                 // N° 514 · 12 apr 2028
+  "Luis Alberto",                // N° 515 · 13 apr 2028
+  "Petar Sučić",                 // N° 516 · 14 apr 2028
+  "Giuliano Simeone",            // N° 517 · 15 apr 2028
+  "Jurriën Timber",              // N° 518 · 16 apr 2028
+  "Ruud Nijstad",                // N° 519 · 17 apr 2028
+  "Albert Gudmundsson",          // N° 520 · 18 apr 2028
+  "Pau Torres",                  // N° 521 · 19 apr 2028
+  "Edmond Tapsoba",              // N° 522 · 20 apr 2028
+  "Mamadou Coulibaly",           // N° 523 · 21 apr 2028
+  "Valentin Atangana",           // N° 524 · 22 apr 2028
+  "Gerard Martín",               // N° 525 · 23 apr 2028
+  "Nikola Milenković",           // N° 526 · 24 apr 2028
+  "Kerim Alajbegović",           // N° 527 · 25 apr 2028
+  "Florian Wirtz",               // N° 528 · 26 apr 2028
+  "Konstantinos Mavropanos",     // N° 529 · 27 apr 2028
+  "Lennart Karl",                // N° 530 · 28 apr 2028
+  "Matteo Darmian",              // N° 531 · 29 apr 2028
+  "Ademola Lookman",             // N° 532 · 30 apr 2028
+  "Destiny Udogie",              // N° 533 · 1 mag 2028
+  "Taty Castellanos",            // N° 534 · 2 mag 2028
+  "Martial Godo",                // N° 535 · 3 mag 2028
+  "Weston McKennie",             // N° 536 · 4 mag 2028
+  "Dan Ndoye",                   // N° 537 · 5 mag 2028
+  "Noah Atubolu",                // N° 538 · 6 mag 2028
+  "Enzo Millot",                 // N° 539 · 7 mag 2028
+  "Dani Carvajal",               // N° 540 · 8 mag 2028
+  "Omar Marmoush",               // N° 541 · 9 mag 2028
+  "Manu Koné",                   // N° 542 · 10 mag 2028
+  "Maurício",                    // N° 543 · 11 mag 2028
+  "Valentino Livramento",        // N° 544 · 12 mag 2028
+  "Yuito Suzuki",                // N° 545 · 13 mag 2028
+  "Pervis Estupiñán",            // N° 546 · 14 mag 2028
+  "Nathan Ngoy",                 // N° 547 · 15 mag 2028
+  "Trent Alexander-Arnold",      // N° 548 · 16 mag 2028
+  "Mohamed Kader Meïté",         // N° 549 · 17 mag 2028
+  "Amine Adli",                  // N° 550 · 18 mag 2028
+  "Hakan Çalhanoğlu",            // N° 551 · 19 mag 2028
+  "Dominic Calvert-Lewin",       // N° 552 · 20 mag 2028
+  "Ibrahima Ba",                 // N° 553 · 21 mag 2028
+  "Kacper Potulski",             // N° 554 · 22 mag 2028
+  "Eric García",                 // N° 555 · 23 mag 2028
+  "Lautaro Martínez",            // N° 556 · 24 mag 2028
+  "Cody Gakpo",                  // N° 557 · 25 mag 2028
+  "Eduard Spertsyan",            // N° 558 · 26 mag 2028
+  "Jean-Clair Todibo",           // N° 559 · 27 mag 2028
+  "Amad Diallo",                 // N° 560 · 28 mag 2028
+  "Santiago Castro",             // N° 561 · 29 mag 2028
+  "Albian Hajdari",              // N° 562 · 30 mag 2028
+  "Dorgeles Nene",               // N° 563 · 31 mag 2028
+  "Vinícius Jr.",                // N° 564 · 1 giu 2028
+  "Phil Foden",                  // N° 565 · 2 giu 2028
+  "Artem Dovbyk",                // N° 566 · 3 giu 2028
+  "Aleksey Batrakov",            // N° 567 · 4 giu 2028
+  "Chris Richards",              // N° 568 · 5 giu 2028
+  "Rocco Reitz",                 // N° 569 · 6 giu 2028
+  "Paulo Dybala",                // N° 570 · 7 giu 2028
+  "Álex Baena",                  // N° 571 · 8 giu 2028
+  "Mohamed Amoura",              // N° 572 · 9 giu 2028
+  "Yeremi Pino",                 // N° 573 · 10 giu 2028
+  "Roger Fernandes",             // N° 574 · 11 giu 2028
+  "Christian Pulisic",           // N° 575 · 12 giu 2028
+  "Pedro Porro",                 // N° 576 · 13 giu 2028
+  "Jonas Urbig",                 // N° 577 · 14 giu 2028
+  "Franculino",                  // N° 578 · 15 giu 2028
+  "Aurélien Tchouaméni",         // N° 579 · 16 giu 2028
+  "Jérémy Jacquet",              // N° 580 · 17 giu 2028
+  "Kenneth Taylor",              // N° 581 · 18 giu 2028
+  "Carlos Forbs",                // N° 582 · 19 giu 2028
+  "Kévin Danois",                // N° 583 · 20 giu 2028
+  "Rayan",                       // N° 584 · 21 giu 2028
+  "Miguel Gutiérrez",            // N° 585 · 22 giu 2028
+  "Duván Zapata",                // N° 586 · 23 giu 2028
+  "Kees Smit",                   // N° 587 · 24 giu 2028
+  "Gavi",                        // N° 588 · 25 giu 2028
+  "Joško Gvardiol",              // N° 589 · 26 giu 2028
+  "Omari Hutchinson",            // N° 590 · 27 giu 2028
+  "Yuri Alberto",                // N° 591 · 28 giu 2028
+  "Harry Maguire",               // N° 592 · 29 giu 2028
+  "Philipp Treu",                // N° 593 · 30 giu 2028
+  "Renato Veiga",                // N° 594 · 1 lug 2028
+  "Niccolò Pisilli",             // N° 595 · 2 lug 2028
+  "Ola Aina",                    // N° 596 · 3 lug 2028
+  "Thiago Almada",               // N° 597 · 4 lug 2028
+  "Matthis Abline",              // N° 598 · 5 lug 2028
+  "Gabriel Gudmundsson",         // N° 599 · 6 lug 2028
+  "Francesco Pio Esposito",      // N° 600 · 7 lug 2028
+  "Ramon Hendriks",              // N° 601 · 8 lug 2028
+  "Archie Brown",                // N° 602 · 9 lug 2028
+  "Álvaro Carreras",             // N° 603 · 10 lug 2028
+  "Luka Vušković",               // N° 604 · 11 lug 2028
+  "Franco Mastantuono",          // N° 605 · 12 lug 2028
+  "Lucca Brughmans",             // N° 606 · 13 lug 2028
+  "Riccardo Calafiori",          // N° 607 · 14 lug 2028
+  "Elye Wahi",                   // N° 608 · 15 lug 2028
+  "Joane Gadou",                 // N° 609 · 16 lug 2028
+  "Adrien Rabiot",               // N° 610 · 17 lug 2028
+  "Pau Cubarsí",                 // N° 611 · 18 lug 2028
+  "Sergi Altimira",              // N° 612 · 19 lug 2028
+  "Brenden Aaronson",            // N° 613 · 20 lug 2028
+  "Ange-Yoan Bonny",             // N° 614 · 21 lug 2028
+  "Joelinton",                   // N° 615 · 22 lug 2028
+  "André",                       // N° 616 · 23 lug 2028
+  "Wouter Burger",               // N° 617 · 24 lug 2028
+  "Éder Militão",                // N° 618 · 25 lug 2028
+  "Bazoumana Touré",             // N° 619 · 26 lug 2028
+  "Stanislav Lobotka",           // N° 620 · 27 lug 2028
+  "Lesley Ugochukwu",            // N° 621 · 28 lug 2028
+  "Lucas Beraldo",               // N° 622 · 29 lug 2028
+  "Federico Chiesa",             // N° 623 · 30 lug 2028
+  "Giannis Konstantelias",       // N° 624 · 31 lug 2028
+  "Alexis Saelemaekers",         // N° 625 · 1 ago 2028
+  "Lucas Paquetá",               // N° 626 · 2 ago 2028
+  "Pedri",                       // N° 627 · 3 ago 2028
+  "Amadou Onana",                // N° 628 · 4 ago 2028
+  "Manuel Akanji",               // N° 629 · 5 ago 2028
+  "Ernest Poku",                 // N° 630 · 6 ago 2028
+  "Max Dowman",                  // N° 631 · 7 ago 2028
+  "Noahkai Banks",               // N° 632 · 8 ago 2028
+  "Patrick Zabi",                // N° 633 · 9 ago 2028
+  "Yassir Zabiri",               // N° 634 · 10 ago 2028
+  "Gabriel Sara",                // N° 635 · 11 ago 2028
+  "Lisandro Martínez",           // N° 636 · 12 ago 2028
+  "Jonathan Rowe",               // N° 637 · 13 ago 2028
+  "Anton Stach",                 // N° 638 · 14 ago 2028
+  "Alan Varela",                 // N° 639 · 15 ago 2028
+  "Jacobo Ramón",                // N° 640 · 16 ago 2028
+  "Facundo Medina",              // N° 641 · 17 ago 2028
+  "Thiago Pitarch",              // N° 642 · 18 ago 2028
+  "Oscar Bobb",                  // N° 643 · 19 ago 2028
+  "Gerson",                      // N° 644 · 20 ago 2028
+  "Ismaël Koné",                 // N° 645 · 21 ago 2028
+  "Arthur Avom",                 // N° 646 · 22 ago 2028
+  "Declan Rice",                 // N° 647 · 23 ago 2028
+  "Assan Ouédraogo",             // N° 648 · 24 ago 2028
+  "Kodai Sano",                  // N° 649 · 25 ago 2028
+  "Javi Rodríguez",              // N° 650 · 26 ago 2028
+  "Khéphren Thuram",             // N° 651 · 27 ago 2028
+  "Martín Zubimendi",            // N° 652 · 28 ago 2028
+  "Gjivai Zechiël",              // N° 653 · 29 ago 2028
+  "Jarrad Branthwaite",          // N° 654 · 30 ago 2028
+  "Djed Spence",                 // N° 655 · 31 ago 2028
+  "Loïc Badé",                   // N° 656 · 1 set 2028
+  "Rudy Matondo",                // N° 657 · 2 set 2028
+  "Jon Martín",                  // N° 658 · 3 set 2028
+  "Jeremie Frimpong",            // N° 659 · 4 set 2028
+  "Matheus Martinelli",          // N° 660 · 5 set 2028
+  "Antonio Vergara",             // N° 661 · 6 set 2028
+  "Alex Iwobi",                  // N° 662 · 7 set 2028
+  "Younes Ebnoutalib",           // N° 663 · 8 set 2028
+  "Joaquin Seys",                // N° 664 · 9 set 2028
+  "Oumar Solet",                 // N° 665 · 10 set 2028
+  "Javi Guerra",                 // N° 666 · 11 set 2028
+  "Alexis Mac Allister",         // N° 667 · 12 set 2028
+  "Iván Fresneda",               // N° 668 · 13 set 2028
+  "Lucas Chevalier",             // N° 669 · 14 set 2028
+  "Pietro Comuzzo",              // N° 670 · 15 set 2028
+  "Rayan Cherki",                // N° 671 · 16 set 2028
+  "Nnamdi Collins",              // N° 672 · 17 set 2028
+  "Lucien Agoumé",               // N° 673 · 18 set 2028
+  "Samuel Lino",                 // N° 674 · 19 set 2028
+  "Ibrahim Sangaré",             // N° 675 · 20 set 2028
+  "Lloyd Kelly",                 // N° 676 · 21 set 2028
+  "Kaio Jorge",                  // N° 677 · 22 set 2028
+  "Andrew Robertson",            // N° 678 · 23 set 2028
+  "Equi Fernández",              // N° 679 · 24 set 2028
+  "Alessandro Buongiorno",       // N° 680 · 25 set 2028
+  "Raúl Asencio",                // N° 681 · 26 set 2028
+  "Mathys Detourbet",            // N° 682 · 27 set 2028
+  "Ryan Gravenberch",            // N° 683 · 28 set 2028
+  "Oskar Pietuszewski",          // N° 684 · 29 set 2028
+  "Anastasios Douvikas",         // N° 685 · 30 set 2028
+  "Igor Thiago",                 // N° 686 · 1 ott 2028
+  "Samuele Inácio",              // N° 687 · 2 ott 2028
+  "Mauro Júnior",                // N° 688 · 3 ott 2028
+  "Mamadou Sarr",                // N° 689 · 4 ott 2028
+  "Luis Henrique",               // N° 690 · 5 ott 2028
+  "Nathan Collins",              // N° 691 · 6 ott 2028
+  "Borja Sainz",                 // N° 692 · 7 ott 2028
+  "Ismaël Doukouré",             // N° 693 · 8 ott 2028
+  "Bryan Mbeumo",                // N° 694 · 9 ott 2028
+  "Álex Jiménez",                // N° 695 · 10 ott 2028
+  "Dženan Pejčinović",           // N° 696 · 11 ott 2028
+  "Ander Barrenetxea",           // N° 697 · 12 ott 2028
+  "Ladislav Krejčí",             // N° 698 · 13 ott 2028
+  "Morgan Rogers",               // N° 699 · 14 ott 2028
+  "Armand Laurienté",            // N° 700 · 15 ott 2028
+  "Malick Thiaw",                // N° 701 · 16 ott 2028
+  "Luciano Valente",             // N° 702 · 17 ott 2028
+  "Fábio Silva",                 // N° 703 · 18 ott 2028
+  "Jon Gorrotxategi",            // N° 704 · 19 ott 2028
+  "Daniele Ghilardi",            // N° 705 · 20 ott 2028
+  "Eli Junior Kroupi",           // N° 706 · 21 ott 2028
+  "Diego Coppola",               // N° 707 · 22 ott 2028
+  "Alberto Costa",               // N° 708 · 23 ott 2028
+  "Davide Bartesaghi",           // N° 709 · 24 ott 2028
+  "Lewis Hall",                  // N° 710 · 25 ott 2028
+  "Kennet Eichhorn",             // N° 711 · 26 ott 2028
+  "Issa Doumbia",                // N° 712 · 27 ott 2028
+  "Carlos Romero",               // N° 713 · 28 ott 2028
+  "Iliman Ndiaye",               // N° 714 · 29 ott 2028
+  "Alisson Santos",              // N° 715 · 30 ott 2028
+  "Galeno",                      // N° 716 · 31 ott 2028
+  "Ronald Araújo",               // N° 717 · 1 nov 2028
+  "Samir El Mourabet",           // N° 718 · 2 nov 2028
+  "Paul Nebel",                  // N° 719 · 3 nov 2028
+  "Arthur Atta",                 // N° 720 · 4 nov 2028
+  "Oihan Sancet",                // N° 721 · 5 nov 2028
+  "Rayan Aït-Nouri",             // N° 722 · 6 nov 2028
+  "Anis Hadj Moussa",            // N° 723 · 7 nov 2028
+  "Konstantinos Koulierakis",    // N° 724 · 8 nov 2028
+  "Gabriel Magalhães",           // N° 725 · 9 nov 2028
+  "Ruben van Bommel",            // N° 726 · 10 nov 2028
+  "Brajan Gruda",                // N° 727 · 11 nov 2028
+  "Yeremay Hernández",           // N° 728 · 12 nov 2028
+  "Cher Ndour",                  // N° 729 · 13 nov 2028
+  "Kaoru Mitoma",                // N° 730 · 14 nov 2028
+  "Paul Wanner",                 // N° 731 · 15 nov 2028
+  "Samson Baidoo",               // N° 732 · 16 nov 2028
+  "Jordan Pickford",             // N° 733 · 17 nov 2028
+  "Beto",                        // N° 734 · 18 nov 2028
+  "Chrislain Matsima",           // N° 735 · 19 nov 2028
+  "Harvey Elliott",              // N° 736 · 20 nov 2028
+  "Darwin Núñez",                // N° 737 · 21 nov 2028
+  "Ferdi Kadıoğlu",              // N° 738 · 22 nov 2028
+  "Sam Beukema",                 // N° 739 · 23 nov 2028
+  "Mohamed Simakan",             // N° 740 · 24 nov 2028
+  "Virgil van Dijk",             // N° 741 · 25 nov 2028
+  "Mikey Moore",                 // N° 742 · 26 nov 2028
+  "Eliezer Mayenda",             // N° 743 · 27 nov 2028
+  "Roberto Fernández",           // N° 744 · 28 nov 2028
+  "Alphadjo Cissè",              // N° 745 · 29 nov 2028
+  "Sandro Tonali",               // N° 746 · 30 nov 2028
+  "Alessandro Circati",          // N° 747 · 1 dic 2028
+  "Jeff Ekhator",                // N° 748 · 2 dic 2028
+  "Nico O'Reilly",               // N° 749 · 3 dic 2028
+  "Breno Bidon",                 // N° 750 · 4 dic 2028
+  "Ezechiel Banzuzi",            // N° 751 · 5 dic 2028
+  "Xavi Espart",                 // N° 752 · 6 dic 2028
+  "Jack Grealish",               // N° 753 · 7 dic 2028
+  "Oliver Provstgaard",          // N° 754 · 8 dic 2028
+  "Tolu Arokodare",              // N° 755 · 9 dic 2028
+  "Abdelhamid Ait Boudlal",      // N° 756 · 10 dic 2028
+  "Kevin Schade",                // N° 757 · 11 dic 2028
+  "Maxime Estève",               // N° 758 · 12 dic 2028
+  "Christ Inao Oulaï",           // N° 759 · 13 dic 2028
+  "Troy Parrott",                // N° 760 · 14 dic 2028
+  "Pedro Guilherme",             // N° 761 · 15 dic 2028
+  "Hugo Ekitiké",                // N° 762 · 16 dic 2028
+  "Jayden Addai",                // N° 763 · 17 dic 2028
+  "Chibuike Nwaiwu",             // N° 764 · 18 dic 2028
+  "Cristhian Mosquera",          // N° 765 · 19 dic 2028
+  "Nathan De Cat",               // N° 766 · 20 dic 2028
+  "Rodrigo Mendoza",             // N° 767 · 21 dic 2028
+  "Pablo Pagis",                 // N° 768 · 22 dic 2028
+  "Tammy Abraham",               // N° 769 · 23 dic 2028
+  "Mandela Keita",               // N° 770 · 24 dic 2028
+  "El Chadaille Bitshiabu",      // N° 771 · 25 dic 2028
+  "Daniel Muñoz",                // N° 772 · 26 dic 2028
+  "Mateo Pellegrino",            // N° 773 · 27 dic 2028
+  "Arne Engels",                 // N° 774 · 28 dic 2028
+  "Eliesse Ben Seghir",          // N° 775 · 29 dic 2028
+  "Santiago Mouriño",            // N° 776 · 30 dic 2028
+  "Zion Suzuki",                 // N° 777 · 31 dic 2028
+  "Lorenzo Bernasconi",          // N° 778 · 1 gen 2029
+  "Malcom",                      // N° 779 · 2 gen 2029
+  "Guillaume Restes",            // N° 780 · 3 gen 2029
+  "Christos Tzolis",             // N° 781 · 4 gen 2029
+  "Derry Scherhant",             // N° 782 · 5 gen 2029
+  "Mikel Jauregizar",            // N° 783 · 6 gen 2029
+  "Thomas Kristensen",           // N° 784 · 7 gen 2029
+  "Fer López",                   // N° 785 · 8 gen 2029
+  "Eberechi Eze"                 // N° 786 · 9 gen 2029
 ];
 
-if (typeof module !== "undefined" && module.exports) { module.exports = { dailyPlayers }; }
+if (typeof module !== "undefined" && module.exports) { module.exports = { dailyCalendar }; }

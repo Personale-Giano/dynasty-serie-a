@@ -8,7 +8,14 @@
    preme Giusto o Sbagliato (oppure si scrive la risposta).
    Giusto: punti alla squadra (10, meno 2 per ogni lettera regalata, minimo 2)
    e si continua. Sbagliato: si accende una lettera in più e la palla passa.
-   Vince chi ha più punti dopo 3, 5 o 8 catene.
+   Vince chi ha più punti dopo 4, 6 o 8 catene: numeri pari, cosi' le due
+   squadre aprono lo stesso numero di catene (le partite salvate a 3 o 5 si
+   riprendono lo stesso). A pari punti si gioca una catena di spareggio, che
+   apre chi ha trovato meno parole (fino a tre spareggi, poi e' pareggio).
+   Il telefono lo tiene la squadra che non risponde: quando la palla passa il
+   gioco copre il pannello del presentatore e dice a chi va il telefono.
+   Cronometro facoltativo a ogni tentativo (30 o 60 secondi): allo scadere e'
+   come una risposta sbagliata.
    Novembre 2026: verdetti protetti dal doppio tocco, tasto "Annulla" per il
    presentatore che ha sbagliato bottone, partita salvata a ogni mossa (si
    riprende dopo una ricarica o il tasto Indietro: chiave qz.catena.partita),
@@ -25,6 +32,7 @@
     var BASE = 10, STEP = 2, MIN = 2;
     var SAVE_KEY = 'qz.catena.partita', ALBO_KEY = 'qz.catena.albo';
     var SAVE_TTL = 12 * 3600 * 1000;
+    var CHAIN_N = [4, 6, 8], SAVE_N = [3, 4, 5, 6, 8], TIMES = [0, 30, 60], MAX_TB = 3;
 
     function norm(s) {
         return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -90,11 +98,39 @@
     }
     function chainKey(c) { return c.words[0] + '>' + c.words[7]; }
 
+    /** Impostazioni: le vecchie 3 e 5 catene diventano 4 e 6, il cronometro e' spento se non e' uno dei valori ammessi */
+    function sanitizeCfg(raw) {
+        var o = { n: 6, timer: 0 };
+        if (raw && typeof raw === 'object') {
+            var n = Number(raw.n);
+            if (CHAIN_N.indexOf(n) >= 0) o.n = n;
+            else if (n === 3 || n === 5) o.n = n + 1;
+            if (TIMES.indexOf(Number(raw.timer)) >= 0) o.timer = Number(raw.timer);
+        }
+        return o;
+    }
+    /**
+     * Chi apre la catena idx (0 = prima): a turno nelle n catene normali, cosi'
+     * con n pari le due squadre ne aprono lo stesso numero. Lo spareggio lo apre
+     * chi ha trovato meno parole; a parita' si tira a sorte.
+     */
+    function opener(idx, n, starter, teams, rnd) {
+        if (idx < n) return idx % 2 ? 1 - starter : starter;
+        var a = teams[0].found || 0, b = teams[1].found || 0;
+        if (a !== b) return a < b ? 0 : 1;
+        return rnd() < 0.5 ? 0 : 1;
+    }
+    /** Finite le catene a pari punti si gioca lo spareggio (al massimo MAX_TB, poi e' pareggio) */
+    function needTiebreak(teams, tb) { return teams[0].pts === teams[1].pts && (tb || 0) < MAX_TB; }
+
     /** Una partita salvata è buona solo se è recente, coerente e la sua catena esiste ancora */
     function checkSave(s, list, now) {
         if (!s || typeof s !== 'object' || s.v !== 1) return null;
         if (!(now - Number(s.ts) < SAVE_TTL) || !Array.isArray(s.teams) || s.teams.length !== 2) return null;
-        if ([3, 5, 8].indexOf(s.n) < 0 || !(s.idx >= 0 && s.idx < s.n)) return null;
+        var tb = s.tb == null ? 0 : s.tb;
+        if (!(tb >= 0 && tb <= MAX_TB && Math.floor(tb) === tb)) return null;
+        if (SAVE_N.indexOf(s.n) < 0 || !(s.idx >= 0 && s.idx < s.n + tb)) return null;
+        if (s.tsec != null && TIMES.indexOf(s.tsec) < 0) return null;
         if (s.state !== 'play' && s.state !== 'done') return null;
         if (s.starter !== 0 && s.starter !== 1) return null;
         var chain = null;
@@ -129,7 +165,8 @@
     var core = {
         norm: norm, distance: distance, matches: matches, bare: bare, initialShown: initialShown,
         valueOf: valueOf, revealNext: revealNext, frontier: frontier, chainKey: chainKey,
-        checkSave: checkSave, pairKey: pairKey, alboAdd: alboAdd, SAVE_TTL: SAVE_TTL
+        checkSave: checkSave, pairKey: pairKey, alboAdd: alboAdd, SAVE_TTL: SAVE_TTL,
+        sanitizeCfg: sanitizeCfg, opener: opener, needTiebreak: needTiebreak, MAX_TB: MAX_TB
     };
     if (typeof module !== 'undefined' && module.exports) { module.exports = core; return; }
 
@@ -138,11 +175,11 @@
        ====================================================================== */
     var $ = QZ.$;
     var deck = new QZ.Deck('catena', chains, chainKey);
-    var CFG = Object.assign({ n: 5 }, QZ.store.get('qz.catena.cfg', {}) || {});
-    if ([3, 5, 8].indexOf(CFG.n) < 0) CFG.n = 5;
+    var CFG = sanitizeCfg(QZ.store.get('qz.catena.cfg', {}));
     var LOCK_MS = 650;
 
     var G = null;
+    var clock = null;
     var nextTo = 0, fitTo = 0;
     var undoStack = [];
 
@@ -152,8 +189,10 @@
     $('#rules').innerHTML = [
         ['Otto parole in fila,', 'ognuna legata alla successiva: un modo di dire, una parola composta, un soprannome. Si vedono la prima e l\'ultima.'],
         ['Si attacca dall\'alto o dal basso:', 'la squadra di turno prova la parola attaccata a una già scoperta. Delle altre si vede solo l\'iniziale.'],
-        ['Chi tiene il telefono fa il presentatore:', 'vede la soluzione con la spiegazione del legame e decide se la risposta vale. Ha sbagliato bottone? C\'è «Annulla».'],
-        ['Giusto? 10 punti e si continua.', 'Sbagliato? Si accende una lettera in più, la parola vale 2 punti in meno e la palla passa agli avversari.']
+        ['Il telefono lo tiene la squadra che non risponde:', 'fa il presentatore, apre la soluzione solo quando serve e decide se la risposta vale. Quando la palla passa, passa anche il telefono: ve lo dice il gioco. Ha sbagliato bottone? C\'è «Annulla».'],
+        ['Giusto? 10 punti e si continua.', 'Sbagliato? Si accende una lettera in più, la parola vale 2 punti in meno e la palla passa agli avversari.'],
+        ['Si gioca a 4, 6 o 8 catene,', 'aperte una a testa: tutte e due le squadre ne aprono lo stesso numero. A pari punti c\'è la catena di spareggio, e la apre chi ha trovato meno parole.'],
+        ['Col cronometro', 'ogni tentativo ha 30 o 60 secondi: allo scadere è come una risposta sbagliata.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
@@ -161,7 +200,8 @@
     $('#start-record').textContent = played ? 'Su questo telefono: ' + played + (played === 1 ? ' partita giocata' : ' partite giocate') + ', ' + chains.length + ' catene in archivio.' : chains.length + ' catene in archivio, nessuna uguale all\'altra.';
 
     var teams = QZ.playerList($('#teams-host'), { key: 'catena', min: 2, max: 2, initial: 2, label: 'Squadra', title: 'Le due squadre' });
-    QZ.segmented($('#opt-n'), [{ label: '3 catene', value: 3 }, { label: '5 catene', value: 5 }, { label: '8 catene', value: 8 }], CFG.n, function (v) { CFG.n = v; QZ.store.set('qz.catena.cfg', CFG); });
+    QZ.segmented($('#opt-n'), [{ label: '4 catene', value: 4 }, { label: '6 catene', value: 6 }, { label: '8 catene', value: 8 }], CFG.n, function (v) { CFG.n = v; QZ.store.set('qz.catena.cfg', CFG); });
+    QZ.segmented($('#opt-t'), [{ label: 'Senza', value: 0 }, { label: '30 s', value: 30 }, { label: '60 s', value: 60 }], CFG.timer, function (v) { CFG.timer = v; QZ.store.set('qz.catena.cfg', CFG); });
 
     $('#start-btn').addEventListener('click', function () { startGame(); });
     $('#resume-btn').addEventListener('click', resumeGame);
@@ -176,7 +216,7 @@
     $('#ok').addEventListener('click', function () { right(''); });
     $('#ko').addEventListener('click', function () { wrong(''); });
     $('#try').innerHTML = 'Prova';
-    $('#peek').addEventListener('click', function () { if (playing()) togglePeek(); });
+    $('#peek').addEventListener('click', function () { if (judging()) togglePeek(); });
     $('#give').innerHTML = QZ.icon('eye') + 'Svela la parola';
     $('#give').setAttribute('aria-label', 'Svela la parola: nessun punto, palla agli avversari');
     $('#give').addEventListener('click', giveUp);
@@ -185,11 +225,14 @@
     $('#quit').innerHTML = QZ.icon('flag') + 'Chiudi la partita';
     $('#quit').addEventListener('click', askQuit);
     $('#next').addEventListener('click', nextChain);
+    $('#handoff-go').innerHTML = QZ.icon('check') + 'Ce l\'abbiamo';
+    $('#handoff-go').addEventListener('click', takePhone);
     $('#form').addEventListener('submit', function (e) {
         e.preventDefault();
         if (!playing()) return;
         var v = $('#guess').value.trim();
         if (!v) { QZ.fx.shake($('#guess')); return; }
+        if (G.pass) return;
         if (locked()) return;
         $('#guess').value = '';
         if (matches(v, word(G.target))) right(v);
@@ -200,7 +243,12 @@
 
     /* ---------- Helper ---------- */
     function playing() { return G && G.state === 'play'; }
+    /** In gioco e col telefono gia' in mano al presentatore giusto */
+    function judging() { return playing() && !G.pass; }
     function team() { return G.teams[G.turn]; }
+    /** Il presentatore: la squadra che non risponde */
+    function host() { return G.teams[1 - G.turn]; }
+    function tiebreak() { return G.idx >= G.n; }
     function word(i) { return G.chain.words[i]; }
     function value(i) { return valueOf(word(i), G.shown[i]); }
     // un verdetto alla volta: il doppio tocco su Giusto regalava anche la parola dopo
@@ -222,6 +270,7 @@
             v: 1, ts: Date.now(), chain: chainKey(G.chain),
             teams: G.teams.map(function (t) { return { name: t.name, color: t.color, pts: t.pts, found: t.found, miss: t.miss, run: t.run, best: t.best }; }),
             n: G.n, idx: G.idx, starter: G.starter, turn: G.turn, state: G.state, dir: G.dir,
+            tb: G.tb || 0, tsec: G.tsec || 0, pass: !!G.pass,
             gaveTot: G.gaveTot, cp: G.cp.slice(), hist: G.hist.slice(), feed: G.feedText || '', feedKind: G.feedKind || '',
             solved: G.solved.slice(), gave: G.gave.slice(), shown: G.shown.map(function (r) { return r.slice(); })
         };
@@ -233,6 +282,7 @@
                 return { name: t.name, color: t.color || QZ.TEAM_COLORS[i], pts: t.pts || 0, found: t.found || 0, miss: t.miss || 0, run: t.run || 0, best: t.best || 0 };
             }),
             n: s.n, idx: s.idx, starter: s.starter, turn: s.turn === 1 ? 1 : 0, state: s.state, dir: s.dir === 'bottom' ? 'bottom' : 'top',
+            tb: s.tb || 0, tsec: TIMES.indexOf(s.tsec) >= 0 ? s.tsec : 0, pass: !!s.pass,
             gaveTot: s.gaveTot || 0, cp: Array.isArray(s.cp) ? s.cp.slice() : [0, 0], hist: Array.isArray(s.hist) ? s.hist.slice() : [],
             chain: chain, solved: s.solved.slice(), gave: s.gave.slice(), shown: s.shown.map(function (r) { return r.slice(); }),
             finished: false, lockUntil: 0, feedText: s.feed, feedKind: s.feedKind
@@ -250,14 +300,17 @@
         if (!sg) return;
         var t = sg.s.teams;
         $('#resume-btn').innerHTML = QZ.icon('play') + 'Riprendi la partita';
-        $('#resume-info').textContent = t[0].name + ' ' + t[0].pts + ' - ' + t[1].pts + ' ' + t[1].name + ' · catena ' + (sg.s.idx + 1) + ' di ' + sg.s.n;
+        $('#resume-info').textContent = t[0].name + ' ' + t[0].pts + ' - ' + t[1].pts + ' ' + t[1].name + ' · ' + (sg.s.idx >= sg.s.n ? 'spareggio' : 'catena ' + (sg.s.idx + 1) + ' di ' + sg.s.n);
     }
     function resumeGame() {
         var sg = savedGame();
         if (!sg) { paintResume(); return; }
         clearTimeout(nextTo);
         restore(sg.s, sg.chain);
-        if (G.state === 'play') { G.feedText = 'Si riprende da dove eravate: tocca a ' + team().name + '.'; G.feedKind = ''; }
+        makeClock();
+        if (G.state !== 'play') G.pass = false;
+        // dopo una ricarica il telefono puo' essere in mano a chiunque: si ripassa al presentatore
+        if (G.state === 'play') { G.pass = true; G.feedText = 'Si riprende da dove eravate: tocca a ' + team().name + '.'; G.feedKind = ''; }
         undoStack = [];
         QZ.wake.on();
         QZ.show('s-game');
@@ -274,8 +327,10 @@
         G = {
             teams: names.map(function (n, i) { return { name: n, color: QZ.TEAM_COLORS[i], pts: 0, found: 0, miss: 0, run: 0, best: 0 }; }),
             n: CFG.n, idx: 0, starter: QZ.rand(0, 1), turn: 0, state: 'play',
+            tb: 0, tsec: CFG.timer, pass: true,
             gaveTot: 0, hist: [], finished: false, lockUntil: 0
         };
+        makeClock();
         QZ.wake.on();
         QZ.show('s-game');
         newChain();
@@ -288,16 +343,82 @@
         G.shown = initialShown(G.chain.words);
         G.cp = [0, 0];
         G.teams.forEach(function (t) { t.run = 0; });
-        G.turn = G.idx % 2 ? 1 - G.starter : G.starter;
+        G.turn = opener(G.idx, G.n, G.starter, G.teams, Math.random);
         G.dir = 'top';
         G.state = 'play';
+        // a ogni catena nuova il telefono va (o torna) alla squadra che non apre
+        G.pass = true;
         undoStack = [];
-        feed(team().name + ' apre la catena. Si parte da «' + word(0) + '» o da «' + word(7) + '».');
+        var why = G.teams[0].found !== G.teams[1].found ? ', che ha trovato meno parole' : ', estratta a sorte (stesse parole trovate)';
+        feed((tiebreak() ? 'Spareggio! Apre ' + team().name + why + '. ' : team().name + ' apre la catena. ') + 'Si parte da «' + word(0) + '» o da «' + word(7) + '».');
         G.feedText = $('#feed').textContent; G.feedKind = '';
         paintAll();
         QZ.sound.whistle();
-        QZ.say('Catena ' + (G.idx + 1) + ' di ' + G.n + ': da ' + word(0) + ' a ' + word(7) + '. Tocca a ' + team().name + '.');
+        QZ.say((tiebreak() ? 'Catena di spareggio' : 'Catena ' + (G.idx + 1) + ' di ' + G.n) + ': da ' + word(0) + ' a ' + word(7) + '. Tocca a ' + team().name + '.');
         save();
+    }
+
+    /* ---------- Il telefono passa al presentatore ---------- */
+    function paintPass() {
+        var on = playing() && !!G.pass;
+        $('#handoff').hidden = !on;
+        $('#host').hidden = on;
+        $('#give').disabled = on;
+        // il lato si sceglie col presentatore: finche' il telefono non e' passato, niente frecce
+        if (playing()) { var f = frontier(G.solved); $('#dir').hidden = on || f.top === f.bottom; }
+        var h = host();
+        $('#phone-who').innerHTML = playing() ? QZ.icon('smartphone') + '<span>Telefono a <b>' + QZ.esc(h.name) + '</b>, che fa il presentatore</span>' : '';
+        $('#phone-who').style.setProperty('--c', h.color);
+        if (!on) return;
+        hidePeek();
+        $('#handoff-who').textContent = h.name;
+        $('#handoff-who').style.setProperty('--c', h.color);
+        $('#handoff-info').textContent = 'Il telefono va a ' + h.name + ': fate voi i presentatori, la soluzione la vedete solo voi. Risponde ' + team().name + '.';
+    }
+    /** Il presentatore ha il telefono: si scopre il pannello e parte il cronometro */
+    function takePhone() {
+        if (!playing() || !G.pass) return;
+        G.pass = false;
+        QZ.sound.click();
+        paintPass();
+        save();
+        startClock();
+        QZ.say(host().name + ' fa il presentatore. Risponde ' + team().name + '.');
+        $('#ok').focus({ preventScroll: true });
+    }
+    function needPass() {
+        G.pass = true;
+        stopClock();
+        paintPass();
+        setTimeout(function () { if (G && G.pass && !$('#handoff').hidden) $('#handoff-go').focus({ preventScroll: true }); }, 60);
+    }
+
+    /* ---------- Cronometro facoltativo, a ogni tentativo ---------- */
+    function makeClock() {
+        if (clock) { clock.destroy(); clock = null; }
+        $('#clock-box').hidden = !G.tsec;
+        $('#tbar').hidden = !G.tsec;
+        if (!G.tsec) return;
+        clock = new QZ.Timer({
+            seconds: G.tsec, bar: $('#tbar'), label: $('#clock'), warnAt: 0.5, dangerAt: 0.25,
+            onSecond: function (s) {
+                $('#clock-box').classList.toggle('is-danger', s <= 5);
+                if (s <= 5 && s > 0) QZ.sound.tick();
+            },
+            onExpire: function () { if (judging()) wrong('', true); }
+        });
+    }
+    function startClock() {
+        if (!clock || !judging()) return;
+        clock.reset(G.tsec);
+        $('#clock-box').classList.remove('is-danger');
+        clock.start();
+    }
+    function stopClock() {
+        if (!clock) return;
+        clock.pause();
+        clock.reset(G.tsec);
+        $('#clock-box').classList.remove('is-danger');
     }
 
     /** Ridisegna tutto dallo stato: serve all'inizio, alla ripresa e dopo un Annulla */
@@ -310,7 +431,7 @@
         });
         $('#done').hidden = G.state !== 'done';
         $('#play').hidden = G.state === 'done';
-        $('#sb-n').textContent = (G.idx + 1) + '/' + G.n;
+        $('#sb-n').textContent = tiebreak() ? 'SPAREGGIO' : (G.idx + 1) + '/' + G.n;
         renderChain();
         clearTimeout(fitTo);
         fitTo = setTimeout(fit, 300);
@@ -319,10 +440,11 @@
         if (G.feedText != null) feed(G.feedText, G.feedKind);
         paintTurn(false);
         paintUndo();
+        paintPass();
     }
 
     function setDir(d) {
-        if (!playing()) return;
+        if (!judging()) return;
         var f = frontier(G.solved);
         if (f.top === f.bottom || G.dir === d) return;
         G.dir = d;
@@ -335,7 +457,7 @@
         var f = frontier(G.solved);
         G.target = G.dir === 'bottom' ? f.bottom : f.top;
         var single = f.top === f.bottom;
-        $('#dir').hidden = single;
+        $('#dir').hidden = single || !!G.pass;
         $('#dir-top').setAttribute('aria-pressed', String(G.dir === 'top'));
         $('#dir-bottom').setAttribute('aria-pressed', String(G.dir === 'bottom'));
         hidePeek();
@@ -456,7 +578,7 @@
     function setFeed(text, kind) { G.feedText = text; G.feedKind = kind || ''; feed(text, kind); }
 
     function right(said) {
-        if (!playing() || (!said && locked())) return;
+        if (!judging() || (!said && locked())) return;
         pushUndo();
         var i = G.target, t = team(), v = value(i);
         G.solved[i] = true;
@@ -478,10 +600,15 @@
         var run = t.run >= 3 ? ' Sono ' + t.run + ' di fila!' : '';
         setFeed((said ? '«' + said.toUpperCase() + '»: ' : '') + 'giusto, era «' + word(i) + '». ' + v + ' punti a ' + t.name + (more ? ', che continua.' : '.') + run, 'ok');
         afterMove(false);
+        // stessa squadra, stesso presentatore: nuovo tentativo, cronometro da capo
+        if (playing()) startClock();
     }
 
-    function wrong(said) {
-        if (!playing() || (!said && locked())) return;
+    /** timeUp: il cronometro e' scaduto (conta come una risposta sbagliata) */
+    function wrong(said, timeUp) {
+        if (!judging()) return;
+        if (timeUp) G.lockUntil = Date.now() + LOCK_MS;
+        else if (!said && locked()) return;
         pushUndo();
         var i = G.target, t = team();
         t.miss++;
@@ -496,17 +623,19 @@
         QZ.sound.wrong();
         QZ.vibrate([50, 30, 50]);
         G.turn = 1 - G.turn;
-        setFeed((said ? '«' + said.toUpperCase() + '» non va. ' : 'Niente da fare. ') + (k >= 0 ? 'Una lettera in più, palla a ' : 'Lettere finite, palla a ') + team().name + '.', 'bad');
+        setFeed((timeUp ? 'Tempo scaduto. ' : said ? '«' + said.toUpperCase() + '» non va. ' : 'Niente da fare. ') + (k >= 0 ? 'Una lettera in più, palla a ' : 'Lettere finite, palla a ') + team().name + ', telefono a ' + host().name + '.', 'bad');
+        if (timeUp) QZ.sound.buzzer();
         hidePeek();
         paintRows();
         paintValue();
         paintTurn(false);
         paintUndo();
+        needPass();
         save();
     }
 
     function giveUp() {
-        if (!playing() || locked()) return;
+        if (!judging() || locked()) return;
         pushUndo();
         var i = G.target;
         G.solved[i] = true;
@@ -516,7 +645,8 @@
         revealWord(i);
         QZ.sound.whoosh();
         G.turn = 1 - G.turn;
-        setFeed('Svelata: era «' + word(i) + '». Nessun punto, palla a ' + team().name + '.', 'bad');
+        setFeed('Svelata: era «' + word(i) + '». Nessun punto, palla a ' + team().name + ', telefono a ' + host().name + '.', 'bad');
+        if (frontier(G.solved).top >= 0) needPass();
         afterMove(true);
     }
 
@@ -525,9 +655,16 @@
         var s = undoStack.pop();
         // un Annulla subito dopo l'ultima parola riapre la catena: il riepilogo non parte più
         clearTimeout(nextTo);
+        // chi ha il telefono adesso: il presentatore, o (passaggio ancora da fare) quello di prima
+        var holder = G.pass ? G.turn : 1 - G.turn;
         restore(s, G.chain);
+        // si ripassa il telefono solo se il presentatore di quel momento non ce l'ha in mano
+        if (G.state === 'play') G.pass = holder !== 1 - G.turn;
+        else G.pass = false;
         G.lockUntil = Date.now() + 250;
+        stopClock();
         paintAll();
+        if (G.state === 'play' && !G.pass) startClock();
         QZ.sound.click();
         QZ.say('Annullato. ' + G.feedText);
         save();
@@ -544,7 +681,10 @@
 
     function chainDone() {
         G.state = 'done';
-        G.hist.push({ first: word(0), last: word(7), a: G.cp[0], b: G.cp[1] });
+        G.pass = false;
+        stopClock();
+        $('#phone-who').innerHTML = '';
+        G.hist.push({ first: word(0), last: word(7), a: G.cp[0], b: G.cp[1], tb: tiebreak() });
         paintRows();
         paintUndo();
         [0, 1].forEach(function (i) { $('#t' + i).classList.remove('is-active'); });
@@ -557,35 +697,44 @@
     function showRecap() {
         undoStack = [];
         paintUndo();
-        var last = G.idx + 1 >= G.n;
+        var end = G.idx + 1 >= G.n + G.tb;
+        var tbNext = end && needTiebreak(G.teams, G.tb);
+        var last = end && !tbNext;
         $('#play').hidden = true;
         $('#done').hidden = false;
-        $('#done-eyebrow').innerHTML = QZ.icon('link') + 'Catena ' + (G.idx + 1) + ' di ' + G.n + ' chiusa';
+        $('#done-eyebrow').innerHTML = QZ.icon('link') + (tiebreak() ? 'Spareggio chiuso' : 'Catena ' + (G.idx + 1) + ' di ' + G.n + ' chiusa');
         $('#done-title').textContent = word(0) + ' … ' + word(7);
         var gave = G.gave.filter(Boolean).length;
         var A = G.teams[0], B = G.teams[1];
-        $('#done-pts').textContent = 'In questa catena: ' + A.name + ' +' + G.cp[0] + ', ' + B.name + ' +' + G.cp[1] + (gave ? ' · ' + gave + (gave === 1 ? ' parola svelata' : ' parole svelate') : '') + '.';
+        $('#done-pts').textContent = 'In questa catena: ' + A.name + ' +' + G.cp[0] + ', ' + B.name + ' +' + G.cp[1] + (gave ? ' · ' + gave + (gave === 1 ? ' parola svelata' : ' parole svelate') : '') + '.' +
+            (tbNext ? ' Pari a ' + A.pts + ': si gioca una catena di spareggio, la apre chi ha trovato meno parole.' : '');
         $('#recap').innerHTML = G.chain.links.map(function (l, k) {
             var bad = G.gave[k + 1] ? ' class="is-gave"' : '';
             return '<li' + bad + '><b>' + QZ.esc(word(k)) + ' → ' + QZ.esc(word(k + 1)) + '</b><span>' + QZ.esc(l) + '</span></li>';
         }).join('');
-        $('#next').innerHTML = last ? QZ.icon('whistle') + 'Fischio finale' : QZ.icon('arrow') + 'Catena successiva';
-        QZ.say('Catena chiusa. ' + A.name + ' ' + A.pts + ', ' + B.name + ' ' + B.pts + '.');
+        $('#next').innerHTML = last ? QZ.icon('whistle') + 'Fischio finale' : tbNext ? QZ.icon('target') + 'Catena di spareggio' : QZ.icon('arrow') + 'Catena successiva';
+        QZ.say('Catena chiusa. ' + A.name + ' ' + A.pts + ', ' + B.name + ' ' + B.pts + '.' + (tbNext ? ' Pari punti: si va allo spareggio.' : ''));
         $('#done-title').focus({ preventScroll: false });
     }
 
     function nextChain() {
         if (!G || G.state !== 'done' || $('#done').hidden || locked()) return;
         G.idx++;
-        if (G.idx >= G.n) { G.idx = G.n - 1; finish(false); return; }
+        if (G.idx >= G.n + G.tb) {
+            if (!needTiebreak(G.teams, G.tb)) { G.idx--; finish(false); return; }
+            G.tb++;
+        }
         newChain();
         $('#turn-who').focus({ preventScroll: true });
     }
 
     function askQuit() {
         if (!G || G.finished) return;
+        var ticking = clock && clock.running;
+        if (ticking) clock.pause();
         QZ.confirm('La partita finisce qui e vince chi ha più punti.', { title: 'Chiudere la partita?', okLabel: 'Chiudi', cancelLabel: 'Si continua', danger: true }).then(function (ok) {
-            if (ok && G && !G.finished) finish(true);
+            if (ok && G && !G.finished) { finish(true); return; }
+            if (ticking && judging()) clock.start();
         });
     }
 
@@ -595,6 +744,7 @@
         var closed = G.hist.length;
         G.finished = true;
         G.state = 'over';
+        if (clock) { clock.destroy(); clock = null; }
         clearTimeout(nextTo);
         QZ.store.remove(SAVE_KEY);
         undoStack = [];
@@ -622,14 +772,14 @@
             icon: W ? 'trophy' : 'whistle',
             title: W ? 'Vince ' + W.name : 'Pareggio',
             subtitle: W
-                ? (early ? 'Partita chiusa in anticipo: decidono i punti, ' + W.pts + ' a ' + L.pts + '.' : subtitleFor(W, L))
-                : (found ? 'Stessi punti per tutte e due. Si rigioca per la bella?' : 'Nessuna parola trovata: zero a zero e tutti a casa.'),
+                ? (early ? 'Partita chiusa in anticipo: decidono i punti, ' + W.pts + ' a ' + L.pts + '.' : G.tb ? 'Decisa allo spareggio, ' + W.pts + ' a ' + L.pts + ': ' + W.name + ' ha tenuto i nervi saldi.' : subtitleFor(W, L))
+                : (early ? 'Partita chiusa in anticipo a pari punti.' : G.tb ? 'Pari anche dopo ' + G.tb + (G.tb === 1 ? ' spareggio' : ' spareggi') + ': stavolta finisce così.' : found ? 'Stessi punti per tutte e due. Si rigioca per la bella?' : 'Nessuna parola trovata: zero a zero e tutti a casa.'),
             big: W ? W.pts : A.pts, bigSuffix: ' punti',
             record: r,
             ratio: ratio,
             stats: [
                 { label: 'Risultato', value: A.pts + ' - ' + B.pts },
-                { label: 'Catene chiuse', value: closed + ' di ' + G.n },
+                { label: 'Catene chiuse', value: Math.min(closed, G.n) + ' di ' + G.n + (G.tb ? ' + ' + (G.tb === 1 ? 'spareggio' : G.tb + ' spareggi') : '') },
                 { label: 'Parole trovate', value: found + (G.gaveTot ? ' (+' + G.gaveTot + (G.gaveTot === 1 ? ' svelata)' : ' svelate)') : '') },
                 { label: 'Serie più lunga', value: best ? best + ' di fila' : '—' }
             ],
@@ -650,7 +800,7 @@
     function histHTML(A, B) {
         if (!G.hist.length) return '';
         return '<div class="card mt-3"><span class="label">Catena per catena · ' + QZ.esc(A.name) + ' - ' + QZ.esc(B.name) + '</span><ul class="ct-hist">' + G.hist.map(function (h, i) {
-            return '<li><span class="ct-hist__n">' + (i + 1) + '</span><span class="ct-hist__w">' + QZ.esc(h.first) + ' … ' + QZ.esc(h.last) + '</span>' +
+            return '<li><span class="ct-hist__n">' + (h.tb ? 'S' : i + 1) + '</span><span class="ct-hist__w">' + QZ.esc(h.first) + ' … ' + QZ.esc(h.last) + '</span>' +
                 '<span class="ct-hist__p" aria-label="' + QZ.esc(A.name + ' ' + h.a + ', ' + B.name + ' ' + h.b) + '">' + h.a + ' - ' + h.b + '</span></li>';
         }).join('') + '</ul></div>';
     }
@@ -683,6 +833,7 @@
         if (k === 'z' || (k === 'backspace' && !onBtn)) { if (undoStack.length) { e.preventDefault(); undo(); } return; }
         if (G.state === 'done' && k === 'enter' && !onBtn) { e.preventDefault(); nextChain(); return; }
         if (!playing()) return;
+        if (G.pass) { if (k === 'enter' && !onBtn) { e.preventDefault(); takePhone(); } return; }
         if (k === 'g') { e.preventDefault(); right(''); }
         else if (k === 'x') { e.preventDefault(); wrong(''); }
         else if (k === 'arrowup') { e.preventDefault(); setDir('top'); }

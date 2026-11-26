@@ -1,23 +1,26 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Il Calciatore del Giorno
-   Dati: assets/db-giocatoredelgiorno.js (`dailyPlayers`,
-   {name, role, team, value, nation, continent, league, born}).
-   Ogni giorno (data di Roma) un calciatore segreto uguale per tutti, preso da
-   un ordine mescolato a seme fisso: niente ripetizioni finche' la lista non
-   finisce. Il N° 1 e' il 16 novembre 2026. Sei tentativi; ogni tentativo
-   accende sei caselle (nazionale, campionato, squadra, ruolo, eta', valore):
-   verde uguale, ambra vicino, frecce per eta' e valore. Dopo il terzo errore
-   c'e' un indizio facoltativo (l'iniziale del cognome). Statistiche, serie e
-   distribuzione in localStorage; condivisione con i quadratini.
-   Modalita' Allenamento: giocatore a caso (tutti, solo Serie A o solo i big),
-   mai quello di oggi; non tocca le statistiche del giorno.
+   Dati: assets/db-giocatoredelgiorno.js (`dailyCalendar`, un nome per partita:
+   [0] = N° 1) e assets/db-giocatoributget.js (`playersDatabase`, da cui si
+   prendono i dati {name, role, team, value, nation, continent, league, born}
+   del segreto e di ogni tentativo).
+   Ogni giorno (data di Roma) un calciatore segreto uguale per tutti, quello del
+   calendario esplicito: il N° 1 e' il 16 novembre 2026, il N° n e' il nome
+   n-1 della lista; finita la lista si ricomincia dall'inizio. Sei tentativi;
+   ogni tentativo accende sei caselle (nazionale, campionato, squadra, ruolo,
+   eta', valore): verde uguale, ambra vicino, frecce per eta' e valore. Dopo il
+   terzo errore c'e' un indizio facoltativo (l'iniziale del cognome), dopo il
+   quarto un secondo (la nazionale, o la squadra se la nazionale e' gia' nota).
+   Statistiche, serie e distribuzione in localStorage; condivisione con i quadratini.
+   Modalita' Allenamento: giocatore a caso (i famosi del calendario, solo Serie A,
+   solo i big o tutto il database), mai quello di oggi; non tocca le statistiche del giorno.
    Archivio: i N° dei giorni passati, rigiocabili senza toccare statistiche e serie.
-   Chiavi: qz.gdg.today (partita di oggi), qz.gdg.stats (statistiche),
+   Chiavi: qz.gdg.today (partita di oggi: {n, guesses, hint, hint2, done, win}), qz.gdg.stats (statistiche),
    qz.gdg.history (esito di ogni N°), qz.gdg.trainpool (ultimo mazzo scelto).
 
    La parte "Core" qui sotto non usa il DOM: i test la caricano con require().
    ========================================================================== */
-/* global dailyPlayers */
+/* global dailyCalendar, playersDatabase */
 (function () {
     'use strict';
 
@@ -26,7 +29,6 @@
        ===================================================================== */
     var Core = (function () {
         var START = '2026-11-16';     // giorno del N° 1
-        var SEED = 0x13C0DE26;        // seme fisso dell'ordine dei giorni
         var MAX_TRIES = 6;
         var DAY = 86400000;
 
@@ -52,44 +54,26 @@
             return Math.round((utcOf(ymd) - utcOf(START)) / DAY);
         }
 
-        /** Generatore pseudo-casuale a seme (mulberry32): stesso seme, stessa sequenza ovunque. */
-        function rng(seed) {
-            var a = seed >>> 0;
-            return function () {
-                a = (a + 0x6D2B79F5) >>> 0;
-                var t = a;
-                t = Math.imul(t ^ (t >>> 15), t | 1);
-                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-            };
-        }
-
-        var cache = null;
-        /** L'ordine dei giorni: la lista ordinata per nome e poi mescolata col seme fisso. */
-        function order(list) {
-            if (cache && cache.list === list) return cache.order;
-            var sorted = list.slice().sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
-            var r = rng(SEED);
-            for (var i = sorted.length - 1; i > 0; i--) {
-                var j = Math.floor(r() * (i + 1));
-                var t = sorted[i]; sorted[i] = sorted[j]; sorted[j] = t;
+        /**
+         * Il calciatore della partita N° n nel calendario `cal` (un elemento per giorno, [0] = N° 1).
+         * Finito il calendario si ricomincia dall'inizio. Un buco (nome sparito dal database) non
+         * sposta gli altri giorni: quel giorno vale il primo calciatore valido che segue.
+         */
+        function nth(cal, n) {
+            var len = cal.length;
+            var i = (Math.max(1, n) - 1) % len;
+            for (var k = 0; k < len; k++) {
+                var p = cal[(i + k) % len];
+                if (p) return p;
             }
-            cache = { list: list, order: sorted };
-            return sorted;
+            return null;
         }
 
         /** Il calciatore del giorno: { n (numero della partita, da 1), player, date }. */
-        function daily(list, d) {
+        function daily(cal, d) {
             var ymd = typeof d === 'string' ? d : romeDate(d);
-            var idx = Math.max(0, dayIndex(ymd)); // prima del via vale il N° 1
-            var ord = order(list);
-            return { n: idx + 1, player: ord[idx % ord.length], date: ymd };
-        }
-
-        /** Il calciatore della partita N° n (per l'archivio): stesso ordine di daily(). */
-        function nth(list, n) {
-            var ord = order(list);
-            return ord[(Math.max(1, n) - 1) % ord.length];
+            var n = Math.max(0, dayIndex(ymd)) + 1; // prima del via vale il N° 1
+            return { n: n, player: nth(cal, n), date: ymd };
         }
 
         /** Data della partita N° n come 'AAAA-MM-GG'. */
@@ -163,6 +147,21 @@
             return { mono: mono, letter: (mono ? p.name : sur).charAt(0).toUpperCase() };
         }
 
+        /**
+         * Secondo indizio (dopo il quarto errore): la nazionale; se un tentativo l'ha gia' indovinata,
+         * la squadra; se anche quella e' nota, il valore. Torna il tipo: 'nation' | 'team' | 'value'.
+         */
+        function hint2Kind(secret, guesses) {
+            var known = function (k) { return (guesses || []).some(function (g) { return g && g[k] === secret[k]; }); };
+            return !known('nation') ? 'nation' : !known('team') ? 'team' : 'value';
+        }
+        /** Testo del secondo indizio: { label, text } (es. 'Nazionale', 'Argentina'). */
+        function hint2(secret, kind) {
+            if (kind === 'team') return { label: 'Squadra', text: secret.team };
+            if (kind === 'value') return { label: 'Valore', text: fmtValue(secret.value) };
+            return { label: 'Nazionale', text: secret.nation };
+        }
+
         function norm(s) {
             return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
                 .replace(/ø/g, 'o').replace(/ł/g, 'l').replace(/ı/g, 'i').replace(/đ/g, 'd').replace(/æ/g, 'ae').replace(/ß/g, 'ss')
@@ -189,52 +188,59 @@
 
         function emoji(state) { return state === 'hit' ? '🟩' : state === 'near' ? '🟨' : '⬛'; }
 
+        /** Eta' indicativa per la scheda: si conosce solo l'anno di nascita. */
+        function ageText(p, year) { return 'Classe ' + p.born + ', circa ' + age(p, year) + ' anni'; }
+
         /**
          * Testo da condividere: intestazione, quadratini, niente nomi (niente spoiler).
+         * hints: indizi usati (0, 1 o 2; true vale 1).
          * opt: { archive: true (partita dell'archivio), gaveUp: true (bandiera bianca), streak: serie in corso }
          */
-        function shareText(n, rows, win, usedHint, opt) {
+        function shareText(n, rows, win, hints, opt) {
             opt = opt || {};
+            hints = Number(hints) || 0;
             var head = 'Calciatore del Giorno N° ' + n + (opt.archive ? ' (archivio)' : '') + ' — ' +
-                (win ? rows.length : 'X') + '/' + MAX_TRIES + (usedHint ? ' (con indizio)' : '');
+                (win ? rows.length : 'X') + '/' + MAX_TRIES + (hints >= 2 ? ' (con 2 indizi)' : hints ? ' (con indizio)' : '');
             var lines = rows.map(function (r) { return r.map(emoji).join(''); });
             if (opt.gaveUp) lines.push('🏳️ bandiera bianca');
             var txt = head + '\n\n' + lines.join('\n');
             if (win && opt.streak >= 2) txt += '\n🔥 serie di ' + opt.streak;
+            // in fondo il link, col nome con cui lo cercano: il Wordle del calcio
+            if (opt.link) txt += '\n\nIl Wordle del calcio: ' + opt.link;
             return txt;
         }
 
         return {
-            START: START, SEED: SEED, MAX_TRIES: MAX_TRIES, ROLE: ROLE,
-            romeDate: romeDate, dayIndex: dayIndex, order: order, daily: daily, nth: nth, dateOf: dateOf, msToNext: msToNext,
-            age: age, fmtValue: fmtValue, compare: compare, surname: surname, hint: hint,
+            START: START, MAX_TRIES: MAX_TRIES, ROLE: ROLE,
+            romeDate: romeDate, dayIndex: dayIndex, daily: daily, nth: nth, dateOf: dateOf, msToNext: msToNext,
+            age: age, ageText: ageText, fmtValue: fmtValue, compare: compare, surname: surname, hint: hint,
+            hint2Kind: hint2Kind, hint2: hint2,
             norm: norm, search: search, shareText: shareText, emoji: emoji
         };
     })();
 
     if (typeof module !== 'undefined' && module.exports) module.exports = Core;
-    if (typeof document === 'undefined' || typeof QZ === 'undefined' || typeof dailyPlayers === 'undefined') return;
+    if (typeof document === 'undefined' || typeof QZ === 'undefined' || typeof dailyCalendar === 'undefined' || typeof playersDatabase === 'undefined') return;
 
     /* =====================================================================
        INTERFACCIA
        ===================================================================== */
     var $ = QZ.$;
     var GAME = 'giocatoredelgiorno';
-    var PLAYERS = dailyPlayers;   // i calciatori del giorno: elenco congelato, decide l'ordine dei giorni
+    // chi si puo' scrivere come tentativo: tutto il database dei calciatori (db-giocatoributget.js)
     var BY_NAME = {};
-    PLAYERS.forEach(function (p) { BY_NAME[p.name] = p; });
-    // chi si puo' scrivere come tentativo: tutto il database dei calciatori (db-giocatoributget.js),
-    // non solo i calciatori del giorno. Il segreto resta sempre uno dei calciatori del giorno.
-    var GUESS = PLAYERS.slice();
-    if (typeof playersDatabase !== 'undefined') {
-        playersDatabase.forEach(function (p) {
-            if (BY_NAME[p.name] || !p.nation || !p.league || !p.born) return;
-            BY_NAME[p.name] = p;
-            GUESS.push(p);
-        });
-    }
+    var GUESS = [];
+    playersDatabase.forEach(function (p) {
+        if (BY_NAME[p.name] || !p.nation || !p.league || !p.born) return;
+        BY_NAME[p.name] = p;
+        GUESS.push(p);
+    });
+    // il calendario dei giorni (db-giocatoredelgiorno.js): nomi -> calciatori del database
+    var CAL = dailyCalendar.map(function (n) { return BY_NAME[n] || null; });
     var IS_DAILY = {};
-    PLAYERS.forEach(function (p) { IS_DAILY[p.name] = 1; });
+    dailyCalendar.forEach(function (n) { IS_DAILY[n] = 1; });
+    // il link nel testo condiviso: lo stesso che QZ.share aggiungerebbe in coda (cosi' non si ripete)
+    function shareLink() { return window.location.href.split('#')[0]; }
     var KEY_DAY = 'qz.gdg.today';       // la partita di oggi (anche a meta')
     var KEY_STATS = 'qz.gdg.stats';     // statistiche e serie
     var KEY_HIST = 'qz.gdg.history';    // esito di ogni N° giocato: { "5": {w, t, h, a} }
@@ -244,12 +250,12 @@
     // mazzi dell'allenamento
     function count(fn) { return GUESS.filter(fn).length; }
     var POOLS = {
-        all: { label: 'I conosciuti', short: 'i conosciuti', test: function (p) { return !!IS_DAILY[p.name]; } },
+        all: { label: 'I famosi', short: 'i famosi', test: function (p) { return !!IS_DAILY[p.name]; } },
         seriea: { label: 'Solo Serie A', short: 'solo Serie A', test: function (p) { return p.league === 'Serie A' && (IS_DAILY[p.name] || p.value >= 4); } },
         big: { label: 'Solo i big', short: 'solo i big', test: function (p) { return p.value >= 30; } },
         tutto: { label: 'Tutto il database', short: 'tutto il database', test: function () { return true; } }
     };
-    POOLS.all.desc = count(POOLS.all.test) + ' calciatori famosi, gli stessi del gioco del giorno';
+    POOLS.all.desc = count(POOLS.all.test) + ' calciatori famosi, quelli del gioco del giorno';
     POOLS.seriea.desc = count(POOLS.seriea.test) + ' calciatori del nostro campionato';
     POOLS.big.desc = count(POOLS.big.test) + ' nomi da copertina, valore da 30 milioni in su';
     POOLS.tutto.desc = count(POOLS.tutto.test) + ' calciatori, anche i meno noti: per veri esperti';
@@ -262,7 +268,9 @@
 
     function tryWord(n) { return n === 1 ? 'tentativo' : 'tentativi'; }
     function year() { return Number(Core.romeDate().slice(0, 4)); }
-    function today() { return Core.daily(PLAYERS); }
+    function today() { return Core.daily(CAL); }
+    function hintCount(o) { return (o.hint ? 1 : 0) + (o.hint2 ? 1 : 0); }
+    var HINT2_KINDS = { nation: 1, team: 1, value: 1 };
     function fmtClock(ms) {
         var s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
         s = s % 60;
@@ -297,9 +305,11 @@
     function getDay() {
         var d = QZ.store.get(KEY_DAY, null);
         var t = today();
-        if (!d || d.n !== t.n || !Array.isArray(d.guesses)) return { n: t.n, guesses: [], hint: false, done: false, win: false };
+        if (!d || d.n !== t.n || !Array.isArray(d.guesses)) return { n: t.n, guesses: [], hint: false, hint2: null, done: false, win: false };
         // i nomi spariti dal database (aggiornamenti) non devono rompere la partita
         d.guesses = d.guesses.filter(function (g) { return BY_NAME[g]; });
+        // salvataggi di prima del secondo indizio: hint2 non c'e'
+        d.hint2 = HINT2_KINDS[d.hint2] ? d.hint2 : null;
         return d;
     }
     function saveDay() {
@@ -307,12 +317,12 @@
         // una partita di ieri finita dopo mezzanotte non cancella quella di oggi gia' iniziata
         var old = QZ.store.get(KEY_DAY, null);
         if (old && old.n > S.n) return;
-        QZ.store.set(KEY_DAY, { n: S.n, guesses: S.guesses.map(function (p) { return p.name; }), hint: S.hint, done: S.done, win: S.win });
+        QZ.store.set(KEY_DAY, { n: S.n, guesses: S.guesses.map(function (p) { return p.name; }), hint: S.hint, hint2: S.hint2 || null, done: S.done, win: S.win });
     }
     // chi ha finito la partita di oggi prima che esistesse lo storico: la si riporta li'
     (function migrate() {
         var d = getDay();
-        if (d.done && !getHist()[d.n]) setHist(d.n, { w: d.win ? 1 : 0, t: d.guesses.length, h: d.hint ? 1 : 0 });
+        if (d.done && !getHist()[d.n]) setHist(d.n, { w: d.win ? 1 : 0, t: d.guesses.length, h: hintCount(d) });
     })();
 
     /* ---------- Markup statico ---------- */
@@ -324,7 +334,7 @@
         ['Scrivi un nome.', 'Basta il cognome, anche senza accenti: i suggerimenti fanno il resto.'],
         ['Guarda le caselle.', 'Mostrano i dati del nome che hai provato. Verde: uguale al segreto. Ambra: vicino (stesso continente, al massimo due anni di differenza, valore entro il 25%).'],
         ['Segui le frecce.', 'Su età e valore dicono da che parte sta il segreto: ↑ più vecchio o più caro, ↓ più giovane o meno caro.'],
-        ['Sei tentativi.', 'Dopo il terzo errore puoi chiedere l\'iniziale del cognome, ma nel risultato si vede. Domani se ne gioca un altro.']
+        ['Sei tentativi.', 'Dopo il terzo errore puoi chiedere l\'iniziale del cognome, dopo il quarto la nazionale (o la squadra, se la nazionale l\'hai già trovata). Nel risultato si vede. Domani se ne gioca un altro.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
@@ -353,7 +363,7 @@
             var secret = t.player;
             var rows = rowsOf(d.guesses.map(function (g) { return BY_NAME[g]; }), secret);
             box.innerHTML =
-                '<div class="gd-today__head"><h2 class="gd-today__title display">N° ' + t.n + ' · ' + (d.win ? 'preso in ' + k + '/6' : 'non preso') + (d.hint ? ' · con indizio' : '') + '</h2>' +
+                '<div class="gd-today__head"><h2 class="gd-today__title display">N° ' + t.n + ' · ' + (d.win ? 'preso in ' + k + '/6' : 'non preso') + (hintCount(d) >= 2 ? ' · con 2 indizi' : hintCount(d) ? ' · con indizio' : '') + '</h2>' +
                 '<span class="small muted">Il prossimo tra <b class="led" data-countdown>--:--:--</b></span></div>' +
                 '<div class="gd-today__body">' + (rows.length ? miniHTML(rows) : '') + cardHTML(secret, d.win ? 'Era lui' : 'Ti è sfuggito') + '</div>';
             box.hidden = false;
@@ -378,7 +388,7 @@
         return '<div class="gd-card"><span class="eyebrow">' + QZ.esc(kicker) + '</span>' +
             '<div class="gd-card__name">' + QZ.esc(p.name) + '</div>' +
             '<div class="gd-card__chips">' +
-            [p.team + ' · ' + p.league, p.nation, Core.ROLE[p.role], Core.age(p, year()) + ' anni', Core.fmtValue(p.value)].map(function (x) {
+            [p.team + ' · ' + p.league, p.nation, Core.ROLE[p.role], Core.ageText(p, year()), Core.fmtValue(p.value)].map(function (x) {
                 return '<span class="chip">' + QZ.esc(x) + '</span>';
             }).join('') + '</div></div>';
     }
@@ -430,7 +440,7 @@
     function startDaily() {
         var t = today();
         var d = getDay();
-        S = { active: true, mode: 'daily', n: t.n, secret: t.player, guesses: [], hint: !!d.hint, done: false, win: false };
+        S = { active: true, mode: 'daily', n: t.n, secret: t.player, guesses: [], hint: !!d.hint, hint2: d.hint2, done: false, win: false };
         d.guesses.forEach(function (name) { S.guesses.push(BY_NAME[name]); });
         enterGame();
     }
@@ -468,12 +478,12 @@
         var todayName = today().player.name;
         // mai il calciatore di oggi: in allenamento sarebbe uno spoiler
         var secret = trainDeck.draw(function (p) { return p.name !== todayName && POOLS[key].test(p); });
-        S = { active: true, mode: 'train', pool: key, n: 0, secret: secret, guesses: [], hint: false, done: false, win: false };
+        S = { active: true, mode: 'train', pool: key, n: 0, secret: secret, guesses: [], hint: false, hint2: null, done: false, win: false };
         enterGame();
     }
 
     function startArchive(n) {
-        S = { active: true, mode: 'archive', n: n, secret: Core.nth(PLAYERS, n), guesses: [], hint: false, done: false, win: false };
+        S = { active: true, mode: 'archive', n: n, secret: Core.nth(CAL, n), guesses: [], hint: false, hint2: null, done: false, win: false };
         enterGame();
     }
 
@@ -569,26 +579,49 @@
         return h.mono ? 'Lo chiamano per nome, e comincia per <b>' + QZ.esc(h.letter) + '</b>.' : 'Il cognome comincia per <b>' + QZ.esc(h.letter) + '</b>.';
     }
 
+    function hint2Text(h) { return QZ.esc(h.label) + ': <b>' + QZ.esc(h.text) + '</b>'; }
+    var HINT2_BTN = { nation: 'la nazionale', team: 'la squadra', value: 'il valore' };
+
+    /** Gli indizi: il primo (iniziale) dopo il terzo errore, il secondo (nazionale o squadra) dopo il quarto. */
     function paintHint() {
         var box = $('#g-hint');
-        if (S.done || wrongCount() < 3) { box.hidden = true; box.innerHTML = ''; return; }
+        var wrong = wrongCount();
+        if (S.done || wrong < 3) { box.hidden = true; box.innerHTML = ''; return; }
         box.hidden = false;
-        if (S.hint) {
-            box.innerHTML = QZ.icon('bulb') + '<span class="gd-hint__text">' + hintText(Core.hint(S.secret)) + '</span>';
-            return;
+        var note = '<span class="small muted">' + (S.mode === 'daily' ? 'Nel risultato si vedrà.' : 'Costa qualche punto esperienza.') + '</span>';
+        var html = S.hint
+            ? '<p class="gd-hint__item">' + QZ.icon('bulb') + '<span class="gd-hint__text">' + hintText(Core.hint(S.secret)) + '</span></p>'
+            : '<p class="gd-hint__item"><button class="btn btn--sm" type="button" id="g-hint-btn">' + QZ.icon('bulb') + 'Indizio: l\'iniziale</button>' + note + '</p>';
+        if (wrong >= 4) {
+            html += S.hint2
+                ? '<p class="gd-hint__item">' + QZ.icon('bulb') + '<span class="gd-hint__text">' + hint2Text(Core.hint2(S.secret, S.hint2)) + '</span></p>'
+                : '<p class="gd-hint__item"><button class="btn btn--sm" type="button" id="g-hint2-btn">' + QZ.icon('bulb') + 'Secondo indizio: ' +
+                    HINT2_BTN[Core.hint2Kind(S.secret, S.guesses)] + '</button>' + (S.hint ? note : '') + '</p>';
         }
-        box.innerHTML = '<button class="btn btn--sm" type="button" id="g-hint-btn">' + QZ.icon('bulb') + 'Indizio: l\'iniziale</button>' +
-            '<span class="small muted">' + (S.mode === 'daily' ? 'Nel risultato si vedrà.' : 'Costa qualche punto esperienza.') + '</span>';
-        $('#g-hint-btn').addEventListener('click', function () {
+        box.innerHTML = html;
+        var b1 = $('#g-hint-btn');
+        if (b1) b1.addEventListener('click', function () {
             if (S.hint || S.done) return;
             S.hint = true;
-            saveDay();
-            QZ.sound.lifeline();
-            paintHint();
+            useHint();
             var h = Core.hint(S.secret);
             QZ.say((h.mono ? 'Lo chiamano per nome, comincia per ' : 'Il cognome comincia per ') + h.letter);
-            if (fine()) input.focus({ preventScroll: true });
         });
+        var b2 = $('#g-hint2-btn');
+        if (b2) b2.addEventListener('click', function () {
+            if (S.hint2 || S.done) return;
+            // il tipo si fissa adesso: i tentativi dopo non lo cambiano
+            S.hint2 = Core.hint2Kind(S.secret, S.guesses);
+            useHint();
+            var h = Core.hint2(S.secret, S.hint2);
+            QZ.say(h.label + ': ' + h.text);
+        });
+    }
+    function useHint() {
+        saveDay();
+        QZ.sound.lifeline();
+        paintHint();
+        if (fine()) input.focus({ preventScroll: true });
     }
 
     function guess(p) {
@@ -609,7 +642,7 @@
         var left = Core.MAX_TRIES - S.guesses.length;
         // si annuncia solo l'ultimo tentativo (la lista non e' piu' una regione live che rilegge tutto)
         QZ.say(p.name + '. ' + sayCells(cells) + '. ' + (left === 1 ? 'Ultimo tentativo.' : 'Restano ' + left + ' tentativi.') +
-            (wrongCount() === 3 && !S.hint ? ' Puoi chiedere un indizio.' : ''));
+            (wrongCount() === 3 && !S.hint ? ' Puoi chiedere un indizio.' : wrongCount() === 4 && !S.hint2 ? ' Puoi chiedere un secondo indizio.' : ''));
     }
 
     function giveUp() {
@@ -631,7 +664,7 @@
         $('#g-hint').hidden = true;
         $('#g-left').textContent = '';
         var tries = S.guesses.length;
-        var rec = { w: win ? 1 : 0, t: tries, h: S.hint ? 1 : 0 };
+        var rec = { w: win ? 1 : 0, t: tries, h: hintCount(S) };
 
         if (S.mode === 'daily') {
             saveDay();
@@ -653,12 +686,14 @@
                 QZ.store.set(KEY_STATS, stats);
             }
             setHist(S.n, rec);
+            // Leghe tra amici: il risultato del giorno entra da solo nelle classifiche (Leghe.html)
+            if (QZ.leagues) QZ.leagues.submit(GAME, S.n, { win: !!win, tries: tries, hints: hintCount(S) });
         } else if (S.mode === 'archive') {
             var old = getHist()[S.n];
             // dall'archivio non si sovrascrive l'esito vero di quel giorno
             if (!old || old.a) { rec.a = 1; setHist(S.n, rec); }
         }
-        var xp = win ? 20 + (Core.MAX_TRIES + 1 - tries) * 15 - (S.hint ? 10 : 0) : 8;
+        var xp = win ? 20 + (Core.MAX_TRIES + 1 - tries) * 15 - hintCount(S) * 10 : 8;
         if (S.mode !== 'daily') xp = Math.round(xp / 2);
         var label = (S.mode === 'daily' ? 'N° ' + S.n : S.mode === 'archive' ? 'Archivio N° ' + S.n : 'Allenamento') + ' · ' + (win ? tries : 'X') + '/6';
         S.xp = QZ.profile.record(GAME, { xp: xp, label: label }).xp;
@@ -694,7 +729,7 @@
         var n = fresh ? S.n : t.n;
         var guesses = fresh ? S.guesses : d.guesses.map(function (g) { return BY_NAME[g]; });
         var win = fresh ? S.win : d.win;
-        var usedHint = fresh ? S.hint : d.hint;
+        var hints = hintCount(fresh ? S : d);
         var tries = guesses.length;
         var gaveUp = !win && tries < Core.MAX_TRIES;
         var rows = rowsOf(guesses, secret);
@@ -710,7 +745,7 @@
             icon: win ? 'trophy' : 'flag',
             title: win ? winTitle(tries) : gaveUp ? 'Bandiera bianca' : TITLES_LOST[n % TITLES_LOST.length],
             subtitle: win
-                ? 'N° ' + n + ': preso in ' + tries + ' su 6' + (usedHint ? ', con l\'aiutino dell\'iniziale.' : '.') +
+                ? 'N° ' + n + ': preso in ' + tries + ' su 6' + (hints >= 2 ? ', con due indizi.' : hints ? ', con un indizio.' : '.') +
                   (streak >= 2 ? ' Sono ' + streak + ' giorni di fila.' : '') + ' Adesso fallo sapere al gruppo.'
                 : gaveUp ? 'N° ' + n + (tries ? ': ti sei arreso dopo ' + tries + ' ' + tryWord(tries) + '.' : ': ti sei arreso senza nemmeno provarci.') + rematch
                     : 'N° ' + n + ': sei tentativi e niente.' + rematch,
@@ -720,7 +755,7 @@
                 (n === t.n
                     ? '<div class="gd-next"><span class="label">Il prossimo tra</span><span class="led" data-countdown>' + fmtClock(Core.msToNext()) + '</span></div>'
                     : '<div class="gd-next"><span class="label">Il N° ' + t.n + ' è già uscito</span><span class="small muted">Lo trovi in panchina.</span></div>') + '</div>',
-            share: Core.shareText(n, rows, win, usedHint, { gaveUp: gaveUp, streak: streak }),
+            share: Core.shareText(n, rows, win, hints, { gaveUp: gaveUp, streak: streak, link: shareLink() }),
             retryLabel: 'Allenamento',
             onRetry: chooseTraining,
             secondary: { label: 'Torna in panchina', icon: 'back', onClick: back }
@@ -734,7 +769,7 @@
         var tries = S.guesses.length;
         var arch = S.mode === 'archive';
         var share = arch
-            ? Core.shareText(S.n, rows, S.win, S.hint, { archive: true, gaveUp: !!S.gaveUp })
+            ? Core.shareText(S.n, rows, S.win, hintCount(S), { archive: true, gaveUp: !!S.gaveUp, link: shareLink() })
             : 'Allenamento al Calciatore del Giorno — ' + (S.win ? tries : 'X') + '/6\n\n' + rows.map(function (r) { return r.map(Core.emoji).join(''); }).join('\n');
         var pool = S.pool;
         QZ.show('s-end');

@@ -108,3 +108,70 @@ test('testi senza spazi doppi o ai bordi', () => {
         });
     });
 });
+
+/* ---------- regole del montepremi (assets/games/cadutalibera.js in sandbox, DOM finto) ---------- */
+function loadGame() {
+    const fs = require('node:fs');
+    const vm = require('node:vm');
+    const el = () => new Proxy(function () {}, {
+        get(t, p) {
+            if (p === 'classList') return { add() {}, remove() {}, toggle() {}, contains() { return false; } };
+            if (p === 'dataset' || p === 'style') return {};
+            if (p === 'hidden' || p === 'disabled') return false;
+            if (p === Symbol.toPrimitive) return () => '';
+            return () => el();
+        },
+        set() { return true; },
+        apply() { return el(); }
+    });
+    const QZ = {
+        $: () => el(), $$: () => [], icon: () => '', esc: (s) => String(s), fmt: (n) => String(n),
+        clamp: (v, a, b) => Math.max(a, Math.min(b, v)),
+        store: { get: (k, f) => f, set() {} },
+        Deck: function () { this.draw = () => cadutaDomande[0]; },
+        segmented() {}, profile: { best: () => undefined }, shuffle: (a) => a
+    };
+    const win = { __QZ_TEST__: {} };
+    const ctx = { QZ, cadutaDomande, window: win, document: { addEventListener() {} }, console };
+    vm.createContext(ctx);
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'assets', 'games', 'cadutalibera.js'), 'utf8'), ctx);
+    return win.__QZ_TEST__.cadutalibera;
+}
+const G = loadGame();
+
+test('bonus velocita\': a parita\' di secondi impiegati, i ritmi veloci rendono di piu\'', () => {
+    // risposta in 2 secondi: Calmo (10 s) avanza 8 s, Svelto 5 s, Lampo 3 s
+    const calmo = G.speedBonus(8, 10), svelto = G.speedBonus(5, 7), lampo = G.speedBonus(3, 5);
+    assert.ok(lampo > svelto && svelto > calmo, `Calmo ${calmo}, Svelto ${svelto}, Lampo ${lampo}`);
+    for (let t = 0; t < 5; t += 0.25) {
+        const l = G.speedBonus(5 - t, 5), s = G.speedBonus(7 - t, 7), c = G.speedBonus(10 - t, 10);
+        assert.ok(l > s && s > c, `in ${t} s: Lampo ${l}, Svelto ${s}, Calmo ${c}`);
+    }
+    for (let t = 5; t < 7; t += 0.25) assert.ok(G.speedBonus(7 - t, 7) > G.speedBonus(10 - t, 10), `in ${t} s Svelto deve battere Calmo`);
+    // proporzionale al tempo risparmiato: a tempo scaduto resta solo la quota del ritmo
+    assert.equal(G.speedBonus(0, 10), 0);
+    assert.ok(G.speedBonus(7, 7) > G.speedBonus(3.5, 7));
+    assert.equal(G.speedBonus(99, 5), G.speedBonus(5, 5));
+});
+
+test('"Mi fermo qui": 50% prima di un terzo, 75% fino a due terzi, 100% dopo; arrivare in fondo paga di piu\'', () => {
+    for (const len of [15, 25, 40]) {
+        assert.equal(G.keepShare(0, len), 0.5);
+        assert.equal(G.keepShare(Math.ceil(len / 3) - 1, len), 0.5);
+        assert.equal(G.keepShare(Math.ceil(len / 3), len), 0.75);
+        assert.equal(G.keepShare(Math.ceil((2 * len) / 3), len), 1);
+        assert.equal(G.toNextStep(0, len), Math.ceil(len / 3));
+        assert.equal(G.toNextStep(len - 1, len), 0);
+        for (let i = 1; i <= len; i++) assert.ok(G.keepShare(i, len) >= G.keepShare(i - 1, len), 'la quota non scende mai');
+    }
+    assert.ok(G.FINISH_BONUS > 1, 'il premio arrivo deve battere il fermarsi');
+    assert.equal(G.FALL_KEEP, 0.5);
+});
+
+test('record separati per lunghezza e ritmo', () => {
+    assert.equal(G.recMode(25, 7), '25-7');
+    assert.notEqual(G.recMode(25, 5), G.recMode(25, 10));
+    const js = require('node:fs').readFileSync(path.join(__dirname, '..', 'assets', 'games', 'cadutalibera.js'), 'utf8');
+    assert.match(js, /mode: recMode\(S\.len, S\.pace\)/);
+    assert.match(js, /QZ\.profile\.best\(GAME, recMode\(set\.len, set\.pace\)\)/);
+});

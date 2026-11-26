@@ -14,11 +14,19 @@
     ];
     var count = { all: QZ.GAMES.length, quiz: 0, party: 0 };
     QZ.GAMES.forEach(function (g) { count[g.kind] = (count[g.kind] || 0) + 1; });
+    // argomento: i giochi di cultura generale hanno il tag, tutti gli altri sono di calcio
+    function topicOf(g) { return (g.tags || []).indexOf('Cultura generale') !== -1 ? 'cultura' : 'calcio'; }
+    var tcount = { calcio: 0, cultura: 0 };
+    QZ.GAMES.forEach(function (g) { tcount[topicOf(g)]++; });
 
     QZ.$('#cta-games').innerHTML = 'Fischio d\'inizio' + QZ.icon('arrow');
     QZ.$('#cta-random').innerHTML = QZ.icon('dice') + 'Gioco a sorpresa';
     QZ.$$('[data-icon]').forEach(function (el) { el.innerHTML = QZ.icon(el.dataset.icon); });
     QZ.$$('[data-n]').forEach(function (el) { el.textContent = count[el.dataset.n] || 0; });
+    QZ.$$('[data-tn]').forEach(function (el) { el.textContent = tcount[el.dataset.tn] || 0; });
+    // il numero dei giochi nel tabellino viene dal registro, non dal testo della pagina
+    var factGames = QZ.$('#fact-games');
+    if (factGames) factGames.dataset.count = QZ.GAMES.length;
 
     function sameDay(ts) {
         if (!ts) return false;
@@ -31,7 +39,7 @@
     function cardHTML(g, profile) {
         var i = QZ.GAMES.indexOf(g);
         var plays = profile.gamesPlayed[g.id] || 0;
-        return '<a class="game" href="' + g.file + '" data-kind="' + g.kind + '" data-id="' + g.id + '" style="--c:' + g.color + ';--c-2:' + g.color2 + '">' +
+        return '<a class="game" href="' + g.file + '" data-kind="' + g.kind + '" data-topic="' + topicOf(g) + '" data-id="' + g.id + '" style="--c:' + g.color + ';--c-2:' + g.color2 + '">' +
             '<div class="game__band"><span class="game__num">N° ' + String(i + 1).padStart(2, '0') + '</span>' +
             (g.daily ? '<span class="game__daily">Ogni giorno</span>' : '') +
             '<span class="game__icon" style="color:' + g.on + '">' + QZ.icon(g.icon) + '</span></div>' +
@@ -62,16 +70,17 @@
         var daily = QZ.GAMES.filter(function (g) { return g.daily; })[0];
         var box = QZ.$('#today-daily');
         if (!daily) { QZ.$('#today').hidden = true; return; }
-        box.href = daily.file;
+        // il Giornale di oggi (Oggi.html) raccoglie tutti i giochi del giorno, uguali per tutti
+        box.href = 'Oggi.html';
         box.style.setProperty('--c', daily.color);
         var date = new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
         var done = sameDay(profile.lastPlayed[daily.id]);
-        QZ.$('#today-date').textContent = 'La sfida di oggi · ' + date;
-        QZ.$('#today-title').textContent = daily.name;
+        QZ.$('#today-date').textContent = 'Il Giornale di oggi · ' + date;
+        QZ.$('#today-title').textContent = 'I giochi del giorno';
         QZ.$('#today-text').textContent = done
-            ? 'Oggi ci hai già giocato. Domani c\'è un calciatore nuovo, e intanto puoi allenarti.'
-            : daily.desc;
-        QZ.$('#today-go').innerHTML = (done ? 'Rivedi o allenati' : 'Gioca la sfida') + QZ.icon('arrow');
+            ? 'Il Calciatore del Giorno è fatto: ti aspettano la Scheda di Quattro per Quattro, l\'Intruso e Sopra o Sotto del giorno.'
+            : 'Il Calciatore del Giorno, la Scheda di Quattro per Quattro, l\'Intruso e Sopra o Sotto: uguali per tutti, una volta al giorno.';
+        QZ.$('#today-go').innerHTML = (done ? 'Continua il Giornale' : 'Apri il Giornale') + QZ.icon('arrow');
         box.classList.toggle('is-done', done);
 
         // gli ultimi tre giochi aperti, dal piu' recente (la sfida del giorno ha gia' il suo posto)
@@ -117,18 +126,39 @@
     var items = news.map(function (n) { return '<span>' + QZ.esc(n) + '</span>'; }).join('');
     QZ.$('#ticker').innerHTML = items + items;
 
-    /* ---------- Filtri (ricordati su questo telefono) ---------- */
+    /* ---------- Filtri (ricordati su questo telefono) e ricerca ---------- */
     var filters = QZ.$$('#filters button');
+    var topics = QZ.$$('#topics button');
+    var search = QZ.$('#games-q');
+    var TOPIC_KEY = 'qz.home.topic';
     var current = 'all';
+    var topic = 'all';
+    var query = '';
+    // per cercare senza badare a maiuscole e accenti («citta» trova «città»)
+    function norm(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim(); }
+    var haystack = {};
+    QZ.GAMES.forEach(function (g) { haystack[g.id] = norm([g.name, g.short, g.desc, g.players, (g.tags || []).join(' ')].join(' ')); });
+    function visible(g) {
+        if (current !== 'all' && g.kind !== current) return false;
+        if (topic !== 'all' && topicOf(g) !== topic) return false;
+        var q = norm(query);
+        if (!q) return true;
+        return q.split(' ').every(function (w) { return haystack[g.id].indexOf(w) !== -1; });
+    }
     function applyFilter(f, animate) {
         if (!count[f]) f = 'all';
         current = f;
         filters.forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.f === f)); });
+        topics.forEach(function (x) { x.setAttribute('aria-pressed', String(x.dataset.t === topic)); });
         var i = 0;
-        QZ.$$('.game, .games__group', grid).forEach(function (card) {
-            var show = f === 'all' || card.dataset.kind === f;
+        var shown = {};
+        QZ.$$('.game', grid).forEach(function (card) {
+            var show = visible(QZ.game(card.dataset.id) || {});
+            // hidden: le figurine filtrate spariscono davvero, anche per i lettori di schermo
+            card.hidden = !show;
             card.classList.toggle('is-hidden', !show);
-            if (show && card.classList.contains('game')) {
+            if (show) {
+                shown[card.dataset.kind] = (shown[card.dataset.kind] || 0) + 1;
                 // le figurine rimaste entrano una dopo l'altra
                 card.style.setProperty('--i', i++);
                 if (animate) {
@@ -138,15 +168,63 @@
                 }
             }
         });
+        QZ.$$('.games__group', grid).forEach(function (h) {
+            var n = shown[h.dataset.kind] || 0;
+            h.hidden = !n;
+            h.classList.toggle('is-hidden', !n);
+            var badge = h.querySelector('.games__n');
+            if (badge) badge.textContent = n;
+        });
+        var empty = QZ.$('.games-empty', grid);
+        if (!i && !empty) {
+            empty = QZ.el('<p class="games-empty"></p>');
+            grid.appendChild(empty);
+        }
+        if (empty) {
+            empty.hidden = !!i;
+            empty.textContent = norm(query) ? 'Nessun gioco con «' + query.trim() + '». Prova un\'altra parola.' : 'Nessun gioco con questi filtri.';
+        }
         return i;
+    }
+    function announce(n) {
+        var parts = [];
+        if (current !== 'all') parts.push(current === 'quiz' ? 'da solo' : 'in compagnia');
+        if (topic !== 'all') parts.push(topic === 'calcio' ? 'di calcio' : 'di cultura generale');
+        if (norm(query)) parts.push('con «' + query.trim() + '»');
+        QZ.$('#filter-status').textContent = (parts.length ? 'Giochi ' + parts.join(', ') : 'Tutti i giochi') + ': ' + n;
     }
     filters.forEach(function (b) {
         b.addEventListener('click', function () {
             var n = applyFilter(b.dataset.f, true);
             QZ.store.set(FILTER_KEY, current);
-            QZ.$('#filter-status').textContent = (current === 'all' ? 'Tutti i giochi' : b.firstChild.textContent.trim()) + ': ' + n + ' giochi';
+            announce(n);
         });
     });
+    topics.forEach(function (b) {
+        b.addEventListener('click', function () {
+            topic = b.dataset.t;
+            var n = applyFilter(current, true);
+            QZ.store.set(TOPIC_KEY, topic);
+            announce(n);
+        });
+    });
+    var searchTimer = null;
+    if (search) {
+        search.addEventListener('input', function () {
+            query = search.value;
+            var n = applyFilter(current, false);
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function () { announce(n); }, 500);
+        });
+        // Invio: se resta un gioco solo, si apre
+        search.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            var cards = QZ.$$('.game:not([hidden])', grid);
+            if (cards.length === 1) window.location.href = cards[0].getAttribute('href');
+        });
+    }
+    topic = QZ.store.get(TOPIC_KEY, 'all');
+    if (topic !== 'calcio' && topic !== 'cultura') topic = 'all';
     applyFilter(QZ.store.get(FILTER_KEY, 'all'), false);
 
     /* ---------- Gioco a sorpresa: si pesca una figurina ---------- */
@@ -156,7 +234,8 @@
         if (drawing) return;
         drawing = true;
         // si pesca tra i giochi visibili col filtro scelto, e mai quello appena giocato
-        var pool = QZ.GAMES.filter(function (g) { return current === 'all' || g.kind === current; });
+        var pool = QZ.GAMES.filter(visible);
+        if (!pool.length) pool = QZ.GAMES.slice();
         var last = QZ.store.get('qz.home.lastRandom', null);
         if (pool.length > 1) pool = pool.filter(function (g) { return g.id !== last; });
         var g = QZ.pick(pool);

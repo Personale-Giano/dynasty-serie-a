@@ -44,11 +44,26 @@ function nc_key($s) {
     return preg_replace('/[^a-z0-9]/', '', $s) ?? '';
 }
 
-/** Distanza di modifica (per "Ibrahimovic" contro "Ibrahimović" o un refuso). */
+/**
+ * Stessa risposta scritta in modo un po' diverso? (le chiavi arrivano da nc_key,
+ * quindi accenti e maiuscole sono gia' a posto).
+ * - uguali tolte le doppie: "Casano" e "Cassano", "Maldinni" e "Maldini";
+ * - un refuso (una lettera in piu', in meno o cambiata) solo su parole di almeno
+ *   7 lettere con la stessa iniziale: "Ibrahimovic" e "Ibrahimovich";
+ * - mai se cambia solo la vocale finale: Rossi e Rosso, Mancini e Mancino sono
+ *   persone diverse (e le parole corte come Conte e Conti non si avvicinano mai).
+ */
 function nc_close($a, $b) {
     if ($a === $b) return true;
-    if (min(strlen($a), strlen($b)) < 5) return false;
-    return levenshtein($a, $b) <= 1;
+    if ($a === '' || $b === '') return false;
+    $single = function ($s) { return preg_replace('/(.)\1+/', '$1', $s) ?? $s; };
+    if ($single($a) === $single($b)) return true;
+    if (min(strlen($a), strlen($b)) < 7 || $a[0] !== $b[0]) return false;
+    if (levenshtein($a, $b) > 1) return false;
+    $la = strlen($a);
+    if ($la === strlen($b) && substr($a, 0, -1) === substr($b, 0, -1)
+        && strpos('aeiou', $a[$la - 1]) !== false && strpos('aeiou', $b[$la - 1]) !== false) return false;
+    return true;
 }
 
 function nc_new_room($code, $hostTok, $now, $opts = []) {
@@ -62,11 +77,13 @@ function nc_new_room($code, $hostTok, $now, $opts = []) {
         'startAt' => 0, 'deadline' => 0, 'stopBy' => '',
         'answers' => [], 'rejects' => [], 'override' => [],
         'history' => [], 'scores' => [], 'seq' => 0,
+        'banned' => [],   // gettoni dei telefoni tolti dalla TV: non rientrano
     ];
 }
 
 function nc_opts($old, $in) {
-    $o = array_merge(['rounds' => 5, 'time' => 90, 'stop' => true, 'foreign' => true], $old);
+    // lettere straniere spente di base: J, K, W e Y si accendono a mano
+    $o = array_merge(['rounds' => 5, 'time' => 90, 'stop' => true, 'foreign' => false], $old);
     if (isset($in['rounds']) && in_array((int)$in['rounds'], [0, 3, 5, 8, 10], true)) $o['rounds'] = (int)$in['rounds'];
     if (isset($in['time']) && in_array((int)$in['time'], [60, 90, 120, 180], true)) $o['time'] = (int)$in['time'];
     if (isset($in['stop'])) $o['stop'] = (bool)$in['stop'];
@@ -87,6 +104,7 @@ function nc_captain($r) {
 function nc_join(&$r, $name, $tok, $now) {
     $name = nc_clean($name, 16);
     if ($name === '') return ['err' => 'Scrivi il tuo nome'];
+    if (in_array($tok, $r['banned'] ?? [], true)) return ['err' => 'Sei stato tolto da questa stanza', 'banned' => 1];
     // stesso telefono che rientra (ricarica, schermo spento): tiene posto e punti
     foreach ($r['players'] as $i => $p) {
         if ($p['tok'] !== $tok) continue;
@@ -240,31 +258,49 @@ function nc_vote(&$r, $voter, $target, $cat) {
     return ['ok' => 1];
 }
 
-/** La TV o il capitano possono forzare: valida (true), non valida (false), torna al voto (null). */
-function nc_override(&$r, $target, $cat, $value) {
+/**
+ * La TV o il capitano possono forzare: valida (true), non valida (false), torna al voto (null).
+ * $by e' il giocatore che lo chiede ('' = la TV): il capitano non decide sulle proprie risposte.
+ */
+function nc_override(&$r, $target, $cat, $value, $by = '') {
     if ($r['phase'] !== 'review') return ['err' => 'Si corregge solo durante il controllo'];
+    if ($by !== '' && $by === $target) return ['err' => 'Le tue risposte le decidono la TV e il tavolo'];
     if (!nc_revealed($r, $cat)) return ['err' => 'Questa categoria non è ancora uscita'];
     $k = $target . '|' . $cat;
     if ($value === null) unset($r['override'][$k]); else $r['override'][$k] = (bool)$value;
     return ['ok' => 1];
 }
 
+/**
+ * Contestazioni che servono per bocciare una risposta: la maggioranza degli
+ * ALTRI giocatori (piu' della meta' di chi non l'ha scritta): 2 su 2 in tre,
+ * 2 su 3 in quattro, 3 su 4 in cinque. In due l'unico altro non basta: la
+ * risposta resta valida, segnata come contestata, e la decide la TV.
+ * Restituisce 0 quando il voto da solo non boccia.
+ */
+function nc_need($n) {
+    $others = $n - 1;
+    if ($others < 2) return 0;
+    return intdiv($others, 2) + 1;
+}
+
 /** Stato di ogni risposta del round: testo, valida, motivo, punti. */
 function nc_evaluate($r) {
     $players = array_column($r['players'], 'id');
     $n = count($players);
-    $need = max(1, (int)ceil(($n - 1) / 2));   // contestazioni per bocciare
+    $need = nc_need($n);
     $out = [];
     foreach ($r['roundCats'] ?? [] as $c) {
         $cid = $c['id'];
         $rows = [];
         foreach ($players as $pid) {
             $txt = $r['answers'][$pid][$cid] ?? '';
-            $rej = count($r['rejects'][$pid][$cid] ?? []);
+            // contano solo i voti di chi e' ancora nella stanza
+            $rej = count(array_intersect($r['rejects'][$pid][$cid] ?? [], $players));
             $why = '';
             if ($txt === '') $why = 'vuota';
             elseif (!nc_letter_ok($txt, $r['letter'])) $why = 'lettera';
-            elseif ($rej >= $need) $why = 'bocciata';
+            elseif ($need > 0 && $rej >= $need) $why = 'bocciata';
             $ov = $r['override'][$pid . '|' . $cid] ?? null;
             $valid = $why === '';
             if ($ov !== null && $txt !== '') { $valid = $ov; $why = $ov ? '' : 'tv'; }
@@ -316,6 +352,12 @@ function nc_rematch(&$r) {
 
 function nc_kick(&$r, $pid) {
     if (!in_array($r['phase'], ['lobby', 'results', 'end'], true)) return ['err' => 'Si toglie un giocatore solo tra un round e l\'altro'];
+    $i = nc_player_index($r, $pid);
+    if ($i < 0) return ['err' => 'Giocatore non trovato'];
+    // il suo telefono non rientra (prima bastava ricaricare la pagina per essere di nuovo dentro)
+    $r['banned'] = $r['banned'] ?? [];
+    if (!in_array($r['players'][$i]['tok'], $r['banned'], true)) $r['banned'][] = $r['players'][$i]['tok'];
+    $r['banned'] = array_slice($r['banned'], -50);
     $r['players'] = array_values(array_filter($r['players'], function ($p) use ($pid) { return $p['id'] !== $pid; }));
     return ['ok' => 1];
 }
@@ -337,7 +379,7 @@ function nc_public($r, $me, $isHost, $now) {
         'cats' => $r['cats'], 'roundCats' => $r['roundCats'] ?? [], 'players' => $players, 'captain' => nc_captain($r),
         'round' => $r['round'], 'letter' => in_array($r['phase'], ['lobby'], true) ? '' : $r['letter'], 'used' => $r['used'],
         'startAt' => $r['startAt'], 'deadline' => $r['deadline'], 'stopBy' => $r['stopBy'],
-        'me' => $me, 'host' => $isHost,
+        'me' => $me, 'host' => $isHost, 'need' => nc_need(count($r['players'])),
     ];
     if (in_array($r['phase'], ['letter', 'play'], true)) {
         $out['mine'] = $me !== '' ? ($r['answers'][$me] ?? new stdClass()) : new stdClass();
@@ -355,4 +397,19 @@ function nc_public($r, $me, $isHost, $now) {
     }
     if (in_array($r['phase'], ['results', 'end'], true)) $out['history'] = $r['history'];
     return $out;
+}
+
+/**
+ * Chi non ha un gettone valido (ne' TV ne' giocatore) vede solo lo stretto
+ * necessario per entrare: fase, nomi e colori. Niente risposte, voti, punti o storico.
+ */
+function nc_public_min($r, $now) {
+    $players = [];
+    foreach ($r['players'] as $p) $players[] = ['id' => $p['id'], 'name' => $p['name'], 'color' => $p['color'], 'score' => 0, 'filled' => 0, 'online' => false];
+    return [
+        'v' => $r['v'], 'code' => $r['code'], 'now' => $now, 'phase' => $r['phase'], 'opts' => $r['opts'],
+        'cats' => $r['cats'], 'roundCats' => [], 'players' => $players, 'captain' => nc_captain($r),
+        'round' => $r['round'], 'letter' => '', 'used' => [], 'startAt' => 0, 'deadline' => 0, 'stopBy' => '',
+        'me' => '', 'host' => false, 'need' => nc_need(count($r['players'])), 'min' => 1,
+    ];
 }

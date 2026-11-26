@@ -13,6 +13,10 @@
    nome può soddisfare anche l'etichetta di un altro gruppo della scheda.
    Fatti aggiornati al 16 novembre 2026 (Spagna campione del mondo 2026,
    Inter campione d'Italia 2025-26, PSG campione d'Europa 2025 e 2026).
+   Dal N° 53 ogni scheda ha i suoi fatti in scripts/verifica-quattro.js
+   (elenchi completi e trappole): il test la blocca se un nome sta in due
+   gruppi. Per le schede gia' pubblicate con un errore c'e' quattroErrata
+   in fondo al file.
    ========================================================================== */
 var quattroSchede = [
     {
@@ -483,9 +487,461 @@ var quattroSchede = [
             { d: 3, nome: 'Ivoriani in Serie A', voci: ['Kessié', 'Gervinho', 'Kouamé', 'Ndicka'] },
             { d: 4, nome: 'Senegalesi in Serie A', voci: ['Koulibaly', 'Keita Baldé', 'Niang', 'Boulaye Dia'] }
         ]
+    },
+    {
+        n: 53, tema: 'estero', titolo: 'Lontano dall\'Europa',
+        gruppi: [
+            { d: 1, nome: 'Club dell\'Arabia Saudita', voci: ['Al-Nassr', 'Al-Hilal', 'Al-Ittihad', 'Al-Ahli'] },
+            { d: 2, nome: 'Club della MLS', voci: ['Inter Miami', 'LA Galaxy', 'Toronto FC', 'Columbus Crew'] },
+            { d: 3, nome: 'Vincitrici della Copa Libertadores', voci: ['Internacional', 'Olimpia', 'Colo-Colo', 'LDU Quito'] },
+            { d: 4, nome: 'Club giapponesi', voci: ['Kashima Antlers', 'Urawa Reds', 'Vissel Kobe', 'Gamba Osaka'] }
+        ]
+    },
+    {
+        n: 54, tema: 'serie-a', titolo: 'Scudetti a peso',
+        gruppi: [
+            { d: 1, nome: 'Almeno nove scudetti', voci: ['Juventus', 'Inter', 'Milan', 'Genoa'] },
+            { d: 2, nome: 'Da due a quattro scudetti', voci: ['Lazio', 'Fiorentina', 'Roma', 'Napoli'] },
+            { d: 3, nome: 'Un solo scudetto', voci: ['Cagliari', 'Verona', 'Sampdoria', 'Casale'] },
+            { d: 4, nome: 'Coppa Italia sì, scudetto mai', voci: ['Atalanta', 'Parma', 'Vicenza', 'Venezia'] }
+        ]
+    },
+    {
+        n: 55, tema: 'curiosita', titolo: 'Cognomi da vocabolario',
+        gruppi: [
+            { d: 1, nome: 'Cognomi che sono colori', voci: ['Rossi', 'Bianchi', 'Neri', 'Verdi'] },
+            { d: 2, nome: 'Cognomi che sono città', voci: ['Ferrara', 'Palermo', 'Foggia', 'Lodi'] },
+            { d: 3, nome: 'Cognomi che sono cibi', voci: ['Fagioli', 'Pepe', 'Lasagna', 'Farina'] },
+            { d: 4, nome: 'Cognomi che sono mestieri o cariche', voci: ['Pastore', 'Cacciatore', 'Abate', 'Cardinale'] }
+        ]
+    },
+    {
+        n: 56, tema: 'azzurri', titolo: 'Mondiali dimenticati',
+        gruppi: [
+            { d: 1, nome: 'Convocati al Mondiale 2014', voci: ['Paletta', 'Cerci', 'Parolo', 'Perin'] },
+            { d: 2, nome: 'Convocati al Mondiale 2010', voci: ['Pepe', 'Iaquinta', 'Bocchetti', 'Palombo'] },
+            { d: 3, nome: 'Convocati al Mondiale 2002', voci: ['Coco', 'Iuliano', 'Doni', 'Abbiati'] },
+            { d: 4, nome: 'Convocati al Mondiale 1998', voci: ['Moriero', 'Torricelli', 'Pessotto', 'Dino Baggio'] }
+        ]
+    },
+    {
+        n: 57, tema: 'estero', titolo: 'Ai confini dell\'Est',
+        gruppi: [
+            { d: 1, nome: 'Club greci', voci: ['Olympiacos', 'Panathinaikos', 'PAOK', 'AEK Atene'] },
+            { d: 2, nome: 'Club ucraini', voci: ['Shakhtar', 'Dynamo Kiev', 'Dnipro', 'Metalist'] },
+            { d: 3, nome: 'Club croati', voci: ['Dinamo Zagabria', 'Hajduk Spalato', 'Rijeka', 'Osijek'] },
+            { d: 4, nome: 'Club cechi', voci: ['Sparta Praga', 'Slavia Praga', 'Viktoria Plzeň', 'Baník Ostrava'] }
+        ]
+    },
+    {
+        n: 58, tema: 'storia', titolo: 'Bacheca personale',
+        gruppi: [
+            { d: 1, nome: 'Vincitori del Pallone d\'Oro', voci: ['Weah', 'Shevchenko', 'Rodri', 'Dembélé'] },
+            { d: 2, nome: 'Vincitori del Golden Boy', voci: ['Pogba', 'Sterling', 'Isco', 'Pedri'] },
+            { d: 3, nome: 'Vincitori della Scarpa d\'Oro', voci: ['Forlán', 'Larsson', 'Jardel', 'Makaay'] },
+            { d: 4, nome: 'Vincitori del Premio Puskás per il gol più bello', voci: ['Lamela', 'Giroud', 'Son', 'Garnacho'] }
+        ]
+    },
+    {
+        n: 59, tema: 'serie-a', titolo: 'Il presidente',
+        gruppi: [
+            { d: 1, nome: 'Presidenti del Milan', voci: ['Berlusconi', 'Farina', 'Rizzoli', 'Scaroni'] },
+            { d: 2, nome: 'Presidenti dell\'Inter', voci: ['Fraizzoli', 'Pellegrini', 'Thohir', 'Zhang'] },
+            { d: 3, nome: 'Presidenti della Roma', voci: ['Viola', 'Sensi', 'Anzalone', 'Friedkin'] },
+            { d: 4, nome: 'Presidenti della Lazio', voci: ['Lenzini', 'Cragnotti', 'Lotito', 'Chinaglia'] }
+        ]
+    },
+    {
+        n: 60, tema: 'estero', titolo: 'Cuore d\'Europa',
+        gruppi: [
+            { d: 1, nome: 'Club francesi', voci: ['Marsiglia', 'Lione', 'Nizza', 'Lilla'] },
+            { d: 2, nome: 'Club belgi', voci: ['Anderlecht', 'Club Brugge', 'Standard Liegi', 'Genk'] },
+            { d: 3, nome: 'Club svizzeri', voci: ['Basilea', 'Young Boys', 'Grasshoppers', 'Servette'] },
+            { d: 4, nome: 'Club austriaci', voci: ['Rapid Vienna', 'Salisburgo', 'Sturm Graz', 'LASK'] }
+        ]
+    },
+    {
+        n: 61, tema: 'curiosita', titolo: 'Il calcio in quattro lingue',
+        gruppi: [
+            { d: 1, nome: 'Parole inglesi del calcio italiano', voci: ['Corner', 'Cross', 'Assist', 'Penalty'] },
+            { d: 2, nome: 'Parole italiane usate in tutto il mondo', voci: ['Catenaccio', 'Tifosi', 'Libero', 'Fantasista'] },
+            { d: 3, nome: 'Ruoli in spagnolo', voci: ['Arquero', 'Delantero', 'Volante', 'Lateral'] },
+            { d: 4, nome: 'Parole tedesche del calcio', voci: ['Gegenpressing', 'Raumdeuter', 'Elfmeter', 'Abseits'] }
+        ]
+    },
+    {
+        n: 62, tema: 'serie-a', titolo: 'Squadre da sogno',
+        gruppi: [
+            { d: 1, nome: 'Campioni d\'Europa con l\'Inter nel 2010', voci: ['Lúcio', 'Sneijder', 'Pandev', 'Maicon'] },
+            { d: 2, nome: 'Campioni d\'Europa con il Milan nel 2007', voci: ['Oddo', 'Jankulovski', 'Ambrosini', 'Gilardino'] },
+            { d: 3, nome: 'Scudetto con la Lazio nel 2000', voci: ['Pancaro', 'Couto', 'Bokšić', 'Almeyda'] },
+            { d: 4, nome: 'Scudetto con la Roma nel 2001', voci: ['Zebina', 'Tommasi', 'Candela', 'Delvecchio'] }
+        ]
+    },
+    {
+        n: 63, tema: 'estero', titolo: 'Fuoriclasse dell\'Est',
+        gruppi: [
+            { d: 1, nome: 'Polacchi', voci: ['Lewandowski', 'Boniek', 'Szczęsny', 'Zieliński'] },
+            { d: 2, nome: 'Ucraini', voci: ['Rebrov', 'Mudryk', 'Malinovskyi', 'Zinchenko'] },
+            { d: 3, nome: 'Rumeni', voci: ['Hagi', 'Mutu', 'Chivu', 'Popescu'] },
+            { d: 4, nome: 'Bulgari', voci: ['Stoičkov', 'Berbatov', 'Balakov', 'Letchkov'] }
+        ]
+    },
+    {
+        n: 64, tema: 'azzurri', titolo: 'Italiani d\'esportazione',
+        gruppi: [
+            { d: 1, nome: 'Hanno giocato in Premier League', voci: ['Di Canio', 'Jorginho', 'Tonali', 'Udogie'] },
+            { d: 2, nome: 'Hanno giocato nella Liga spagnola', voci: ['Cassano', 'Torricelli', 'Abbiati', 'Zambrotta'] },
+            { d: 3, nome: 'Hanno giocato in Bundesliga', voci: ['Toni', 'Barzagli', 'Grifo', 'Bonucci'] },
+            { d: 4, nome: 'Hanno giocato nella Ligue 1 francese', voci: ['Verratti', 'De Sciglio', 'Pellegri', 'El Shaarawy'] }
+        ]
+    },
+    {
+        n: 65, tema: 'curiosita', titolo: 'Feste mondiali',
+        gruppi: [
+            { d: 1, nome: 'Canzoni ufficiali dei Mondiali', voci: ['Waka Waka', 'Un\'estate italiana', 'La copa de la vida', 'Live It Up'] },
+            { d: 2, nome: 'Palloni dei Mondiali', voci: ['Etrusco', 'Tango', 'Jabulani', 'Brazuca'] },
+            { d: 3, nome: 'Mascotte dei Mondiali', voci: ['Ciao', 'Footix', 'Naranjito', 'Zakumi'] },
+            { d: 4, nome: 'Mascotte degli Europei', voci: ['Berni', 'Goaliath', 'Super Victor', 'Albärt'] }
+        ]
+    },
+    {
+        n: 66, tema: 'estero', titolo: 'Freddo del Nord',
+        gruppi: [
+            { d: 1, nome: 'Club russi', voci: ['Zenit', 'Spartak Mosca', 'CSKA Mosca', 'Krasnodar'] },
+            { d: 2, nome: 'Club polacchi', voci: ['Legia Varsavia', 'Lech Poznań', 'Wisła Cracovia', 'Górnik Zabrze'] },
+            { d: 3, nome: 'Club danesi', voci: ['Midtjylland', 'Aalborg', 'Odense', 'AGF Aarhus'] },
+            { d: 4, nome: 'Club norvegesi', voci: ['Rosenborg', 'Molde', 'Bodø/Glimt', 'Brann'] }
+        ]
+    },
+    {
+        n: 67, tema: 'serie-a', titolo: 'Province d\'Italia',
+        gruppi: [
+            { d: 1, nome: 'Squadre liguri', voci: ['Genoa', 'Sampdoria', 'Entella', 'Savona'] },
+            { d: 2, nome: 'Squadre piemontesi', voci: ['Novara', 'Alessandria', 'Pro Vercelli', 'Cuneo'] },
+            { d: 3, nome: 'Squadre marchigiane', voci: ['Ancona', 'Ascoli', 'Sambenedettese', 'Fermana'] },
+            { d: 4, nome: 'Squadre abruzzesi', voci: ['Pescara', 'L\'Aquila', 'Teramo', 'Chieti'] }
+        ]
+    },
+    {
+        n: 68, tema: 'storia', titolo: 'Anni da almanacco',
+        gruppi: [
+            { d: 1, nome: 'Anni di fondazione di un club campione d\'Italia', voci: ['1897', '1908', '1927', '1893'] },
+            { d: 2, nome: 'La Spagna campione d\'Europa', voci: ['1964', '2008', '2012', '2024'] },
+            { d: 3, nome: 'Il Milan campione d\'Europa', voci: ['1963', '1990', '1994', '2003'] },
+            { d: 4, nome: 'Pallone d\'Oro a un giocatore del Milan', voci: ['1987', '1988', '1992', '1995'] }
+        ]
+    },
+    {
+        n: 69, tema: 'estero', titolo: 'Stadi lontani',
+        gruppi: [
+            { d: 1, nome: 'Stadi brasiliani', voci: ['Maracanã', 'Morumbi', 'Mineirão', 'Beira-Rio'] },
+            { d: 2, nome: 'Stadi francesi', voci: ['Vélodrome', 'Parc des Princes', 'Allianz Riviera', 'Bollaert'] },
+            { d: 3, nome: 'Stadi turchi', voci: ['Şükrü Saracoğlu', 'Atatürk Olimpiyat', 'Rams Park', 'İnönü'] },
+            { d: 4, nome: 'Stadi greci', voci: ['Karaiskakis', 'Toumba', 'Leoforos', 'OAKA'] }
+        ]
+    },
+    {
+        n: 70, tema: 'azzurri', titolo: 'Europei senza coppa',
+        gruppi: [
+            { d: 1, nome: 'Convocati a Euro 2016', voci: ['Giaccherini', 'Éder', 'Sturaro', 'Ogbonna'] },
+            { d: 2, nome: 'Convocati a Euro 2024', voci: ['Frattesi', 'Retegui', 'Folorunsho', 'Zaccagni'] },
+            { d: 3, nome: 'Convocati a Euro 1996', voci: ['Apolloni', 'Carboni', 'Mussi', 'Fuser'] },
+            { d: 4, nome: 'Convocati a Euro 1988', voci: ['De Napoli', 'De Agostini', 'Francini', 'Ferri'] }
+        ]
+    },
+    {
+        n: 71, tema: 'curiosita', titolo: 'Nomi di battesimo, il ritorno',
+        gruppi: [
+            { d: 1, nome: 'Si chiamano Andrea', voci: ['Belotti', 'Petagna', 'Cambiaso', 'Carnevale'] },
+            { d: 2, nome: 'Si chiamano Marco', voci: ['Di Vaio', 'Simone', 'Borriello', 'Reus'] },
+            { d: 3, nome: 'Si chiamano Christian', voci: ['Panucci', 'Maggio', 'Eriksen', 'Kouamé'] },
+            { d: 4, nome: 'Si chiamano Gianluca', voci: ['Scamacca', 'Lapadula', 'Caprari', 'Pessotto'] }
+        ]
+    },
+    {
+        n: 72, tema: 'estero', titolo: 'Africa nel mondo',
+        gruppi: [
+            { d: 1, nome: 'Egiziani', voci: ['Salah', 'Marmoush', 'Elneny', 'Aboutrika'] },
+            { d: 2, nome: 'Ghanesi', voci: ['Essien', 'Gyan', 'Appiah', 'Muntari'] },
+            { d: 3, nome: 'Algerini', voci: ['Mahrez', 'Bennacer', 'Ghezzal', 'Madjer'] },
+            { d: 4, nome: 'Marocchini', voci: ['Hakimi', 'Ziyech', 'Bounou', 'Benatia'] }
+        ]
+    },
+    {
+        n: 73, tema: 'serie-a', titolo: 'Britannici e alpini',
+        gruppi: [
+            { d: 1, nome: 'Scozzesi in Serie A', voci: ['McTominay', 'Gilmour', 'Souness', 'Jordan'] },
+            { d: 2, nome: 'Gallesi in Serie A', voci: ['Charles', 'Rush', 'Ramsey', 'Ampadu'] },
+            { d: 3, nome: 'Svizzeri in Serie A', voci: ['Behrami', 'Freuler', 'Sommer', 'Ndoye'] },
+            { d: 4, nome: 'Austriaci in Serie A', voci: ['Arnautović', 'Polster', 'Prohaska', 'Posch'] }
+        ]
+    },
+    {
+        n: 74, tema: 'storia', titolo: 'Nazionali in bacheca',
+        gruppi: [
+            { d: 1, nome: 'Campioni d\'Europa', voci: ['Grecia', 'Danimarca', 'Cecoslovacchia', 'Portogallo'] },
+            { d: 2, nome: 'Vincitrici della Copa América', voci: ['Paraguay', 'Perù', 'Colombia', 'Cile'] },
+            { d: 3, nome: 'Vincitrici della Coppa d\'Africa', voci: ['Zambia', 'Etiopia', 'Sudan', 'Tunisia'] },
+            { d: 4, nome: 'Vincitrici della Coppa d\'Asia', voci: ['Corea del Sud', 'Iraq', 'Qatar', 'Israele'] }
+        ]
+    },
+    {
+        n: 75, tema: 'estero', titolo: 'Americhe',
+        gruppi: [
+            { d: 1, nome: 'Messicani', voci: ['Chicharito', 'Márquez', 'Lozano', 'Ochoa'] },
+            { d: 2, nome: 'Statunitensi', voci: ['Pulisic', 'McKennie', 'Donovan', 'Howard'] },
+            { d: 3, nome: 'Colombiani', voci: ['Valderrama', 'James Rodríguez', 'Higuita', 'Asprilla'] },
+            { d: 4, nome: 'Cileni', voci: ['Vidal', 'Sánchez', 'Zamorano', 'Pulgar'] }
+        ]
+    },
+    {
+        n: 76, tema: 'curiosita', titolo: 'Scritte sul petto',
+        gruppi: [
+            { d: 1, nome: 'Sponsor di maglia della Juventus', voci: ['Ariston', 'Upim', 'Sony', 'Jeep'] },
+            { d: 2, nome: 'Sponsor di maglia del Milan', voci: ['Ennedue', 'Mediolanum', 'Opel', 'Emirates'] },
+            { d: 3, nome: 'Sponsor di maglia dell\'Inter', voci: ['FitGar', 'Pirelli', 'Paramount+', 'Betsson'] },
+            { d: 4, nome: 'Sponsor di maglia del Napoli', voci: ['Buitoni', 'Mars', 'Voiello', 'Lete'] }
+        ]
+    },
+    {
+        n: 77, tema: 'serie-a', titolo: 'Passaporti di Serie A',
+        gruppi: [
+            { d: 1, nome: 'Belgi', voci: ['Lukaku', 'Mertens', 'Nainggolan', 'De Ketelaere'] },
+            { d: 2, nome: 'Serbi', voci: ['Vlahović', 'Kolarov', 'Jugović', 'Ljajić'] },
+            { d: 3, nome: 'Portoghesi', voci: ['Cancelo', 'Mário Rui', 'Dimas', 'Paulo Sousa'] },
+            { d: 4, nome: 'Bosniaci', voci: ['Džeko', 'Pjanić', 'Kolašinac', 'Lulić'] }
+        ]
+    },
+    {
+        n: 78, tema: 'estero', titolo: 'Panchine straniere',
+        gruppi: [
+            { d: 1, nome: 'Allenatori spagnoli', voci: ['Guardiola', 'Arteta', 'Emery', 'Xabi Alonso'] },
+            { d: 2, nome: 'Allenatori tedeschi', voci: ['Klopp', 'Nagelsmann', 'Rangnick', 'Löw'] },
+            { d: 3, nome: 'Allenatori portoghesi', voci: ['Villas-Boas', 'Amorim', 'Fonseca', 'Jorge Jesus'] },
+            { d: 4, nome: 'Allenatori argentini', voci: ['Pochettino', 'Bielsa', 'Gallardo', 'Scaloni'] }
+        ]
+    },
+    {
+        n: 79, tema: 'storia', titolo: 'Dinastie d\'Europa',
+        gruppi: [
+            { d: 1, nome: 'Il Real delle prime cinque Coppe dei Campioni (1956-60)', voci: ['Puskás', 'Gento', 'Kopa', 'Santamaría'] },
+            { d: 2, nome: 'L\'Ajax delle tre Coppe dei Campioni di fila (1971-73)', voci: ['Neeskens', 'Krol', 'Keizer', 'Haan'] },
+            { d: 3, nome: 'Il Bayern delle tre Coppe dei Campioni di fila (1974-76)', voci: ['Maier', 'Breitner', 'Hoeneß', 'Schwarzenbeck'] },
+            { d: 4, nome: 'Il Liverpool delle prime due Coppe dei Campioni (1977-78)', voci: ['Clemence', 'Heighway', 'McDermott', 'Case'] }
+        ]
+    },
+    {
+        n: 80, tema: 'curiosita', titolo: 'Cognomi di club',
+        gruppi: [
+            { d: 1, nome: 'Dopo «Real»', voci: ['Sociedad', 'Betis', 'Saragozza', 'Oviedo'] },
+            { d: 2, nome: 'Dopo «Sporting»', voci: ['Lisbona', 'Braga', 'Kansas City', 'Charleroi'] },
+            { d: 3, nome: 'Dopo «Dinamo» o «Dynamo»', voci: ['Kiev', 'Dresda', 'Zagabria', 'Brest'] },
+            { d: 4, nome: 'Dopo «Racing»', voci: ['Strasburgo', 'Genk', 'Avellaneda', 'Ferrol'] }
+        ]
+    },
+    {
+        n: 81, tema: 'serie-a', titolo: 'Bomber di città',
+        gruppi: [
+            { d: 1, nome: 'Capocannonieri della Serie A con la Fiorentina', voci: ['Batistuta', 'Milani', 'Orlando', 'Petrone'] },
+            { d: 2, nome: 'Capocannonieri della Serie A con la Roma', voci: ['Pruzzo', 'Manfredini', 'Da Costa', 'Džeko'] },
+            { d: 3, nome: 'Capocannonieri della Serie A con il Torino', voci: ['Pulici', 'Graziani', 'Gabetto', 'Immobile'] },
+            { d: 4, nome: 'Capocannonieri della Serie A con il Bologna', voci: ['Savoldi', 'Nielsen', 'Pivatelli', 'Schiavio'] }
+        ]
+    },
+    {
+        n: 82, tema: 'estero', titolo: 'Derby del mondo',
+        gruppi: [
+            { d: 1, nome: 'Derby spagnoli', voci: ['El Clásico', 'Derbi madrileño', 'El Gran Derbi', 'Derbi vasco'] },
+            { d: 2, nome: 'Derby britannici', voci: ['North London', 'Merseyside', 'Tyne-Wear', 'Old Firm'] },
+            { d: 3, nome: 'Derby di Brasile e Argentina', voci: ['Superclásico', 'Fla-Flu', 'Grenal', 'Choque-Rei'] },
+            { d: 4, nome: 'Derby tedeschi', voci: ['Der Klassiker', 'Revierderby', 'Nordderby', 'Rheinderby'] }
+        ]
+    },
+    {
+        n: 83, tema: 'azzurri', titolo: 'Finali azzurre',
+        gruppi: [
+            { d: 1, nome: 'In gol nei tempi di gioco di una finale con l\'Italia', voci: ['Boninsegna', 'Altobelli', 'Delvecchio', 'Bonucci'] },
+            { d: 2, nome: 'Portieri titolari in una finale dell\'Italia', voci: ['Combi', 'Olivieri', 'Toldo', 'Pagliuca'] },
+            { d: 3, nome: 'Ct dell\'Italia in una finale', voci: ['Valcareggi', 'Sacchi', 'Prandelli', 'Lippi'] },
+            { d: 4, nome: 'Rigore sbagliato ai tiri dal dischetto di una finale azzurra', voci: ['Baresi', 'Massaro', 'Belotti', 'Jorginho'] }
+        ]
+    },
+    {
+        n: 84, tema: 'curiosita', titolo: 'Nomi d\'arte',
+        gruppi: [
+            { d: 1, nome: 'Hanno giocato con il Brasile', voci: ['Zico', 'Cafu', 'Dida', 'Hulk'] },
+            { d: 2, nome: 'Hanno giocato con la Spagna', voci: ['Koke', 'Joselu', 'Nolito', 'Isco'] },
+            { d: 3, nome: 'Hanno giocato con il Portogallo', voci: ['Nani', 'Deco', 'Vitinha', 'Danny'] },
+            { d: 4, nome: 'Nati in Brasile, in campo con l\'Italia', voci: ['João Pedro', 'Amauri', 'Éder', 'Emerson'] }
+        ]
+    },
+    {
+        n: 85, tema: 'serie-a', titolo: 'Bomber delle grandi',
+        gruppi: [
+            { d: 1, nome: 'Capocannonieri della Serie A con l\'Inter', voci: ['Angelillo', 'Serena', 'Icardi', 'Nyers'] },
+            { d: 2, nome: 'Capocannonieri della Serie A con la Juventus', voci: ['Borel', 'Hansen', 'Bettega', 'Trezeguet'] },
+            { d: 3, nome: 'Capocannonieri della Serie A con il Milan', voci: ['Boffi', 'Prati', 'Virdis', 'Shevchenko'] },
+            { d: 4, nome: 'Capocannonieri con un club mai campione d\'Italia', voci: ['Protti', 'Hübner', 'Lucarelli', 'Amoroso'] }
+        ]
+    },
+    {
+        n: 86, tema: 'estero', titolo: 'Numeri uno del mondo',
+        gruppi: [
+            { d: 1, nome: 'Portieri spagnoli', voci: ['Zubizarreta', 'Iribar', 'De Gea', 'Cañizares'] },
+            { d: 2, nome: 'Portieri tedeschi', voci: ['Neuer', 'Kahn', 'Lehmann', 'Schumacher'] },
+            { d: 3, nome: 'Portieri brasiliani', voci: ['Taffarel', 'Alisson', 'Ederson', 'Júlio César'] },
+            { d: 4, nome: 'Portieri inglesi', voci: ['Shilton', 'Seaman', 'Pickford', 'Hart'] }
+        ]
+    },
+    {
+        n: 87, tema: 'storia', titolo: 'Padroni di casa',
+        gruppi: [
+            { d: 1, nome: 'Hanno vinto il Mondiale in casa', voci: ['Italia', 'Inghilterra', 'Germania', 'Francia'] },
+            { d: 2, nome: 'Un Europeo in casa sì, un Mondiale mai', voci: ['Belgio', 'Paesi Bassi', 'Austria', 'Polonia'] },
+            { d: 3, nome: 'Hanno organizzato un Mondiale insieme ad altri', voci: ['Canada', 'Giappone', 'Corea del Sud', 'Stati Uniti'] },
+            { d: 4, nome: 'Ospiteranno partite dei Mondiali 2030 o 2034', voci: ['Marocco', 'Arabia Saudita', 'Paraguay', 'Spagna'] }
+        ]
+    },
+    {
+        n: 88, tema: 'estero', titolo: 'Piccole grandi nazioni',
+        gruppi: [
+            { d: 1, nome: 'Gallesi', voci: ['Bale', 'Giggs', 'Southall', 'Hughes'] },
+            { d: 2, nome: 'Nordirlandesi', voci: ['Best', 'Jennings', 'Lafferty', 'Healy'] },
+            { d: 3, nome: 'Islandesi', voci: ['Gudjohnsen', 'Sigurdsson', 'Finnbogason', 'Halldórsson'] },
+            { d: 4, nome: 'Finlandesi', voci: ['Litmanen', 'Hyypiä', 'Pukki', 'Forssell'] }
+        ]
+    },
+    {
+        n: 89, tema: 'curiosita', titolo: 'Il secondo nome',
+        gruppi: [
+            { d: 1, nome: '… United', voci: ['Leeds', 'Newcastle', 'West Ham', 'Southend'] },
+            { d: 2, nome: '… City', voci: ['Leicester', 'Norwich', 'Hull', 'Stoke'] },
+            { d: 3, nome: '… Rovers', voci: ['Blackburn', 'Tranmere', 'Doncaster', 'Forest Green'] },
+            { d: 4, nome: '… Athletic', voci: ['Charlton', 'Oldham', 'Wigan', 'Dunfermline'] }
+        ]
+    },
+    {
+        n: 90, tema: 'serie-a', titolo: 'Stadi di provincia',
+        gruppi: [
+            { d: 1, nome: 'Stadi di squadre lombarde', voci: ['Zini', 'Rigamonti', 'Sinigaglia', 'Gewiss'] },
+            { d: 2, nome: 'Stadi di squadre toscane', voci: ['Castellani', 'Arena Garibaldi', 'Picchi', 'Porta Elisa'] },
+            { d: 3, nome: 'Stadi di squadre pugliesi', voci: ['San Nicola', 'Via del Mare', 'Zaccheria', 'Iacovone'] },
+            { d: 4, nome: 'Stadi di squadre emiliane', voci: ['Tardini', 'Braglia', 'Mazza', 'Mapei'] }
+        ]
+    },
+    {
+        n: 91, tema: 'estero', titolo: 'Ultime fermate',
+        gruppi: [
+            { d: 1, nome: 'Hanno giocato nella MLS', voci: ['Beckham', 'Henry', 'Gerrard', 'Lampard'] },
+            { d: 2, nome: 'Hanno giocato in Arabia Saudita', voci: ['Benzema', 'Mané', 'Brozović', 'Henderson'] },
+            { d: 3, nome: 'Hanno giocato in Giappone', voci: ['Iniesta', 'Podolski', 'Lineker', 'Stojković'] },
+            { d: 4, nome: 'Hanno giocato in Qatar', voci: ['Batistuta', 'Raúl', 'Sneijder', 'Cazorla'] }
+        ]
+    },
+    {
+        n: 92, tema: 'azzurri', titolo: 'Radici azzurre',
+        gruppi: [
+            { d: 1, nome: 'Azzurri nati in Sardegna', voci: ['Zola', 'Matteoli', 'Barella', 'Sirigu'] },
+            { d: 2, nome: 'Azzurri nati in Sicilia', voci: ['Anastasi', 'Furino', 'Coco', 'Galia'] },
+            { d: 3, nome: 'Azzurri nati in Puglia', voci: ['Conte', 'Rizzitelli', 'Causio', 'Pellè'] },
+            { d: 4, nome: 'Azzurri nati fuori dall\'Italia', voci: ['Camoranesi', 'Perrotta', 'Thiago Motta', 'Amauri'] }
+        ]
+    },
+    {
+        n: 93, tema: 'estero', titolo: 'Africa di club',
+        gruppi: [
+            { d: 1, nome: 'Club egiziani', voci: ['Al Ahly', 'Zamalek', 'Pyramids', 'Ismaily'] },
+            { d: 2, nome: 'Club marocchini', voci: ['Raja Casablanca', 'Wydad', 'FAR Rabat', 'RS Berkane'] },
+            { d: 3, nome: 'Club tunisini', voci: ['Espérance', 'Étoile du Sahel', 'Club Africain', 'CS Sfaxien'] },
+            { d: 4, nome: 'Club sudafricani', voci: ['Kaizer Chiefs', 'Orlando Pirates', 'Mamelodi Sundowns', 'SuperSport United'] }
+        ]
+    },
+    {
+        n: 94, tema: 'serie-a', titolo: 'Panchine del centro-sud',
+        gruppi: [
+            { d: 1, nome: 'Hanno allenato il Napoli', voci: ['Conte', 'Calzona', 'Bigon', 'Donadoni'] },
+            { d: 2, nome: 'Hanno allenato la Roma', voci: ['Mourinho', 'Di Francesco', 'Juric', 'De Rossi'] },
+            { d: 3, nome: 'Hanno allenato la Lazio', voci: ['Simone Inzaghi', 'Petković', 'Ballardini', 'Papadopulo'] },
+            { d: 4, nome: 'Hanno allenato la Fiorentina', voci: ['Italiano', 'Palladino', 'Iachini', 'Mihajlović'] }
+        ]
+    },
+    {
+        n: 95, tema: 'estero', titolo: 'Asia e Oceania di club',
+        gruppi: [
+            { d: 1, nome: 'Club australiani', voci: ['Melbourne Victory', 'Sydney FC', 'Western Sydney', 'Perth Glory'] },
+            { d: 2, nome: 'Club cinesi', voci: ['Guangzhou', 'Shanghai Port', 'Shandong Taishan', 'Beijing Guoan'] },
+            { d: 3, nome: 'Club sudcoreani', voci: ['Jeonbuk', 'Ulsan', 'Pohang Steelers', 'FC Seoul'] },
+            { d: 4, nome: 'Club del Qatar', voci: ['Al-Sadd', 'Al-Duhail', 'Al-Gharafa', 'Al-Rayyan'] }
+        ]
+    },
+    {
+        n: 96, tema: 'storia', titolo: 'Sudamerica d\'autore',
+        gruppi: [
+            { d: 1, nome: 'Argentini', voci: ['Passarella', 'Ardiles', 'Valdano', 'Burruchaga'] },
+            { d: 2, nome: 'Brasiliani', voci: ['Sócrates', 'Careca', 'Júnior', 'Dirceu'] },
+            { d: 3, nome: 'Uruguaiani', voci: ['Francescoli', 'Rubén Sosa', 'Rubén Paz', 'Aguilera'] },
+            { d: 4, nome: 'Paraguaiani', voci: ['Chilavert', 'Gamarra', 'Arce', 'Romerito'] }
+        ]
+    },
+    {
+        n: 97, tema: 'curiosita', titolo: 'Dizionario del pallone',
+        gruppi: [
+            { d: 1, nome: '«Calcio» in altre lingue', voci: ['Fútbol', 'Futebol', 'Fußball', 'Voetbal'] },
+            { d: 2, nome: '«Portiere» in altre lingue', voci: ['Portero', 'Goleiro', 'Torwart', 'Keeper'] },
+            { d: 3, nome: '«Allenatore» in altre lingue', voci: ['Entrenador', 'Técnico', 'Trainer', 'Coach'] },
+            { d: 4, nome: '«Fuorigioco» in altre lingue', voci: ['Fuera de juego', 'Impedimento', 'Buitenspel', 'Hors-jeu'] }
+        ]
+    },
+    {
+        n: 98, tema: 'estero', titolo: 'Germania in quattro regioni',
+        gruppi: [
+            { d: 1, nome: 'Club della Ruhr', voci: ['Dortmund', 'Schalke', 'Bochum', 'Duisburg'] },
+            { d: 2, nome: 'Club bavaresi', voci: ['Bayern', 'Norimberga', 'Augusta', 'Greuther Fürth'] },
+            { d: 3, nome: 'Club del Nord sul mare', voci: ['Amburgo', 'Werder Brema', 'St. Pauli', 'Holstein Kiel'] },
+            { d: 4, nome: 'Club dell\'ex Germania Est', voci: ['RB Lipsia', 'Dynamo Dresda', 'Hansa Rostock', 'Energie Cottbus'] }
+        ]
+    },
+    {
+        n: 99, tema: 'estero', titolo: 'Spagna in quattro regioni',
+        gruppi: [
+            { d: 1, nome: 'Club andalusi', voci: ['Siviglia', 'Real Betis', 'Málaga', 'Cadice'] },
+            { d: 2, nome: 'Club baschi', voci: ['Athletic Bilbao', 'Real Sociedad', 'Eibar', 'Alavés'] },
+            { d: 3, nome: 'Club valenciani', voci: ['Valencia', 'Villarreal', 'Levante', 'Elche'] },
+            { d: 4, nome: 'Club galiziani', voci: ['Celta Vigo', 'Deportivo', 'Compostela', 'Lugo'] }
+        ]
+    },
+    {
+        n: 100, tema: 'curiosita', titolo: 'Il mondo in quattro confederazioni',
+        gruppi: [
+            { d: 1, nome: 'Nazionali del Centro e Nord America', voci: ['Costa Rica', 'Honduras', 'Giamaica', 'Panama'] },
+            { d: 2, nome: 'Oggi nella confederazione asiatica', voci: ['Australia', 'Iran', 'Uzbekistan', 'Giordania'] },
+            { d: 3, nome: 'Nazionali africane', voci: ['Capo Verde', 'Mali', 'Burkina Faso', 'Gabon'] },
+            { d: 4, nome: 'Nazionali dell\'Oceania', voci: ['Nuova Zelanda', 'Tahiti', 'Figi', 'Isole Salomone'] }
+        ]
     }
 ];
 
+/* --------------------------------------------------------------------------
+   ERRATA delle schede pubblicate (che non si possono cambiare).
+   Per numero di scheda: un gruppo (indice in gruppi, da 0) e i nomi di altri
+   gruppi che ne soddisfano comunque l'etichetta. Se il giocatore propone
+   quattro nomi tutti validi per quell'etichetta ma non il gruppo previsto,
+   il gioco non conta l'errore e spiega perche' (assets/games/quattro.js).
+   -------------------------------------------------------------------------- */
+var quattroErrata = {
+    8: [{
+        gruppo: 1,
+        anche: ['Ibrahimović', 'Vieri'],
+        nota: 'Anche Ibrahimović (2009 e 2012) e Vieri (2003) sono stati capocannonieri della Serie A.'
+    }],
+    29: [{
+        gruppo: 0,
+        anche: ['Zoff'],
+        nota: 'Anche Zoff è stato il portiere titolare della Nazionale a un Mondiale (1974, 1978 e 1982).'
+    }]
+};
+
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { quattroSchede: quattroSchede };
+    module.exports = { quattroSchede: quattroSchede, quattroErrata: quattroErrata };
 }

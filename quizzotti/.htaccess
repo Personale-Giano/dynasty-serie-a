@@ -1,0 +1,52 @@
+# Quizzotti su Altervista (Apache)
+# ATTENZIONE: api/ deve restare raggiungibile (giochi TV + telefoni e leghe);
+# le stanze in api/stanze e i file riservati hanno il loro .htaccess, che resta valido.
+
+Options -Indexes
+DirectoryIndex index.html
+ErrorDocument 404 /quizzotti/404.html
+
+AddType application/manifest+json .webmanifest
+AddType font/woff2 .woff2
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # api/: nessuna regola (niente redirect, che trasformerebbe le POST in GET)
+  RewriteRule ^api/ - [L]
+
+  # https sempre (anche dietro un proxy che passa X-Forwarded-Proto)
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+  # /quizzotti/index.html -> /quizzotti/ (solo se chiesto davvero, non per DirectoryIndex)
+  RewriteCond %{THE_REQUEST} \s/+quizzotti/index\.html[?\s]
+  RewriteRule ^index\.html$ /quizzotti/ [R=301,L]
+
+  # cartelle di lavoro: non sono pagine del sito
+  RewriteRule ^(scripts|tests|node_modules|\.github)(/|$) - [R=404,L]
+</IfModule>
+
+# documentazione, configurazione e pacchetti npm: non si servono
+<FilesMatch "(\.md|^package(-lock)?\.json|^eslint\.config\.js|^\.stylelintrc\.json|^\.gitignore)$">
+  Require all denied
+  <IfModule !mod_authz_core.c>
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  # le pagine e il service worker si ricontrollano sempre: cosi' gli aggiornamenti arrivano subito
+  <FilesMatch "\.(html|webmanifest)$|^sw\.js$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+  # caratteri e anteprime: cambiano quasi mai
+  <FilesMatch "\.(woff2|jpg|png|webp|ico)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  # asset con ?v=hash (scripts/cache-bust.js): il nome cambia a ogni modifica, quindi cache lunghissima
+  <If "%{QUERY_STRING} =~ /(^|&)v=[a-f0-9]+/">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </If>
+</IfModule>

@@ -163,3 +163,46 @@ test('bilancio: si tengono al massimo 30 coppie, la piu\' recente resta', () => 
     assert.ok(keys.includes(C.pairKey('A39', 'B39')));
     assert.ok(!keys.includes(C.pairKey('A0', 'B0')));
 });
+
+/* ---------------- Equita', spareggio, cronometro ---------------- */
+
+test('catene pari: ognuna delle due squadre apre lo stesso numero di catene', () => {
+    for (const n of [4, 6, 8]) {
+        for (const starter of [0, 1]) {
+            const opened = [0, 0];
+            for (let idx = 0; idx < n; idx++) opened[C.opener(idx, n, starter, [{}, {}], Math.random)]++;
+            assert.deepEqual(opened, [n / 2, n / 2], `${n} catene, parte ${starter}`);
+        }
+    }
+});
+
+test('spareggio: lo apre chi ha trovato meno parole, a parita\' la sorte', () => {
+    const t = (a, b) => [{ found: a, pts: 30 }, { found: b, pts: 30 }];
+    assert.equal(C.opener(6, 6, 0, t(5, 3), () => 0.1), 1);
+    assert.equal(C.opener(6, 6, 1, t(2, 3), () => 0.9), 0);
+    assert.equal(C.opener(6, 6, 0, t(4, 4), () => 0.1), 0);
+    assert.equal(C.opener(6, 6, 0, t(4, 4), () => 0.9), 1);
+    assert.ok(C.needTiebreak(t(1, 2), 0));
+    assert.ok(C.needTiebreak(t(1, 2), C.MAX_TB - 1));
+    assert.ok(!C.needTiebreak(t(1, 2), C.MAX_TB), 'dopo tre spareggi e\' pareggio');
+    assert.ok(!C.needTiebreak([{ pts: 30 }, { pts: 28 }], 0));
+});
+
+test('impostazioni: 3 e 5 catene diventano 4 e 6, cronometro solo 0/30/60', () => {
+    assert.deepEqual(C.sanitizeCfg(null), { n: 6, timer: 0 });
+    assert.deepEqual(C.sanitizeCfg({ n: 3 }), { n: 4, timer: 0 });
+    assert.deepEqual(C.sanitizeCfg({ n: 5, timer: 30 }), { n: 6, timer: 30 });
+    assert.deepEqual(C.sanitizeCfg({ n: 8, timer: 60 }), { n: 8, timer: 60 });
+    assert.deepEqual(C.sanitizeCfg({ n: 7, timer: 45 }), { n: 6, timer: 0 });
+});
+
+test('partita salvata: vecchie partite a 3 o 5 catene e spareggi si riprendono', () => {
+    const now = 1000 + 60 * 1000;
+    assert.equal(C.checkSave(goodSave({ n: 3, idx: 2 }), chains, now), chains[0]);
+    assert.equal(C.checkSave(goodSave({ n: 6, idx: 5, tsec: 30, pass: true }), chains, now), chains[0]);
+    // la settima catena di una partita a 6 e' lo spareggio: serve tb
+    assert.equal(C.checkSave(goodSave({ n: 6, idx: 6 }), chains, now), null);
+    assert.equal(C.checkSave(goodSave({ n: 6, idx: 6, tb: 1 }), chains, now), chains[0]);
+    assert.equal(C.checkSave(goodSave({ n: 6, idx: 6, tb: 9 }), chains, now), null);
+    assert.equal(C.checkSave(goodSave({ tsec: 45 }), chains, now), null);
+});

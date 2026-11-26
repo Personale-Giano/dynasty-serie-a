@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Leghe tra amici · Quizzotti</title>
+<meta name="description" content="Crea una lega con gli amici, condividi il codice e i risultati dei giochi del giorno entrano da soli in classifica: settimana, mese e da sempre. Il lunedì escono le pagelle.">
+<link rel="canonical" href="https://quizotti.altervista.org/quizzotti/Leghe.html">
+<meta property="og:url" content="https://quizotti.altervista.org/quizzotti/Leghe.html">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="Leghe tra amici · Quizzotti">
+<meta property="og:description" content="Il Calciatore del Giorno con gli amici: una lega, un codice, la classifica della settimana e il pagellino del lunedì.">
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/assets/og/quizzotti.jpg">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="logo1.webp" type="image/webp">
+<link rel="apple-touch-icon" href="logo1.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/qz.css?v=8d3462ca">
+<style>
+  /* la pagina non e' un gioco: il colore e' quello del prato */
+  body[data-page="leghe"] { --accent: #5be38a; --accent-2: #a6f0c0; --accent-rgb: 91, 227, 138; --accent-ink: #6ee89a; --on-accent: #07090b; }
+
+  @media (min-width: 900px) { .lg-intro { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); } }
+  .lg-forms { display: grid; gap: 14px; }
+  .lg-form { display: grid; gap: 10px; }
+  .lg-form h2 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 18px; }
+  .lg-code-input { font-family: var(--font-led); font-size: 26px; letter-spacing: .22em; text-transform: uppercase; text-align: center; }
+  .lg-err { margin: 0; color: var(--bad); font-weight: 600; min-height: 1.2em; }
+  .lg-err:empty { display: none; }
+
+  /* le mie leghe */
+  .lg-mine { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .lg-mine a { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); color: var(--text); text-decoration: none; }
+  .lg-mine a:hover { border-color: rgba(var(--accent-rgb), .6); }
+  .lg-mine b { display: block; font-family: var(--font-display); font-weight: 800; font-size: 17px; overflow-wrap: anywhere; }
+  .lg-mine small { color: var(--text-2); }
+  .lg-mine .led { font-size: 26px; text-align: right; }
+  .lg-mine .led small { display: block; font-family: var(--font-body, inherit); font-size: 12px; color: var(--text-2); text-shadow: none; letter-spacing: .08em; text-transform: uppercase; }
+
+  /* testata della lega */
+  .lg-head { display: grid; gap: 6px; margin-bottom: 18px; }
+  .lg-head h1 { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: clamp(28px, 5vw, 46px); line-height: 1.02; overflow-wrap: anywhere; }
+  .lg-head p { margin: 0; color: var(--text-2); }
+  .lg-grid { display: grid; gap: 18px; }
+  @media (min-width: 980px) { .lg-grid { grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); align-items: start; } }
+  .lg-sec { display: grid; gap: 12px; }
+  .lg-sec h2 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-2); }
+
+  /* classifica */
+  .lg-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .lg-table th { padding: 6px 8px; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-2); text-align: right; border-bottom: 1px solid var(--line-2); }
+  .lg-table th:nth-child(2) { text-align: left; }
+  .lg-table td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: right; }
+  .lg-table td:nth-child(2) { text-align: left; font-weight: 700; overflow-wrap: anywhere; }
+  .lg-table .lg-pos { width: 44px; font-family: var(--font-led); font-size: 20px; color: var(--led); text-shadow: var(--led-glow); text-align: center; }
+  .lg-table .lg-pts { font-family: var(--font-led); font-size: 22px; color: var(--led); text-shadow: var(--led-glow); }
+  .lg-table tr.is-me td { background: rgba(var(--accent-rgb), .07); }
+  .lg-table tr.is-me td:nth-child(2)::after { content: " · tu"; color: var(--accent-ink); font-weight: 600; }
+  .lg-table tr.is-zero td { color: var(--text-2); }
+  .lg-dot { flex: none; display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%; background: var(--c); vertical-align: 1px; }
+  @media (max-width: 520px) { .lg-table .lg-opt { display: none; } }
+  .lg-empty { margin: 0; color: var(--text-2); }
+
+  /* oggi in lega */
+  .lg-today { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .lg-today li { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); }
+  .lg-today li > span { flex: 1; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+  .lg-today li em { font-style: normal; color: var(--text-2); }
+  .lg-today li b { font-family: var(--font-led); font-size: 19px; color: var(--led); text-shadow: var(--led-glow); }
+  .lg-today li.is-wait { opacity: .6; }
+
+  /* il pagellino */
+  .lg-pag { display: grid; gap: 14px; }
+  .lg-pag.is-monday { border-color: rgba(var(--accent-rgb), .55); }
+  .lg-pag__title { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: clamp(22px, 3.4vw, 30px); line-height: 1.05; }
+  .lg-pag .stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .lg-pag .stat__value { font-size: 24px; overflow-wrap: anywhere; }
+  .lg-pag .stat small { display: block; margin-top: 4px; color: var(--text-2); font-size: 13px; }
+  .lg-votes { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .lg-votes li { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); }
+  .lg-votes .lg-voto { display: grid; place-items: center; height: 48px; border-radius: var(--r-sm); background: #000; border: 1px solid var(--line-2); font-family: var(--font-led); font-size: 26px; color: var(--led); text-shadow: var(--led-glow); }
+  .lg-votes .lg-voto.is-sv { font-size: 16px; color: var(--text-2); text-shadow: none; }
+  .lg-votes b { display: block; overflow-wrap: anywhere; }
+  .lg-votes small { color: var(--text-2); }
+
+  /* invito */
+  .lg-qr { display: grid; justify-items: center; gap: 10px; text-align: center; }
+  .lg-qr__img { width: min(100%, 220px); aspect-ratio: 1; padding: 10px; background: #fff; border-radius: var(--r); }
+  .lg-qr__img svg { display: block; width: 100%; height: 100%; }
+  .lg-qr__code { font-family: var(--font-led); font-size: clamp(34px, 6vw, 46px); line-height: 1; letter-spacing: .16em; color: var(--led); text-shadow: var(--led-glow); }
+  .lg-qr__url { font-size: 14px; color: var(--text-2); overflow-wrap: anywhere; }
+  .lg-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .lg-people { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .lg-people li { display: flex; align-items: center; gap: 8px; min-height: 40px; }
+  .lg-people li > span:not(.lg-dot) { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .lg-people small { color: var(--text-2); }
+</style>
+</head>
+<body data-page="leghe">
+<main id="app" class="qz-main" tabindex="-1">
+
+  <!-- ============ COPERTINA: LE MIE LEGHE, CREA, ENTRA ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro lg-intro">
+      <div data-stagger>
+        <span class="eyebrow">Giochi del giorno · con gli amici</span>
+        <h1 class="intro__title">Leghe tra <em>amici</em></h1>
+        <p class="intro__lead">Crea una lega, manda il codice al gruppo e giocate ognuno per conto suo: i risultati dei giochi del giorno entrano da soli in classifica. Il lunedì escono le pagelle della settimana.</p>
+        <div class="card mt-3" id="mine-card" hidden>
+          <div class="lg-sec">
+            <h2>Le tue leghe</h2>
+            <ul class="lg-mine" id="mine"></ul>
+          </div>
+        </div>
+        <div class="card mt-3">
+          <ul class="rules" id="rules"></ul>
+        </div>
+      </div>
+      <div class="lg-forms">
+        <form class="card card--glow lg-form" id="f-create" novalidate>
+          <h2>Crea una lega</h2>
+          <div class="field"><label class="label" for="c-name">Nome della lega</label><input class="input" id="c-name" maxlength="40" autocomplete="off" placeholder="Calcetto del giovedì"></div>
+          <div class="field"><label class="label" for="c-nick">Il tuo soprannome</label><input class="input" id="c-nick" maxlength="20" autocomplete="nickname" placeholder="Il Bomber"></div>
+          <p class="lg-err" id="c-err" role="alert"></p>
+          <button class="btn btn--primary btn--lg" type="submit" id="c-go">Crea la lega</button>
+        </form>
+        <form class="card lg-form" id="f-join" novalidate>
+          <h2>Hai un codice?</h2>
+          <div class="field"><label class="label" for="j-code">Codice della lega</label><input class="input lg-code-input" id="j-code" maxlength="7" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="······"></div>
+          <div class="field"><label class="label" for="j-nick">Il tuo soprannome</label><input class="input" id="j-nick" maxlength="20" autocomplete="nickname" placeholder="Il Bomber"></div>
+          <p class="lg-err" id="j-err" role="alert"></p>
+          <button class="btn btn--lg" type="submit" id="j-go">Entra</button>
+        </form>
+        <p class="small muted">Niente account e niente password: entri con un soprannome e questo telefono si ricorda di te. Su un altro telefono saresti un membro nuovo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ INVITO: ENTRA IN UNA LEGA ============ -->
+  <section class="screen" id="s-join">
+    <div class="qz-main--narrow" style="margin:0 auto">
+      <form class="card card--glow lg-form" id="f-invite" novalidate>
+        <span class="eyebrow" id="i-eyebrow">Sei stato convocato</span>
+        <h1 class="lg-pag__title" id="i-title"></h1>
+        <p class="muted" id="i-sub"></p>
+        <div class="field"><label class="label" for="i-nick">Il tuo soprannome</label><input class="input input--lg" id="i-nick" maxlength="20" autocomplete="nickname" placeholder="Il Bomber"></div>
+        <p class="lg-err" id="i-err" role="alert"></p>
+        <button class="btn btn--primary btn--xl" type="submit" id="i-go">Entra nella lega</button>
+        <a class="btn btn--ghost" href="Leghe.html">Torna in panchina</a>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ LA LEGA ============ -->
+  <section class="screen" id="s-league">
+    <div class="lg-head">
+      <a class="btn btn--ghost btn--sm" href="Leghe.html" style="justify-self:start">Le tue leghe</a>
+      <h1 id="l-name" tabindex="-1"></h1>
+      <p id="l-sub"></p>
+    </div>
+    <div class="lg-grid">
+      <div class="stack" style="--gap:18px">
+        <div class="card lg-pag" id="l-pag" hidden></div>
+        <div class="card lg-sec">
+          <div class="row row--between"><h2 id="lbl-rank">Classifica</h2><span class="small muted" id="l-range"></span></div>
+          <div id="l-period" aria-labelledby="lbl-rank"></div>
+          <div style="overflow-x:auto"><table class="lg-table" id="l-table"></table></div>
+          <p class="lg-empty" id="l-empty" hidden></p>
+          <p class="small muted" id="l-points"></p>
+        </div>
+        <div class="card lg-sec">
+          <h2>Oggi in lega</h2>
+          <div id="l-today"></div>
+        </div>
+      </div>
+      <div class="stack" style="--gap:18px">
+        <div class="card lg-qr">
+          <span class="label">Invita gli amici</span>
+          <div class="lg-qr__img" id="l-qr" aria-hidden="true"></div>
+          <div class="lg-qr__code" id="l-code" aria-label="Codice della lega"></div>
+          <div class="lg-qr__url" id="l-url"></div>
+          <div class="lg-actions">
+            <button class="btn btn--primary" type="button" id="l-share">Manda l'invito</button>
+            <button class="btn" type="button" id="l-copy">Copia il codice</button>
+          </div>
+        </div>
+        <div class="card lg-sec">
+          <div class="row row--between"><h2>In rosa</h2><span class="small muted" id="l-count"></span></div>
+          <ul class="lg-people" id="l-people"></ul>
+          <div class="row">
+            <button class="btn btn--sm" type="button" id="l-rename">Cambia soprannome</button>
+            <button class="btn btn--sm btn--ghost" type="button" id="l-leave">Esci dalla lega</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ LEGA NON TROVATA ============ -->
+  <section class="screen" id="s-gone">
+    <div class="result" data-stagger>
+      <div class="result__badge result__badge--bad" id="g-badge"></div>
+      <h1 class="result__title" tabindex="-1">Lega non trovata</h1>
+      <p class="muted result__sub" id="g-sub">Controlla il codice: sono sei caratteri, lettere e numeri.</p>
+      <div class="row row--center mt-3"><a class="btn btn--primary btn--lg" href="Leghe.html">Torna alle tue leghe</a></div>
+    </div>
+  </section>
+
+</main>
+
+<script src="assets/qz.js?v=40f99e24" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
+<script src="assets/games/leghe.js?v=f3553572" defer></script>
+</body>
+</html>

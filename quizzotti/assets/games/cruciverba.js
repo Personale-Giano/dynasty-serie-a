@@ -6,6 +6,8 @@
    Mondiali...). Il N° 1 e' sempre la stessa griglia: una volta
    completata resta da rivedere, non da rigiocare. Ogni scheda ha il suo
    salvataggio: si puo' lasciare a meta' e riprenderla quando si vuole.
+   Sul telefono la parola corrente sta in grande in una striscia ferma
+   sopra la tastiera (caselle tappabili) e la casella attiva resta in vista.
    ========================================================================== */
 /* global cruciverbaSchede, cruciverbaErrata */
 (function () {
@@ -112,6 +114,8 @@
 
     $('#xw-prev').innerHTML = QZ.icon('left');
     $('#xw-next').innerHTML = QZ.icon('right');
+    $('#xw-dprev').innerHTML = QZ.icon('left');
+    $('#xw-dnext').innerHTML = QZ.icon('right');
     $('#xw-back').innerHTML = QZ.icon('back') + 'Torna alle schede';
     $('#xw-back-2').innerHTML = QZ.icon('back') + 'Torna alle schede';
     $('#xw-back').addEventListener('click', backToList);
@@ -206,6 +210,7 @@
         if (S && !S.done) save();
         stopClock();
         S = null;
+        dockPlay(false);
         paintIntro();
         QZ.show('s-start');
     }
@@ -252,6 +257,7 @@
         if (review) Object.keys(S.map).forEach(function (ci) { S.fill[ci] = S.map[ci].ch; });
         $('#xw-title').textContent = 'N° ' + p.n + (p.tema ? ' · ' + temaLabel(p.tema) : '') + ' · ' + p.title;
         $('#s-game').classList.toggle('is-review', !!review);
+        dockPlay(!review);
         $('#xw-aids').hidden = !!review;
         $('#xw-back').hidden = !!review;
         $('#xw-review').hidden = !review;
@@ -356,6 +362,7 @@
         gridEl.style.setProperty('--gap', gap + 'px');
         gridEl.style.setProperty('--pad', pad + 'px');
         placeInput();
+        paintDock(true);
     }
     window.addEventListener('resize', function () { clearTimeout(fit.t); fit.t = setTimeout(fit, 80); });
 
@@ -426,6 +433,94 @@
         });
     }
 
+    /* ---------- La striscia della parola corrente (telefono) ---------- */
+    var dockEl = $('#xw-dock');
+    // fuori dalla schermata: le animazioni delle schermate (transform) sposterebbero una striscia "fixed"
+    document.body.appendChild(dockEl);
+    /** La striscia c'e' solo mentre si gioca una scheda (non in revisione, non nel resoconto). */
+    function dockPlay(on) { document.body.classList.toggle('xw-play', !!on); if (!on) setDockVars(0); }
+    var dockCells = $('#xw-dcells');
+    var dockWord = -1;
+    function dockOn() { return !!S && getComputedStyle(dockEl).display !== 'none'; }
+
+    /** Le caselle grandi copiano lo stato di quelle della griglia (lettera e colori). */
+    function paintDock(resize) {
+        if (!dockOn()) { setDockVars(0); return; }
+        var wi = curWord();
+        if (wi < 0) return;
+        var w = S.p.words[wi];
+        if (wi !== dockWord || resize || dockCells.children.length !== w.cells.length) {
+            dockWord = wi;
+            dockCells.innerHTML = w.cells.map(function (ci) { return '<button type="button" class="xw-dcell" tabindex="-1" data-ci="' + ci + '"></button>'; }).join('');
+            var cs = getComputedStyle(dockEl), n = w.cells.length;
+            var avail = dockEl.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+            dockCells.style.setProperty('--dcs', Math.max(18, Math.min(44, Math.floor((avail - 4 * (n - 1)) / n))) + 'px');
+        }
+        $('#xw-dref').textContent = w.n + ' ' + dirName(w.dir) + ' · ' + w.answer.length + ' lettere';
+        $('#xw-dtxt').textContent = w.clue;
+        dockEl.classList.toggle('is-solved', !!S.solved[wi]);
+        QZ.$$('.xw-dcell', dockCells).forEach(function (b) {
+            var src = cellEls[Number(b.dataset.ci)];
+            if (!src) return;
+            b.textContent = src.querySelector('.xw-ch').textContent;
+            ['is-cur', 'is-right', 'is-solved', 'is-rev', 'is-wrong'].forEach(function (c) { b.classList.toggle(c, src.classList.contains(c)); });
+        });
+        setDockVars(dockEl.offsetHeight);
+    }
+    function setDockVars(h) { document.documentElement.style.setProperty('--xw-dock-h', h + 'px'); }
+
+    /** Quanto copre la tastiera del telefono: la striscia ci si appoggia sopra. */
+    function keyboardH() {
+        var vv = window.visualViewport;
+        return vv ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)) : 0;
+    }
+    function placeDock() {
+        var kb = keyboardH();
+        document.documentElement.style.setProperty('--xw-kb', kb + 'px');
+        dockEl.classList.toggle('is-keyboard', kb > 0);
+    }
+
+    /** La casella attiva non finisce mai sotto la striscia (o sotto la testata): si scorre quanto basta. */
+    function keepVisible() {
+        if (!dockOn() || !cellEls[S.cur]) return;
+        var vv = window.visualViewport;
+        var vTop = vv ? vv.offsetTop : 0, vH = vv ? vv.height : window.innerHeight;
+        var r = cellEls[S.cur].getBoundingClientRect();
+        var top = vTop + headerOffset() + 8;
+        var bottom = vTop + vH - dockEl.offsetHeight - 10;
+        var dy = r.bottom > bottom ? r.bottom - bottom : r.top < top ? r.top - top : 0;
+        if (dy) window.scrollBy({ top: dy, behavior: 'auto' });
+    }
+
+    // aiuti, verifica e cancellazioni cambiano la griglia: la striscia la segue
+    var dockRaf = 0;
+    new window.MutationObserver(function () {
+        if (dockRaf) return;
+        dockRaf = requestAnimationFrame(function () { dockRaf = 0; if (S) paintDock(); });
+    }).observe(gridEl, { subtree: true, attributes: true, attributeFilter: ['class'], childList: true, characterData: true });
+
+    if (window.visualViewport) {
+        ['resize', 'scroll'].forEach(function (ev) {
+            window.visualViewport.addEventListener(ev, function () {
+                placeDock();
+                if (ev === 'resize') { clearTimeout(placeDock.t); placeDock.t = setTimeout(function () { if (S) keepVisible(); }, 60); }
+            });
+        });
+    }
+    placeDock();
+
+    dockCells.addEventListener('click', function (e) {
+        var b = e.target.closest('.xw-dcell');
+        if (!b || !canNav()) return;
+        select(Number(b.dataset.ci), S.p.words[curWord()].dir);
+        inputEl.focus({ preventScroll: true });
+    });
+    $('#xw-dprev').addEventListener('click', function () { if (canNav()) { jumpWord(-1); keepFocus(); } });
+    $('#xw-dnext').addEventListener('click', function () { if (canNav()) { jumpWord(1); keepFocus(); } });
+    $('#xw-dclue').addEventListener('click', function () { if (canNav()) { toggleDir(); inputEl.focus({ preventScroll: true }); } });
+    // toccare la striscia non chiude la tastiera
+    dockEl.addEventListener('pointerdown', function (e) { if (document.activeElement === inputEl) e.preventDefault(); });
+
     /* ---------- Selezione ---------- */
     function curWord() {
         var m = S.map[S.cur];
@@ -445,6 +540,8 @@
         w.cells.forEach(function (x) { cellEls[x].classList.add('is-word'); });
         cellEls[ci].classList.add('is-cur');
         placeInput();
+        paintDock();
+        keepVisible();
 
         // la barra con la definizione corrente
         $('#xw-ref').textContent = w.n + ' ' + dirName(w.dir) + ' · ' + w.answer.length + ' lettere';
@@ -896,6 +993,7 @@
 
         setTimeout(function () {
             if (S !== G) return;   // nel frattempo si e' tornati alle schede: l'esito e' gia' salvato
+            dockPlay(false);
             QZ.show('s-end');
             QZ.results($('#end-host'), {
                 win: type === 'win',

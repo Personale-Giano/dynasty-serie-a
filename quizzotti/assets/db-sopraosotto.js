@@ -1,5 +1,10 @@
 /* ==========================================================================
-   QUIZZOTTI — Database: Sopra o Sotto, mazzo "Gol in Serie A"
+   QUIZZOTTI — Database: Sopra o Sotto, i mazzi storici
+   Quattro mazzi coi numeri che non cambiano piu': "Gol in Serie A" (qui
+   sotto), "Presenze in Serie A", "Gol in Nazionale" e "Campionati vinti"
+   (piu' in basso, ognuno con la sua fonte e la data).
+
+   Mazzo "Gol in Serie A"
    I bomber della storia del campionato con i gol segnati in Serie A.
    Solo giocatori che in Serie A hanno chiuso (ritirati o lontani da anni):
    il numero non cambia piu'. Fonte: classifica marcatori di tutti i tempi
@@ -75,4 +80,327 @@ const sosGoalsDatabase = [
   { name: "Marek Hamšík", role: "CEN", team: "Napoli", value: 100 },
 ];
 
-if (typeof module !== "undefined" && module.exports) { module.exports = { sosGoalsDatabase }; }
+/* ==========================================================================
+   Mazzo "Presenze in Serie A"
+   Le presenze in Serie A a girone unico (dal 1929-30) dei giocatori con piu'
+   partite nella storia del campionato. Fonte: it.wikipedia.org, "Classifica di
+   presenze in Serie A" (elenco aggiornato al 23 novembre 2026, letto il
+   26 novembre 2026). Solo gente che in Serie A ha chiuso: esclusi i due ancora
+   in attivita' (De Silvestri, Zielinski) e, per prudenza, chi ha giocato in
+   Serie A fino al 2024 o dopo e potrebbe tornarci (Acerbi, Cuadrado,
+   Candreva, Consigli). Gli spareggi non contano, come nella fonte.
+   tag: gli anni in Serie A (prima e ultima stagione); team: le tre squadre
+   con piu' presenze. Ci sono presenze uguali (la classifica e' quella):
+   il gioco non le mette mai in coppia.
+   ========================================================================== */
+
+const sosAppsDatabase = [
+  { name: "Gianluigi Buffon", tag: "1995-2021", team: "Juventus, Parma", value: 657 },
+  { name: "Paolo Maldini", tag: "1984-2009", team: "Milan", value: 647 },
+  { name: "Francesco Totti", tag: "1992-2017", team: "Roma", value: 619 },
+  { name: "Javier Zanetti", tag: "1995-2014", team: "Inter", value: 615 },
+  { name: "Gianluca Pagliuca", tag: "1987-2007", team: "Bologna, Sampdoria, Inter", value: 592 },
+  { name: "Dino Zoff", tag: "1961-1983", team: "Juventus, Napoli, Mantova", value: 570 },
+  { name: "Samir Handanovič", tag: "2004-2023", team: "Inter, Udinese, Treviso", value: 566 },
+  { name: "Pietro Vierchowod", tag: "1980-2000", team: "Sampdoria, Piacenza, Como", value: 562 },
+  { name: "Fabio Quagliarella", tag: "1999-2023", team: "Sampdoria, Juventus, Udinese", value: 556 },
+  { name: "Roberto Mancini", tag: "1981-2000", team: "Sampdoria, Lazio, Bologna", value: 541 },
+  { name: "Silvio Piola", tag: "1929-1954", team: "Lazio, Novara, Pro Vercelli", value: 537 },
+  { name: "Enrico Albertosi", tag: "1958-1980", team: "Fiorentina, Cagliari, Milan", value: 532 },
+  { name: "Gianni Rivera", tag: "1958-1979", team: "Milan, Alessandria", value: 527 },
+  { name: "Giuseppe Bergomi", tag: "1980-1999", team: "Inter", value: 519 },
+  { name: "Alberto Gilardino", tag: "1999-2017", team: "Fiorentina, Parma, Milan", value: 514 },
+  { name: "Ciro Ferrara", tag: "1984-2005", team: "Juventus, Napoli", value: 500 },
+  { name: "Giovanni Galli", tag: "1977-1995", team: "Fiorentina, Milan, Napoli", value: 496 },
+  { name: "Tarcisio Burgnich", tag: "1958-1977", team: "Inter, Napoli, Palermo", value: 494 },
+  { name: "Goran Pandev", tag: "2003-2022", team: "Genoa, Lazio, Napoli", value: 493 },
+  { name: "Andrea Pirlo", tag: "1994-2015", team: "Milan, Juventus, Brescia", value: 493 },
+  { name: "Giuseppe Favalli", tag: "1989-2010", team: "Lazio, Milan, Cremonese", value: 486 },
+  { name: "Giancarlo De Sisti", tag: "1960-1979", team: "Fiorentina, Roma", value: 478 },
+  { name: "Alessandro Del Piero", tag: "1993-2012", team: "Juventus", value: 478 },
+  { name: "Angelo Peruzzi", tag: "1987-2007", team: "Juventus, Lazio, Inter", value: 478 },
+  { name: "Giacinto Facchetti", tag: "1960-1978", team: "Inter", value: 475 },
+  { name: "Franco Baresi", tag: "1977-1997", team: "Milan", value: 470 },
+  { name: "Pietro Ferraris II", tag: "1929-1950", team: "Inter, Torino, Pro Vercelli", value: 469 },
+  { name: "Sergio Cervato", tag: "1948-1964", team: "Fiorentina, SPAL, Juventus", value: 466 },
+  { name: "Franco Causio", tag: "1967-1986", team: "Juventus, Udinese, Lecce", value: 460 },
+  { name: "José Altafini", tag: "1958-1976", team: "Milan, Napoli, Juventus", value: 459 },
+  { name: "Daniele De Rossi", tag: "2002-2019", team: "Roma", value: 459 },
+  { name: "Sergio Pellissier", tag: "2002-2019", team: "Chievo", value: 459 },
+  { name: "Alessandro Costacurta", tag: "1987-2007", team: "Milan", value: 458 },
+  { name: "Roberto Baggio", tag: "1986-2004", team: "Juventus, Brescia, Fiorentina", value: 452 },
+  { name: "Dario Dainelli", tag: "2000-2018", team: "Chievo, Fiorentina, Brescia", value: 446 },
+  { name: "Sébastien Frey", tag: "1998-2013", team: "Fiorentina, Parma, Genoa", value: 446 },
+  { name: "Antonio Di Natale", tag: "2002-2016", team: "Udinese, Empoli", value: 445 },
+  { name: "Giampiero Boniperti", tag: "1946-1961", team: "Juventus", value: 443 },
+  { name: "Mario Corso", tag: "1958-1974", team: "Inter, Genoa", value: 436 },
+  { name: "Leonardo Bonucci", tag: "2005-2023", team: "Juventus, Bari, Milan", value: 431 },
+  { name: "Giorgio Chiellini", tag: "2004-2022", team: "Juventus, Fiorentina", value: 430 },
+  { name: "Giacomo Mari", tag: "1946-1960", team: "Juventus, Atalanta, Padova", value: 426 },
+  { name: "Francesco Janich", tag: "1956-1972", team: "Bologna, Lazio, Atalanta", value: 425 },
+  { name: "Amedeo Amadei", tag: "1936-1956", team: "Roma, Napoli, Inter", value: 423 },
+  { name: "Paolo Cannavaro", tag: "1999-2018", team: "Napoli, Sassuolo, Parma", value: 422 },
+  { name: "Luca Marchegiani", tag: "1988-2005", team: "Lazio, Torino, Chievo", value: 422 },
+  { name: "Fabio Cannavaro", tag: "1992-2010", team: "Parma, Juventus, Napoli", value: 421 },
+  { name: "Morgan De Sanctis", tag: "1998-2016", team: "Udinese, Napoli, Roma", value: 419 },
+  { name: "Sandro Mazzola", tag: "1960-1977", team: "Inter", value: 417 },
+  { name: "Alessandro Nesta", tag: "1993-2012", team: "Milan, Lazio", value: 417 },
+  { name: "Francesco Antonioli", tag: "1991-2012", team: "Sampdoria, Roma, Bologna", value: 416 },
+  { name: "Cesare Maldini", tag: "1952-1967", team: "Milan, Torino, Triestina", value: 412 },
+  { name: "Massimo Gobbi", tag: "2004-2019", team: "Parma, Chievo, Fiorentina", value: 411 },
+  { name: "Marek Hamšík", tag: "2004-2019", team: "Napoli, Brescia", value: 409 },
+  { name: "Lido Vieri", tag: "1958-1976", team: "Torino, Inter", value: 409 },
+  { name: "Sergio Santarini", tag: "1967-1983", team: "Roma, Catanzaro, Inter", value: 406 },
+  { name: "Matteo Brighi", tag: "2000-2019", team: "Roma, Chievo, Bologna", value: 405 },
+  { name: "Giorgio Ferrini", tag: "1960-1975", team: "Torino", value: 405 },
+  { name: "Diego Fuser", tag: "1986-2003", team: "Lazio, Parma, Torino", value: 405 },
+  { name: "Giuseppe Savoldi", tag: "1965-1980", team: "Bologna, Napoli, Atalanta", value: 405 },
+  { name: "Mauro Tassotti", tag: "1978-1997", team: "Milan, Lazio", value: 404 },
+  { name: "Luciano Castellini", tag: "1970-1985", team: "Napoli, Torino", value: 403 },
+  { name: "Romano Fogli", tag: "1955-1971", team: "Bologna, Torino, Milan", value: 403 },
+  { name: "Sandro Salvadore", tag: "1958-1974", team: "Juventus, Milan", value: 403 },
+  { name: "Lucidio Sentimenti IV", tag: "1938-1959", team: "Lazio, Juventus, Modena", value: 403 },
+  { name: "Simone Perrotta", tag: "1998-2013", team: "Roma, Chievo, Bari", value: 402 },
+  { name: "Gino Armano", tag: "1946-1959", team: "Inter, Torino, Alessandria", value: 401 },
+  { name: "Paolo Pulici", tag: "1968-1985", team: "Torino, Fiorentina, Udinese", value: 401 },
+  { name: "Carlo Reguzzoni", tag: "1929-1948", team: "Bologna, Pro Patria", value: 401 },
+  { name: "Antonio Cassano", tag: "1999-2016", team: "Sampdoria, Roma, Parma", value: 400 },
+  { name: "Teobaldo Depetrini", tag: "1930-1951", team: "Juventus, Pro Vercelli, Torino", value: 400 },
+  { name: "Kurt Hamrin", tag: "1956-1971", team: "Fiorentina, Milan, Padova", value: 400 },
+  { name: "Gaetano Scirea", tag: "1972-1988", team: "Juventus, Atalanta", value: 397 },
+  { name: "Guido Vincenzi", tag: "1953-1969", team: "Sampdoria, Inter", value: 397 },
+  { name: "Clarence Seedorf", tag: "1995-2012", team: "Milan, Inter, Sampdoria", value: 396 },
+  { name: "Fabrizio Ferron", tag: "1988-2003", team: "Atalanta, Sampdoria, Verona", value: 394 },
+  { name: "Christian Panucci", tag: "1991-2010", team: "Roma, Milan, Genoa", value: 394 },
+  { name: "Bruno Pesaola", tag: "1947-1960", team: "Napoli, Roma, Novara", value: 394 },
+  { name: "Mario Bergamaschi", tag: "1950-1964", team: "Sampdoria, Milan, Como", value: 393 },
+  { name: "Giuseppe Sabadini", tag: "1965-1985", team: "Milan, Catanzaro, Sampdoria", value: 393 },
+  { name: "Massimo Ambrosini", tag: "1995-2014", team: "Milan, Vicenza, Fiorentina", value: 392 },
+  { name: "Giuseppe Baresi", tag: "1977-1992", team: "Inter", value: 392 },
+  { name: "Alessandro Gamberini", tag: "1999-2018", team: "Fiorentina, Chievo, Bologna", value: 392 },
+  { name: "Carlo Annovazzi", tag: "1946-1958", team: "Milan, Atalanta", value: 391 },
+  { name: "Giacomo Bulgarelli", tag: "1958-1975", team: "Bologna", value: 391 },
+  { name: "Luigi Di Biagio", tag: "1988-2007", team: "Inter, Roma, Foggia", value: 391 },
+  { name: "Simone Vergassola", tag: "1996-2013", team: "Siena, Torino, Sampdoria", value: 390 },
+  { name: "Giampiero Pinzi", tag: "2000-2016", team: "Udinese, Chievo", value: 389 },
+  { name: "Gaudenzio Bernasconi", tag: "1952-1965", team: "Sampdoria, Atalanta", value: 388 },
+  { name: "Giuseppe Furino", tag: "1968-1984", team: "Juventus, Palermo", value: 388 },
+  { name: "Giuseppe Bruscolotti", tag: "1972-1988", team: "Napoli", value: 387 },
+  { name: "Francesco Morini", tag: "1963-1979", team: "Juventus, Sampdoria", value: 387 },
+  { name: "Stefano Tacconi", tag: "1980-1995", team: "Juventus, Avellino, Genoa", value: 387 },
+  { name: "Ivano Blason", tag: "1946-1962", team: "Padova, Triestina, Inter", value: 386 },
+  { name: "Giacomo Losi", tag: "1954-1969", team: "Roma", value: 386 },
+  { name: "Alessandro Lucarelli", tag: "1998-2015", team: "Parma, Piacenza, Reggina", value: 386 },
+];
+
+/* ==========================================================================
+   Mazzo "Gol in Nazionale"
+   Tutti gli 86 calciatori che hanno segnato almeno 50 gol con la nazionale
+   maggiore. Fonte: en.wikipedia.org, "List of men's footballers with 50 or
+   more international goals" (dati FIFA, RSSSF, IFFHS; tabella aggiornata al
+   17 novembre 2026, ultima giornata della sosta di novembre, letta il
+   26 novembre 2026). Per chi gioca ancora in nazionale (team "in attivita'")
+   il numero vale al 26 novembre 2026: fino alla sosta di marzo 2027 non
+   cambia. Puskas: i gol sono tutti con l'Ungheria (con la Spagna zero).
+   tag: la nazionale; team: gli anni in nazionale. Gol uguali ce ne sono
+   (e' la classifica vera): il gioco non li mette mai in coppia.
+   ========================================================================== */
+
+const sosNationalGoalsDatabase = [
+  { name: "Cristiano Ronaldo", tag: "Portogallo", team: "2003-2026", value: 146 },
+  { name: "Lionel Messi", tag: "Argentina", team: "2005-2026", value: 126 },
+  { name: "Ali Daei", tag: "Iran", team: "1993-2006", value: 108 },
+  { name: "Sunil Chhetri", tag: "India", team: "2005-2025", value: 95 },
+  { name: "Romelu Lukaku", tag: "Belgio", team: "2010-2026", value: 94 },
+  { name: "Harry Kane", tag: "Inghilterra", team: "dal 2015, in attività", value: 93, active: true },
+  { name: "Robert Lewandowski", tag: "Polonia", team: "dal 2008, in attività", value: 92, active: true },
+  { name: "Mokhtar Dahari", tag: "Malesia", team: "1972-1985", value: 89 },
+  { name: "Ali Mabkhout", tag: "Emirati Arabi Uniti", team: "2009-2024", value: 85 },
+  { name: "Ferenc Puskás", tag: "Ungheria", team: "1945-1962", value: 84 },
+  { name: "Neymar", tag: "Brasile", team: "2010-2026", value: 80 },
+  { name: "Godfrey Chitalu", tag: "Zambia", team: "1968-1980", value: 79 },
+  { name: "Hussein Saeed", tag: "Iraq", team: "1977-1990", value: 78 },
+  { name: "Pelé", tag: "Brasile", team: "1957-1971", value: 77 },
+  { name: "Sándor Kocsis", tag: "Ungheria", team: "1948-1956", value: 75 },
+  { name: "Kunishige Kamamoto", tag: "Giappone", team: "1964-1977", value: 75 },
+  { name: "Bashar Abdullah", tag: "Kuwait", team: "1996-2007", value: 75 },
+  { name: "Edin Džeko", tag: "Bosnia ed Erzegovina", team: "2007-2026", value: 73 },
+  { name: "Majed Abdullah", tag: "Arabia Saudita", team: "1977-1994", value: 72 },
+  { name: "Kinnah Phiri", tag: "Malawi", team: "1973-1981", value: 71 },
+  { name: "Kiatisuk Senamuang", tag: "Thailandia", team: "1993-2007", value: 71 },
+  { name: "Miroslav Klose", tag: "Germania", team: "2001-2014", value: 71 },
+  { name: "Piyapong Pue-on", tag: "Thailandia", team: "1981-1997", value: 70 },
+  { name: "Abdul Kadir", tag: "Indonesia", team: "1967-1979", value: 70 },
+  { name: "Stern John", tag: "Trinidad e Tobago", team: "1995-2012", value: 70 },
+  { name: "Mohamed Salah", tag: "Egitto", team: "dal 2011, in attività", value: 70, active: true },
+  { name: "Luis Suárez", tag: "Uruguay", team: "2007-2024", value: 69 },
+  { name: "Hossam Hassan", tag: "Egitto", team: "1985-2006", value: 69 },
+  { name: "Erling Haaland", tag: "Norvegia", team: "dal 2019, in attività", value: 68, active: true },
+  { name: "Gerd Müller", tag: "Germania Ovest", team: "1966-1974", value: 68 },
+  { name: "Carlos Ruiz", tag: "Guatemala", team: "1998-2016", value: 68 },
+  { name: "Robbie Keane", tag: "Irlanda", team: "1998-2016", value: 68 },
+  { name: "Kylian Mbappé", tag: "Francia", team: "dal 2017, in attività", value: 67, active: true },
+  { name: "Didier Drogba", tag: "Costa d'Avorio", team: "2002-2014", value: 65 },
+  { name: "Aleksandar Mitrović", tag: "Serbia", team: "dal 2013, in attività", value: 64, active: true },
+  { name: "Teerasil Dangda", tag: "Thailandia", team: "dal 2007, in attività", value: 64, active: true },
+  { name: "Jasem Al-Huwaidi", tag: "Kuwait", team: "1992-2003", value: 63 },
+  { name: "Ronaldo", tag: "Brasile", team: "1994-2011", value: 62 },
+  { name: "Ahmed Radhi", tag: "Iraq", team: "1982-1997", value: 62 },
+  { name: "Zlatan Ibrahimović", tag: "Svezia", team: "2001-2023", value: 62 },
+  { name: "Abdul Ghani Minhat", tag: "Malesia", team: "1956-1966", value: 61 },
+  { name: "Almoez Ali", tag: "Qatar", team: "dal 2013, in attività", value: 61, active: true },
+  { name: "Mehdi Taremi", tag: "Iran", team: "dal 2015, in attività", value: 60, active: true },
+  { name: "Yousef Nasser", tag: "Kuwait", team: "dal 2009, in attività", value: 60, active: true },
+  { name: "Imre Schlosser", tag: "Ungheria", team: "1906-1927", value: 59 },
+  { name: "David Villa", tag: "Spagna", team: "2005-2017", value: 59 },
+  { name: "Son Heung-min", tag: "Corea del Sud", team: "dal 2010, in attività", value: 59, active: true },
+  { name: "Sardar Azmoun", tag: "Iran", team: "dal 2014, in attività", value: 58, active: true },
+  { name: "Ali Ashfaq", tag: "Maldive", team: "dal 2003, in attività", value: 58, active: true },
+  { name: "Cha Bum-kun", tag: "Corea del Sud", team: "1972-1986", value: 58 },
+  { name: "Edinson Cavani", tag: "Uruguay", team: "2008-2022", value: 58 },
+  { name: "Carlos Pavón", tag: "Honduras", team: "1993-2010", value: 57 },
+  { name: "Olivier Giroud", tag: "Francia", team: "2011-2024", value: 57 },
+  { name: "Clint Dempsey", tag: "Stati Uniti", team: "2004-2018", value: 57 },
+  { name: "Younis Mahmoud", tag: "Iraq", team: "2002-2016", value: 57 },
+  { name: "Landon Donovan", tag: "Stati Uniti", team: "2000-2014", value: 57 },
+  { name: "Gabriel Batistuta", tag: "Argentina", team: "1991-2002", value: 56 },
+  { name: "Samuel Eto'o", tag: "Camerun", team: "1997-2014", value: 56 },
+  { name: "Bader Al-Mutawa", tag: "Kuwait", team: "2003-2022", value: 56 },
+  { name: "Romário", tag: "Brasile", team: "1987-2005", value: 55 },
+  { name: "Kazuyoshi Miura", tag: "Giappone", team: "1990-2000", value: 55 },
+  { name: "Jan Koller", tag: "Repubblica Ceca", team: "1999-2009", value: 55 },
+  { name: "Iswadi Idris", tag: "Indonesia", team: "1968-1980", value: 55 },
+  { name: "Fandi Ahmad", tag: "Singapore", team: "1979-1997", value: 55 },
+  { name: "Joachim Streich", tag: "Germania Est", team: "1969-1984", value: 55 },
+  { name: "Memphis Depay", tag: "Paesi Bassi", team: "dal 2013, in attività", value: 55, active: true },
+  { name: "Sadio Mané", tag: "Senegal", team: "dal 2012, in attività", value: 55, active: true },
+  { name: "Wayne Rooney", tag: "Inghilterra", team: "2003-2018", value: 53 },
+  { name: "Poul Nielsen", tag: "Danimarca", team: "1910-1925", value: 52 },
+  { name: "Phil Younghusband", tag: "Filippine", team: "2006-2019", value: 52 },
+  { name: "Javier Hernández", tag: "Messico", team: "2009-2019", value: 52 },
+  { name: "Jon Dahl Tomasson", tag: "Danimarca", team: "1997-2010", value: 52 },
+  { name: "Adnan Al Talyani", tag: "Emirati Arabi Uniti", team: "1983-1997", value: 52 },
+  { name: "Lajos Tichy", tag: "Ungheria", team: "1955-1971", value: 51 },
+  { name: "Lê Công Vinh", tag: "Vietnam", team: "2004-2016", value: 51 },
+  { name: "Asamoah Gyan", tag: "Ghana", team: "2003-2019", value: 51 },
+  { name: "Hakan Şükür", tag: "Turchia", team: "1992-2007", value: 51 },
+  { name: "Thierry Henry", tag: "Francia", team: "1997-2010", value: 51 },
+  { name: "Alexis Sánchez", tag: "Cile", team: "dal 2006, in attività", value: 51, active: true },
+  { name: "Karim Bagheri", tag: "Iran", team: "1993-2010", value: 50 },
+  { name: "Robin van Persie", tag: "Paesi Bassi", team: "2005-2017", value: 50 },
+  { name: "Hwang Sun-hong", tag: "Corea del Sud", team: "1988-2002", value: 50 },
+  { name: "Tim Cahill", tag: "Australia", team: "2004-2018", value: 50 },
+  { name: "Shinji Okazaki", tag: "Giappone", team: "2008-2019", value: 50 },
+  { name: "Salomón Rondón", tag: "Venezuela", team: "dal 2008, in attività", value: 50, active: true },
+  { name: "Zainal Abidin Hassan", tag: "Malesia", team: "1980-1997", value: 50 },
+];
+
+/* ==========================================================================
+   Mazzo "Campionati vinti"
+   I titoli di campione nazionale dei grandi club di Italia, Inghilterra,
+   Spagna, Germania, Francia, Portogallo, Paesi Bassi e Scozia, alla fine
+   della stagione 2025-26: fino a maggio 2027 nessuno ne vince altri.
+   Fonte: en.wikipedia.org, "List of Italian / English / Spanish / German /
+   French / Portuguese / Dutch / Scottish football champions", tabelle per
+   club, lette il 26 novembre 2026. Si contano i titoli come li conta la
+   federazione: in Italia, Germania, Inghilterra e Scozia anche quelli prima
+   del girone unico (Genoa 9, Norimberga 9, Schalke 7...); in Francia solo
+   l'era professionistica, dal 1932-33 (Marsiglia 9: il titolo 1992-93 fu
+   revocato). Lille lasciato fuori apposta: le fonti non sono d'accordo se
+   contare l'Olympique Lillois del 1933.
+   tag: il paese; team: l'ultimo titolo vinto. Tanti numeri uguali (ci sono
+   parecchi club con 1 o 2 titoli): il gioco non li mette mai in coppia.
+   ========================================================================== */
+
+const sosTitlesDatabase = [
+  { name: "Celtic", tag: "Scozia", team: "ultimo titolo 2025-26", value: 56 },
+  { name: "Rangers", tag: "Scozia", team: "ultimo titolo 2020-21", value: 55 },
+  { name: "Benfica", tag: "Portogallo", team: "ultimo titolo 2022-23", value: 38 },
+  { name: "Juventus", tag: "Italia", team: "ultimo titolo 2019-20", value: 36 },
+  { name: "Real Madrid", tag: "Spagna", team: "ultimo titolo 2023-24", value: 36 },
+  { name: "Ajax", tag: "Paesi Bassi", team: "ultimo titolo 2021-22", value: 36 },
+  { name: "Bayern Monaco", tag: "Germania", team: "ultimo titolo 2025-26", value: 35 },
+  { name: "Porto", tag: "Portogallo", team: "ultimo titolo 2025-26", value: 31 },
+  { name: "Barcellona", tag: "Spagna", team: "ultimo titolo 2025-26", value: 29 },
+  { name: "PSV Eindhoven", tag: "Paesi Bassi", team: "ultimo titolo 2025-26", value: 27 },
+  { name: "Inter", tag: "Italia", team: "ultimo titolo 2025-26", value: 21 },
+  { name: "Sporting Lisbona", tag: "Portogallo", team: "ultimo titolo 2024-25", value: 21 },
+  { name: "Liverpool", tag: "Inghilterra", team: "ultimo titolo 2024-25", value: 20 },
+  { name: "Manchester United", tag: "Inghilterra", team: "ultimo titolo 2012-13", value: 20 },
+  { name: "Milan", tag: "Italia", team: "ultimo titolo 2021-22", value: 19 },
+  { name: "Feyenoord", tag: "Paesi Bassi", team: "ultimo titolo 2022-23", value: 16 },
+  { name: "Arsenal", tag: "Inghilterra", team: "ultimo titolo 2025-26", value: 14 },
+  { name: "Paris Saint-Germain", tag: "Francia", team: "ultimo titolo 2025-26", value: 14 },
+  { name: "Atlético Madrid", tag: "Spagna", team: "ultimo titolo 2020-21", value: 11 },
+  { name: "Manchester City", tag: "Inghilterra", team: "ultimo titolo 2023-24", value: 10 },
+  { name: "Saint-Étienne", tag: "Francia", team: "ultimo titolo 1980-81", value: 10 },
+  { name: "Genoa", tag: "Italia", team: "ultimo titolo 1923-24", value: 9 },
+  { name: "Everton", tag: "Inghilterra", team: "ultimo titolo 1986-87", value: 9 },
+  { name: "Norimberga", tag: "Germania", team: "ultimo titolo 1967-68", value: 9 },
+  { name: "Olympique Marsiglia", tag: "Francia", team: "ultimo titolo 2009-10", value: 9 },
+  { name: "Athletic Bilbao", tag: "Spagna", team: "ultimo titolo 1983-84", value: 8 },
+  { name: "Borussia Dortmund", tag: "Germania", team: "ultimo titolo 2011-12", value: 8 },
+  { name: "Monaco", tag: "Francia", team: "ultimo titolo 2016-17", value: 8 },
+  { name: "Nantes", tag: "Francia", team: "ultimo titolo 2000-01", value: 8 },
+  { name: "Torino", tag: "Italia", team: "ultimo titolo 1975-76", value: 7 },
+  { name: "Bologna", tag: "Italia", team: "ultimo titolo 1963-64", value: 7 },
+  { name: "Pro Vercelli", tag: "Italia", team: "ultimo titolo 1921-22", value: 7 },
+  { name: "Aston Villa", tag: "Inghilterra", team: "ultimo titolo 1980-81", value: 7 },
+  { name: "Schalke 04", tag: "Germania", team: "ultimo titolo 1958", value: 7 },
+  { name: "Olympique Lione", tag: "Francia", team: "ultimo titolo 2007-08", value: 7 },
+  { name: "Sunderland", tag: "Inghilterra", team: "ultimo titolo 1935-36", value: 6 },
+  { name: "Chelsea", tag: "Inghilterra", team: "ultimo titolo 2016-17", value: 6 },
+  { name: "Valencia", tag: "Spagna", team: "ultimo titolo 2003-04", value: 6 },
+  { name: "Amburgo", tag: "Germania", team: "ultimo titolo 1982-83", value: 6 },
+  { name: "Bordeaux", tag: "Francia", team: "ultimo titolo 2008-09", value: 6 },
+  { name: "Reims", tag: "Francia", team: "ultimo titolo 1961-62", value: 6 },
+  { name: "Stoccarda", tag: "Germania", team: "ultimo titolo 2006-07", value: 5 },
+  { name: "Borussia Mönchengladbach", tag: "Germania", team: "ultimo titolo 1976-77", value: 5 },
+  { name: "Napoli", tag: "Italia", team: "ultimo titolo 2024-25", value: 4 },
+  { name: "Sheffield Wednesday", tag: "Inghilterra", team: "ultimo titolo 1929-30", value: 4 },
+  { name: "Newcastle", tag: "Inghilterra", team: "ultimo titolo 1926-27", value: 4 },
+  { name: "Werder Brema", tag: "Germania", team: "ultimo titolo 2003-04", value: 4 },
+  { name: "Kaiserslautern", tag: "Germania", team: "ultimo titolo 1997-98", value: 4 },
+  { name: "Nizza", tag: "Francia", team: "ultimo titolo 1958-59", value: 4 },
+  { name: "Aberdeen", tag: "Scozia", team: "ultimo titolo 1984-85", value: 4 },
+  { name: "Hearts", tag: "Scozia", team: "ultimo titolo 1959-60", value: 4 },
+  { name: "Hibernian", tag: "Scozia", team: "ultimo titolo 1951-52", value: 4 },
+  { name: "Roma", tag: "Italia", team: "ultimo titolo 2000-01", value: 3 },
+  { name: "Blackburn Rovers", tag: "Inghilterra", team: "ultimo titolo 1994-95", value: 3 },
+  { name: "Huddersfield Town", tag: "Inghilterra", team: "ultimo titolo 1925-26", value: 3 },
+  { name: "Wolverhampton", tag: "Inghilterra", team: "ultimo titolo 1958-59", value: 3 },
+  { name: "Leeds", tag: "Inghilterra", team: "ultimo titolo 1991-92", value: 3 },
+  { name: "Colonia", tag: "Germania", team: "ultimo titolo 1977-78", value: 3 },
+  { name: "Lazio", tag: "Italia", team: "ultimo titolo 1999-2000", value: 2 },
+  { name: "Fiorentina", tag: "Italia", team: "ultimo titolo 1968-69", value: 2 },
+  { name: "Preston North End", tag: "Inghilterra", team: "ultimo titolo 1889-90", value: 2 },
+  { name: "Burnley", tag: "Inghilterra", team: "ultimo titolo 1959-60", value: 2 },
+  { name: "Portsmouth", tag: "Inghilterra", team: "ultimo titolo 1949-50", value: 2 },
+  { name: "Tottenham", tag: "Inghilterra", team: "ultimo titolo 1960-61", value: 2 },
+  { name: "Derby County", tag: "Inghilterra", team: "ultimo titolo 1974-75", value: 2 },
+  { name: "Real Sociedad", tag: "Spagna", team: "ultimo titolo 1981-82", value: 2 },
+  { name: "Hertha Berlino", tag: "Germania", team: "ultimo titolo 1931", value: 2 },
+  { name: "Hannover 96", tag: "Germania", team: "ultimo titolo 1954", value: 2 },
+  { name: "AZ Alkmaar", tag: "Paesi Bassi", team: "ultimo titolo 2008-09", value: 2 },
+  { name: "Cagliari", tag: "Italia", team: "ultimo titolo 1969-70", value: 1 },
+  { name: "Verona", tag: "Italia", team: "ultimo titolo 1984-85", value: 1 },
+  { name: "Sampdoria", tag: "Italia", team: "ultimo titolo 1990-91", value: 1 },
+  { name: "Ipswich Town", tag: "Inghilterra", team: "ultimo titolo 1961-62", value: 1 },
+  { name: "Nottingham Forest", tag: "Inghilterra", team: "ultimo titolo 1977-78", value: 1 },
+  { name: "Leicester", tag: "Inghilterra", team: "ultimo titolo 2015-16", value: 1 },
+  { name: "Deportivo La Coruña", tag: "Spagna", team: "ultimo titolo 1999-2000", value: 1 },
+  { name: "Siviglia", tag: "Spagna", team: "ultimo titolo 1945-46", value: 1 },
+  { name: "Betis", tag: "Spagna", team: "ultimo titolo 1934-35", value: 1 },
+  { name: "Bayer Leverkusen", tag: "Germania", team: "ultimo titolo 2023-24", value: 1 },
+  { name: "1860 Monaco", tag: "Germania", team: "ultimo titolo 1965-66", value: 1 },
+  { name: "Eintracht Francoforte", tag: "Germania", team: "ultimo titolo 1959", value: 1 },
+  { name: "Wolfsburg", tag: "Germania", team: "ultimo titolo 2008-09", value: 1 },
+  { name: "Lens", tag: "Francia", team: "ultimo titolo 1997-98", value: 1 },
+  { name: "Strasburgo", tag: "Francia", team: "ultimo titolo 1978-79", value: 1 },
+  { name: "Auxerre", tag: "Francia", team: "ultimo titolo 1995-96", value: 1 },
+  { name: "Montpellier", tag: "Francia", team: "ultimo titolo 2011-12", value: 1 },
+  { name: "Boavista", tag: "Portogallo", team: "ultimo titolo 2000-01", value: 1 },
+  { name: "Twente", tag: "Paesi Bassi", team: "ultimo titolo 2009-10", value: 1 },
+];
+
+if (typeof module !== "undefined" && module.exports) { module.exports = { sosGoalsDatabase, sosAppsDatabase, sosNationalGoalsDatabase, sosTitlesDatabase }; }

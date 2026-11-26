@@ -6,6 +6,9 @@
    del verdetto, domande che non si ripetono tra una partita e l'altra, tempo
    che cresce con la difficolta', tastiera A-D / 1-4, statistiche di carriera
    e revisione delle domande a fine partita.
+   Sfida un amico (assets/sfida.js): a fine partita un link con il seme
+   (ordine delle risposte) e le quindici domande uscite; l'amico gioca le
+   stesse, nello stesso ordine, senza toccare mazzo, record e carriera.
    ========================================================================== */
 (function () {
     'use strict';
@@ -13,6 +16,8 @@
     var PRIZES = [0, 100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 1000000];
     var SAFE = [5, 10];
     var LETTERS = ['A', 'B', 'C', 'D'];
+    /* Dalla domanda 6 si conferma: «È la sua risposta definitiva?». */
+    var FINAL_FROM = 6;
     /* Due versioni, un motore: calcio (CVEM.html) e cultura generale
        (MilionarioNormale.html, data-game="milionario", dati in db-milionario.js). */
     var NORMAL = !!document.body && document.body.getAttribute('data-game') === 'milionario';
@@ -44,6 +49,9 @@
         });
     }
     var deck = new QZ.Deck(GID, pool, function (q) { return q.text; });
+    var SF = QZ.sfida || null;
+    var CH = SF ? SF.read(GID, pool.length) : null;   // la sfida arrivata col link
+    var GNAME = NORMAL ? 'Milionario' : 'Milionario Calcio';
 
     /* ---------- Stato ---------- */
     var S = {};
@@ -58,7 +66,8 @@
         ['Quindici domande,', 'da €100 al milione. Più sali, più si fanno cattive.'],
         ['Il tempo corre:', '30 secondi per le prime cinque, 40 fino alla decima, 50 per le ultime. Se scade, ' + (NORMAL ? 'la partita finisce.' : 'è fischio finale.')],
         ['Due soglie sicure', 'a €1.000 e €32.000: se sbagli dopo, quei soldi non te li toglie nessuno.'],
-        ['Quattro aiuti:', '50:50, pubblico, telefonata a casa e 15 secondi in più. Uno a testa, e mentre li usi il tempo si ferma.'],
+        ['Quattro aiuti:', '50:50, pubblico, telefonata a casa e 15 secondi in più. Uno a testa: mentre ascolti il pubblico o la telefonata il tempo si ferma.'],
+        ['Dalla domanda ' + FINAL_FROM + ' si conferma:', 'il primo tocco sceglie, il secondo sulla stessa risposta la rende definitiva. Il tempo intanto corre.'],
         ['Puoi ritirarti', 'quando vuoi e incassare quello che hai vinto. Il coraggio è facoltativo.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
@@ -101,7 +110,18 @@
         var k = e.key.toUpperCase();
         var idx = LETTERS.indexOf(k);
         if (idx < 0 && /^[1-4]$/.test(k)) idx = Number(k) - 1;
-        if (idx >= 0 && !answerEls[idx].disabled) { e.preventDefault(); pick(idx); }
+        if (idx >= 0 && !answerEls[idx].disabled) {
+            e.preventDefault();
+            // il fuoco segue la scelta: cosi' Invio (che "clicca" il bottone col fuoco) conferma proprio quella
+            if (needsConfirm()) answerEls[idx].focus({ preventScroll: true });
+            pick(idx);
+            return;
+        }
+        // Invio fuori dai bottoni: conferma la risposta evidenziata
+        if (e.key === 'Enter' && S.picked != null && !(document.activeElement && document.activeElement.closest && document.activeElement.closest('button, a, summary'))) {
+            e.preventDefault();
+            pick(S.picked);
+        }
     });
 
     /* ---------- Helper ---------- */
@@ -112,7 +132,12 @@
         SAFE.forEach(function (x) { if (level > x) s = x; });
         return s;
     }
-    function phase(lv) { return lv <= 5 ? 'Riscaldamento' : lv <= 10 ? 'Primo tempo' : lv < 15 ? 'Secondo tempo' : 'La domanda da un milione'; }
+    function phase(lv) {
+        if (lv >= 15) return 'La domanda da un milione';
+        if (NORMAL) return lv <= 5 ? 'Si scaldano i motori' : lv <= 10 ? 'Si fa sul serio' : 'Zona vertigini';
+        return lv <= 5 ? 'Riscaldamento' : lv <= 10 ? 'Primo tempo' : 'Secondo tempo';
+    }
+    function needsConfirm() { return S.level >= FINAL_FROM; }
     function alive() { return [0, 1, 2, 3].filter(function (i) { return S.out.indexOf(i) < 0; }); }
 
     /* ---------- Carriera (statistiche su questo dispositivo) ---------- */
@@ -130,10 +155,17 @@
     }
 
     /* ---------- Flusso ---------- */
-    function start() {
+    /** kind 'sfida': le domande del link (CH), senza toccare mazzo, record e carriera. */
+    function start(kind) {
         if (starting) return;
         starting = true;
         S = { level: 1, active: false, hold: 0, used: {}, correct: 0, times: [], streak: 0, q: null, out: [], log: [] };
+        // il seme decide l'ordine delle risposte; le domande escono dal mazzo e si annotano per la sfida
+        S.ch = kind === 'sfida' ? CH : null;
+        S.seed = S.ch ? S.ch.seed : SF ? SF.newSeed() : 0;
+        S.rng = SF ? SF.rng(S.seed) : null;
+        S.src = SF ? SF.source(deck, pool, S.ch, S.rng) : null;
+        if (S.ch) SF.kickoff(S.ch, money(S.ch.score));
         QZ.$$('.cv-life').forEach(function (b) { b.disabled = false; });
         QZ.$$('.cv-life .qz-mark').forEach(function (m) { m.remove(); });
         paintStreak();
@@ -159,12 +191,14 @@
 
     function load() {
         var lv = S.level;
-        var q = deck.draw(function (x) { return x.level === lv; }) || deck.draw(function (x) { return Math.abs(x.level - lv) <= 1; });
+        var src = S.src || deck;
+        var q = src.draw(function (x) { return x.level === lv; }) || src.draw(function (x) { return Math.abs(x.level - lv) <= 1; });
         if (!q) { finish('win'); return; }
         // rimescola le opzioni: la risposta giusta non sta sempre nella stessa posizione
-        var order = QZ.shuffle([0, 1, 2, 3]);
+        var order = S.rng ? SF.shuffle([0, 1, 2, 3], S.rng) : QZ.shuffle([0, 1, 2, 3]);
         S.q = { text: q.text, cat: q.cat, options: order.map(function (i) { return q.options[i]; }), correct: order.indexOf(q.correct) };
         S.out = [];
+        S.picked = null;
 
         $('#q-label').textContent = String(lv).padStart(2, '0') + '/15';
         $('#q-label').setAttribute('aria-label', 'Domanda ' + lv + ' di 15');
@@ -201,9 +235,27 @@
         setTimeout(resume, 350);
     }
 
+    /** Evidenzia una risposta (o nessuna, con null) in attesa della conferma. */
+    function mark(i) {
+        S.picked = i;
+        answerEls.forEach(function (el, k) {
+            el.classList.toggle('is-picked', k === i);
+            el.classList.toggle('is-asking', k === i);
+            if (k === i) el.setAttribute('aria-pressed', 'true'); else el.removeAttribute('aria-pressed');
+        });
+    }
+
     function pick(i) {
         if (!S.active || S.hold) return;
+        if (needsConfirm() && S.picked !== i) {
+            // primo tocco: «È la sua risposta definitiva?»
+            mark(i);
+            QZ.sound.tock();
+            QZ.say('Risposta ' + LETTERS[i] + '. È la sua risposta definitiva? Toccala di nuovo o premi Invio per confermare.');
+            return;
+        }
         S.active = false;
+        mark(null);
         timer.pause();
         S.times.push((performance.now() - S.t0) / 1000);
         answerEls.forEach(function (el) { el.disabled = true; });
@@ -217,11 +269,11 @@
     function reveal(i) {
         var ok = i === S.q.correct;
         var correctEl = answerEls[S.q.correct];
-        answerEls.forEach(function (el) { el.disabled = true; el.classList.remove('is-picked'); });
+        answerEls.forEach(function (el) { el.disabled = true; el.classList.remove('is-picked', 'is-asking'); el.removeAttribute('aria-pressed'); });
         correctEl.classList.add('is-correct');
         var rightTxt = LETTERS[S.q.correct] + ', ' + S.q.options[S.q.correct];
         S.log.push({ lv: S.level, text: S.q.text, right: S.q.options[S.q.correct], picked: i >= 0 ? S.q.options[i] : null, ok: ok });
-        QZ.fx.stamp(correctEl, ok ? QZ.pick(['Esatto!', 'Gol!', 'Che giocata']) : 'Era questa', ok ? 'ok' : 'ink', {
+        QZ.fx.stamp(correctEl, ok ? QZ.pick(NORMAL ? ['Esatto!', 'Giusta!', 'Bingo!'] : ['Esatto!', 'Gol!', 'Che giocata']) : 'Era questa', ok ? 'ok' : 'ink', {
             size: 22, x: 74,
             say: ok ? 'Esatto! ' + rightTxt + '. Hai vinto ' + money(PRIZES[S.level]) + '.'
                 : (i >= 0 ? 'Sbagliato. ' : 'Tempo scaduto. ') + 'La risposta giusta era ' + rightTxt + '.'
@@ -244,7 +296,7 @@
                 load();
             }, 1500);
         } else {
-            if (i >= 0) { answerEls[i].classList.add('is-wrong'); QZ.fx.stamp(answerEls[i], 'Fuorigioco', 'bad', { size: 22, x: 74, say: false }); }
+            if (i >= 0) { answerEls[i].classList.add('is-wrong'); QZ.fx.stamp(answerEls[i], NORMAL ? 'Ahia' : 'Fuorigioco', 'bad', { size: 22, x: 74, say: false }); }
             else QZ.toast(NORMAL ? 'Tempo scaduto: la partita finisce qui.' : 'Fischio finale: tempo scaduto.', { icon: 'clock', type: 'bad' });
             S.timeout = i < 0;
             S.streak = 0;
@@ -299,6 +351,7 @@
         if (!spend('fifty')) return;
         var wrong = QZ.shuffle([0, 1, 2, 3].filter(function (i) { return i !== S.q.correct; })).slice(0, 2);
         S.out = wrong;
+        if (wrong.indexOf(S.picked) >= 0) mark(null);
         // il fuoco non deve restare su una risposta che sta per sparire
         if (wrong.indexOf(answerEls.indexOf(document.activeElement)) >= 0) answerEls[alive()[0]].focus({ preventScroll: true });
         wrong.forEach(function (i, k) {
@@ -357,7 +410,7 @@
         var live = alive();
         var right = Math.random() < reliability;
         var say = right ? S.q.correct : QZ.pick(live.filter(function (i) { return i !== S.q.correct; }));
-        var conf = right ? QZ.pick(['Ci metto la mano sul fuoco', 'Sono abbastanza sicuro', 'Direi', 'Mi sembra']) : QZ.pick(['Non ne sono certo, ma direi', 'Vado a sensazione', 'Forse']);
+        var conf = phoneTone(S.level, Math.random());
         var answerText = LETTERS[say] + ' · ' + S.q.options[say];
         var node = QZ.el('<div class="stack" style="--gap:14px;align-items:center;text-align:center">' +
             '<div class="medal" style="width:84px;animation:none">' + QZ.icon('phone') + '</div>' +
@@ -377,6 +430,15 @@
                 }, 1600);
             }
         }).then(release);
+    }
+
+    /** Il tono dell'amico: dipende solo da quanto e' difficile la domanda, mai da
+        se ci azzecca (altrimenti la frase svelerebbe l'esito). r in [0, 1). */
+    function phoneTone(level, r) {
+        var sure = level <= 5 ? 0.75 : level <= 10 ? 0.5 : 0.3;
+        return r < sure
+            ? QZ.pick(['Ci metto la mano sul fuoco', 'Sono abbastanza sicuro', 'Direi', 'Mi sembra'])
+            : QZ.pick(['Non ne sono certo, ma direi', 'Vado a sensazione', 'Forse']);
     }
 
     function useTime() {
@@ -417,22 +479,27 @@
         var prize = PRIZES[prizeLevel];
         var avg = S.times.length ? S.times.reduce(function (a, b) { return a + b; }, 0) / S.times.length : 0;
         var xp = reached * 15 + S.correct * 3 + (type === 'win' ? 100 : 0);
-        var r = QZ.profile.record(GID, { xp: xp, label: money(prize) + ' · livello ' + reached + '/15', score: reached });
+        var ch = S.ch;
+        // la partita di sfida da' meta' XP e non tocca record e carriera
+        var r = ch ? QZ.profile.record(GID, { xp: Math.round(xp / 2), label: 'Sfida: ' + money(prize) + ' contro ' + money(ch.score) })
+            : QZ.profile.record(GID, { xp: xp, label: money(prize) + ' · livello ' + reached + '/15', score: reached });
 
         var c = career();
         var bestBefore = c.best;
-        c.games++; c.won += prize; c.correct += S.correct;
-        if (prize > c.best) c.best = prize;
-        if (type === 'win') c.millions++;
-        QZ.store.set(STATS_KEY, c);
-        paintCareer();
+        if (!ch) {
+            c.games++; c.won += prize; c.correct += S.correct;
+            if (prize > c.best) c.best = prize;
+            if (type === 'win') c.millions++;
+            QZ.store.set(STATS_KEY, c);
+            paintCareer();
+        }
 
         var how = S.timeout ? 'Il tempo ti frega alla domanda ' + S.level : 'Sbagli alla domanda ' + S.level;
         var titles = {
             win: ['Milionario!', 'Quindici su quindici. Da stasera al bar paghi tu.'],
             lose: prize
                 ? ['Salvato dalla soglia', how + ', ma la soglia sicura ti para il colpo.']
-                : [reached === 4 ? 'A un passo dalla soglia' : reached ? 'Fuori nel riscaldamento' : 'Fuori al primo turno', how + ' e torni a casa a mani vuote. Capita anche ai migliori.'],
+                : [reached === 4 ? 'A un passo dalla soglia' : reached ? (NORMAL ? 'Fuori alle prime battute' : 'Fuori nel riscaldamento') : (NORMAL ? 'Fuori alla prima domanda' : 'Fuori al primo turno'), how + ' e torni a casa a mani vuote. Capita anche ai migliori.'],
             quit: [prize ? 'Incassa e saluta' : 'Ritirato a secco', 'Ti fermi alla domanda ' + S.level + '. Il coraggio è facoltativo, i soldi no.']
         };
         var used = Object.keys(S.used).length;
@@ -441,7 +508,7 @@
             win: prize > 0,
             icon: type === 'win' ? 'crown' : type === 'quit' ? 'coins' : 'flag',
             title: titles[type][0],
-            subtitle: titles[type][1] + (prize > bestBefore && c.games > 1 ? ' E questa è la tua vincita più alta di sempre.' : ''),
+            subtitle: titles[type][1] + (!ch && prize > bestBefore && c.games > 1 ? ' E questa è la tua vincita più alta di sempre.' : ''),
             big: prize, bigPrefix: '€',
             record: r,
             ratio: reached / 15,
@@ -451,12 +518,35 @@
                 { label: 'Tempo medio', value: avg.toFixed(1).replace('.', ',') + ' s' },
                 { label: 'Aiuti usati', value: used + '/4' }
             ],
-            extraHTML: reviewHTML(),
+            extraHTML: (ch ? SF.verdictHTML(ch, prize, money) : '') + reviewHTML(),
             share: type === 'win'
                 ? 'Sono diventato milionario su Quizzotti: 15 domande' + (NORMAL ? ' di cultura generale' : ' di calcio') + ' su 15' + (used ? ', con ' + used + (used === 1 ? ' aiuto' : ' aiuti') : ' senza nemmeno un aiuto') + '. Riesci a battermi?'
                 : 'Chi Vuol Essere Milionario su Quizzotti: ' + money(prize) + ' vinti, livello ' + reached + '/15' + (type === 'quit' ? ' e ritiro prudente' : '') + '. Fai di meglio?',
-            onRetry: start
+            retryLabel: ch ? 'Rigioca la sfida' : undefined,
+            onRetry: ch ? playChallenge : start,
+            secondary: ch ? { label: 'Partita normale', icon: 'list', onClick: function () { QZ.show('s-start'); } } : undefined
         });
+        if (SF && S.src && S.log.length) {
+            SF.offer($('#end-host'), {
+                game: GID, title: GNAME, seed: S.seed, opt: '', src: S.src, score: prize,
+                text: function (name, url) {
+                    return (ch ? 'Rilancio la sfida' : 'Ti sfido') + ' a Chi Vuol Essere ' + GNAME + ': ' + money(prize) + ' vinti, livello ' + reached + '/15. ' +
+                        'Le stesse domande per te, nello stesso ordine: riesci a battermi?\n' + url;
+                }
+            });
+        }
         if (prize >= 1000) setTimeout(function () { QZ.fx.rain('€', type === 'win' ? 40 : 18); }, 400);
     }
+
+    /* ---------- Sfida un amico: il link arrivato ---------- */
+    function playChallenge() { if (CH) start('sfida'); }
+    if (CH && SF) {
+        SF.intro({
+            ch: CH, target: money(CH.score),
+            rules: 'Le stesse quindici domande, nello stesso ordine e con le risposte negli stessi posti. Aiuti e soglie come sempre; niente record in palio, solo l\'onore.',
+            onPlay: playChallenge
+        });
+    }
+
+    if (typeof window !== 'undefined' && window.__cvemTest) window.__cvemTest({ phoneTone: phoneTone, phase: phase, FINAL_FROM: FINAL_FROM });
 })();

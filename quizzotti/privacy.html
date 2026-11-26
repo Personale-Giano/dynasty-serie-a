@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Privacy · Quizzotti</title>
+<meta name="description" content="Cosa sa Quizzotti di te: niente cookie, niente account, profilo e partite solo sul tuo telefono. Cosa passa dal server nei giochi TV + telefoni e nelle leghe.">
+<link rel="canonical" href="https://quizotti.altervista.org/quizzotti/privacy.html">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://quizotti.altervista.org/quizzotti/privacy.html">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="Privacy · Quizzotti">
+<meta property="og:description" content="Niente cookie, niente account: cosa resta sul telefono e cosa passa dal server.">
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/assets/og/quizzotti.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="assets/icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/qz.css?v=8d3462ca">
+</head>
+<body>
+<main id="app" class="qz-main" tabindex="-1">
+  <article class="qz-text">
+    <span class="eyebrow">Quizzotti · le regole della casa</span>
+    <h1>Privacy</h1>
+    <p>In breve: Quizzotti non ti chiede chi sei, non usa cookie e non ti segue in giro per il web. Ecco tutto quello che succede ai tuoi dati, senza giri di parole.</p>
+
+    <h2>Niente cookie, niente account</h2>
+    <p>Il sito non imposta cookie, non ha iscrizioni e non usa strumenti di statistica, pubblicità o «mi piace» di altri siti.</p>
+
+    <h2>Quello che resta sul tuo telefono</h2>
+    <p>Profilo, livello, record, partite a metà, nomi dei giocatori e preferenze (audio, filtri) sono salvati nel <em>localStorage</em> del browser, cioè sul tuo dispositivo. Non arrivano a nessun server. Li cancelli quando vuoi con «Azzera tutto» nel profilo o cancellando i dati del sito dal browser. «Esporta / Importa» crea solo un codice da copiare a mano: anche quello non passa dal server.</p>
+    <p>Per far funzionare il sito anche senza rete, il browser tiene una copia delle pagine e dei file del sito (service worker). Dentro non ci sono dati tuoi.</p>
+
+    <h2>Quello che passa dal server</h2>
+    <ul>
+      <li><strong>Nomi, Cose, Calcio</strong> e <strong>Tutti contro la TV</strong>: la stanza della partita tiene i nomi che scegliete e le risposte date. È un file sul server del sito e si cancella da solo dopo due giorni. Per limitare quante stanze si possono creare, il server conserva un'impronta (hash) dell'indirizzo IP, non l'indirizzo in chiaro.</li>
+      <li><strong>Leghe tra amici</strong>: se entri in una lega, il server tiene il nome della lega, il soprannome che scegli e i risultati dei giochi del giorno che mandi. Il telefono è riconosciuto da un gettone segreto, di cui il server conserva solo l'impronta. Anche qui c'è l'impronta dell'IP per il limite di creazione. Una lega che nessuno usa da 180 giorni sparisce; puoi uscire quando vuoi.</li>
+    </ul>
+
+    <h2>I registri del server</h2>
+    <p>Il sito è ospitato da Altervista. Come ogni server web, il loro registra le richieste (indirizzo IP, pagina, data e ora, browser) per sicurezza e funzionamento, secondo le regole di Altervista. Quizzotti non usa questi registri per altro.</p>
+
+    <h2>Caratteri e immagini</h2>
+    <p>I caratteri (Archivo e Saira Semi Condensed) e le immagini sono sul sito stesso: aprendo Quizzotti il browser non contatta Google Fonts né altri servizi esterni. Fanno eccezione solo i link che decidi di aprire tu.</p>
+
+    <p class="small faint">Aggiornata il 26 novembre 2026.</p>
+    <p><a class="btn btn--ghost" href="./">Torna in panchina</a></p>
+  </article>
+</main>
+<script src="assets/qz.js?v=40f99e24" defer></script>
+</body>
+</html>

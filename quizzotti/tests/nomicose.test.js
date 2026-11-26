@@ -52,6 +52,21 @@ test('api/nomicose.php: le stanze non sono leggibili dal web e il PHP è compati
     assert.doesNotMatch(both, /\benum\s+\w+|\breadonly\b|\):\s*never\b|array_is_list/);
 });
 
+test('nomicose: ultime lettere salvate alla chiusura, letture senza lock esclusivo, risposte solo a chi ha un gettone', () => {
+    const js = fs.readFileSync(path.join(root, 'assets', 'games', 'nomicose.js'), 'utf8');
+    assert.match(js, /addEventListener\('pagehide'/);
+    assert.match(js, /document\.hidden\) \{[^}]*save\(true, true\)/);
+    assert.match(js, /navigator\.sendBeacon\(API, body\)/);
+    assert.match(js, /keepalive: true/);
+    const api = fs.readFileSync(path.join(root, 'api', 'nomicose.php'), 'utf8');
+    assert.match(api, /function read_fast[\s\S]*LOCK_SH/);
+    assert.match(api, /read_fast\(\$code, \$tok, \$v, \$now\);[\s\S]*with_room/);
+    assert.match(api, /nc_public_min\(/);
+    // sendBeacon manda text/plain: il corpo si legge comunque da php://input
+    assert.match(api, /php:\/\/input/);
+    assert.doesNotMatch(api, /CONTENT_TYPE/);
+});
+
 function findPhp() {
     const cands = [process.env.PHP_BIN, path.join(root, '..', '..', 'istituto-amaretti', 'tools', 'php', 'php.exe'), 'php'].filter(Boolean);
     for (const c of cands) {

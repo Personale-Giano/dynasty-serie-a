@@ -1,16 +1,25 @@
 /* ==========================================================================
    QUIZZOTTI v2 — Bingo della Partita
-   Dati: assets/db-bingo.js (`bingoEvents`: {text, rarity 1-3, cat, g?}).
+   Dati: assets/db-bingo.js (`bingoEvents`: {text, cat, g?, p, t?, rarity, r2?, f2?, ritirato?}).
    Si gioca davanti a una partita vera in TV. Cartelle 4x4, tutte con lo
-   stesso schema: 8 eventi comuni sulle due diagonali, 4 medi e 4 rari
-   sparsi in modo che ogni riga e ogni colonna ne abbia uno per tipo.
-   Premi: Riga (una riga, colonna o diagonale), Doppia (due), Bingo (piena).
+   stesso schema. Premi: Riga (una riga, colonna o diagonale), Doppia (due),
+   Bingo (piena).
+   Le cartelle nascono da un codice (seme): stesso codice = stessa cartella.
+   Il codice dice anche la versione dell'algoritmo, e ogni versione resta
+   per sempre com'e':
+   - v1, codici di 4 caratteri (fino a novembre 2026): 8 comuni sulle due
+     diagonali, 4 medi e 4 rari (campo `rarity`), prime 148 voci al massimo.
+     Le diagonali facevano quasi sempre la riga e il bingo non usciva mai.
+   - v2, codici di 5 caratteri che iniziano con 2 (es. 2K7QX): 4 caselle
+     "finale" (campo `f2`), una per riga, colonna e diagonale, poi 7 comuni,
+     3 medi e 2 rari (campo `r2`, scelto dalla probabilita' stimata `p`),
+     niente eventi ritirati, prime 185 voci. A pari evento la riga va a chi
+     ha piu' caselle segnate. Simulazione e numeri in tests/bingo.test.js.
    Due modalita':
    - Cartelle per tutti: un telefono solo, una cartella per giocatore;
      chi tiene il telefono segna gli eventi dall'elenco e il gioco controlla
      tutte le cartelle e annuncia i premi.
-   - La mia cartella: ognuno sul suo telefono; la cartella nasce da un
-     codice di 4 caratteri (seme), stesso codice = stessa cartella.
+   - La mia cartella: ognuno sul suo telefono, con il suo codice.
    La partita resta salvata in localStorage finche' non si fischia la fine
    o si chiede una partita nuova.
    Il nucleo (generatore con seme, righe, premi) non tocca il DOM ed e'
@@ -27,18 +36,46 @@
         // niente 0/O e 1/I: il codice si detta a voce senza equivoci
         var ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         var SIZE = 4;
-        var MIX = { 1: 8, 2: 4, 3: 4 };
         // eventi del database prima dell'aggiornamento di novembre 2026: le partite
         // salvate senza `pool` si rigenerano su questi, cosi' le cartelle non cambiano
         var LEGACY_POOL = 113;
-        // rarita' per casella (riga per riga): comuni sulle diagonali,
-        // un medio e un raro in ogni riga e in ogni colonna
-        var PATTERN = [
-            1, 3, 2, 1,
-            2, 1, 1, 3,
-            3, 1, 1, 2,
-            1, 2, 3, 1
-        ];
+        /*
+         * Le versioni dell'algoritmo. Una versione pubblicata non si tocca piu':
+         * schema, numero di eventi e campo della rarita' decidono le cartelle
+         * dei codici gia' dati. Per cambiare qualcosa si aggiunge una versione.
+         * pattern: classe per casella, riga per riga (puo' uscire specchiato):
+         * 1 comune, 2 medio, 3 raro (dal campo `tier` dell'evento), 4 finale
+         * (eventi col campo `late`: succedono quasi sempre, ma solo verso la fine).
+         * pool: quante voci del database guarda, al massimo.
+         */
+        var VERSIONS = {
+            // righe e colonne con 2 comuni, 1 medio e 1 raro, diagonali con 4 comuni
+            1: {
+                pool: 148, tier: 'rarity', mix: { 1: 8, 2: 4, 3: 4 },
+                pattern: [
+                    1, 3, 2, 1,
+                    2, 1, 1, 3,
+                    3, 1, 1, 2,
+                    1, 2, 3, 1
+                ]
+            },
+            // ogni riga, colonna e diagonale ha una casella "finale" (4), quindi
+            // nessuna linea si chiude nel primo tempo; solo 2 rari, in righe e
+            // colonne diverse e fuori dalle diagonali, perche' il bingo deve poter
+            // uscire. Diagonali: 2 finale, 1 comune, 1 medio. Nessuna scorciatoia.
+            // Numeri della simulazione nei test (tests/bingo.test.js).
+            2: {
+                pool: 185, tier: 'r2', late: 'f2', mix: { 4: 4, 1: 7, 2: 3, 3: 2 },
+                pattern: [
+                    4, 1, 3, 1,
+                    1, 2, 4, 1,
+                    1, 4, 1, 3,
+                    2, 2, 1, 4
+                ]
+            }
+        };
+        var CURRENT = 2;
+        var MIX = VERSIONS[1].mix, PATTERN = VERSIONS[1].pattern; // nomi storici della v1
         var LINES = (function () {
             var l = [], r, c;
             for (r = 0; r < SIZE; r++) { var row = []; for (c = 0; c < SIZE; c++) row.push(r * SIZE + c); l.push(row); }
@@ -74,46 +111,73 @@
             return a;
         }
         function normCode(s) { return String(s == null ? '' : s).toUpperCase().replace(/[\s\-_.]/g, ''); }
-        function validCode(s) {
+        /** Versione dell'algoritmo di un codice: 1 (4 caratteri), 2 (5, il primo e' 2), 0 se non valido. */
+        function codeVersion(s) {
             s = normCode(s);
-            if (s.length !== 4) return false;
-            for (var i = 0; i < s.length; i++) if (ALPHA.indexOf(s[i]) < 0) return false;
-            return true;
+            var body, v;
+            if (s.length === 4) { body = s; v = 1; }
+            else if (s.length === 5 && s[0] !== '1' && VERSIONS[s[0]]) { body = s.slice(1); v = Number(s[0]); }
+            else return 0;
+            for (var i = 0; i < body.length; i++) if (ALPHA.indexOf(body[i]) < 0) return 0;
+            return v;
         }
-        function randomCode(rnd) {
+        function validCode(s) { return codeVersion(s) > 0; }
+        /** Codice nuovo a caso, della versione corrente (o di quella chiesta). */
+        function randomCode(rnd, version) {
             rnd = rnd || Math.random;
-            var s = '';
+            version = version || CURRENT;
+            var s = version === 1 ? '' : String(version);
             for (var i = 0; i < 4; i++) s += ALPHA[Math.floor(rnd() * ALPHA.length)];
             return s;
+        }
+        /** Classe (1-4, vedi pattern) di un evento nelle cartelle di una versione; 0 se non ci entra. */
+        function classOf(e, version) {
+            var v = VERSIONS[version] || VERSIONS[1];
+            if (version > 1 && e.ritirato && e.ritirato <= version) return 0;
+            var r = rarityOf(e, version);
+            if (!r) return 0;
+            return v.late && e[v.late] ? 4 : r;
+        }
+        /** Rarita' da mostrare (1-3) di un evento nelle cartelle di una versione; 0 se non ci entra. */
+        function rarityOf(e, version) {
+            var r = e[(VERSIONS[version] || VERSIONS[1]).tier];
+            return r === 1 || r === 2 || r === 3 ? r : 0;
         }
 
         /**
          * La cartella del codice: 16 eventi (oggetti del database) in ordine di
          * casella, riga per riga. Stesso codice e stesso database = stessa cartella.
+         * pool: quanti eventi c'erano quando e' nata la partita (conta solo per la
+         * v1, le partite salvate lo ricordano); non supera mai il pool della versione.
          */
         function makeCard(code, events, pool) {
-            if (pool > 0 && pool < events.length) events = events.slice(0, pool);
-            var rnd = rng(hash('bingo-partita/1:' + normCode(code)));
-            var pools = { 1: [], 2: [], 3: [] };
-            events.forEach(function (e) { if (pools[e.rarity]) pools[e.rarity].push(e); });
-            var groups = {}, picked = { 1: [], 2: [], 3: [] };
-            // prima i rari, che sono i piu' vincolati dagli argomenti
-            [3, 2, 1].forEach(function (r) {
-                var pool = shuffle(pools[r], rnd);
-                for (var i = 0; i < pool.length && picked[r].length < MIX[r]; i++) {
-                    var e = pool[i];
+            var version = codeVersion(code);
+            if (!version) throw new Error('Bingo: codice non valido');
+            var V = VERSIONS[version];
+            var max = version === 1 && pool > 0 ? Math.min(pool, V.pool) : V.pool;
+            if (max < events.length) events = events.slice(0, max);
+            var rnd = rng(hash('bingo-partita/' + version + ':' + normCode(code)));
+            // classi dalla piu' alta alla piu' bassa: nella v1 3, 2, 1 (prima i rari,
+            // i piu' vincolati dagli argomenti), nella v2 4, 3, 2, 1
+            var order = Object.keys(V.mix).map(Number).sort(function (a, b) { return b - a; });
+            var pools = {}, picked = {}, next = {}, groups = {};
+            order.forEach(function (k) { pools[k] = []; picked[k] = []; next[k] = 0; });
+            events.forEach(function (e) { var k = classOf(e, version); if (pools[k]) pools[k].push(e); });
+            order.forEach(function (r) {
+                var list = shuffle(pools[r], rnd);
+                for (var i = 0; i < list.length && picked[r].length < V.mix[r]; i++) {
+                    var e = list[i];
                     if (e.g && groups[e.g]) continue;
                     picked[r].push(e);
                     if (e.g) groups[e.g] = true;
                 }
-                if (picked[r].length < MIX[r]) throw new Error('Bingo: pochi eventi di rarità ' + r);
+                if (picked[r].length < V.mix[r]) throw new Error('Bingo: pochi eventi di classe ' + r);
             });
             var mirror = rnd() < 0.5;
-            var next = { 1: 0, 2: 0, 3: 0 };
             var cells = [];
             for (var i = 0; i < SIZE * SIZE; i++) {
                 var r = Math.floor(i / SIZE), c = i % SIZE;
-                var rar = PATTERN[mirror ? r * SIZE + (SIZE - 1 - c) : i];
+                var rar = V.pattern[mirror ? r * SIZE + (SIZE - 1 - c) : i];
                 cells.push(picked[rar][next[rar]++]);
             }
             return cells;
@@ -155,9 +219,11 @@
          * Chi ha vinto cosa, rigiocando gli eventi nell'ordine in cui sono stati
          * segnati: ogni premio va a chi lo raggiunge per primo (a pari evento,
          * a tutti). cards: array di array di testi; order: testi segnati in ordine.
+         * tiebreak (cartelle v2): a pari evento vince chi ha piu' caselle segnate,
+         * e solo se anche quelle sono pari il premio e' di tutti.
          * -> { riga: {step, winners:[indici]} | null, doppia: ..., bingo: ... }
          */
-        function prizes(cards, order) {
+        function prizes(cards, order, tiebreak) {
             var res = { riga: null, doppia: null, bingo: null };
             var set = {};
             for (var s = 0; s < order.length; s++) {
@@ -167,6 +233,10 @@
                     if (res[p.id]) return;
                     var w = [];
                     evs.forEach(function (ev, i) { if (p.test(ev)) w.push(i); });
+                    if (tiebreak && w.length > 1) {
+                        var most = Math.max.apply(null, w.map(function (i) { return evs[i].count; }));
+                        w = w.filter(function (i) { return evs[i].count === most; });
+                    }
                     if (w.length) res[p.id] = { step: s, winners: w };
                 });
                 if (res.bingo) break;
@@ -176,8 +246,9 @@
 
         return {
             ALPHA: ALPHA, SIZE: SIZE, MIX: MIX, LEGACY_POOL: LEGACY_POOL, PATTERN: PATTERN, LINES: LINES, PRIZES: PRIZES,
-            hash: hash, rng: rng, normCode: normCode, validCode: validCode, randomCode: randomCode,
-            makeCard: makeCard, evaluate: evaluate, oneAway: oneAway, prizes: prizes
+            VERSIONS: VERSIONS, CURRENT: CURRENT,
+            hash: hash, rng: rng, normCode: normCode, validCode: validCode, codeVersion: codeVersion, randomCode: randomCode,
+            classOf: classOf, rarityOf: rarityOf, makeCard: makeCard, evaluate: evaluate, oneAway: oneAway, prizes: prizes
         };
     })();
 
@@ -208,11 +279,18 @@
         return '<span class="bg-cell__pips" aria-hidden="true">' + [1, 2, 3].map(function (k) { return '<i' + (k <= r ? ' class="on"' : '') + '></i>'; }).join('') + '</span>';
     }
     var RARITY_WORD = { 1: 'comune', 2: 'media', 3: 'rara' };
+    // quante caselle rare ha una cartella di quella versione
+    function raresOf(version) { return Core.VERSIONS[version].pattern.filter(function (k) { return k === 3; }).length; }
+    function rarity(t, version) { return BY_TEXT[t] ? Core.rarityOf(BY_TEXT[t], version) || 1 : 1; }
+    // versione delle cartelle della partita in corso (al tavolo sono tutte della stessa)
+    function gameVer(g) { g = g || S; return Core.codeVersion(g.mode === 'table' ? g.players[0].code : g.code) || 1; }
+    // dalla v2, a pari evento la riga va a chi ha piu' caselle segnate
+    function tablePrizes(g) { g = g || S; return Core.prizes(cards, g.marked, gameVer(g) > 1); }
 
-    /** HTML di una cartella. interactive: caselle-bottone con data-i. */
-    function cardHTML(texts, ev, interactive) {
+    /** HTML di una cartella. interactive: caselle-bottone con data-i. version: delle rarita' mostrate. */
+    function cardHTML(texts, ev, interactive, version) {
         return texts.map(function (t, i) {
-            var e = BY_TEXT[t] || { rarity: 1 };
+            var e = { rarity: rarity(t, version) };
             var on = ev.on[i], line = ev.inLine[i], hot = !on && ev.hot && ev.hot[i];
             var cls = 'bg-cell' + (on ? ' is-on' : '') + (line ? ' is-line' : '') + (hot ? ' is-hot' : '');
             var label = QZ.esc(t) + ', ' + RARITY_WORD[e.rarity] + (on ? ', segnato' : '') + (line ? ', in riga' : '') + (hot ? ', manca solo questa per chiudere una linea' : '');
@@ -227,9 +305,9 @@
     $('#resume-btn').innerHTML = QZ.icon('play') + 'Riprendi';
     $('#medal').innerHTML = QZ.icon('ticket');
     $('#rules').innerHTML = rulesHTML([
-        ['Una cartella a testa,', '16 caselle: 8 cose che succedono quasi sempre, 4 così così e 4 rare. Stesso schema per tutti, nessuno parte avvantaggiato.'],
+        ['Una cartella a testa,', '16 caselle: cose che succedono quasi sempre, altre così così e due rare. In ogni riga, colonna e diagonale c\'è una cosa da finale di partita: la riga non si chiude nel primo tempo. Stesso schema per tutti.'],
         ['Succede in TV?', 'Si segna. Vale per tutte e due le squadre, dal fischio d\'inizio ai saluti finali.'],
-        ['Riga, doppia, bingo:', 'il primo che chiude una riga, una colonna o una diagonale fa riga; con due fa doppia; con la cartella piena fa bingo.'],
+        ['Riga, doppia, bingo:', 'il primo che chiude una riga, una colonna o una diagonale fa riga; con due fa doppia; con la cartella piena fa bingo. Se lo stesso evento fa vincere due persone, vince chi ha più caselle segnate.'],
         ['Al fischio finale', 'si fa la classifica. Se nessuno ha fatto bingo, conta il premio più alto e poi le caselle segnate.']
     ]);
 
@@ -237,7 +315,7 @@
 
     var MODE_HINT = {
         table: 'Un telefono solo per tutti. Chi lo tiene segna gli eventi dall\'elenco e il gioco controlla tutte le cartelle.',
-        mine: 'Ognuno sul suo telefono. La cartella ha un codice di 4 caratteri: dettalo agli amici e potranno controllarla.'
+        mine: 'Ognuno sul suo telefono. La cartella ha un codice di 5 caratteri: dettalo agli amici e potranno controllarla.'
     };
     function paintMode() {
         $('#mode-hint').textContent = MODE_HINT[opts.mode];
@@ -250,7 +328,7 @@
     });
     paintMode();
     $('#code-in').addEventListener('input', function () {
-        var v = Core.normCode(this.value).slice(0, 4);
+        var v = Core.normCode(this.value).slice(0, 5);
         if (v !== this.value) this.value = v;
     });
 
@@ -355,7 +433,7 @@
             } else {
                 var typed = Core.normCode($('#code-in').value);
                 if (typed && !Core.validCode(typed)) {
-                    QZ.toast('Codice non valido: 4 caratteri, senza 0, O, 1 e I', { icon: 'x', type: 'bad', ms: 3200 });
+                    QZ.toast('Codice non valido: 5 caratteri che iniziano con 2 (o 4 per le cartelle vecchie), senza 0, O, 1 e I', { icon: 'x', type: 'bad', ms: 4200 });
                     QZ.fx.shake($('#code-in'));
                     $('#code-in').focus();
                     return;
@@ -378,7 +456,7 @@
         QZ.wake.on();
         if (S.mode === 'table') {
             cards = S.players.map(function (p) { return cardTexts(p.code, S.pool); });
-            prevPrizes = Core.prizes(cards, S.marked);
+            prevPrizes = tablePrizes();
             $('#t-filter').value = '';
             renderTable();
             QZ.show('s-table');
@@ -419,7 +497,7 @@
     function renderTable(pz) {
         var evs = evals();
         $('#t-count').textContent = S.marked.length;
-        pz = pz || Core.prizes(cards, S.marked);
+        pz = pz || tablePrizes();
         hotEv = {};
         Core.PRIZES.forEach(function (p) {
             var cell = $('#t-p-' + p.id);
@@ -462,7 +540,8 @@
         var html = CATS.map(function (cat) {
             var list = EVENTS.filter(function (e) { return e.cat === cat && who[e.text] && (!q || QZ.norm(e.text).indexOf(q) >= 0); });
             if (!list.length) return '';
-            list.sort(function (a, b) { return a.rarity - b.rarity; });
+            var v = gameVer();
+            list.sort(function (a, b) { return rarity(a.text, v) - rarity(b.text, v); });
             return '<div class="bg-group"><h3>' + QZ.esc(cat) + '</h3><div class="bg-evs">' + list.map(function (e) {
                 var on = isMarked(e.text);
                 var w = who[e.text];
@@ -503,7 +582,7 @@
     }
 
     function afterTableChange() {
-        var pz = Core.prizes(cards, S.marked);
+        var pz = tablePrizes();
         renderTable(pz);
         if (fullIdx != null) renderFull();
         var gained = Core.PRIZES.filter(function (p) { return pz[p.id] && !prevPrizes[p.id]; });
@@ -610,7 +689,7 @@
             $('#bg-full-name').textContent = 'Cartella di un amico';
             $('#bg-full-code').textContent = friend.code;
             cardEl.setAttribute('aria-label', 'Cartella con codice ' + friend.code);
-            cardEl.innerHTML = cardHTML(friend.texts, evF, false);
+            cardEl.innerHTML = cardHTML(friend.texts, evF, false, Core.codeVersion(friend.code));
             $('#bg-full-status').textContent = 'Stesso codice, stessa cartella: confrontala con la sua.';
             $('#bg-full-nav').hidden = true;
             return;
@@ -621,7 +700,7 @@
         $('#bg-full-name').textContent = p.name;
         $('#bg-full-code').textContent = p.code;
         cardEl.setAttribute('aria-label', 'Cartella di ' + p.name);
-        cardEl.innerHTML = cardHTML(cards[fullIdx], ev, true);
+        cardEl.innerHTML = cardHTML(cards[fullIdx], ev, true, Core.codeVersion(p.code));
         $('#bg-full-status').textContent = ev.count + ' su 16 · ' + plural(ev.lines, 'riga', 'righe') + ' · tocca una casella per segnarla su tutte le cartelle';
         $('#bg-full-nav').hidden = S.players.length < 2;
     }
@@ -664,7 +743,7 @@
         var next = Core.oneAway(ev);
         // il bordo tratteggiato solo se quella casella fa vincere qualcosa (dopo la doppia conta solo il bingo)
         if (!next) ev.hot = {};
-        $('#m-card').innerHTML = cardHTML(mineCard, ev, true);
+        $('#m-card').innerHTML = cardHTML(mineCard, ev, true, gameVer());
         $('#m-hint').textContent = next
             ? (next === 'bingo' ? 'Manca una casella al bingo. Occhio alla TV.' : 'Ancora una casella e fai ' + next + ': va bene una di quelle col bordo tratteggiato.')
             : ev.full ? 'Cartella piena. Adesso fischia la fine e goditi la gloria.'
@@ -700,14 +779,14 @@
     $('#m-check').addEventListener('click', function () {
         var node = QZ.el('<form class="stack" style="--gap:12px" novalidate>' +
             '<label class="label" for="bg-friend">Il codice del tuo amico</label>' +
-            '<input class="input bg-code-input" id="bg-friend" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="····">' +
-            '<p class="small muted" id="bg-friend-msg">Quattro caratteri, quelli che vede in alto sulla sua cartella.</p></form>');
+            '<input class="input bg-code-input" id="bg-friend" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="····">' +
+            '<p class="small muted" id="bg-friend-msg">Il codice che vede in alto sulla sua cartella (5 caratteri, o 4 per le cartelle vecchie).</p></form>');
         var inp = node.querySelector('input');
-        inp.addEventListener('input', function () { var v = Core.normCode(inp.value).slice(0, 4); if (v !== inp.value) inp.value = v; });
+        inp.addEventListener('input', function () { var v = Core.normCode(inp.value).slice(0, 5); if (v !== inp.value) inp.value = v; });
         function tryOpen() {
             var code = Core.normCode(inp.value);
             if (!Core.validCode(code)) {
-                node.querySelector('#bg-friend-msg').textContent = 'Codice non valido: 4 caratteri, senza 0, O, 1 e I.';
+                node.querySelector('#bg-friend-msg').textContent = 'Codice non valido: 5 caratteri che iniziano con 2 (o 4 per le cartelle vecchie), senza 0, O, 1 e I.';
                 QZ.fx.shake(inp);
                 inp.focus();
                 return false;
@@ -767,7 +846,7 @@
     function finishTable(g) {
         var marked = function (t) { return g.marked.indexOf(t) >= 0; };
         var evs = cards.map(function (c) { return Core.evaluate(c, marked); });
-        var pz = Core.prizes(cards, g.marked);
+        var pz = tablePrizes(g);
         var rows = g.players.map(function (p, i) {
             var won = Core.PRIZES.filter(function (x) { return pz[x.id] && pz[x.id].winners.indexOf(i) >= 0; });
             var best = won.reduce(function (m, x) { return Math.max(m, Core.PRIZES.indexOf(x) + 1); }, 0);
@@ -796,7 +875,7 @@
             big: g.marked.length, bigSuffix: g.marked.length === 1 ? ' evento' : ' eventi',
             record: r,
             stats: Core.PRIZES.map(function (x) { return { label: x.name, value: pz[x.id] ? g.players.filter(function (p, i) { return pz[x.id].winners.indexOf(i) >= 0; }).map(function (p) { return p.name; }).join(', ') : '—' }; })
-                .concat([{ label: 'Eventi rari usciti', value: g.marked.filter(function (t) { return BY_TEXT[t].rarity === 3; }).length }]),
+                .concat([{ label: 'Eventi rari usciti', value: g.marked.filter(function (t) { return rarity(t, gameVer(g)) === 3; }).length }]),
             extraHTML: '<div class="mt-3">' + QZ.podiumHTML(rows.map(function (x) {
                 return { name: x.p.name, score: x.ev.count, color: x.p.color, sub: (x.won.length ? x.won.map(function (w) { return w.name; }).join(' · ') + ' · ' : '') + plural(x.ev.lines, 'riga', 'righe') + ' · codice ' + x.p.code };
             }), function (s) { return s + '/16'; }) + '</div>',
@@ -830,7 +909,7 @@
             record: r,
             stats: [
                 { label: 'Righe chiuse', value: ev.lines },
-                { label: 'Rari presi', value: mineCard.filter(function (t, i) { return ev.on[i] && BY_TEXT[t].rarity === 3; }).length + '/4' },
+                { label: 'Rari presi', value: mineCard.filter(function (t, i) { return ev.on[i] && rarity(t, gameVer(g)) === 3; }).length + '/' + raresOf(gameVer(g)) },
                 { label: 'Codice', value: g.code },
                 { label: 'Miglior cartella', value: st.best + '/16' }
             ],

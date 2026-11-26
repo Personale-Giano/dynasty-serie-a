@@ -131,7 +131,7 @@ const quotes = [
 
             // ===== CALCIATORI STRANIERI =====
             { cat: "campo", quote: "Hai comprato una Ferrari, ma la guidi come una Fiat.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Samuel Eto'o", "Thierry Henry", "Gerard Piqué"] },
-            { cat: "campo", quote: "Zlatan non fa i provini.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Mario Balotelli", "Cristiano Ronaldo", "Romelu Lukaku"] },
+            { cat: "campo", quote: "Io i provini non li faccio.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Mario Balotelli", "Cristiano Ronaldo", "Romelu Lukaku"] },
             { cat: "campo", quote: "Non ho bisogno del Pallone d'Oro per sapere che sono il migliore.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Cristiano Ronaldo", "Neymar", "Mario Balotelli"] },
             { cat: "campo", quote: "Sono arrivato come un re, me ne vado come una leggenda.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "David Beckham", "Thiago Silva", "Kylian Mbappé"] },
             { cat: "campo", quote: "Questo Paese di m***a non merita il PSG.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Neymar", "Eric Cantona", "Edinson Cavani"] },
@@ -139,7 +139,7 @@ const quotes = [
             { cat: "campo", quote: "I leoni non si paragonano agli esseri umani.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Romelu Lukaku", "Cristiano Ronaldo", "Samuel Eto'o"] },
             { cat: "campo", quote: "Il vostro amore mi rende forte, il vostro odio mi rende inarrestabile.", correct: "Cristiano Ronaldo", options: ["Cristiano Ronaldo", "Lionel Messi", "Zlatan Ibrahimović", "Neymar"] },
             { cat: "campo", quote: "Quando i gabbiani seguono il peschereccio, è perché pensano che verranno gettate in mare delle sardine.", correct: "Eric Cantona", options: ["Eric Cantona", "Johan Cruijff", "George Best", "Zlatan Ibrahimović"] },
-            { cat: "campo", quote: "Un po' con la testa di Maradona e un po' con la mano di Dio.", correct: "Diego Maradona", options: ["Diego Maradona", "Pelé", "Lionel Messi", "Mario Kempes"] },
+            { cat: "campo", quote: "Un po' con la mia testa e un po' con la mano di Dio.", correct: "Diego Maradona", options: ["Diego Maradona", "Pelé", "Lionel Messi", "Mario Kempes"] },
             { cat: "campo", quote: "Ho sbagliato e ho pagato. Ma il pallone non si macchia.", correct: "Diego Maradona", options: ["Diego Maradona", "George Best", "Paul Gascoigne", "Adriano"] },
             { cat: "campo", quote: "Voglio diventare l'idolo dei ragazzi poveri di Napoli, perché sono come ero io a Buenos Aires.", correct: "Diego Maradona", options: ["Diego Maradona", "Ezequiel Lavezzi", "Edinson Cavani", "Gonzalo Higuaín"] },
             { cat: "campo", quote: "Sono nato per il calcio, così come Beethoven è nato per la musica.", correct: "Pelé", options: ["Pelé", "Diego Maradona", "Johan Cruijff", "Michel Platini"] },
@@ -151,7 +151,7 @@ const quotes = [
             { cat: "campo", quote: "Ho visto il mio erede nel calcio argentino: si chiama Messi.", correct: "Diego Maradona", options: ["Diego Maradona", "Pelé", "Gabriel Batistuta", "Juan Román Riquelme"] },
             { cat: "campo", quote: "Preferisco vincere titoli con la squadra piuttosto che premi individuali.", correct: "Lionel Messi", options: ["Lionel Messi", "Cristiano Ronaldo", "Kylian Mbappé", "Luka Modrić"] },
             { cat: "campo", quote: "Che guardi, scemo? Vai di là.", correct: "Lionel Messi", options: ["Lionel Messi", "Ángel Di María", "Emiliano Martínez", "Rodrigo De Paul"] },
-            { cat: "campo", quote: "Che regalo ho fatto a mia moglie? Niente: lei ha già Zlatan.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Cristiano Ronaldo", "Mario Balotelli", "Neymar"] },
+            { cat: "campo", quote: "Che regalo ho fatto a mia moglie? Niente: lei ha già me.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Cristiano Ronaldo", "Mario Balotelli", "Neymar"] },
             { cat: "campo", quote: "Una cosa è sicura: un Mondiale senza di me non vale la pena di guardarlo.", correct: "Zlatan Ibrahimović", options: ["Zlatan Ibrahimović", "Cristiano Ronaldo", "Neymar", "Karim Benzema"] },
             { cat: "campo", quote: "Questa adesso non ci scivola via!", correct: "Steven Gerrard", options: ["Steven Gerrard", "Wayne Rooney", "Frank Lampard", "John Terry"] },
             { cat: "campo", quote: "Ho tanti bei ricordi, ma quello che preferisco è quando ho preso a calci quel teppista.", correct: "Eric Cantona", options: ["Eric Cantona", "Roy Keane", "Paul Gascoigne", "Vinnie Jones"] },

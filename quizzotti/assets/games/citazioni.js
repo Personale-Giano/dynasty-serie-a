@@ -2,11 +2,14 @@
    QUIZZOTTI v2 — Chi l'ha detto (citazioni)
    Dati: assets/db-citazioni.js (`quotes`, {cat, quote, correct, options[4]}).
    Si scrive il nome (3 punti, basta il cognome, errori di battitura
-   tollerati) oppure si aprono le opzioni (1 punto). Partite a numero fisso
+   tollerati) oppure si aprono le opzioni (1 punto). Un nome scritto e
+   sbagliato costa la frase: niente opzioni di riserva, cosi' tirare a caso
+   («Mourinho» a ogni frase) non conviene mai. Partite a numero fisso
    di frasi, niente frasi ripetute, confronto tollerante, aiuto "iniziali",
    serie bonus, modalita' a tempo e riepilogo finale delle frasi.
    Si sceglie da dove arrivano le voci (panchina, campo, tribuna o tutte),
-   il record e' tenuto per lunghezza della partita, l'archivio ricorda le
+   il record e' tenuto per lunghezza e per tempo (QZ.profile, modalita'
+   '10', '10t', ...: le partite a tempo non si confrontano con le altre), l'archivio ricorda le
    frasi riconosciute almeno una volta e a fine partita si ripassano le
    mancate.
    Riflettori: la frase va sul maxischermo dello stadio, con le virgolette
@@ -22,7 +25,7 @@
     var LETTERS = ['A', 'B', 'C', 'D'];
     var PTS = { typed: 3, hinted: 2, options: 1 };
     var KEY_SET = 'qz.citazioni.settings';
-    var KEY_BEST = 'qz.citazioni.best';      // record per lunghezza: {10: pt, 15: pt, 20: pt}
+    var KEY_BEST = 'qz.citazioni.best';      // vecchi record per lunghezza {10: pt, ...}: solo lettura, a tempo e no insieme
     var KEY_ARCH = 'qz.citazioni.archivio';  // impronte delle frasi riconosciute almeno una volta
     var CATS = {
         all: { label: 'Tutte', from: '', what: 'allenatori, calciatori, presidenti, cronisti e scrittori' },
@@ -74,6 +77,8 @@
     var validPrints = new Set(pool.map(fingerprint));
     function archived() { var n = 0; archive.forEach(function (k) { if (validPrints.has(k)) n++; }); return n; }
     function bests() { var b = QZ.store.get(KEY_BEST, {}); return b && typeof b === 'object' ? b : {}; }
+    /** Modalita' del record: lunghezza, piu' "t" se a tempo (es. '15t'). */
+    function recMode(len, time) { return String(len) + (time ? 't' : ''); }
 
     /* ---------- Markup statico ---------- */
     $('#start-btn').innerHTML = 'Fischio d\'inizio' + QZ.icon('arrow');
@@ -81,7 +86,7 @@
     $('#rules').innerHTML = [
         ['Leggi la frase sul maxischermo', 'e scrivi chi l\'ha detta: basta il cognome, accenti e piccoli refusi non contano. Valgono anche i soprannomi giusti (Ibra, Trap, Ringhio…).'],
         ['A memoria: 3 punti.', 'Con le iniziali come aiutino, 2.'],
-        ['Con le opzioni: 1 punto.', 'Le apri quando vuoi, o arrivano da sole dopo un tentativo a vuoto.'],
+        ['Con le opzioni: 1 punto.', 'Le apri quando vuoi, prima di tirare: un nome sbagliato è fuorigioco e la frase è persa.'],
         ['Serie calda:', 'dalla terza giusta di fila, +1 a frase. A tempo, chi risponde a memoria nella prima metà prende +1 di velocità.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
@@ -96,17 +101,18 @@
 
     function saveSet() { QZ.store.set(KEY_SET, set); }
     QZ.segmented($('#set-len'), [{ label: '10', value: 10 }, { label: '15', value: 15 }, { label: '20', value: 20 }], set.len, function (v) { set.len = v; saveSet(); paintStartInfo(); });
-    QZ.segmented($('#set-time'), [{ label: 'Senza limite', value: 0 }, { label: '30 s a frase', value: 30 }], set.time, function (v) { set.time = v; saveSet(); });
+    QZ.segmented($('#set-time'), [{ label: 'Senza limite', value: 0 }, { label: '30 s a frase', value: 30 }], set.time, function (v) { set.time = v; saveSet(); paintStartInfo(); });
     QZ.segmented($('#set-cat'), Object.keys(CATS).map(function (k) { return { label: CATS[k].label, value: k }; }), set.cat, function (v) { set.cat = v; saveSet(); paintStartInfo(); });
 
     function paintStartInfo() {
         $('#cat-note').textContent = countBy[set.cat] + ' frasi · ' + CATS[set.cat].what;
-        var b = bests()[set.len];
+        var b = QZ.profile.best(GAME, recMode(set.len, set.time));
         var n = archived();
         var bits = [];
-        var old = QZ.profile.best(GAME);
-        if (b != null) bits.push('Record a ' + set.len + ' frasi: ' + b + ' punti');
-        // record di prima della divisione per lunghezza: resta in vista finche' non ce n'e' uno a questa lunghezza
+        var oldLen = bests()[set.len], old = QZ.profile.best(GAME);
+        if (b != null) bits.push('Record a ' + set.len + ' frasi' + (set.time ? ' a tempo' : ' senza limite') + ': ' + b + ' punti');
+        // record di prima della divisione: restano in vista finche' non ce n'e' uno di questa modalita'
+        else if (oldLen != null) bits.push('Vecchio record a ' + set.len + ' frasi: ' + oldLen + ' punti');
         else if (old != null) bits.push('Miglior partita: ' + old + ' punti');
         if (n) bits.push('Archivio: ' + n + (n === 1 ? ' frase riconosciuta' : ' frasi riconosciute') + ' su ' + pool.length);
         $('#start-record').textContent = bits.join(' · ');
@@ -138,7 +144,13 @@
     $('#g-options').addEventListener('click', function () { if (S.phase === 'type') showOptions(); });
     $('#g-initials').addEventListener('click', useInitials);
     $('#g-skip').addEventListener('click', function () { if (S.phase === 'type' || S.phase === 'options') lose('skip'); });
-    $('#g-next').addEventListener('click', function () { if (S.phase === 'done') { load(); guard(); } });
+    $('#g-next').addEventListener('click', function () {
+        if (S.phase !== 'done') return;
+        load();
+        guard();
+        // fuoco dato subito, dentro il tocco (non dopo un ritardo): solo cosi' sul telefono la tastiera si riapre
+        if (S.phase === 'type') $('#g-input').focus({ preventScroll: true });
+    });
 
     document.addEventListener('keydown', function (e) {
         if (S.phase !== 'options' || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -338,14 +350,9 @@
             QZ.toast('Quasi. Controlla come si scrive', { icon: 'bulb' });
             return;
         }
-        // tentativo a vuoto: restano le opzioni per 1 punto
-        S.streak = 0;
-        paintStreak();
-        QZ.fx.shake($('#g-note'));
-        QZ.sound.wrong();
-        QZ.vibrate([50, 30, 50]);
-        QZ.toast('Non è «' + val + '». Ecco le opzioni, per 1 punto', { icon: 'x', type: 'bad' });
-        showOptions();
+        // nome sbagliato: la frase e' persa (le opzioni vanno chieste prima di tirare)
+        S.guess = val;
+        lose('typed');
     }
 
     function useInitials() {
@@ -420,10 +427,12 @@
         }
         if (how === 'skip') QZ.sound.whoosh();
         else { QZ.sound.wrong(); QZ.vibrate([60, 40, 60]); QZ.fx.shake($('#g-card')); }
-        caption({ wrong: 'Fuorigioco', skip: 'Passata', time: 'Tempo!' }[how], how === 'skip' ? 'ink' : 'bad',
-            { wrong: 'Sbagliato', skip: 'Frase passata', time: 'Tempo scaduto' }[how] + '. L\'ha detto ' + S.q.correct + '.');
-        var label = { wrong: 'Niente da fare', skip: 'Frase passata', time: 'Tempo scaduto' }[how];
-        showResult(false, 0, label, hadStreak ? 'Serie calda spenta. Si riparte da zero.' : QZ.pick(SAD));
+        caption({ wrong: 'Fuorigioco', typed: 'Fuorigioco', skip: 'Passata', time: 'Tempo!' }[how], how === 'skip' ? 'ink' : 'bad',
+            { wrong: 'Sbagliato', typed: 'Sbagliato', skip: 'Frase passata', time: 'Tempo scaduto' }[how] + '. L\'ha detto ' + S.q.correct + '.');
+        var label = how === 'typed' ? 'Non è ' + S.guess : { wrong: 'Niente da fare', skip: 'Frase passata', time: 'Tempo scaduto' }[how];
+        var sub = hadStreak ? 'Serie calda spenta. Si riparte da zero.'
+            : how === 'typed' ? 'Se non sei sicuro, apri le opzioni prima di tirare: 1 punto è meglio di zero.' : QZ.pick(SAD);
+        showResult(false, 0, label, sub);
     }
 
     function lockOptions() {
@@ -475,18 +484,11 @@
         var ratio = QZ.clamp(S.score / (played * PTS.typed), 0, 1);
         var missed = S.log.filter(function (l) { return !l.ok; }).map(function (l) { return l.q; });
 
-        var r = null, newLenBest = false;
+        var r = null;
         if (!S.review) {
             var xp = S.score * 2 + S.bestStreak * 2 + (S.time ? 10 : 0);
-            r = QZ.profile.record(GAME, { xp: xp, label: S.score + ' punti su ' + S.len + ' frasi', score: S.score });
-            var b = bests();
-            if (b[S.len] == null || S.score > b[S.len]) {
-                newLenBest = b[S.len] != null;
-                b[S.len] = S.score;
-                QZ.store.set(KEY_BEST, b);
-            }
-            // "nuovo record" solo contro le partite della stessa lunghezza: 20 frasi battono sempre 10
-            r.newRecord = newLenBest;
+            // record per lunghezza e tempo: 20 frasi non battono 10, e il bonus velocita' non pesa sulle partite libere
+            r = QZ.profile.record(GAME, { xp: xp, label: S.score + ' punti su ' + S.len + ' frasi' + (S.time ? ' a tempo' : ''), score: S.score, mode: recMode(S.len, S.time) });
         }
 
         var review = '<details class="ch-review"><summary>Il riepilogo · ' + S.log.length + ' frasi</summary>' + S.log.map(function (l) {
@@ -534,5 +536,5 @@
     }
 
     // per i test automatici (node): il confronto dei nomi e' la parte delicata
-    if (typeof window !== 'undefined' && window.__QZ_TEST__) window.__QZ_TEST__.citazioni = { judge: judge, forms: forms };
+    if (typeof window !== 'undefined' && window.__QZ_TEST__) window.__QZ_TEST__.citazioni = { judge: judge, forms: forms, recMode: recMode };
 })();

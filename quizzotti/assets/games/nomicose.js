@@ -107,7 +107,7 @@
         ['La TV crea la stanza,', 'gli altri entrano dal telefono col QR code.'],
         ['Esce una lettera:', 'per ogni categoria una risposta che inizia così. Calciatore con la M? Maldini.'],
         ['Stop!', 'Chi riempie tutto può fermare il round: agli altri restano 10 secondi.'],
-        ['Controllo:', 'si vedono tutte le risposte e si bocciano quelle sbagliate.'],
+        ['Controllo:', 'si vedono tutte le risposte e si bocciano quelle sbagliate: serve la maggioranza degli altri giocatori (in due decide la TV).'],
         ['Punti:', '10 se la risposta è solo tua, 5 se è doppia, 20 se sei l\'unico ad averne una.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
@@ -132,13 +132,27 @@
     QZ.ring($('#p-timer .timer-ring'));
 
     /* ---------- Copertina ---------- */
+    /**
+     * Regole dell'ultima stanza. Le lettere straniere ora partono spente: prima
+     * in qz.nc.opts finiva anche il "sì" di base, che non era una scelta, quindi
+     * vale solo quello toccato a mano (qz.nc.foreign) o un "no" gia' salvato.
+     */
+    function savedOpts() {
+        var o = QZ.store.get('qz.nc.opts', {}) || {};
+        var out = {};
+        Object.keys(o).forEach(function (k) { if (k !== 'foreign') out[k] = o[k]; });
+        var f = QZ.store.get('qz.nc.foreign', null);
+        if (typeof f === 'boolean') out.foreign = f;
+        else if (o.foreign === false) out.foreign = false;
+        return out;
+    }
     var creating = false;
     $('#create-btn').addEventListener('click', function () {
         if (creating) return;
         creating = true;
         QZ.sound.unlock();
         var cats = D.categories.filter(function (c) { return c.on; }).map(function (c) { return { id: c.id, name: c.name }; });
-        window.fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: 'create', cats: cats, opts: QZ.store.get('qz.nc.opts', {}) }) })
+        window.fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ a: 'create', cats: cats, opts: savedOpts() }) })
             .then(function (r) { return r.json(); })
             .then(function (d) {
                 if (d.err) { QZ.toast(d.err, { type: 'bad' }); creating = false; return; }
@@ -277,7 +291,10 @@
             QZ.confirm('Togliere ' + (p ? p.name : 'il giocatore') + ' dalla stanza?', { title: 'Fuori dal campo', okLabel: 'Togli' }).then(function (ok) { if (ok) api({ a: 'kick', pid: b.dataset.kick }); });
         });
         $('#opt-stop').addEventListener('change', function () { api({ a: 'opts', opts: { stop: this.checked } }); });
-        $('#opt-foreign').addEventListener('change', function () { api({ a: 'opts', opts: { foreign: this.checked } }); });
+        $('#opt-foreign').addEventListener('change', function () {
+            QZ.store.set('qz.nc.foreign', this.checked);
+            api({ a: 'opts', opts: { foreign: this.checked } });
+        });
         $('#t-start').addEventListener('click', function () { QZ.sound.unlock(); api({ a: 'start' }); });
         $('#t-next').addEventListener('click', function () { api(lastRoundDone() ? { a: 'end' } : { a: 'start' }); });
         $('#t-end').addEventListener('click', function () {
@@ -426,6 +443,12 @@
         QZ.sound.click();
         api({ a: 'revcat', idx: (S.revIdx || 0) + d });
     }
+    /** La regola delle bocciature, detta con i numeri della stanza (S.need arriva dal server). */
+    function voteRule() {
+        var n = S.players.length;
+        if (!S.need) return n < 2 ? 'Da soli non si vota: decide la TV' : 'In due il voto dell\'altro non basta: una risposta contestata la decide la TV';
+        return 'Per bocciare servono ' + S.need + ' «Non vale» su ' + (n - 1) + ': la maggioranza degli altri';
+    }
     function prevLabel() { return QZ.icon('back') + 'Categoria prima'; }
     function nextLabel() { return revLast() ? QZ.icon('check') + 'Conferma i punti' : 'Prossima categoria' + QZ.icon('arrow'); }
 
@@ -434,7 +457,7 @@
         var why = { lettera: 'Lettera sbagliata', bocciata: 'Bocciata dal tavolo (' + x.rej + ')', tv: 'Tolta dalla TV' }[x.why] || '';
         var forced = S.override && S.override[p.id + '|' + cid] !== undefined;
         var status = !x.ok ? why : x.pts === 20 ? 'L\'unico con una risposta!' : x.dup ? 'Uguale a qualcun altro' : 'Solo sua';
-        if (x.ok && x.rej) status += ' · ' + plural(x.rej, 'contestazione', 'contestazioni');
+        if (x.ok && x.rej) status += ' · ' + plural(x.rej, 'contestazione', 'contestazioni') + (!S.need && !forced ? ', decide la TV' : '');
         if (forced) status += ' · decisa dalla TV';
         return '<button type="button" class="nc-card' + (x.ok ? (x.dup ? ' is-dup' : '') : ' is-bad') + (forced ? ' is-forced' : '') + '" style="--c:' + p.color + ';--i:' + i + '" data-ov="' + p.id + '|' + cid + '" title="Tocca per correggere">' +
             '<span class="nc-card__who"><span class="team__dot" aria-hidden="true"></span>' + QZ.esc(p.name) + '</span>' +
@@ -457,7 +480,7 @@
         // l'animazione d'ingresso solo quando arriva una categoria nuova, non a ogni voto
         if (key === shownRev) QZ.$$('.nc-card', grid).forEach(function (el) { el.style.animation = 'none'; });
         else { shownRev = key; QZ.sound.reveal(); }
-        $('#t-legend').innerHTML = '<span>Verde: solo sua, 10 punti (20 se è l\'unica)</span><span>Gialla: uguale a un\'altra, 5</span><span>Barrata: non vale</span><span>Tocca una risposta per correggerla a mano</span>';
+        $('#t-legend').innerHTML = '<span>Verde: solo sua, 10 punti (20 se è l\'unica)</span><span>Gialla: uguale a un\'altra, 5</span><span>Barrata: non vale</span><span>' + QZ.esc(voteRule()) + '</span><span>Tocca una risposta per correggerla a mano</span>';
         $('#t-rev-prev').innerHTML = prevLabel();
         $('#t-rev-prev').disabled = idx === 0;
         $('#t-rev-next').innerHTML = nextLabel();
@@ -583,6 +606,9 @@
             updateStopBtn();
         });
         $('#p-sheet').addEventListener('change', function () { save(false); });
+        // le ultime lettere non si perdono se si spegne lo schermo o si chiude la pagina
+        document.addEventListener('visibilitychange', function () { if (document.hidden) { clearTimeout(saveT); save(true, true); } });
+        window.addEventListener('pagehide', function () { clearTimeout(saveT); save(true, true); });
         $('#p-vote').addEventListener('click', function (e) {
             var b = e.target.closest('[data-vote]');
             if (!b) return;
@@ -599,8 +625,25 @@
         QZ.$$('#p-sheet input').forEach(function (i) { out[i.dataset.cat] = i.value; });
         return out;
     }
-    function save(force) {
-        if ((!dirty && !force) || sending || !S || (S.phase !== 'play' && S.phase !== 'letter')) return Promise.resolve();
+    /**
+     * Manda le risposte al server. `leaving`: la pagina si sta nascondendo o
+     * chiudendo (schermo spento, app cambiata): si spedisce subito anche se un
+     * altro salvataggio e' in viaggio, con sendBeacon (text/plain, il PHP lo
+     * accetta) o con fetch keepalive, che sopravvivono alla chiusura.
+     */
+    function save(force, leaving) {
+        if (!S || (S.phase !== 'play' && S.phase !== 'letter') || !me()) return Promise.resolve();
+        if (leaving) {
+            var body = JSON.stringify({ a: 'answer', code: code, tok: tok, answers: answersNow() });
+            var sent = false;
+            try { sent = !!(navigator.sendBeacon && navigator.sendBeacon(API, body)); } catch { sent = false; }
+            if (!sent) {
+                try { window.fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true }).catch(function () {}); } catch { /* pagina gia' chiusa */ }
+            }
+            dirty = false;
+            return Promise.resolve();
+        }
+        if ((!dirty && !force) || sending) return Promise.resolve();
         sending = true;
         dirty = false;
         $('#p-saved').textContent = 'Salvo…';
@@ -707,6 +750,7 @@
             var before = $('#p-vote').dataset.k;
             renderVote();
             $('#p-boss2').hidden = !boss;
+            $('#p-rev-rule').textContent = 'Guardate la TV. Tocca «Non vale» sulle risposte sbagliate. ' + voteRule() + '.';
             $('#p-rev-prev').innerHTML = prevLabel();
             $('#p-rev-prev').disabled = !S.revIdx;
             $('#p-rev-next').innerHTML = nextLabel();

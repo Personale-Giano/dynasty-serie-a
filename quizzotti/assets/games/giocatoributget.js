@@ -9,7 +9,11 @@
    mercato mondiale o solo italiano, passaggio del telefono tra i turni,
    regola "chi sfora perde", partita in solitaria con le sue statistiche,
    rivelazione dei valori uno alla volta, parita' gestite, rivincita con chi
-   apre il mercato a rotazione, partita che sopravvive a un ricaricamento.
+   apre il mercato a rotazione, partita che sopravvive a un ricaricamento e
+   anche alla chiusura della scheda (localStorage, scade dopo 12 ore).
+   Doppioni ammessi: lo stesso calciatore puo' finire in piu' liste. I prezzi
+   sono coperti, quindi nessuno ruba niente a nessuno; e chi gioca dopo non
+   vede le scelte degli altri (prima le vedeva, barrate, e ne approfittava).
    Riflettori: il calciomercato come un tabellone dello stadio. I calciatori
    sono righe scure col ruolo a colori (POR, DIF, CEN, ATT), budget e posti
    da riempire stanno a LED, la rosa e' una distinta; alla resa dei conti i
@@ -111,6 +115,12 @@
         return diff <= budget * 0.2 ? (rule === 'bust' ? 'out' : 'over') : 'broke';
     }
 
+    /** Partita in corso salvata: vale 12 ore, poi si butta (era un mercato di ieri sera). */
+    var LIVE_TTL = 12 * 3600e3;
+    function liveFresh(d, now) {
+        return !!d && d.v === 1 && Array.isArray(d.players) && d.players.length > 0 && typeof d.ts === 'number' && now - d.ts >= 0 && now - d.ts <= LIVE_TTL;
+    }
+
     /** Statistiche della solitaria, aggiornate a fine partita. */
     function addSoloStats(st, acc, hit) {
         st = st && typeof st === 'object' ? st : {};
@@ -121,7 +131,7 @@
     var core = {
         BUDGET_MIN: BUDGET_MIN, BUDGET_MAX: BUDGET_MAX, PICKS_MAX: PICKS_MAX, ITALY: ITALY, LINES: LINES,
         poolIds: poolIds, cleanSettings: cleanSettings, randomSetup: randomSetup, isNear: isNear, accuracy: accuracy,
-        rank: rank, lineKind: lineKind, addSoloStats: addSoloStats, keyOf: keyOf
+        rank: rank, lineKind: lineKind, addSoloStats: addSoloStats, keyOf: keyOf, liveFresh: liveFresh, LIVE_TTL: LIVE_TTL
     };
     if (typeof module !== 'undefined' && module.exports) { module.exports = core; return; }
 
@@ -130,7 +140,7 @@
     var $ = QZ.$;
     var GAME = 'giocatoributget';
     var PAGE = 40;
-    var LIVE_KEY = 'qz.budget.live';          // partita in corso (solo questa scheda)
+    var LIVE_KEY = 'qz.budget.live';          // partita in corso (localStorage, 12 ore; prima in sessionStorage)
     var STATS_KEY = 'qz.budget.stats';        // statistiche della solitaria
     // un colore per ruolo, acceso come sul tabellone, con la scritta scura sopra
     var ROLES = {
@@ -166,7 +176,9 @@
     function solo() { return G.players.length === 1; }
 
     /* ---------- Partita in corso: sopravvive a un ricaricamento o al tasto Indietro ---------- */
-    function session() { try { return window.sessionStorage; } catch { return null; } }
+    // in localStorage: se il telefono chiude la scheda (o il browser la scarica) il mercato resta
+    function session() { try { return window.localStorage; } catch { return null; } }
+    function oldSession() { try { return window.sessionStorage; } catch { return null; } }
     function saveLive() {
         var s = session();
         if (!s || !G) return;
@@ -177,11 +189,21 @@
             }));
         } catch { /* memoria piena o bloccata: pazienza */ }
     }
-    function clearLive() { var s = session(); if (s) try { s.removeItem(LIVE_KEY); } catch { /* niente */ } }
+    function clearLive() {
+        [session(), oldSession()].forEach(function (s) { if (s) try { s.removeItem(LIVE_KEY); } catch { /* niente */ } });
+    }
     function loadLive() {
         var s = session(), d = null;
         try { d = s && JSON.parse(s.getItem(LIVE_KEY)); } catch { d = null; }
-        if (!d || d.v !== 1 || !Array.isArray(d.players) || !d.players.length || Date.now() - d.ts > 6 * 3600e3) return null;
+        // mercato lasciato a meta' con la versione di prima (sessionStorage): si recupera da li'
+        if (!d) {
+            var o = oldSession();
+            try { d = o && JSON.parse(o.getItem(LIVE_KEY)); } catch { d = null; }
+        }
+        if (!liveFresh(d, Date.now())) {
+            if (d) clearLive();   // scaduto o rovinato: non resta a occupare spazio
+            return null;
+        }
         var ok = true;
         var players = d.players.map(function (p, i) {
             var picks = (p.picks || []).map(function (k) { var x = BY_KEY[k]; if (!x) ok = false; return x; });
@@ -202,7 +224,7 @@
     $('#randomize').innerHTML = QZ.icon('dice') + 'A caso';
     $('#rules').innerHTML = [
         ['Cartellini coperti.', 'Scegli i calciatori senza vedere quanto costano. Vale l\'occhio, non il listino.'],
-        ['Un turno a testa.', 'Fai la tua lista e passa il telefono. Chi è già preso resta all\'altro.'],
+        ['Un turno a testa.', 'Fai la tua lista e passa il telefono. Le liste degli altri restano coperte, e lo stesso calciatore lo possono prendere in tanti.'],
         ['Vince chi ci va più vicino', 'al budget, sopra o sotto. A pari distanza passa chi è rimasto sotto; con la regola dura chi sfora finisce in fondo.'],
         ['La resa dei conti:', 'i prezzi si accendono uno a uno sul tabellone, poi si tirano le somme.']
     ].map(function (r, i) {
@@ -333,7 +355,6 @@
         round = d.round;
         G = newGame(d.players, d);
         G.turn = d.turn;
-        for (var t = 0; t < d.turn; t++) G.players[t].picks.forEach(function (p) { G.takenBy[p.id] = t; });
         QZ.wake.on();
         QZ.sound.start();
         if (G.turn >= G.players.length) reveal();
@@ -352,7 +373,7 @@
     function newGame(players, o) {
         return {
             players: players, budget: o.budget, perUser: o.perUser, rule: o.rule, market: o.market,
-            turn: 0, order: QZ.shuffle(poolIds(DB, o.market)).map(function (i) { return DB[i]; }), takenBy: {},
+            turn: 0, order: QZ.shuffle(poolIds(DB, o.market)).map(function (i) { return DB[i]; }),
             q: '', role: 'ALL', shown: PAGE, token: 0, stage: 'start'
         };
     }
@@ -372,7 +393,7 @@
             return out;
         });
         var players = names.map(function (n, i) { return { name: n, color: QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length], picks: [] }; });
-        // alla rivincita apre il mercato il secondo, poi il terzo...: il primo turno ha la scelta piu' larga
+        // alla rivincita apre il mercato il secondo, poi il terzo...: si passa il telefono in un ordine nuovo
         var shift = players.length > 1 ? round % players.length : 0;
         players = players.slice(shift).concat(players.slice(0, shift));
         G = newGame(players, { budget: set.budget, perUser: set.picks, rule: set.rule, market: set.market });
@@ -397,7 +418,7 @@
             '<span class="bg-shirt__dot" style="color:' + QZ.onColor(p.color) + '">' + QZ.esc(initial) + '</span><span class="bg-shirt__name">' + QZ.esc(p.name) + '</span></div>' +
             '<h2>Passa il telefono a <em>' + QZ.esc(p.name) + '</em></h2>' +
             '<p>Gli altri guardano altrove. Scegli ' + nCalc(G.perUser) + ' con <b>' + money(G.budget) + '</b> in cassa.' +
-            (G.turn > 0 ? ' Chi è già stato preso è fuori mercato.' : '') +
+            (G.turn > 0 ? ' Le liste degli altri non le vedi: puoi prendere anche i loro stessi calciatori.' : '') +
             (left ? '' : ' Sei l\'ultimo: poi si scoprono i cartellini.') + '</p>' +
             '<button class="btn btn--primary btn--xl" type="button" data-autofocus id="hand-go">Tocca a me' + QZ.icon('arrow') + '</button>' +
             '<button class="btn btn--ghost btn--sm" type="button" id="hand-exit">' + QZ.icon('x') + 'Abbandona il mercato</button>';
@@ -446,20 +467,19 @@
         setTimeout(function () { if (G && G.stage === 'pick') $(fine ? '#p-search' : '#p-name').focus({ preventScroll: true }); }, 260);
     }
 
-    /** Calciatori filtrati: liberi prima, gia' presi dagli altri in fondo. */
+    /** Calciatori filtrati per ruolo e ricerca (le scelte degli altri non contano: doppioni ammessi). */
     function filtered() {
         var terms = QZ.norm(G.q).split(' ').filter(Boolean);
         var role = G.role;
-        var free = [], taken = [];
+        var list = [];
         for (var i = 0; i < G.order.length; i++) {
             var p = G.order[i];
             if (role !== 'ALL' && p.role !== role) continue;
             var ok = true;
             for (var t = 0; t < terms.length; t++) if (p.key.indexOf(terms[t]) < 0) { ok = false; break; }
-            if (!ok) continue;
-            (G.takenBy[p.id] != null ? taken : free).push(p);
+            if (ok) list.push(p);
         }
-        return { list: free.concat(taken), free: free.length };
+        return { list: list };
     }
 
     var renderQueued = false;
@@ -476,17 +496,15 @@
         var list = f.list.slice(0, G.shown);
         $('#p-list').innerHTML = list.length ? list.map(function (p) {
             var mine = me.picks.indexOf(p) >= 0;
-            var owner = G.takenBy[p.id];
-            var disabled = owner != null || (full && !mine);
-            var sub = owner != null ? 'Preso da ' + G.players[owner].name : p.team;
-            return '<button type="button" class="bg-player' + (owner != null ? ' is-taken' : '') + '" data-id="' + p.id + '" aria-pressed="' + mine + '"' + (disabled ? ' disabled' : '') + '>' +
+            var disabled = full && !mine;
+            return '<button type="button" class="bg-player" data-id="' + p.id + '" aria-pressed="' + mine + '"' + (disabled ? ' disabled' : '') + '>' +
                 roleBadge(p) +
                 '<span class="bg-player__info"><span class="bg-player__name">' + QZ.esc(p.name) + '</span>' +
-                '<span class="bg-player__team">' + QZ.esc(sub) + '</span></span>' +
-                '<span class="bg-player__state"><span>' + QZ.icon(mine ? 'check' : owner != null ? 'lock' : 'plus') + '</span></span></button>';
+                '<span class="bg-player__team">' + QZ.esc(p.team) + '</span></span>' +
+                '<span class="bg-player__state"><span>' + QZ.icon(mine ? 'check' : 'plus') + '</span></span></button>';
         }).join('') : '<p class="bg-empty">' + (G.q ? 'Nessuno con questo nome' + (G.role !== 'ALL' ? ' tra i ' + ROLE_PLURAL[G.role] : '') + '. Prova col cognome o con la squadra.' : 'Nessun calciatore qui.') + '</p>';
         var n = f.list.length;
-        var countTxt = (G.q || G.role !== 'ALL' ? QZ.fmt(n) + (n === 1 ? ' trovato' : ' trovati') : QZ.fmt(n) + ' calciatori') + (f.free < n ? ' · ' + (n - f.free) + ' già presi' : '');
+        var countTxt = (G.q || G.role !== 'ALL' ? QZ.fmt(n) + (n === 1 ? ' trovato' : ' trovati') : QZ.fmt(n) + ' calciatori');
         // e' una regione live: si riscrive solo quando il conteggio cambia davvero
         if ($('#p-count').textContent !== countTxt) $('#p-count').textContent = countTxt;
         var more = $('#p-more');
@@ -531,7 +549,6 @@
             me.picks.splice(i, 1);
             QZ.sound.click();
         } else {
-            if (G.takenBy[id] != null) return;
             if (me.picks.length >= G.perUser) { QZ.toast('Rosa piena. Per cambiare, prima ne togli uno.', { icon: 'info' }); return; }
             me.picks.push(p);
             added = p;
@@ -610,7 +627,6 @@
         var me = cur();
         if (me.picks.length !== G.perUser) return;
         G.closing = true;
-        me.picks.forEach(function (p) { G.takenBy[p.id] = G.turn; });
         QZ.sound.whistle();
         G.turn++;
         saveLive();

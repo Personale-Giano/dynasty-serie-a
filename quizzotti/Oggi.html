@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Il Giornale di oggi: i giochi del giorno · Quizzotti</title>
+<meta name="description" content="Il Giornale di oggi di Quizzotti: il Calciatore del Giorno, la Scheda di Quattro per Quattro, l'Intruso e Sopra o Sotto del giorno. Uguali per tutti, una serie di giorni da tenere viva.">
+<link rel="canonical" href="https://quizotti.altervista.org/quizzotti/Oggi.html">
+<meta property="og:url" content="https://quizotti.altervista.org/quizzotti/Oggi.html">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="Il Giornale di oggi · Quizzotti">
+<meta property="og:description" content="Quattro giochi del giorno uguali per tutti, una casella da spuntare per ognuno e la serie dei giorni in campo. Poi il riepilogo con le emoji al gruppo.">
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/assets/og/giocatoredelgiorno.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="assets/icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/qz.css?v=8d3462ca">
+<style>
+  /* la pagina non e' un gioco: il colore e' quello del tabellone */
+  body[data-page="oggi"] { --accent: #ffb627; --accent-2: #ffd36e; --accent-rgb: 255, 182, 39; --accent-ink: #ffc24d; --on-accent: #07090b; }
+
+  .og { display: grid; gap: 18px; max-width: 860px; margin: 0 auto; }
+  .og-head { display: grid; gap: 8px; }
+  .og-head h1 { font-size: clamp(34px, 7vw, 60px); line-height: .98; }
+  .og-head h1 em { font-style: normal; color: var(--accent-ink); }
+  .og-head p { margin: 0; color: var(--text-2); max-width: 60ch; }
+  .og-date { color: var(--text); font-weight: 700; }
+
+  .og-board { flex-wrap: wrap; }
+  .og-board .board__cell { flex: 1 1 120px; padding: 12px 16px; }
+  .og-board .led { font-size: clamp(30px, 6vw, 44px); }
+  .og-board .led small { font-size: .5em; color: #a07a2e; text-shadow: none; }
+  .og-board__clock { font-size: clamp(20px, 4.4vw, 30px) !important; color: #c99a3a; }
+  .og-goal { margin: 0; font-weight: 600; }
+  .og-best { margin: 0; color: var(--text-2); font-size: 14px; }
+  .og-best:empty { display: none; }
+
+  .og-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+  .og-item { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--line); border-left: 4px solid var(--c); border-radius: var(--r); background: var(--panel); }
+  .og-item.is-done { border-color: rgba(61, 220, 132, .45); border-left-color: var(--c); }
+  .og-item.is-soon { opacity: .65; }
+  .og-check { display: grid; place-items: center; width: 36px; height: 36px; border: 2px solid var(--line-2); border-radius: 8px; background: #000; color: var(--led-green); }
+  .og-item.is-done .og-check { border-color: var(--led-green); }
+  .og-check .ico { width: 22px; height: 22px; }
+  .og-body { display: grid; gap: 3px; min-width: 0; }
+  .og-name { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 7px; font-family: var(--font-display); font-weight: 800; font-size: 18px; }
+  .og-name .ico { width: 18px; height: 18px; color: var(--c); }
+  .og-num { font-family: var(--font-led); font-weight: 700; color: var(--led); font-size: 16px; }
+  .og-desc { color: var(--text-2); font-size: 15px; }
+  .og-line { font-size: 20px; letter-spacing: 2px; overflow-wrap: anywhere; }
+  .og-go { white-space: nowrap; }
+  .og-soon { font-size: 13px; color: var(--text-2); text-align: right; }
+  @media (max-width: 560px) {
+    .og-item { grid-template-columns: 36px minmax(0, 1fr); }
+    .og-go, .og-soon { grid-column: 1 / -1; justify-self: stretch; text-align: center; }
+  }
+  .og-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+</style>
+</head>
+<body data-page="oggi">
+<main id="app" class="qz-main" tabindex="-1">
+  <section class="screen is-active" id="s-start">
+    <div class="og">
+      <div class="og-head" data-stagger>
+        <span class="eyebrow">I giochi del giorno · uguali per tutti</span>
+        <h1>Il Giornale <em>di oggi</em></h1>
+        <p><span class="og-date" id="o-date"></span>. Quattro giochi, una casella da spuntare per ognuno: chiudine almeno tre e la serie dei giorni in campo va avanti.</p>
+      </div>
+
+      <div class="board og-board" role="group" aria-label="Il tabellone di oggi">
+        <div class="board__cell"><span class="board__label">Giornale N°</span><span class="led" id="o-n">--</span></div>
+        <div class="board__cell"><span class="board__label">Fatti oggi</span><span class="led" id="o-done">0</span></div>
+        <div class="board__cell"><span class="board__label">Giorni in campo</span><span class="led" id="o-streak">00</span></div>
+        <div class="board__cell board__cell--grow"><span class="board__label">Il prossimo tra</span><span class="led og-board__clock" id="o-next" aria-live="off">--:--:--</span></div>
+      </div>
+      <p class="og-goal" id="o-goal" aria-live="polite"></p>
+      <p class="og-best" id="o-best"></p>
+
+      <ul class="og-list" id="o-list"></ul>
+
+      <div class="og-actions">
+        <button type="button" class="btn btn--primary btn--lg" id="o-share" disabled></button>
+        <a class="btn btn--ghost" href="Leghe.html">Le Leghe tra amici</a>
+      </div>
+
+      <div class="card">
+        <h2 class="label" style="margin-bottom:12px">Come funziona</h2>
+        <ul class="rules" id="o-rules"></ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="assets/qz.js?v=40f99e24" defer></script>
+<script src="assets/sfida.js?v=919dd0c2" defer></script>
+<script src="assets/games/oggi.js?v=f5006cf0" defer></script>
+</body>
+</html>

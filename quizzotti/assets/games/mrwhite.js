@@ -10,7 +10,11 @@
    Ordine di parola (Mr. White non parla mai per primo), eliminazione, ultimo
    tiro per Mr. White con risposta tollerante (alias, refusi, cognomi doppi),
    piu' round con classifica, calciatori che non si ripetono tra le partite.
-   La partita si salva a fine round: ricaricando la pagina si riprende.
+   La partita si salva a ogni passo (anche a meta' round: schermi gia' visti,
+   discussione, esito): ricaricando la pagina si riprende da li'.
+   Mr. White gira: tocca a chi lo e' stato meno volte, cosi' nessuno lo fa due
+   volte prima che l'abbiano fatto tutti (lo stesso per l'Infiltrato).
+   Con «Tutti» il calciatore e' italiano o straniero a testa o croce.
    La logica pura sta in `core` ed e' esportata per i test con Node.
    ========================================================================== */
 (function () {
@@ -141,6 +145,33 @@
         var first = seats.indexOf(pick(ok));
         return seats.slice(first).concat(seats.slice(0, first));
     }
+    /**
+     * Chi fa l'impostore: i k giocatori che lo sono stati meno volte, a caso tra
+     * quelli alla pari. Cosi' il ruolo gira e nessuno lo rifa' prima che l'abbiano
+     * avuto tutti. skip: indici esclusi (i Mr. White, quando si sceglie l'Infiltrato).
+     */
+    function pickBad(times, k, rnd, skip) {
+        var ids = times.map(function (t, i) { return { i: i, t: Number(t) || 0, r: rnd() }; })
+            .filter(function (x) { return !skip || skip.indexOf(x.i) < 0; });
+        ids.sort(function (a, b) { return a.t - b.t || a.r - b.r; });
+        return ids.slice(0, k).map(function (x) { return x.i; });
+    }
+    /**
+     * Quali calciatori possono uscire. Con «Tutti» si tira a testa o croce tra
+     * italiani e stranieri: nella lista gli stranieri sono tre su quattro e
+     * altrimenti uscirebbero quasi sempre loro. Per le coppie dell'Infiltrato, dal
+     * lato stranieri di «Tutti» vanno bene anche quelle miste.
+     */
+    function poolFilter(pool, ita, rnd) {
+        var side = pool === 'tutti' ? (rnd() < 0.5 ? 'italiani' : 'stranieri') : pool;
+        var isIta = function (w) { return ita.has(w); };
+        if (side === 'italiani') return { side: side, word: isIta, pair: function (p) { return isIta(p[0]) && isIta(p[1]); } };
+        return {
+            side: side,
+            word: function (w) { return !isIta(w); },
+            pair: pool === 'stranieri' ? function (p) { return !isIta(p[0]) && !isIta(p[1]); } : function (p) { return !isIta(p[0]) || !isIta(p[1]); }
+        };
+    }
     /** Nomi doppi resi unici ("Luca", "Luca 2"): altrimenti punteggi e voti si confondono. */
     function uniqueNames(names) {
         var seen = {};
@@ -165,32 +196,66 @@
             '\nChi di voi bluffa meglio?';
     }
 
-    /* ---------- Salvataggio tra un round e l'altro ---------- */
+    /* ---------- Salvataggio: tra un round e l'altro e a meta' round ---------- */
     var SAVE_MAX_AGE = 12 * 3600 * 1000;
-    function snapshot(G, now) {
-        return {
+    var STAGES = ['reveal', 'talk', 'end'];
+    /**
+     * R (facoltativo): il round in corso, con stage = 'reveal' (pos = prossimo schermo da accendere),
+     * 'talk' (si riparte dalla discussione del giro R.turn) o 'end' (esito deciso, end = {winner, how, guesser}).
+     * Senza R si salva tra un round e l'altro, come prima.
+     */
+    function snapshot(G, now, R) {
+        var s = {
             v: 1, at: now, cfg: Object.assign({}, G.cfg), round: G.round, done: G.done,
             stats: Object.assign({}, G.stats),
-            players: G.players.map(function (p) { return { name: p.name, color: p.color, score: p.score, mwTimes: p.mwTimes, mwWins: p.mwWins }; })
+            players: G.players.map(function (p) { return { name: p.name, color: p.color, score: p.score, mwTimes: p.mwTimes, mwWins: p.mwWins, infTimes: p.infTimes || 0 }; })
         };
+        if (R) {
+            s.cur = {
+                word: R.word, infWord: R.infWord || null, role: R.role.slice(), alive: R.alive.slice(), order: R.order.slice(),
+                pos: R.pos, turn: R.turn, delta: R.delta.slice(), stage: R.stage, end: R.end ? Object.assign({}, R.end) : null
+            };
+        }
+        return s;
+    }
+    function isInt(x, lo, hi) { return typeof x === 'number' && Math.floor(x) === x && x >= lo && x <= hi; }
+    function validCur(c, n) {
+        if (!c || typeof c !== 'object' || typeof c.word !== 'string' || !c.word || STAGES.indexOf(c.stage) < 0) return false;
+        if (!['role', 'alive', 'order', 'delta'].every(function (k) { return Array.isArray(c[k]) && c[k].length === n; })) return false;
+        if (!c.role.every(function (r) { return r === 'civ' || r === 'mw' || r === 'inf'; }) || c.role.indexOf('mw') < 0) return false;
+        if (c.role.indexOf('inf') >= 0 && (typeof c.infWord !== 'string' || !c.infWord)) return false;
+        if (!c.alive.every(function (a) { return typeof a === 'boolean'; })) return false;
+        if (!c.delta.every(function (d) { return typeof d === 'number' && isFinite(d); })) return false;
+        if (c.order.slice().sort(function (a, b) { return a - b; }).some(function (x, i) { return x !== i; })) return false;
+        if (!isInt(c.pos, 0, n) || !isInt(c.turn, 0, 99)) return false;
+        if (c.stage === 'reveal') return c.pos < n && c.turn === 0;
+        if (c.pos !== n) return false;
+        if (c.stage === 'talk') return c.turn >= 1 && outcome(c.role, c.alive) === null;
+        var e = c.end;
+        return !!e && (e.winner === 'civ' || e.winner === 'bad') && ['caught', 'guess', 'survive'].indexOf(e.how) >= 0 &&
+            (e.how !== 'guess' || isInt(e.guesser, 0, n - 1));
     }
     function validSave(s, now) {
         if (!s || s.v !== 1 || typeof s.at !== 'number' || now - s.at > SAVE_MAX_AGE || now < s.at - 60000) return false;
         if (!s.cfg || JSON.stringify(sanitizeCfg(s.cfg)) !== JSON.stringify(Object.assign({}, DEFAULTS, s.cfg))) return false;
         if (!Array.isArray(s.players) || s.players.length < MIN_P || s.players.length > MAX_P) return false;
-        if (!(s.done >= 1 && s.round === s.done)) return false;
+        if (s.cur != null) {
+            // round a meta': il round in corso e' quello dopo gli ultimi finiti
+            if (!(isInt(s.done, 0, 9999) && s.round === s.done + 1) || !validCur(s.cur, s.players.length)) return false;
+        } else if (!(s.done >= 1 && s.round === s.done)) return false;
         if (s.cfg.rounds && s.done >= s.cfg.rounds) return false;
         if (!s.stats || ['caught', 'guessed', 'civOut', 'infOut'].some(function (k) { return typeof s.stats[k] !== 'number'; })) return false;
         return s.players.every(function (p) {
             return p && typeof p.name === 'string' && p.name && typeof p.color === 'string' &&
-                ['score', 'mwTimes', 'mwWins'].every(function (k) { return typeof p[k] === 'number' && isFinite(p[k]); });
+                ['score', 'mwTimes', 'mwWins'].every(function (k) { return typeof p[k] === 'number' && isFinite(p[k]); }) &&
+                (p.infTimes == null || (typeof p.infTimes === 'number' && isFinite(p.infTimes)));
         });
     }
 
     var core = {
         CHOICES: CHOICES, DEFAULTS: DEFAULTS, PTS: PTS, sanitizeCfg: sanitizeCfg, maxBad: maxBad, canInf: canInf, maxMW: maxMW,
         norm: norm, checkGuess: checkGuess, buildIndex: buildIndex, shirtName: shirtName, hintLetter: hintLetter,
-        outcome: outcome, settle: settle, speakOrder: speakOrder, uniqueNames: uniqueNames, rank: rank,
+        outcome: outcome, settle: settle, speakOrder: speakOrder, pickBad: pickBad, poolFilter: poolFilter, uniqueNames: uniqueNames, rank: rank,
         shareText: shareText, snapshot: snapshot, validSave: validSave
     };
     if (typeof module !== 'undefined' && module.exports) { module.exports = core; return; }
@@ -202,7 +267,7 @@
     var DATA = window.mrwhiteData || { italiani: wordsList, stranieri: [], coppie: [], alias: {}, maglia: {} };
     var ALL = wordsList.map(function (w) { return String(w).trim(); });
     var IDX = buildIndex(ALL, DATA.alias);
-    var POOLS = { tutti: null, italiani: new Set(DATA.italiani), stranieri: new Set(DATA.stranieri) };
+    var ITA = new Set(DATA.italiani);
     var deck = new QZ.Deck('mrwhite', ALL);
     var pairDeck = new QZ.Deck('mrwhite-coppie', DATA.coppie || [], function (p) { return p.join('|'); });
     var CFG = sanitizeCfg(QZ.store.get('qz.mrwhite.cfg', {}));
@@ -220,7 +285,7 @@
     $('#medal').innerHTML = '<span class="mw-q" aria-hidden="true">?</span>';
     $('#rules').innerHTML = [
         ['Passatevi il telefono:', 'ognuno accende il maxischermo di nascosto e vede il calciatore segreto.'],
-        ['Mr. White', 'trova lo schermo senza segnale: non sa chi è il calciatore e deve fare finta di saperlo.'],
+        ['Mr. White', 'trova lo schermo senza segnale: non sa chi è il calciatore e deve fare finta di saperlo. Il ruolo gira: nessuno lo rifà prima che l\'abbiano fatto tutti.'],
         ['Una parola a testa', 'sul calciatore, poi si vota chi buttare fuori. Pari? Si rivota tra quelli.'],
         ['Beccato?', 'Mr. White ha un ultimo tiro: se indovina il calciatore, la vince lui.'],
         ['Con l\'Infiltrato', 'uno di voi vede un calciatore simile, e non lo sa. Occhio a chi «sbaglia» di poco.']
@@ -288,7 +353,8 @@
     /* ---------- Partita lasciata a meta' ---------- */
     function readSave() {
         var s = QZ.store.get(SAVE_KEY, null);
-        if (validSave(s, Date.now())) return s;
+        // il calciatore del round a meta' deve esistere ancora nella lista
+        if (validSave(s, Date.now()) && (!s.cur || (ALL.indexOf(s.cur.word) >= 0 && (!s.cur.infWord || ALL.indexOf(s.cur.infWord) >= 0)))) return s;
         if (s) QZ.store.remove(SAVE_KEY);
         return null;
     }
@@ -297,6 +363,13 @@
         box.hidden = !s;
         if (!s) return;
         var top = rank(s.players)[0];
+        if (s.cur) {
+            var where = s.cur.stage === 'reveal' ? (s.cur.pos ? 'dallo schermo di ' + QZ.esc(s.players[s.cur.order[s.cur.pos]].name) : 'dal primo schermo')
+                : s.cur.stage === 'talk' ? 'dalla discussione' : 'dall\'esito del round';
+            $('#mw-resume-txt').innerHTML = 'Partita lasciata a metà del <b>round ' + s.round + (s.cfg.rounds ? ' di ' + s.cfg.rounds : '') + '</b>' +
+                (s.done ? ', in testa ' + QZ.esc(top.name) + ' con ' + plural(top.score, 'punto', 'punti') : '') + '. Si riprende ' + where + ', con lo stesso calciatore.';
+            return;
+        }
         $('#mw-resume-txt').innerHTML = 'Partita lasciata a metà: <b>' + (s.cfg.rounds ? s.done + ' round su ' + s.cfg.rounds : plural(s.done, 'round giocato', 'round giocati')) +
             '</b>, in testa ' + QZ.esc(top.name) + ' con ' + plural(top.score, 'punto', 'punti') + '. Si riparte con un calciatore nuovo.';
     }
@@ -384,6 +457,26 @@
         return d.textContent.replace(/\s+/g, ' ').trim();
     }
     function save() { if (G && G.done) QZ.store.set(SAVE_KEY, snapshot(G, Date.now())); }
+    /** Round in corso: si salva a ogni passo, cosi' una ricarica non lo butta via. */
+    function saveRound(stage, end) {
+        if (!G || !R) return;
+        R.stage = stage;
+        R.end = end || null;
+        QZ.store.set(SAVE_KEY, snapshot(G, Date.now(), R));
+    }
+    /** Dopo un'eliminazione si riparla: ricaricando si riparte dal giro dopo, non da prima del voto. */
+    function toTalk() {
+        var t = R.turn;
+        R.turn = t + 1;
+        saveRound('talk');
+        R.turn = t;
+        return startTalk;
+    }
+    /** L'esito del round e' deciso: lo si salva subito, la schermata del round arriva al tocco. */
+    function toEnd(winner, how, guesser) {
+        saveRound('end', { winner: winner, how: how, guesser: guesser == null ? null : guesser });
+        return function () { endRound(winner, how, guesser); };
+    }
 
     /* ---------- Partita ---------- */
     function startGame(resume) {
@@ -394,6 +487,21 @@
                 round: resume.round, done: resume.done,
                 stats: Object.assign({}, resume.stats)
             };
+            G.players.forEach(function (p) { if (typeof p.infTimes !== 'number') p.infTimes = 0; });
+            if (resume.cur) {
+                var c = resume.cur;
+                R = {
+                    word: c.word, infWord: c.infWord || null, role: c.role.slice(), alive: c.alive.slice(), order: c.order.slice(),
+                    pos: c.pos, flipped: false, turn: c.turn, delta: c.delta.slice(), stage: c.stage, end: c.end
+                };
+                busy = false;
+                QZ.wake.on();
+                QZ.sound.start();
+                if (c.stage === 'reveal') showReveal();
+                else if (c.stage === 'talk') { R.turn--; startTalk(); }
+                else endRound(c.end.winner, c.end.how, c.end.how === 'guess' ? c.end.guesser : undefined);
+                return;
+            }
         } else {
             syncRoles();
             var names = uniqueNames(players.get());
@@ -402,7 +510,7 @@
             cfg.mw = QZ.clamp(cfg.mw, 1, maxMW(names.length, cfg.inf));
             G = {
                 cfg: cfg,
-                players: names.map(function (n, i) { return { name: n, color: QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length], score: 0, mwTimes: 0, mwWins: 0 }; }),
+                players: names.map(function (n, i) { return { name: n, color: QZ.TEAM_COLORS[i % QZ.TEAM_COLORS.length], score: 0, mwTimes: 0, mwWins: 0, infTimes: 0 }; }),
                 round: 0, done: 0,
                 stats: { caught: 0, guessed: 0, civOut: 0, infOut: 0 }
             };
@@ -415,25 +523,24 @@
     }
 
     function drawWords() {
-        var pool = POOLS[G.cfg.pool];
-        var inPool = pool ? function (w) { return pool.has(w); } : null;
+        var f = poolFilter(G.cfg.pool, ITA, Math.random);
         if (G.cfg.inf) {
-            var pair = pairDeck.draw(inPool ? function (p) { return inPool(p[0]) && inPool(p[1]); } : null) || pairDeck.draw();
+            var pair = pairDeck.draw(f.pair) || pairDeck.draw();
             if (pair) {
                 var flip = Math.random() < 0.5;
                 return { word: pair[flip ? 1 : 0], infWord: pair[flip ? 0 : 1] };
             }
         }
-        return { word: deck.draw(inPool) || deck.draw(), infWord: null };
+        return { word: deck.draw(f.word) || deck.draw(), infWord: null };
     }
 
     function newRound() {
         G.round++;
         var n = G.players.length;
         var w = drawWords();
-        var bad = QZ.shuffle(G.players.map(function (_, i) { return i; }));
-        var mwIdx = bad.slice(0, G.cfg.mw);
-        var infIdx = w.infWord ? bad[G.cfg.mw] : -1;
+        // il ruolo gira: tocca a chi l'ha fatto meno volte (a caso tra chi e' alla pari)
+        var mwIdx = pickBad(G.players.map(function (p) { return p.mwTimes; }), G.cfg.mw, Math.random);
+        var infIdx = w.infWord ? pickBad(G.players.map(function (p) { return p.infTimes || 0; }), 1, Math.random, mwIdx)[0] : -1;
         var start = (G.round - 1) % n;
         R = {
             word: w.word, infWord: w.infWord,
@@ -443,9 +550,19 @@
             pos: 0, flipped: false, turn: 0,
             delta: G.players.map(function () { return 0; })
         };
-        R.role.forEach(function (r, i) { if (r === 'mw') G.players[i].mwTimes++; });
+        R.role.forEach(function (r, i) {
+            if (r === 'mw') G.players[i].mwTimes++;
+            if (r === 'inf') G.players[i].infTimes = (G.players[i].infTimes || 0) + 1;
+        });
+        saveRound('reveal');
+        showReveal();
+    }
+
+    /** Il giro degli schermi dal giocatore R.pos: a inizio round o alla ripresa. */
+    function showReveal() {
         $('#rv-round').textContent = G.cfg.rounds ? pad(G.round) + '/' + pad(G.cfg.rounds) : pad(G.round);
         $('#rv-dots').innerHTML = R.order.map(function () { return '<i></i>'; }).join('');
+        R.flipped = false;
         $('#rv-card').classList.remove('is-flipped');
         $('#rv-back').innerHTML = '';
         $('#rv-front').removeAttribute('aria-hidden');
@@ -545,7 +662,7 @@
             R.flipped = false;
             R.pos++;
             busy = false;
-            if (R.pos < R.order.length) { renderFront(); QZ.say('Schermo spento. Passa il telefono a ' + G.players[R.order[R.pos]].name + '.'); }
+            if (R.pos < R.order.length) { saveRound('reveal'); renderFront(); QZ.say('Schermo spento. Passa il telefono a ' + G.players[R.order[R.pos]].name + '.'); }
             else startTalk();
         }, QZ.reducedMotion() ? 30 : 650);
     }
@@ -577,6 +694,7 @@
 
     function startTalk() {
         R.turn++;
+        saveRound('talk');
         $('#tk-round').textContent = $('#rv-round').textContent;
         $('#tk-turn').textContent = pad(R.turn);
         $('#tk-alive').textContent = pad(alive().length) + '/' + pad(G.players.length);
@@ -775,15 +893,15 @@
     function afterOut(lead) {
         var res = outcome(R.role, R.alive);
         if (res === 'civ') {
-            panel('<p class="mw-msg center">Fuori tutti gli impostori. Il calciatore è salvo.</p>', 'Vedi il round', function () { endRound('civ', 'caught'); }, lead);
+            panel('<p class="mw-msg center">Fuori tutti gli impostori. Il calciatore è salvo.</p>', 'Vedi il round', toEnd('civ', 'caught'), lead);
         } else if (res === 'bad') {
             var solo = R.role.filter(function (r) { return r !== 'civ'; }).length === 1;
-            panel('<p class="mw-msg center">' + (solo ? 'Ora Mr. White e voi siete pari. Partita chiusa: l\'ha fatta franca.' : 'Ora gli impostori sono quanti voi. Partita chiusa: l\'hanno fatta franca.') + '</p>', 'Vedi il round', function () { endRound('bad', 'survive'); }, lead);
+            panel('<p class="mw-msg center">' + (solo ? 'Ora Mr. White e voi siete pari. Partita chiusa: l\'ha fatta franca.' : 'Ora gli impostori sono quanti voi. Partita chiusa: l\'hanno fatta franca.') + '</p>', 'Vedi il round', toEnd('bad', 'survive'), lead);
         } else {
             var mw = alive('mw').length, inf = alive('inf').length;
             var who = mw > 1 ? 'Ci sono ancora ' + mw + ' Mr. White' : mw ? 'Mr. White è ancora' : 'L\'infiltrato è ancora';
             if (mw && inf) who += (mw > 1 ? ' e l\'infiltrato' : ', e pure l\'infiltrato,');
-            panel('<p class="mw-msg center">' + who + ' in campo. Altro giro di parole.</p>', 'Altro giro', startTalk, lead);
+            panel('<p class="mw-msg center">' + who + ' in campo. Altro giro di parole.</p>', 'Altro giro', toTalk(), lead);
         }
     }
 
@@ -831,7 +949,7 @@
             QZ.sound.correct();
             panel('<div class="card mw-solution">' + shirt(R.word) +
                 '<p class="mw-msg grow"><b>' + QZ.esc(p.name) + '</b> ci ha preso: era <b>' + QZ.esc(R.word) + '</b>. Che faccia tosta.</p></div>',
-                'Vedi il round', function () { endRound('bad', 'guess', i); }, 'Gol! ');
+                'Vedi il round', toEnd('bad', 'guess', i), 'Gol! ');
             QZ.fx.stamp($('#vd-panel .mw-solution'), 'Gol!', 'bad', { size: 26, x: 80, y: 0, say: false });
             return;
         }
@@ -845,9 +963,9 @@
             : res === 'ambiguous' && ends ? '«' + QZ.esc(said) + '»: di quel cognome ce n\'è più d\'uno, serviva anche il nome.'
                 : '«' + QZ.esc(said) + '»: ' + QZ.pick(['fuori dallo specchio.', 'alto sopra la traversa.', 'para il portiere.', 'palo pieno.']);
         var override = said ? '<button type="button" class="btn btn--ghost btn--sm" id="vd-override">' + QZ.icon('check') + 'Era giusta, decide il gruppo</button>' : '';
-        var next = res2 === 'civ' ? function () { endRound('civ', 'caught'); }
-            : res2 === 'bad' ? function () { endRound('bad', 'survive'); }
-                : startTalk;
+        var next = res2 === 'civ' ? toEnd('civ', 'caught')
+            : res2 === 'bad' ? toEnd('bad', 'survive')
+                : toTalk();
         panel('<div class="card center stack" style="--gap:10px;align-items:center"><span class="note" style="color:var(--led-red)">' + QZ.fmt(PTS.wrongGuess) + ' punti</span><p class="mw-msg">' + msg + '</p>' + override + '</div>',
             ends ? 'Vedi il round' : 'Altro giro', next);
         var ov = $('#vd-override');

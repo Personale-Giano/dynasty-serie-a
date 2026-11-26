@@ -144,14 +144,14 @@ test('db-cruciverba.js: parole A-Z 3-13, definizioni brevi senza la risposta, ca
     }
 });
 
-test('cruciverba-schede.js: 20 schede a tema coerenti, risposte uniche e prese dal database', () => {
+test('cruciverba-schede.js: almeno 60 schede a tema coerenti, risposte uniche e prese dal database', () => {
     const { cruciverbaSchede, cruciverbaErrata } = load('cruciverba-schede.js');
     const { cruciverba } = load('db-cruciverba.js');
     const clueOf = new Map(cruciverba.map((x) => [x.answer, x.clue]));
     const temiOf = new Map(cruciverba.map((x) => [x.answer, x.temi || []]));
     const errata = cruciverbaErrata || {};
-    assert.equal(cruciverbaSchede.length, 20);
-    assert.deepEqual(cruciverbaSchede.map((p) => p.n), Array.from({ length: 20 }, (_, i) => i + 1));
+    assert.ok(cruciverbaSchede.length >= 60, `attese almeno 60 schede, trovate ${cruciverbaSchede.length}`);
+    assert.deepEqual(cruciverbaSchede.map((p) => p.n), Array.from({ length: cruciverbaSchede.length }, (_, i) => i + 1));
     // le correzioni valgono solo per parole delle schede e coincidono con il database
     const inSchede = new Set(cruciverbaSchede.flatMap((p) => p.words.map((w) => w.answer)));
     for (const [a, c] of Object.entries(errata)) {
@@ -217,7 +217,29 @@ test('cruciverba-schede.js: 20 schede a tema coerenti, risposte uniche e prese d
     }
 });
 
-test('cruciverba-schede.js: le schede pubblicate (N° 1-15) non cambiano mai', () => {
+test('cruciverba-schede.js: dal N° 21 griglie dense, con almeno 1,5 incroci per parola in media', () => {
+    // incroci = caselle condivise da una orizzontale e una verticale; densita' = caselle bianche / area
+    const { cruciverbaSchede } = load('cruciverba-schede.js');
+    const nuove = cruciverbaSchede.filter((p) => p.n >= 21);
+    const ratios = nuove.map((p) => {
+        const cnt = new Map();
+        p.words.forEach((w) => {
+            for (let k = 0; k < w.answer.length; k++) {
+                const key = w.dir === 'A' ? w.row + ',' + (w.col + k) : (w.row + k) + ',' + w.col;
+                cnt.set(key, (cnt.get(key) || 0) + 1);
+            }
+        });
+        const X = [...cnt.values()].filter((v) => v > 1).length;
+        assert.ok(p.words.length >= 17, `N° ${p.n}: solo ${p.words.length} parole`);
+        assert.ok(X / p.words.length >= 1.45, `N° ${p.n}: ${(X / p.words.length).toFixed(2)} incroci per parola`);
+        assert.ok(cnt.size / (p.w * p.h) >= 0.5, `N° ${p.n}: troppe caselle nere`);
+        return X / p.words.length;
+    });
+    const mean = ratios.reduce((a, b) => a + b, 0) / ratios.length;
+    assert.ok(mean >= 1.5, `media di ${mean.toFixed(2)} incroci per parola dal N° 21`);
+});
+
+test('cruciverba-schede.js: le schede pubblicate (N° 1-60) non cambiano mai', () => {
     // I giocatori hanno partite salvate su queste griglie: rigenerarle romperebbe i progressi.
     // scripts/build-cruciverba.js le congela; se questo test fallisce, qualcuno le ha toccate.
     // Quando si pubblicano nuove schede, si aggiunge la loro impronta qui sotto (mai cambiare quelle esistenti).
@@ -226,7 +248,9 @@ test('cruciverba-schede.js: le schede pubblicate (N° 1-15) non cambiano mai', (
     const PUBBLICATE = [
         { fino: 7, sha256: '5b494d2e1384dd9411d9dd99dd1910520b160bd15936236dc83de554971e0365' },
         { fino: 10, sha256: 'f4ac217d8b446c051f2a7d16cdeba8d77d1c30a72c5eccd7f8dec4eed2abbdf6' },
-        { fino: 15, sha256: '468e9c619745437bb7da948ba988ef2012386eb445fb5fa86045ea6791fb51da' }
+        { fino: 15, sha256: '468e9c619745437bb7da948ba988ef2012386eb445fb5fa86045ea6791fb51da' },
+        { fino: 20, sha256: '5ca5e084ac8121ed1d7d793838447562c75a6b3ada2895505385507d648fc3b9' },
+        { fino: 60, sha256: '32e01cef492d1bc70c9e93558b3a0073f34e95fb94dd8a84d29c65b9b8a26522' }
     ];
     for (const { fino, sha256 } of PUBBLICATE) {
         const got = crypto.createHash('sha256').update(JSON.stringify(cruciverbaSchede.slice(0, fino))).digest('hex');

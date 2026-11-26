@@ -38,8 +38,16 @@
         }
         return prev[b.length];
     }
-    /** Errori di battitura tollerati: nessuno fino a 4 lettere, uno fino a 8, poi due. */
-    function tolerance(len) { return len <= 4 ? 0 : len <= 8 ? 1 : 2; }
+    /** Errori di battitura tollerati: nessuno sotto le 7 lettere (ROSSO non e' ROSSI,
+        PALO non e' PALI), uno fino a 10, poi due. */
+    function tolerance(len) { return len < 7 ? 0 : len <= 10 ? 1 : 2; }
+    /** s somiglia a p entro la tolleranza; l'ultima lettera pero' deve essere giusta
+        (e' quella che distingue singolare e plurale, ROSSONERO e ROSSONERI). */
+    function close(s, p) {
+        if (s === p) return true;
+        var tol = tolerance(p.length);
+        return tol > 0 && Math.abs(s.length - p.length) <= tol && s.slice(-1) === p.slice(-1) && distance(s, p) <= tol;
+    }
 
     /** Confronto tollerante: accenti, punteggiatura e piccoli refusi non contano;
         a voce cerca la parola anche dentro una frase ("e' il rigore"). */
@@ -47,15 +55,82 @@
         var a = norm(answer).replace(/ /g, '');
         var words = norm(said).split(' ').filter(Boolean);
         if (!a || !words.length) return false;
-        var tol = tolerance(a.length);
         var m = norm(answer).split(' ').length;
         for (var size = Math.max(1, m - 1); size <= m + 1; size++) {
             for (var i = 0; i + size <= words.length; i++) {
-                var chunk = words.slice(i, i + size).join('');
-                if (Math.abs(chunk.length - a.length) <= tol && distance(chunk, a) <= tol) return true;
+                if (close(words.slice(i, i + size).join(''), a)) return true;
             }
         }
         return false;
+    }
+
+    /* ---------- Persone: basta il cognome, se non e' ambiguo ---------- */
+    // Le risposte a piu' parole del database che NON sono persone (club, stadi, coppe, gesti
+    // tecnici, nazionali...). Tutte le altre a piu' parole sono calciatori, allenatori, arbitri
+    // o giornalisti. Se se ne aggiunge una nuova che non e' una persona, va scritta qui:
+    // lo controlla tests/sfidaeredita.test.js confrontando le sezioni del database.
+    var NOT_PEOPLE = ('RIMESSA LATERALE|CALCIO D\'INIZIO|COLPO DI TESTA|FAIR PLAY|ZONA CESARINI|PALLONE D\'ORO|COPPA ITALIA|FALSO NOVE|' +
+        'GOL OLIMPICO|GOLDEN GOAL|SECONDA PUNTA|AREA DI RIGORE|AREA PICCOLA|INCROCIO DEI PALI|RIMESSA DAL FONDO|GOL FANTASMA|' +
+        'CLEAN SHEET|PARAMETRO ZERO|CLAUSOLA RESCISSORIA|QUARTO UOMO|LOTTERIA DEI RIGORI|PORTE CHIUSE|PASSAGGIO FILTRANTE|' +
+        'COPPA DEI CAMPIONI|MANO DE DIOS|GRANDE TORINO|PARTITA DEL SECOLO|NOTTI MAGICHE|SAN SIRO|CAMP NOU|MIRACOLO DI BERNA|' +
+        'MIRACOLO DI ISTANBUL|NOTTE DI BERLINO|SENTENZA BOSMAN|FATAL VERONA|OLD FIRM|EL CLÁSICO|DERBY DELLA MADONNINA|' +
+        'DERBY D\'ITALIA|DERBY DELLA MOLE|DERBY DELLA LANTERNA|OLD TRAFFORD|ALLIANZ ARENA|SIGNAL IDUNA PARK|STAMFORD BRIDGE|' +
+        'PARC DES PRINCES|STADIO OLIMPICO|ARTEMIO FRANCHI|GRANDE INTER|CALCIO TOTALE|REAL MADRID|MANCHESTER UNITED|' +
+        'MANCHESTER CITY|BAYERN MONACO|BORUSSIA DORTMUND|PARIS SAINT-GERMAIN|PSV EINDHOVEN|HELLAS VERONA|ATLÉTICO MADRID|' +
+        'REAL BETIS|ATHLETIC BILBAO|BAYER LEVERKUSEN|BORUSSIA MÖNCHENGLADBACH|DINAMO ZAGABRIA|STELLA ROSSA|DINAMO KIEV|' +
+        'SHAKHTAR DONETSK|SÃO PAULO|RIVER PLATE|BOCA JUNIORS|NOTTINGHAM FOREST|ASTON VILLA|WEST HAM|STEAUA BUCAREST|' +
+        'DEPORTIVO LA CORUÑA|INTER MIAMI|AL AHLY|STATI UNITI|COREA DEL SUD|COSTA D\'AVORIO|ARABIA SAUDITA|TIRO AL VOLO|' +
+        'COLPO DI TACCO|FOGLIA MORTA|GOL DELLA BANDIERA|TESSERA DEL TIFOSO|ZONA MISTA|CONFERENZA STAMPA|MERCATO DI RIPARAZIONE|' +
+        'SENZA VOTO|PREPARATORE ATLETICO|NUMERO DIECI|ERBA SINTETICA|SCAPOLI E AMMOGLIATI|PORTIERE VOLANTE|' +
+        'CERCHIO DI CENTROCAMPO|GOAL-LINE TECHNOLOGY|FAIR PLAY FINANZIARIO|DECRETO CRESCITA|SCARPA D\'ORO|GOLDEN BOY|' +
+        'PANCHINA D\'ORO|COPPA DELLE COPPE|COPPA UEFA|CONFERENCE LEAGUE|TOYOTA CUP|MONDIALE PER CLUB|COPA AMÉRICA|' +
+        'NATIONS LEAGUE|CALCIO BALILLA|NOVANTESIMO MINUTO|PROCESSO DEL LUNEDÌ|TUTTO IL CALCIO MINUTO PER MINUTO|' +
+        'STADIO MARADONA|ALLIANZ STADIUM|DELLE ALPI|SAN NICOLA|NEW BALANCE ARENA|DE KUIP|ESTÁDIO DA LUZ|METLIFE STADIUM|' +
+        'PUSKÁS ARÉNA|ROSE BOWL|PRO VERCELLI|CRYSTAL PALACE|REAL SOCIEDAD|LOS ANGELES FC|BOSNIA ED ERZEGOVINA|' +
+        'MACEDONIA DEL NORD|IRLANDA DEL NORD|COREA DEL NORD|UNIONE SOVIETICA|COSTA RICA').split('|');
+
+    function toks(word) { return String(word).trim().split(/\s+/).map(function (t) { return norm(t).replace(/ /g, ''); }).filter(Boolean); }
+
+    /** Per ogni persona del database (norm della risposta -> elenco), i cognomi che bastano
+        da soli: ogni coda del nome dalla seconda parola in poi ("DE ROSSI", "RIQUELME"),
+        di almeno 4 lettere, che non compare nel nome di nessun'altra persona del database
+        (ROSSI no, c'e' anche Paolo Rossi; RONALDO no, c'e' Ronaldo Nazario). */
+    function surnameIndex(db, notPeople) {
+        var skip = {}, seq = {}, out = {};
+        (notPeople || []).forEach(function (n) { skip[norm(n)] = 1; });
+        // le altre risposte che contano per l'ambiguita': persone e parole singole
+        // (MARADONA basta per Diego Maradona anche se c'e' lo STADIO MARADONA)
+        (db || []).forEach(function (d) {
+            if (skip[norm(d.word)]) return;
+            var t = toks(d.word), mine = {};
+            for (var i = 0; i < t.length; i++) for (var j = i + 1; j <= t.length; j++) mine[t.slice(i, j).join('')] = 1;
+            Object.keys(mine).forEach(function (k) { seq[k] = (seq[k] || 0) + 1; });
+        });
+        (db || []).forEach(function (d) {
+            var key = norm(d.word), orig = String(d.word).trim().split(/\s+/), t = toks(d.word);
+            if (t.length < 2 || skip[key] || orig.length !== t.length) return;
+            out[key] = [];
+            for (var i = 1; i < t.length; i++) {
+                var s = t.slice(i).join('');
+                if (s.length >= 4 && seq[s] === 1) out[key].push(orig.slice(i).join(' '));
+            }
+        });
+        return out;
+    }
+
+    /** Gol? La risposta intera o, per le persone, un cognome che basta (vedi surnameIndex). */
+    function accepts(said, answer, index) {
+        if (matches(said, answer)) return true;
+        var list = index && index[norm(answer)];
+        return !!list && list.some(function (s) { return matches(said, s); });
+    }
+
+    /** Millisecondi tra una lettera e l'altra: il ritmo scelto vale per una parola di 10
+        lettere (9 da svelare); le parole corte vanno piu' piano, le lunghe piu' in fretta,
+        cosi' il tabellone si riempie in tempi simili qualunque sia la lunghezza. */
+    function letterDelay(letters, speed) {
+        var steps = Math.max(1, letters - 1);
+        return Math.round(Math.min(speed * 1.6, Math.max(speed * 0.4, speed * 9 / steps)));
     }
 
     var STOP = ['della', 'delle', 'dello', 'degli', 'dalla', 'nella', 'sulla'];
@@ -72,8 +147,7 @@
                 if (i === 0 && j === parts.length) continue;
                 var p = parts.slice(i, j).join('');
                 if (p.length < 4 || (j - i === 1 && STOP.indexOf(p) >= 0)) continue;
-                var tol = tolerance(p.length);
-                if (Math.abs(s.length - p.length) <= tol && distance(s, p) <= tol) return true;
+                if (close(s, p)) return true;
             }
         }
         return false;
@@ -131,7 +205,10 @@
         return { tw: tw, gap: tw < 22 ? 2 : 3 };
     }
 
-    var core = { norm: norm, scoreLine: scoreLine, cellSize: cellSize, matches: matches, nearMiss: nearMiss, sanitizeCfg: sanitizeCfg, headToHead: headToHead, CLOCKS: CLOCKS, SPEEDS: SPEEDS };
+    var core = {
+        norm: norm, scoreLine: scoreLine, cellSize: cellSize, matches: matches, nearMiss: nearMiss, sanitizeCfg: sanitizeCfg, headToHead: headToHead,
+        tolerance: tolerance, surnameIndex: surnameIndex, accepts: accepts, letterDelay: letterDelay, NOT_PEOPLE: NOT_PEOPLE, CLOCKS: CLOCKS, SPEEDS: SPEEDS
+    };
     if (typeof module !== 'undefined' && module.exports) { module.exports = core; return; }
 
     /* ======================================================================
@@ -139,6 +216,7 @@
        ====================================================================== */
     var $ = QZ.$;
     var deck = new QZ.Deck('sfidaeredita', database, function (d) { return d.word; });
+    var SURNAMES = surnameIndex(database, NOT_PEOPLE);
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     // la v2 non ricorda piu' il microfono (si accende solo a mano): sanitizeCfg lo scarta
     var CFG = sanitizeCfg(QZ.store.get('qz.sfidaeredita.cfg', {}));
@@ -154,7 +232,8 @@
     $('#medal').innerHTML = QZ.icon('ball');
     $('#rules').innerHTML = [
         ['Esce una definizione', 'e la parola si accende sul tabellone, una lettera alla volta. L\'ultima non la regala mai.'],
-        ['Rispondete', 'scrivendo o lasciando decidere all\'arbitro. Sbagliato? Palo, si riprova quante volte volete.'],
+        ['Rispondete', 'scrivendo, a voce o lasciando decidere all\'arbitro: i tasti Gol e Palo li tocca la squadra avversaria, mai chi risponde. Sbagliato? Palo, si riprova quante volte volete.'],
+        ['Per i calciatori basta il cognome,', 'se non c\'è un omonimo: Mbappé va bene, Inzaghi no (Filippo o Simone?).'],
         ['Gol:', 'parola indovinata, palla agli avversari con una parola nuova.'],
         ['Non la sapete?', 'Passo: parola nuova, ma il cronometro perde ' + PASS_COST + ' secondi.'],
         ['Ogni squadra ha il suo cronometro,', 'che corre solo nel suo turno. Chi lo finisce perde il derby, anche se ha segnato di più.']
@@ -309,6 +388,7 @@
         $('#kick').hidden = true;
         $('#play').hidden = false;
         newWord();
+        paintRefWho();
         feed(micActive() ? 'Parlate pure, vi ascolto.' : 'Scrivete la risposta o chiamate l\'arbitro.', null, micActive() ? 'mic' : 'message');
         G.state = 'play';
         paintPause();
@@ -373,9 +453,18 @@
         $('#word').setAttribute('aria-label', 'Parola misteriosa: ' + shown + ' (' + hidden + ' lettere nascoste)');
     }
 
+    /** Chi tiene i tasti dell'arbitro: la squadra che non sta rispondendo. */
+    function paintRefWho() {
+        var other = G.teams[1 - G.turn];
+        var who = $('#ref-who');
+        who.innerHTML = QZ.icon('whistle') + '<span>Gol e Palo li tocca <b style="--c:' + other.color + '">' + QZ.esc(other.name) + '</b>, non chi risponde</span>';
+        $('#ref-group').setAttribute('aria-label', 'Arbitro: tasti per ' + other.name + ', la squadra che non risponde');
+    }
+
     function startLetters() {
         clearInterval(letterIv);
-        letterIv = setInterval(revealLetter, CFG.speed);
+        var letters = G.word.word.split('').filter(isLetter).length;
+        letterIv = setInterval(revealLetter, letterDelay(letters, CFG.speed));
     }
     function revealLetter() {
         if (!playing()) return;
@@ -404,15 +493,16 @@
     /* ---------- Risposte ---------- */
     function judge(cands) {
         if (!playing()) return;
-        var ok = cands.some(function (c) { return matches(c, G.word.word); });
+        var ok = cands.some(function (c) { return accepts(c, G.word.word, SURNAMES); });
         if (ok) goal();
         else post(cands[0], cands.some(function (c) { return nearMiss(c, G.word.word); }));
     }
 
     function post(said, near) {
         team().posts++;
+        var person = !!SURNAMES[QZ.norm(G.word.word)];
         feed(!said ? 'Palo. Si riprova.'
-            : near ? 'Fuori di poco: «' + said.toUpperCase() + '» c\'è, ma serve la risposta intera.'
+            : near ? 'Fuori di poco: «' + said.toUpperCase() + '» c\'è, ma ' + (person ? 'da solo non basta: dite nome e cognome.' : 'serve la risposta intera.')
                 : 'Palo. «' + said.toUpperCase() + '» non è la parola giusta.', 'bad', 'x');
         QZ.sound.wrong();
         QZ.vibrate([50, 30, 50]);
@@ -558,6 +648,11 @@
                     var alts = [];
                     for (var k = 0; k < res.length; k++) alts.push(res[k].transcript);
                     if (QZ.norm(text).length >= 2) judge(alts);
+                } else if (accepts(text, G.word.word, SURNAMES)) {
+                    // gol gia' sul risultato provvisorio: non si aspetta che la frase finisca.
+                    // Un provvisorio sbagliato invece non e' palo (la frase sta ancora arrivando).
+                    judge([text]);
+                    return;
                 } else {
                     feed('«' + text.toUpperCase() + '»', null, 'mic', true);
                 }

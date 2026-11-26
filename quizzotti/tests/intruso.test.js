@@ -73,8 +73,113 @@ test('db-intruso.js: nomi gia\' superati non tornano (stadio dell\'Atalanta rino
     }
 });
 
+test('db-intruso.js: dopo il 26 novembre 2026 almeno 400 round, 140 difficili e 180 medi', () => {
+    assert.ok(intrusoRounds.length >= 400, `trovati solo ${intrusoRounds.length} round`);
+    assert.ok(intrusoRounds.filter((r) => r.diff === 3).length >= 140, 'troppo pochi round difficili');
+    assert.ok(intrusoRounds.filter((r) => r.diff === 2).length >= 180, 'troppo pochi round medi');
+});
+
+test('db-intruso.js: intrusi variati, i soliti nomi non tornano ancora', () => {
+    const count = {};
+    intrusoRounds.forEach((r) => { count[r.odd] = (count[r.odd] || 0) + 1; });
+    // tetto ai nomi gia' abusati come intruso prima della revisione di novembre 2026
+    const tetto = { 'Del Piero': 10, Batistuta: 6, 'Ibrahimović': 6, Totti: 5 };
+    for (const [nome, max] of Object.entries(tetto)) {
+        assert.ok((count[nome] || 0) <= max, `${nome} e' l'intruso ${count[nome]} volte`);
+    }
+    const top = Object.entries(count).filter(([, n]) => n > 10);
+    assert.deepEqual(top, [], `intrusi troppo ripetuti: ${top.map((e) => e.join(':')).join(', ')}`);
+});
+
 test('games/intruso.js: lo script del gioco compila', () => {
     const fs = require('node:fs');
     const src = fs.readFileSync(path.join(__dirname, '..', 'assets', 'games', 'intruso.js'), 'utf8');
     assert.doesNotThrow(() => new Function(src));
+});
+
+/* ---------- Sfida a due: stessa difficolta' per tutti e due, telefono a blocchi ---------- */
+const G = require(path.join('..', 'assets', 'games', 'intruso.js'));
+
+test('sfida a due: un solo piano di difficolta\' per la partita, che sale come da solo', () => {
+    for (let k = 0; k < 50; k++) {
+        const plan = G.diffPlan(G.DUO_ROUNDS, Math.random);
+        assert.equal(plan.length, G.DUO_ROUNDS);
+        assert.deepEqual(plan.slice(0, 3), [1, 1, 1]);
+        plan.forEach((d, n) => assert.ok(n < 8 ? d <= 2 : d >= 2, `round ${n}: ${d}`));
+    }
+    // stesso generatore, stessa sequenza: il piano non dipende da chi gioca
+    const seq = (seed) => { let x = seed; return () => { x = (x * 16807) % 2147483647; return x / 2147483647; }; };
+    assert.deepEqual(G.diffPlan(10, seq(7)), G.diffPlan(10, seq(7)));
+});
+
+function simulate(lose) {
+    // lose[i] = round (1 = primo) in cui il giocatore i perde l'ultima vita, oppure 0
+    const ps = [0, 1].map(() => ({ lives: G.LIVES, played: 0 }));
+    let turn = 0, passes = 0;
+    const seq = [];
+    for (;;) {
+        const p = ps[turn];
+        p.played++;
+        seq.push(turn);
+        if (lose[turn] && p.played === lose[turn]) p.lives = 0;
+        const n = G.nextTurn(ps, turn);
+        if (n < 0) break;
+        if (n !== turn) passes++;
+        turn = n;
+    }
+    return { seq, passes, ps };
+}
+
+test('sfida a due: blocchi da cinque round, tre passaggi di mano invece di diciannove', () => {
+    const r = simulate([0, 0]);
+    assert.deepEqual(r.seq, [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]);
+    assert.equal(r.passes, 3);
+    assert.deepEqual(r.ps.map((p) => p.played), [10, 10]);
+});
+
+test('sfida a due: chi resta senza vite passa subito il telefono, l\'altro finisce i suoi round', () => {
+    const r = simulate([3, 0]);
+    assert.deepEqual(r.seq, [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
+    assert.equal(r.passes, 1);
+    const q = simulate([0, 7]);
+    assert.deepEqual(q.seq, [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1]);
+    assert.deepEqual(q.ps.map((p) => p.played), [10, 7]);
+    assert.equal(G.blockEnd(0, true), 5);
+    assert.equal(G.blockEnd(5, true), 10);
+    assert.equal(G.blockEnd(3, false), 10);
+});
+
+/* ---------- L'Intruso del giorno ---------- */
+test('Intruso del giorno: cinque round diversi, due facili, due medi e uno difficile, uguali per tutti', () => {
+    const days = ['2026-11-27', '2026-11-28', '2026-12-25', '2027-06-01'];
+    const sets = days.map((ymd) => {
+        const a = G.dailyRounds(intrusoRounds, ymd);
+        assert.deepEqual(a.map((r) => r.diff), [1, 1, 2, 2, 3], ymd);
+        assert.equal(new Set(a.map(G.roundKey)).size, 5, `${ymd}: round ripetuti`);
+        assert.deepEqual(G.dailyRounds(intrusoRounds, ymd), a, `${ymd}: stessa data, stessi round`);
+        // l'ordine del database non conta: e' la data a decidere
+        assert.deepEqual(G.dailyRounds(intrusoRounds.slice().reverse(), ymd).map(G.roundKey), a.map(G.roundKey), `${ymd}: dipende dall'ordine del database`);
+        return a.map(G.roundKey).join('#');
+    });
+    assert.equal(new Set(sets).size, days.length, 'ogni giorno i suoi round');
+});
+
+test('Intruso del giorno: un round aggiunto al database cambia al massimo i giorni in cui vince', () => {
+    const extra = { cat: 'Prova', diff: 2, items: ['A1', 'B2', 'C3', 'D4', 'E5', 'F6'], odd: 'F6', rule: 'r', why: 'w' };
+    let changed = 0;
+    for (let k = 0; k < 60; k++) {
+        const ymd = new Date(Date.UTC(2026, 10, 27 + k)).toISOString().slice(0, 10);
+        const a = G.dailyRounds(intrusoRounds, ymd).map(G.roundKey);
+        const b = G.dailyRounds(intrusoRounds.concat([extra]), ymd).map(G.roundKey);
+        const diff = a.filter((x, i) => x !== b[i]);
+        if (diff.length) { changed++; assert.ok(b.includes(G.roundKey(extra)), ymd); }
+    }
+    assert.ok(changed <= 6, `cambiati ${changed} giorni su 60`);
+});
+
+test('Intruso del giorno: quadratini e ritmo', () => {
+    assert.equal(G.dailyGrid(['ok', 'bad', 'time', 'ok']), '🟩🟥⬛🟩⬛', 'i round non giocati sono neri');
+    assert.equal(G.dailyGrid([]), '⬛⬛⬛⬛⬛');
+    assert.equal(G.DAILY_PACE, 10);
+    assert.equal(G.DAILY_PLAN.length, 5);
 });

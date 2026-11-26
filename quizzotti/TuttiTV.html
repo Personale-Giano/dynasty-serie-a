@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tutti contro la TV: quiz calcio con i telefoni · Quizzotti</title>
+<meta name="description" content="Il quiz di calcio da salotto: la TV fa le domande, ognuno risponde dal suo telefono con quattro bottoni colorati. Vince chi sa ed è più veloce. Da 2 a 12.">
+<link rel="canonical" href="https://quizotti.altervista.org/quizzotti/TuttiTV.html">
+<meta property="og:url" content="https://quizotti.altervista.org/quizzotti/TuttiTV.html">
+<meta name="theme-color" content="#07090b">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Quizzotti">
+<meta property="og:locale" content="it_IT">
+<meta property="og:title" content="Tutti contro la TV: quiz calcio con i telefoni · Quizzotti">
+<meta property="og:description" content="Il quiz di calcio da salotto: la TV fa le domande, ognuno risponde dal suo telefono con quattro bottoni colorati. Vince chi sa ed è più veloce. Da 2 a 12.">
+<!-- qz:testa (generato da scripts/seo-pagine.js) -->
+<meta property="og:image" content="https://quizotti.altervista.org/quizzotti/assets/og/tuttitv.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Tutti contro la TV sul tabellone di Quizzotti">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tutti contro la TV: quiz calcio con i telefoni · Quizzotti">
+<meta name="twitter:description" content="Il quiz di calcio da salotto: la TV fa le domande, ognuno risponde dal suo telefono con quattro bottoni colorati. Vince chi sa ed è più veloce. Da 2 a 12.">
+<meta name="twitter:image" content="https://quizotti.altervista.org/quizzotti/assets/og/tuttitv.jpg">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="icon" href="assets/icons/icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "@id": "https://quizotti.altervista.org/quizzotti/TuttiTV.html#gioco",
+      "name": "Tutti contro la TV",
+      "url": "https://quizotti.altervista.org/quizzotti/TuttiTV.html",
+      "description": "Il quiz di calcio da salotto: la TV fa le domande, ognuno risponde dal suo telefono con quattro bottoni colorati. Vince chi sa ed è più veloce. Da 2 a 12.",
+      "image": "https://quizotti.altervista.org/quizzotti/assets/og/tuttitv.jpg",
+      "applicationCategory": "GameApplication",
+      "applicationSubCategory": "Gioco di calcio",
+      "operatingSystem": "Tutti (browser web)",
+      "browserRequirements": "Serve JavaScript",
+      "isAccessibleForFree": true,
+      "inLanguage": "it",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "isPartOf": {
+        "@type": "WebSite",
+        "@id": "https://quizotti.altervista.org/quizzotti/#sito",
+        "name": "Quizzotti",
+        "url": "https://quizotti.altervista.org/quizzotti/"
+      }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Quizzotti",
+          "item": "https://quizotti.altervista.org/quizzotti/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Tutti contro la TV",
+          "item": "https://quizotti.altervista.org/quizzotti/TuttiTV.html"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Serve un'app?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, basta il browser: la TV apre la pagina, i telefoni inquadrano il QR code."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Quanti giocatori?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Da 2 a 12, ognuno con il suo telefono."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Le domande sono solo di calcio?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sì, è un quiz di calcio, con domande dal Milionario e dal trivia di Quizzotti."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<!-- /qz:testa -->
+<link rel="stylesheet" href="assets/qz.css?v=8d3462ca">
+<style>
+  /* i quattro colori delle risposte, uguali su TV e telefoni */
+  :root { --oA: #c8302a; --oB: #2563d9; --oC: #f2c230; --oD: #17804a; --oA-on: #fff; --oB-on: #fff; --oC-on: #07090b; --oD-on: #fff; }
+
+  /* ---------- Copertina ---------- */
+  .tt-join { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .tt-code-input { max-width: 170px; font-family: var(--font-led); font-size: 28px; letter-spacing: .25em; text-transform: uppercase; text-align: center; }
+
+  /* ---------- Sala d'attesa sulla TV ---------- */
+  .tt-lobby { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  @media (min-width: 960px) { .tt-lobby { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); align-items: start; } }
+  .tt-qr { display: grid; justify-items: center; gap: 12px; text-align: center; }
+  .tt-qr__img { width: min(100%, 300px); aspect-ratio: 1; padding: 12px; background: #fff; border-radius: var(--r); }
+  .tt-qr__img svg { display: block; width: 100%; height: 100%; }
+  .tt-qr__code { font-family: var(--font-led); font-size: clamp(44px, 7vw, 68px); line-height: 1; letter-spacing: .18em; color: var(--led); text-shadow: var(--led-glow); }
+  .tt-qr__url { font-size: 14px; color: var(--text-2); overflow-wrap: anywhere; }
+  .tt-sec { display: grid; gap: 12px; }
+  .tt-sec + .tt-sec { margin-top: 22px; }
+  .tt-sec h2 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-2); }
+  .tt-players { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tt-player { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 6px 12px 6px 8px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--panel-2); font-weight: 700; }
+  .tt-player .team__dot { background: var(--c); }
+  .tt-player.is-off { opacity: .45; }
+  .tt-player small { font-weight: 600; color: var(--text-2); }
+  .tt-player button { min-width: 28px; min-height: 28px; border: 0; border-radius: 50%; background: transparent; color: var(--text-2); }
+  .tt-player button:hover { color: var(--text); background: #000; }
+  .tt-empty { color: var(--text-2); }
+  .tt-themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr)); gap: 6px; }
+  .tt-theme { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); color: var(--text-2); font-weight: 600; text-align: left; }
+  .tt-theme__lamp { flex: none; width: 14px; height: 14px; border-radius: 3px; background: #000; border: 1px solid var(--line-2); }
+  .tt-theme small { margin-left: auto; font-family: var(--font-led); color: var(--text-2); }
+  .tt-theme[aria-pressed="true"] { color: var(--text); font-weight: 800; background: rgba(var(--accent-rgb), .08); border-color: rgba(var(--accent-rgb), .45); }
+  .tt-theme[aria-pressed="true"] .tt-theme__lamp { background: var(--accent); border-color: var(--accent); }
+  .tt-opts { display: grid; gap: 14px; }
+  .tt-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
+  .tt-twists { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  /* ---------- La domanda sulla TV ---------- */
+  .tt-hud { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+  .tt-hud__info { flex: 1; min-width: 0; }
+  .tt-hud__info b { display: block; font-family: var(--font-display); font-size: clamp(18px, 2.4vw, 26px); font-weight: 900; text-transform: uppercase; line-height: 1.05; color: var(--accent-ink); }
+  .tt-hud .timer-ring { --size: 104px; }
+  .tt-q { margin: 0 0 22px; font-family: var(--font-display); font-weight: 900; font-size: clamp(28px, 4.4vw, 58px); line-height: 1.08; text-wrap: balance; animation: qz-rise .4s var(--ease-out) both; }
+  .tt-ready { height: 8px; margin: -8px 0 20px; border-radius: 4px; background: #20272d; overflow: hidden; }
+  .tt-ready span { display: block; height: 100%; width: 0; background: var(--accent); }
+  .tt-opts4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .tt-opt { position: relative; display: flex; align-items: center; gap: 16px; min-height: 108px; padding: 16px 20px; border-radius: var(--r); background: var(--o); color: var(--o-on); font-family: var(--font-display); font-weight: 800; font-size: clamp(20px, 2.8vw, 36px); line-height: 1.1; overflow-wrap: anywhere; transition: opacity .3s, transform .3s var(--ease-out), filter .3s; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 80ms); }
+  .tt-opt__l { flex: none; display: grid; place-items: center; width: 54px; height: 54px; border-radius: 12px; background: rgba(0, 0, 0, .25); font-family: var(--font-led); font-size: 34px; }
+  .tt-opt__t { flex: 1; min-width: 0; }
+  .tt-opt__n { flex: none; min-width: 64px; padding: 4px 10px; border-radius: 10px; background: rgba(0, 0, 0, .35); color: #fff; font-family: var(--font-led); font-size: 34px; text-align: center; }
+  .tt-opt__bar { position: absolute; left: 0; bottom: 0; height: 8px; width: 0; border-radius: 0 4px 0 var(--r); background: rgba(0, 0, 0, .35); transition: width .6s var(--ease-out); }
+  .tt-opts4.is-wait .tt-opt { opacity: 0; transform: translateY(10px); animation: none; }
+  .tt-opts4.is-reveal .tt-opt { animation: none; }
+  .tt-opts4.is-reveal .tt-opt:not(.is-right) { opacity: .28; filter: saturate(.4); }
+  .tt-opts4.is-reveal .tt-opt.is-right { transform: scale(1.03); box-shadow: 0 0 0 4px #fff; }
+  .tt-opt.is-right .tt-opt__l::after { content: ''; }
+  .tt-who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 20px; font-weight: 700; color: var(--text-2); }
+  .tt-who__dot { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text-2); font-size: 15px; }
+  .tt-who__dot .team__dot { background: var(--c); opacity: .35; }
+  .tt-who__dot.is-done { border-color: var(--c); color: var(--text); }
+  .tt-who__dot.is-done .team__dot { opacity: 1; }
+
+  /* ---------- La soluzione ---------- */
+  .tt-reveal { display: grid; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+  @media (min-width: 1000px) { .tt-reveal { grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); align-items: start; } }
+  .tt-reveal .tt-q { font-size: clamp(22px, 3vw, 38px); }
+  .tt-reveal .tt-opts4 { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .tt-reveal .tt-opt { min-height: 68px; padding: 10px 16px; font-size: clamp(18px, 2.2vw, 28px); }
+  .tt-reveal .tt-opt__l { width: 46px; height: 46px; font-size: 28px; }
+  .tt-reveal .tt-opt__l svg { width: 26px; height: 26px; }
+  .tt-rank-title { margin: 0 0 10px; font-family: var(--font-display); font-weight: 800; font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-2); }
+  .tt-news { margin-top: 16px; padding: 12px 16px; border-radius: var(--r); background: rgba(var(--accent-rgb), .12); border: 1px solid rgba(var(--accent-rgb), .45); font-weight: 800; font-size: clamp(17px, 2vw, 22px); }
+  .tt-news:empty { display: none; }
+  .tt-board { display: grid; gap: 6px; }
+  .tt-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; min-height: 52px; padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); box-shadow: inset 4px 0 0 var(--c); animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 60ms); }
+  .tt-row__pos { font-family: var(--font-led); font-size: 22px; color: var(--text-2); text-align: center; }
+  .tt-row__name { font-weight: 800; font-size: 18px; overflow-wrap: anywhere; }
+  .tt-row__name small { display: block; font-size: 13px; font-weight: 600; color: var(--text-2); }
+  .tt-row__pts { font-family: var(--font-led); font-size: 20px; color: var(--led-green, #3ddc84); }
+  .tt-row__pts.is-zero { color: var(--text-2); }
+  .tt-row__pts.is-neg { color: var(--led-red, #e5484d); }
+  .tt-row__tot { min-width: 82px; font-family: var(--font-led); font-size: 26px; color: var(--led); text-align: right; }
+  .tt-auto { display: flex; align-items: center; gap: 12px; margin-top: 18px; color: var(--text-2); font-weight: 700; }
+  .tt-auto__bar { flex: 1; height: 6px; border-radius: 3px; background: #20272d; overflow: hidden; }
+  .tt-auto__bar span { display: block; height: 100%; width: 0; background: var(--accent); }
+
+  /* ---------- L'imprevisto ---------- */
+  .tt-twist { display: grid; justify-items: center; gap: 16px; padding: 20px 0; text-align: center; }
+  .tt-twist__tag { padding: 6px 16px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-family: var(--font-display); font-weight: 900; font-size: clamp(16px, 2vw, 22px); letter-spacing: .14em; text-transform: uppercase; animation: tt-blink 1s steps(1) 3; }
+  @keyframes tt-blink { 50% { opacity: .35; } }
+  .tt-twist__icon { display: grid; place-items: center; width: clamp(96px, 14vw, 150px); aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--accent); color: var(--accent); animation: qz-rise .5s var(--ease-spring) both; }
+  .tt-twist__icon svg { width: 55%; height: 55%; }
+  .tt-twist__name { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: clamp(44px, 8vw, 110px); line-height: .95; text-transform: uppercase; color: var(--led); text-shadow: var(--led-glow); }
+  .tt-twist__text { max-width: 26ch; margin: 0; font-family: var(--font-display); font-weight: 800; font-size: clamp(24px, 3.6vw, 46px); line-height: 1.15; text-wrap: balance; }
+  .tt-twist__sub { color: var(--text-2); font-weight: 700; font-size: clamp(16px, 1.8vw, 20px); }
+
+  /* ---------- Resoconto finale ---------- */
+  .tt-awards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 10px; margin-top: 18px; }
+  .tt-award { padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel); }
+  .tt-award span { display: block; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+  .tt-award b { display: block; margin-top: 4px; font-family: var(--font-display); font-size: 22px; font-weight: 900; overflow-wrap: anywhere; }
+  .tt-award small { display: block; margin-top: 2px; color: var(--text-2); }
+  .tt-award--wide { grid-column: 1 / -1; }
+  .tt-award--wide b { font-size: clamp(18px, 2.2vw, 24px); }
+  .tt-table-wrap { overflow-x: auto; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel); }
+  .tt-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .tt-table th, .tt-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .tt-table thead th { background: var(--panel-2); font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .tt-table td.num { font-family: var(--font-led); white-space: nowrap; }
+
+  /* ---------- Il telefono ---------- */
+  .tt-phone { max-width: 560px; margin: 0 auto; display: grid; gap: 14px; }
+  .tt-me { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel); box-shadow: inset 4px 0 0 var(--c); }
+  .tt-me b { flex: 1; min-width: 0; font-size: 18px; overflow-wrap: anywhere; }
+  .tt-me .led { font-size: 26px; }
+  .tt-big-msg { padding: 24px 18px; text-align: center; border: 1px solid var(--line-2); border-radius: var(--r-lg); background: #000; }
+  .tt-big-msg b { display: block; font-family: var(--font-display); font-weight: 900; font-size: clamp(28px, 8vw, 46px); text-transform: uppercase; line-height: 1.05; }
+  .tt-big-msg p { margin: 10px 0 0; color: var(--text-2); font-size: 17px; }
+  .tt-big-msg.is-ok { border-color: #17804a; background: #062414; }
+  .tt-big-msg.is-ok b { color: var(--led-green, #3ddc84); }
+  .tt-big-msg.is-bad { border-color: #8c1d18; background: #240807; }
+  .tt-big-msg.is-bad b { color: var(--led-red, #e5484d); }
+  .tt-phone-hud { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel); }
+  .tt-phone-hud .timer-ring { --size: 58px; }
+  .tt-phone-hud__txt { flex: 1; min-width: 0; font-weight: 700; color: var(--text-2); font-size: 14px; }
+  .tt-phone-hud__txt b { display: block; color: var(--text); font-size: 17px; }
+  .tt-pad { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .tt-pad button { display: grid; align-content: center; justify-items: start; gap: 6px; min-height: min(30vh, 190px); padding: 14px; border: 0; border-radius: var(--r); background: var(--o); color: var(--o-on); font-family: var(--font-display); font-weight: 800; font-size: clamp(17px, 4.6vw, 22px); line-height: 1.12; text-align: left; overflow-wrap: anywhere; touch-action: manipulation; transition: opacity .2s, transform .15s; }
+  .tt-pad button span { font-family: var(--font-led); font-size: 30px; line-height: 1; opacity: .85; }
+  .tt-pad button:active { transform: scale(.97); }
+  .tt-pad button:disabled { opacity: .25; }
+  .tt-pad.is-sent button:disabled { opacity: .18; }
+  .tt-pad button.is-mine { opacity: 1; box-shadow: 0 0 0 4px #fff; }
+  .tt-pad.is-wait button { opacity: .15; }
+  .tt-boss { display: grid; gap: 10px; padding: 14px; border: 1px dashed rgba(var(--accent-rgb), .55); border-radius: var(--r); }
+  .tt-boss > span { font-size: 13px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-ink); }
+  .tt-sent { font-size: 15px; font-weight: 700; color: var(--text-2); text-align: center; min-height: 1.4em; }
+</style>
+</head>
+<body data-game="tuttitv">
+<main id="app" class="qz-main" tabindex="-1">
+
+  <!-- ============ COPERTINA ============ -->
+  <section class="screen is-active" id="s-start">
+    <div class="intro">
+      <div data-stagger>
+        <span class="eyebrow">Gioco 22 · TV e telefoni, da 2 a 12</span>
+        <h1 class="intro__title">Tutti contro <em>la TV</em></h1>
+        <p class="intro__lead">La TV fa le domande di calcio, i telefoni diventano pulsantiere: quattro bottoni colorati e il tempo che scorre. Chi sa prende punti, chi è anche veloce ne prende di più. E tra un round e l'altro arriva l'imprevisto.</p>
+        <div class="row mt-3">
+          <button class="btn btn--primary btn--xl" type="button" id="create-btn" data-autofocus></button>
+        </div>
+        <p class="note mt-2">Apri questa pagina sulla TV o sul computer: i telefoni entrano col QR code.</p>
+        <div class="card mt-3">
+          <label class="label" for="code-in">Hai già il codice della stanza?</label>
+          <div class="tt-join mt-1">
+            <input class="input tt-code-input" id="code-in" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="····">
+            <button class="btn" type="button" id="code-go"></button>
+          </div>
+        </div>
+      </div>
+      <div class="stack" style="--gap:22px;align-items:center">
+        <div class="medal" id="medal"></div>
+        <div class="card card--glow" style="width:100%">
+          <ul class="rules" id="rules"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TV: SALA D'ATTESA ============ -->
+  <section class="screen" id="t-lobby">
+    <div class="tt-lobby">
+      <div class="card tt-qr">
+        <span class="label">Inquadra per entrare</span>
+        <div class="tt-qr__img" id="qr" aria-hidden="true"></div>
+        <div class="tt-qr__code" id="room-code" aria-label="Codice stanza"></div>
+        <div class="tt-qr__url" id="room-url"></div>
+      </div>
+      <div class="card">
+        <div class="tt-sec">
+          <h2 id="lbl-players">In campo</h2>
+          <div class="tt-players" id="t-players" role="list" aria-labelledby="lbl-players"></div>
+        </div>
+        <div class="tt-sec tt-opts">
+          <h2>Regole</h2>
+          <div class="field"><span class="label" id="lbl-rounds">Round da 5 domande</span><div id="opt-rounds" aria-labelledby="lbl-rounds"></div></div>
+          <div class="field"><span class="label" id="lbl-time">Tempo per domanda</span><div id="opt-time" aria-labelledby="lbl-time"></div></div>
+          <div class="field"><span class="label" id="lbl-diff">Difficoltà</span><div id="opt-diff" aria-labelledby="lbl-diff"></div></div>
+        </div>
+        <div class="tt-sec">
+          <div class="row row--between"><h2 id="lbl-themes">Temi</h2><span class="small muted" id="themes-count"></span></div>
+          <div class="tt-themes" id="t-themes" role="group" aria-labelledby="lbl-themes"></div>
+        </div>
+        <div class="tt-sec">
+          <h2>Gli imprevisti tra un round e l'altro</h2>
+          <div class="tt-twists" id="t-twists"></div>
+        </div>
+        <div class="tt-actions">
+          <button class="btn btn--primary btn--xl" type="button" id="t-start"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TV: DOMANDA ============ -->
+  <section class="screen" id="t-ask">
+    <div class="tt-hud">
+      <div class="tt-hud__info"><span class="label" id="t-ask-step"></span><b id="t-ask-mode"></b></div>
+      <div id="t-timer"></div>
+    </div>
+    <h2 class="tt-q" id="t-ask-q" aria-live="polite"></h2>
+    <div class="tt-ready" id="t-ready" aria-hidden="true"><span></span></div>
+    <div class="tt-opts4" id="t-ask-opts"></div>
+    <div class="tt-who" id="t-who"></div>
+    <div class="tt-actions"><button class="btn btn--sm btn--ghost" type="button" id="t-close"></button></div>
+  </section>
+
+  <!-- ============ TV: SOLUZIONE ============ -->
+  <section class="screen" id="t-reveal">
+    <div class="tt-reveal">
+      <div>
+        <span class="label" id="t-rev-step"></span>
+        <h2 class="tt-q" id="t-rev-q"></h2>
+        <div class="tt-opts4 is-reveal" id="t-rev-opts"></div>
+        <div class="tt-news" id="t-rev-news" aria-live="polite"></div>
+      </div>
+      <div>
+        <h2 class="tt-rank-title" id="t-rev-rank-title">Classifica</h2>
+        <div class="tt-board" id="t-rev-board"></div>
+        <div class="tt-auto" id="t-rev-auto"><span id="t-rev-auto-txt"></span><div class="tt-auto__bar"><span></span></div></div>
+        <div class="tt-actions">
+          <button class="btn btn--lg" type="button" id="t-rev-hold"></button>
+          <button class="btn btn--primary btn--lg" type="button" id="t-rev-next"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TV: IMPREVISTO ============ -->
+  <section class="screen" id="t-twist">
+    <div class="tt-twist">
+      <span class="tt-twist__tag">Imprevisto</span>
+      <div class="tt-twist__icon" id="t-tw-icon" aria-hidden="true"></div>
+      <h2 class="tt-twist__name" id="t-tw-name" aria-live="polite"></h2>
+      <p class="tt-twist__text" id="t-tw-text"></p>
+      <p class="tt-twist__sub" id="t-tw-sub"></p>
+    </div>
+    <div class="qz-main--narrow" style="margin:0 auto">
+      <div class="tt-board" id="t-tw-board"></div>
+      <div class="tt-auto" id="t-tw-auto"><span id="t-tw-auto-txt"></span><div class="tt-auto__bar"><span></span></div></div>
+      <div class="tt-actions">
+        <button class="btn btn--lg" type="button" id="t-tw-hold"></button>
+        <button class="btn btn--primary btn--xl" type="button" id="t-tw-next"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TV: RESOCONTO FINALE ============ -->
+  <section class="screen" id="t-final">
+    <div class="result" data-stagger>
+      <div class="result__badge" id="f-badge"></div>
+      <h1 class="result__title" id="f-title" tabindex="-1"></h1>
+      <p class="muted result__sub" id="f-sub"></p>
+    </div>
+    <div class="qz-main--narrow" style="margin:0 auto" id="f-podium"></div>
+    <div class="tt-awards" id="f-awards"></div>
+    <div class="section-head mt-4"><h2>Domanda per domanda</h2></div>
+    <div class="tt-table-wrap mt-2"><table class="tt-table" id="f-table"></table></div>
+    <div class="tt-actions">
+      <button class="btn btn--primary btn--lg" type="button" id="f-again"></button>
+      <button class="btn btn--lg" type="button" id="f-new"></button>
+      <a class="btn btn--ghost btn--lg" href="index.html#giochi" id="f-exit"></a>
+    </div>
+  </section>
+
+  <!-- ============ TELEFONO: ENTRA ============ -->
+  <section class="screen" id="p-join">
+    <div class="tt-phone">
+      <div class="tt-big-msg"><b id="p-join-code"></b><p>Stanza di Tutti contro la TV</p></div>
+      <div class="card stack" style="--gap:12px">
+        <label class="label" for="p-name">Il tuo nome</label>
+        <input class="input input--lg" id="p-name" maxlength="16" autocomplete="nickname" placeholder="Come ti chiamano al campetto" data-autofocus>
+        <button class="btn btn--primary btn--xl btn--block" type="button" id="p-join-btn"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TELEFONO: IN ATTESA ============ -->
+  <section class="screen" id="p-wait">
+    <div class="tt-phone">
+      <div class="tt-me" id="p-me"></div>
+      <div class="tt-big-msg"><b id="p-wait-title"></b><p id="p-wait-sub"></p></div>
+      <div class="tt-boss" id="p-boss" hidden>
+        <span>Sei il capitano: comandi tu</span>
+        <button class="btn btn--primary btn--xl btn--block" type="button" id="p-start"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TELEFONO: LA PULSANTIERA ============ -->
+  <section class="screen" id="p-ask">
+    <div class="tt-phone">
+      <div class="tt-phone-hud">
+        <div class="tt-phone-hud__txt" id="p-hud-txt"></div>
+        <div id="p-timer"></div>
+      </div>
+      <div class="tt-pad" id="p-pad" role="group" aria-label="Le quattro risposte"></div>
+      <p class="tt-sent" id="p-sent" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- ============ TELEFONO: ESITO ============ -->
+  <section class="screen" id="p-reveal">
+    <div class="tt-phone">
+      <div class="tt-big-msg" id="p-res"><b id="p-res-title"></b><p id="p-res-sub"></p></div>
+      <div class="tt-me" id="p-me2"></div>
+      <div class="tt-boss" id="p-boss2" hidden>
+        <span>Sei il capitano</span>
+        <div class="grid-2">
+          <button class="btn btn--lg" type="button" id="p-hold"></button>
+          <button class="btn btn--primary btn--lg" type="button" id="p-next"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TELEFONO: FINE ============ -->
+  <section class="screen" id="p-final">
+    <div class="tt-phone">
+      <div class="tt-big-msg"><b id="p-final-title"></b><p id="p-final-sub"></p></div>
+      <div id="p-final-rank"></div>
+      <div class="tt-boss" id="p-boss3" hidden>
+        <span>Sei il capitano</span>
+        <button class="btn btn--primary btn--lg btn--block" type="button" id="p-again"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- qz:info (generato da scripts/seo-pagine.js: i testi si cambiano lì) -->
+  <section class="qz-about" aria-label="Informazioni sul gioco">
+    <div>
+      <h2>Come si gioca a Tutti contro la TV</h2>
+      <ol class="qz-about__steps">
+        <li>Apri la pagina sulla TV o sul computer: fa le domande.</li>
+        <li>Gli altri entrano dal telefono con il QR code.</li>
+        <li>Il telefono diventa una pulsantiera con quattro bottoni colorati.</li>
+        <li>Chi risponde giusto prende punti, chi è più veloce ne prende di più.</li>
+        <li>Tra un round e l'altro arrivano imprevisti e punti doppi.</li>
+      </ol>
+    </div>
+    <div>
+      <h2>Domande frequenti</h2>
+      <details class="qz-about__faq"><summary>Serve un'app?</summary><p>No, basta il browser: la TV apre la pagina, i telefoni inquadrano il QR code.</p></details>
+      <details class="qz-about__faq"><summary>Quanti giocatori?</summary><p>Da 2 a 12, ognuno con il suo telefono.</p></details>
+      <details class="qz-about__faq"><summary>Le domande sono solo di calcio?</summary><p>Sì, è un quiz di calcio, con domande dal Milionario e dal trivia di Quizzotti.</p></details>
+    </div>
+    <nav class="qz-about__more" aria-label="Altri giochi">
+      <h2>Altri giochi</h2>
+      <ul>
+      <li><a href="NomiCose.html">Nomi, Cose, Calcio<span>Gioco di calcio in compagnia · TV e telefoni, 2-12</span></a></li>
+      <li><a href="Jeopardy.html">Jeopardy Calcio<span>Gioco di calcio in compagnia · 1-6 squadre</span></a></li>
+      <li><a href="Bingo.html">Bingo della Partita<span>Gioco di calcio in compagnia · 2+ giocatori</span></a></li>
+      <li><a href="CVEM.html">Chi Vuol Essere Milionario Calcio<span>Quiz di calcio · Da solo</span></a></li>
+      </ul>
+    </nav>
+  </section>
+  <!-- /qz:info -->
+
+</main>
+
+<script src="assets/qz.js?v=40f99e24" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
+<script src="assets/games/tuttitv.js?v=37d4cf72" defer></script>
+</body>
+</html>

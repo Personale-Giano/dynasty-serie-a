@@ -9,7 +9,8 @@
    Campi: name, role (POR/DIF/CEN/ATT), team, value, nation (la nazionale),
    continent, league (campionato 2026-27), born (anno di nascita).
    Usato da: Sfida dei Budget, Sopra o Sotto, Calciatore del Giorno (tentativi).
-   I nomi dei calciatori del giorno (db-giocatoredelgiorno.js) non si cambiano mai.
+   I nomi del calendario del Calciatore del Giorno (db-giocatoredelgiorno.js) non si
+   rinominano e non si tolgono: il segreto di ogni giorno si cerca qui per nome.
    ========================================================================== */
 
 const playersDatabase = [

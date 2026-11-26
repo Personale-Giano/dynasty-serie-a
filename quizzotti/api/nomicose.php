@@ -91,10 +91,47 @@ function who($r, $tok) {
 ensure_dir();
 $now = time();
 
+/** Stato per chi chiede: completo per la TV e i giocatori, minimo per chi non ha un gettone valido. */
+function state_for($r, $tok, $now) {
+    [$me, $isHost] = who($r, $tok);
+    if ($me === '' && !$isHost) return nc_public_min($r, $now);
+    return nc_public($r, $me, $isHost, $now);
+}
+
+/**
+ * Lettura veloce, senza lock esclusivo: legge la stanza sotto lock condiviso e,
+ * se non c'e' niente da scrivere (nessun passaggio di fase a tempo, presenza
+ * del giocatore aggiornata da meno di 8 secondi), risponde subito.
+ * Restituisce null quando serve il percorso con la scrittura.
+ */
+function read_fast($code, $tok, $v, $now) {
+    if (!valid_code($code)) out(['err' => 'Codice stanza non valido'], 400);
+    $path = room_path($code);
+    if (!is_file($path)) out(['err' => 'Stanza non trovata: controlla il codice', 'gone' => 1], 404);
+    $fh = @fopen($path, 'r');
+    if (!$fh) return null;
+    flock($fh, LOCK_SH);
+    $raw = stream_get_contents($fh);
+    flock($fh, LOCK_UN);
+    fclose($fh);
+    $r = json_decode($raw ?: '', true);
+    if (!is_array($r)) return null;   // il percorso lento sa dire "stanza rovinata"
+    $copy = $r;
+    if (nc_tick($copy, $now)) return null;
+    [$me] = who($r, $tok);
+    if ($me !== '') {
+        $i = nc_player_index($r, $me);
+        if ($now - ($r['players'][$i]['last'] ?? 0) >= 8) return null;
+    }
+    if ($v === $r['v']) out(['u' => 1, 'now' => $now]);
+    out(state_for($r, $tok, $now));
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $code = strtoupper((string)($_GET['code'] ?? ''));
     $tok = (string)($_GET['tok'] ?? '');
     $v = (int)($_GET['v'] ?? -1);
+    read_fast($code, $tok, $v, $now);   // esce da sola quando basta leggere
     [$r, $res] = with_room($code, function (&$r) use ($tok, $now, $v) {
         $changed = nc_tick($r, $now);
         [$me] = who($r, $tok);
@@ -106,12 +143,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         return ['_dirty' => $changed, '_touch' => $touch, 'same' => !$changed && $v === $r['v']];
     });
     if ($res['same']) out(['u' => 1, 'now' => $now]);
-    [$me, $isHost] = who($r, $tok);
-    out(nc_public($r, $me, $isHost, $now));
+    out(state_for($r, $tok, $now));
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') out(['err' => 'Metodo non ammesso'], 405);
-$in = json_decode((string)file_get_contents('php://input'), true);
+// il corpo e' JSON sia con fetch (application/json) sia con navigator.sendBeacon
+// (text/plain, quando il telefono chiude la pagina); per sicurezza anche un campo "d" in un form
+$body = (string)file_get_contents('php://input');
+if (trim($body) === '' && isset($_POST['d'])) $body = (string)$_POST['d'];
+if (strncmp($body, "\xEF\xBB\xBF", 3) === 0) $body = substr($body, 3);
+$in = json_decode($body, true);
 if (!is_array($in)) out(['err' => 'Richiesta non valida'], 400);
 $a = (string)($in['a'] ?? '');
 
@@ -150,7 +191,7 @@ if ($a === 'join') {
 $BOSS = ['opts', 'cats', 'removecat', 'start', 'finish', 'revcat', 'confirm', 'override', 'end', 'rematch', 'kick'];
 [$r, $res] = with_room($code, function (&$r) use ($a, $in, $tok, $now, $BOSS) {
     nc_tick($r, $now);
-    [$me, , $boss] = who($r, $tok);
+    [$me, $isHost, $boss] = who($r, $tok);
     if (in_array($a, $BOSS, true) && !$boss) return ['err' => 'Solo la TV o il capitano possono farlo'];
     if (!$boss && $me === '') return ['err' => 'Entra prima nella stanza'];
     switch ($a) {
@@ -169,7 +210,8 @@ $BOSS = ['opts', 'cats', 'removecat', 'start', 'finish', 'revcat', 'confirm', 'o
         case 'vote': return $me === '' ? ['err' => 'Solo i giocatori votano'] : nc_vote($r, $me, (string)($in['pid'] ?? ''), (string)($in['cat'] ?? ''));
         case 'override':
             $val = $in['value'] ?? null;
-            return nc_override($r, (string)($in['pid'] ?? ''), (string)($in['cat'] ?? ''), $val === null ? null : (bool)$val);
+            // la TV decide su tutte; il capitano su tutte tranne le sue
+            return nc_override($r, (string)($in['pid'] ?? ''), (string)($in['cat'] ?? ''), $val === null ? null : (bool)$val, $isHost ? '' : $me);
         case 'finish': return nc_finish($r, $now);
         case 'revcat': return nc_review_cat($r, (int)($in['idx'] ?? 0));
         case 'confirm': return nc_confirm($r);

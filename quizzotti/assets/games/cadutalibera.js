@@ -7,8 +7,17 @@
    si apre una botola, dai bordi verso i piedi. Il "Passo" salta la domanda
    senza aprire botole ma azzera la serie, e si usa due volte a partita.
    Si arriva in fondo alle 15/25/40 domande oppure si cade: chi cade si
-   porta a casa solo meta' del montepremi. Difficolta' che sale (1 -> 3),
-   QZ.Deck per non rivedere subito le stesse domande, record per lunghezza.
+   porta a casa solo meta' del montepremi, chi arriva in fondo prende il
+   premio arrivo (montepremi x1,5). «Mi fermo qui» tiene il 50% prima del
+   primo traguardo (un terzo delle domande), il 75% fino al secondo (due
+   terzi) e il 100% solo dopo: fermarsi presto non conviene, e in fondo il
+   premio arrivo vale il rischio. Bonus velocita' proporzionale al tempo
+   risparmiato sul ritmo, piu' ricco per i ritmi veloci. Difficolta' che sale
+   (1 -> 3), QZ.Deck per non rivedere subito le stesse domande, record per
+   lunghezza e ritmo (QZ.profile, modalita' '25-7').
+   Sfida un amico (assets/sfida.js): il link porta lunghezza, ritmo e botole,
+   il seme (ordine delle risposte) e le domande uscite; l'amico gioca le stesse,
+   nello stesso ordine, senza toccare mazzo, record e statistiche.
    ========================================================================== */
 /* global cadutaDomande */
 (function () {
@@ -23,9 +32,23 @@
     var PASSES = 2;
     var PACE_XP = { 10: 1, 7: 1.2, 5: 1.5 };
     var PACE_NAME = { 10: 'Calmo', 7: 'Svelto', 5: 'Lampo' };
+    // bonus velocita' per ritmo: una quota fissa per il ritmo scelto piu' una parte proporzionale al
+    // tempo avanzato (massima con la risposta istantanea). Tarati perche', a parita' di secondi
+    // impiegati, Lampo renda sempre piu' di Svelto e Svelto piu' di Calmo.
+    var SPEED_BASE = { 10: 0, 7: 200, 5: 500 };
+    var SPEED_MAX = { 10: 600, 7: 900, 5: 1200 };
+    var FINISH_BONUS = 1.5; // in piedi fino in fondo: montepremi x1,5
+    var FALL_KEEP = 0.5;    // chi cade ne salva meta'
     var STATS_KEY = 'qz.caduta.stats';
 
     var deck = new QZ.Deck(GAME, cadutaDomande, function (d) { return d.q; });
+    var SF = QZ.sfida || null;
+    var CH = SF ? SF.read(GAME, cadutaDomande.length) : null;   // la sfida arrivata col link
+    /** Le regole della sfida: '25-7-10' (domande, secondi, botole); valori strani -> quelli di base. */
+    function chRules(opt) {
+        var p = String(opt || '').split('-').map(Number);
+        return { len: [15, 25, 40].indexOf(p[0]) >= 0 ? p[0] : 25, pace: [10, 7, 5].indexOf(p[1]) >= 0 ? p[1] : 7, floor: [10, 6, 3].indexOf(p[2]) >= 0 ? p[2] : 10 };
+    }
     var set = Object.assign({ len: 25, pace: 7, floor: 10 }, QZ.store.get('qz.caduta.settings', {}) || {});
     // impostazioni salvate a mano o da una versione vecchia: si torna ai valori ammessi
     if ([15, 25, 40].indexOf(set.len) < 0) set.len = 25;
@@ -42,8 +65,8 @@
         ['Tre risposte, pochi secondi.', 'Una sola è quella giusta, e le domande si fanno più cattive man mano.'],
         ['Sbagli o vai lungo col tempo?', 'Si apre una botola. Prima ai bordi, poi sempre più vicino ai tuoi piedi.'],
         ['Il Passo ti salva la botola,', 'ma azzera la serie. E ne hai solo due.'],
-        ['Di fila vale di più:', 'con 3, 6 e 10 risposte giuste il montepremi va per 2, per 3 e per 5. E più rispondi in fretta, più incassi.'],
-        ['Senti le gambe tremare?', 'Con «Mi fermo qui» scendi quando vuoi e il montepremi resta tutto tuo. Se cadi, invece, ne salvi la metà.']
+        ['Di fila vale di più:', 'con 3, 6 e 10 risposte giuste il montepremi va per 2, per 3 e per 5. E più tempo avanzi, più incassi: col ritmo Lampo il bonus velocità vale più del doppio che col Calmo.'],
+        ['Senti le gambe tremare?', 'Con «Mi fermo qui» scendi quando vuoi, ma ti porti a casa il 50% del montepremi fino a un terzo delle domande, il 75% fino a due terzi e tutto solo dopo. Se cadi ne salvi la metà; se resti in piedi fino in fondo, premio arrivo: montepremi per 1,5.']
     ].map(function (r, i) {
         return '<li><span class="rules__n">' + (i + 1) + '</span><span><b>' + r[0] + '</b> ' + r[1] + '</span></li>';
     }).join('');
@@ -92,13 +115,33 @@
         var s = QZ.store.get(STATS_KEY, null);
         return Object.assign({ games: 0, safe: 0, falls: 0, quits: 0, right: 0, asked: 0, bestStreak: 0, perfect: 0 }, s && typeof s === 'object' ? s : {});
     }
+    /** Modalita' del record: lunghezza e ritmo (i secondi a domanda), es. '25-7'. */
+    function recMode(len, pace) { return len + '-' + pace; }
+    /** Bonus velocita': quota del ritmo + parte proporzionale al tempo risparmiato, arrotondato a 50 euro. */
+    function speedBonus(rem, pace) {
+        var frac = QZ.clamp(rem / pace, 0, 1);
+        return Math.round(((SPEED_BASE[pace] || 0) + frac * (SPEED_MAX[pace] || 0)) / 50) * 50;
+    }
+    /** Quota del montepremi che si tiene fermandosi dopo `done` domande su `len`. */
+    function keepShare(done, len) {
+        return done >= Math.ceil((2 * len) / 3) ? 1 : done >= Math.ceil(len / 3) ? 0.75 : 0.5;
+    }
+    /** Domande da rispondere ancora per il prossimo traguardo (0 se si tiene gia' tutto). */
+    function toNextStep(done, len) {
+        var a = Math.ceil(len / 3), b = Math.ceil((2 * len) / 3);
+        return done < a ? a - done : done < b ? b - done : 0;
+    }
+    function pct(share) { return Math.round(share * 100) + '%'; }
     function paintRecord() {
-        var all = bests();
-        var b = all[set.len];
+        var b = QZ.profile.best(GAME, recMode(set.len, set.pace));
+        var old = bests()[set.len];
         var host = $('#start-record');
         var st = stats();
         var lines = [];
-        lines.push(b ? 'Record su ' + set.len + ' domande: <b>' + money(b) + '</b> portati a casa.' : 'Su ' + set.len + ' domande non hai ancora un record: è il momento buono.');
+        var what = set.len + ' domande col ritmo ' + PACE_NAME[set.pace];
+        lines.push(b != null ? 'Record su ' + what + ': <b>' + money(b) + '</b> portati a casa.'
+            : 'Su ' + what + ' non hai ancora un record: è il momento buono.' +
+                (old ? ' (Vecchio record su ' + set.len + ' domande, ritmi insieme: ' + money(old) + '.)' : ''));
         if (st.games) {
             lines.push(st.games + (st.games === 1 ? ' partita' : ' partite') + ' · ' + st.safe + ' in piedi fino in fondo · ' + st.falls + (st.falls === 1 ? ' caduta' : ' cadute') +
                 ' · serie record ' + st.bestStreak + (st.asked ? ' · ' + Math.round(st.right * 100 / st.asked) + '% di risposte giuste' : ''));
@@ -113,11 +156,12 @@
     function draw(i) {
         var want = targetDiff(i, S.len);
         var fresh = function (d) { return !S.used[d.q]; };
-        var raw = deck.draw(function (d) { return d.diff === want && fresh(d); }) ||
-            deck.draw(function (d) { return Math.abs(d.diff - want) === 1 && fresh(d); }) ||
-            deck.draw(fresh);
+        var src = S.src || deck;
+        var raw = src.draw(function (d) { return d.diff === want && fresh(d); }) ||
+            src.draw(function (d) { return Math.abs(d.diff - want) === 1 && fresh(d); }) ||
+            src.draw(fresh) || src.draw();
         S.used[raw.q] = true;
-        var opts = QZ.shuffle([raw.ok, raw.ko[0], raw.ko[1]]);
+        var opts = S.rng ? SF.shuffle([raw.ok, raw.ko[0], raw.ko[1]], S.rng) : QZ.shuffle([raw.ok, raw.ko[0], raw.ko[1]]);
         return { raw: raw, text: raw.q, options: opts, correct: opts.indexOf(raw.ok) };
     }
 
@@ -170,6 +214,10 @@
         $('#g-pass').innerHTML = QZ.icon('skip') + 'Passo <b>' + S.passes + '</b>';
         $('#g-pass').disabled = !S.passes || !S.active;
         $('#g-pass').setAttribute('aria-label', 'Passo: ne restano ' + S.passes);
+        // quanto ci si porta a casa fermandosi adesso
+        var share = keepShare(S.i, S.len);
+        $('#g-quit').innerHTML = QZ.icon('flag') + 'Mi fermo qui · <b>' + pct(share) + '</b>';
+        $('#g-quit').setAttribute('aria-label', 'Mi fermo qui: tieni il ' + pct(share) + ' del montepremi');
     }
 
     function paintBank(from) {
@@ -180,14 +228,23 @@
     }
 
     /* ---------- Flusso ---------- */
-    function start() {
+    /** kind 'sfida': regole e domande del link (CH), senza toccare mazzo, record e statistiche. */
+    function start(kind) {
         if (starting) return;
         starting = true;
+        var ch = kind === 'sfida' ? CH : null;
+        var rules = ch ? chRules(ch.opt) : set;
         S = {
-            len: set.len, pace: set.pace, floor: set.floor,
-            i: 0, left: set.floor, passes: PASSES, streak: 0, bestStreak: 0,
+            len: rules.len, pace: rules.pace, floor: rules.floor,
+            i: 0, left: rules.floor, passes: PASSES, streak: 0, bestStreak: 0,
             bank: 0, right: 0, log: [], used: {}, q: null, active: false, running: false, done: false
         };
+        // il seme decide l'ordine delle risposte; le domande si annotano per la sfida
+        S.ch = ch;
+        S.seed = ch ? ch.seed : SF ? SF.newSeed() : 0;
+        S.rng = SF ? SF.rng(S.seed) : null;
+        S.src = SF ? SF.source(deck, cadutaDomande, ch, S.rng) : null;
+        if (ch) SF.kickoff(ch, money(ch.score));
         if (timer) timer.destroy();
         timer = new QZ.Timer({
             seconds: S.pace, bar: $('#g-bar'), label: $('#g-clock'), warnAt: 0.5, dangerAt: 0.3,
@@ -283,7 +340,7 @@
         S.streak++;
         if (S.streak > S.bestStreak) S.bestStreak = S.streak;
         var m = multFor(S.streak);
-        var gain = (S.q.raw.diff * 1000 + Math.ceil(rem) * 100) * m;
+        var gain = (S.q.raw.diff * 1000 + speedBonus(rem, S.pace)) * m;
         var from = S.bank;
         S.bank += gain;
         var el = answerEls[i];
@@ -364,9 +421,14 @@
         S.paused = true;
         if (timer) timer.pause();
         var g = S;
-        var text = S.bank
-            ? 'Scendi dalla botola e ti porti a casa ' + money(S.bank) + ', tutto intero. Le domande che restano non le saprai mai.'
-            : 'Scendi a mani vuote: il montepremi è ancora a zero. Le domande che restano non le saprai mai.';
+        var share = keepShare(S.i, S.len), take = Math.floor(S.bank * share / 100) * 100;
+        var missing = toNextStep(S.i, S.len);
+        var text = !S.bank
+            ? 'Scendi a mani vuote: il montepremi è ancora a zero. Le domande che restano non le saprai mai.'
+            : share === 1
+                ? 'Scendi dalla botola e ti porti a casa ' + money(take) + ', tutto intero. Restando fino in fondo, invece, il premio arrivo lo porta a ' + money(Math.floor(S.bank * FINISH_BONUS / 100) * 100) + '.'
+                : 'Adesso ti porti a casa il ' + pct(share) + ' del montepremi: ' + money(take) + ' su ' + money(S.bank) + '. ' +
+                    'Ancora ' + missing + (missing === 1 ? ' domanda' : ' domande') + ' e scendendo ne tieni il ' + pct(keepShare(S.i + missing, S.len)) + '.';
         QZ.confirm(text, { title: 'Ti fermi qui?', okLabel: 'Mi fermo', cancelLabel: 'Resto su', danger: true }).then(function (ok) {
             if (g !== S || S.done) return;
             S.paused = false;
@@ -409,38 +471,41 @@
         S.running = false;
         if (timer) timer.pause();
         var fell = how === 'fall';
-        var won = Math.floor((fell ? S.bank / 2 : S.bank) / 100) * 100;
         var answered = S.i;
-        var all = bests();
-        var prev = all[S.len] || 0;
-        var lenRecord = won > prev;
-        if (lenRecord) { all[S.len] = won; QZ.store.set('qz.caduta.best', all); }
+        var share = how === 'safe' ? FINISH_BONUS : fell ? FALL_KEEP : keepShare(answered, S.len);
+        var won = Math.floor(S.bank * share / 100) * 100;
 
         // statistiche di carriera: domande davvero viste (quella su cui si cade conta, quella lasciata scendendo no)
+        var ch = S.ch;
         var st = stats();
         var seen = fell ? Math.min(S.i + 1, S.len) : answered;
-        var streakRecord = S.bestStreak > st.bestStreak && st.games > 0;
-        st.games++;
-        st[how === 'safe' ? 'safe' : fell ? 'falls' : 'quits']++;
-        st.right += S.right;
-        st.asked += seen;
-        st.bestStreak = Math.max(st.bestStreak, S.bestStreak);
-        if (how === 'safe' && S.right === S.len) st.perfect++;
-        QZ.store.set(STATS_KEY, st);
+        var streakRecord = !ch && S.bestStreak > st.bestStreak && st.games > 0;
+        if (!ch) {
+            st.games++;
+            st[how === 'safe' ? 'safe' : fell ? 'falls' : 'quits']++;
+            st.right += S.right;
+            st.asked += seen;
+            st.bestStreak = Math.max(st.bestStreak, S.bestStreak);
+            if (how === 'safe' && S.right === S.len) st.perfect++;
+            QZ.store.set(STATS_KEY, st);
+        }
 
         var floorXP = { 10: 1, 6: 1.2, 3: 1.4 }[S.floor] || 1;
         var xp = Math.round((S.right * 4 + S.bestStreak * 2 + (how === 'safe' ? 20 + S.len : 0)) * (PACE_XP[S.pace] || 1) * floorXP);
-        var r = QZ.profile.record(GAME, {
+        // la partita di sfida da' meta' XP e non entra nei record
+        var r = ch ? QZ.profile.record(GAME, { xp: Math.round(xp / 2), label: 'Sfida: ' + money(won) + ' contro ' + money(ch.score) }) : QZ.profile.record(GAME, {
             xp: xp,
             label: (how === 'safe' ? 'In piedi dopo ' + S.len + ' domande' : fell ? 'Caduto alla ' + Math.min(S.i + 1, S.len) + 'ª' : 'Sceso alla ' + (S.i + 1) + 'ª') + ' · ' + money(won),
-            score: won
+            score: won,
+            mode: recMode(S.len, S.pace)
         });
         var ratio = QZ.clamp(S.right / S.len, 0, 1) * (fell ? 0.85 : 1);
         var title = how === 'safe' ? (S.left === S.floor ? 'Pavimento intatto' : 'Ancora in piedi') : fell ? 'Caduta libera' : 'Sceso dalla botola';
         var sub = how === 'safe'
-            ? S.len + ' domande e sei ancora lì, con ' + S.left + (S.left === 1 ? ' botola chiusa' : ' botole chiuse') + ' sotto i piedi.'
+            ? S.len + ' domande e sei ancora lì, con ' + S.left + (S.left === 1 ? ' botola chiusa' : ' botole chiuse') + ' sotto i piedi.' +
+                (S.bank ? ' Premio arrivo: il montepremi di ' + money(S.bank) + ' vale una volta e mezza.' : '')
             : fell ? 'L\'ultima botola si è aperta alla domanda ' + Math.min(S.i + 1, S.len) + (S.bank ? '. Del montepremi di ' + money(S.bank) + ' si salva la metà.' : ', col montepremi ancora a zero. Giù, e senza paracadute.')
-                : answered ? 'Ti sei fermato dopo ' + answered + (answered === 1 ? ' domanda' : ' domande') + ', con ' + money(S.bank) + ' in tasca.' : 'Sei sceso prima ancora di rispondere. Prudenza da vecchio libero.';
+                : answered ? 'Ti sei fermato dopo ' + answered + (answered === 1 ? ' domanda' : ' domande') + ': del montepremi di ' + money(S.bank) + ' tieni il ' + pct(share) + '.' : 'Sei sceso prima ancora di rispondere. Prudenza da vecchio libero.';
 
         QZ.show('s-end');
         QZ.results($('#end-host'), {
@@ -450,7 +515,7 @@
             subtitle: sub,
             big: won,
             bigPrefix: '€ ',
-            record: { newRecord: r.newRecord || (lenRecord && prev > 0), xp: r.xp },
+            record: { newRecord: r.newRecord, xp: r.xp },
             ratio: ratio,
             stats: [
                 { label: 'Risposte giuste', value: S.right + '/' + S.len },
@@ -458,11 +523,40 @@
                 { label: 'Botole chiuse', value: S.left + '/' + S.floor },
                 { label: 'Passi usati', value: (PASSES - S.passes) + '/' + PASSES }
             ],
-            extraHTML: reviewHTML(),
+            extraHTML: (ch ? SF.verdictHTML(ch, won, money) : '') + reviewHTML(),
             share: shareText(how, won, seen),
-            onRetry: start,
-            secondary: { label: 'Cambia regole', icon: 'list', onClick: function () { QZ.show('s-start'); } }
+            retryLabel: ch ? 'Rigioca la sfida' : undefined,
+            onRetry: ch ? playChallenge : start,
+            secondary: ch ? { label: 'Partita normale', icon: 'list', onClick: function () { QZ.show('s-start'); } }
+                : { label: 'Cambia regole', icon: 'list', onClick: function () { QZ.show('s-start'); } }
         });
+        if (SF && S.src && seen) {
+            var opt = S.len + '-' + S.pace + '-' + S.floor;
+            var what = S.len + ' domande, ritmo ' + PACE_NAME[S.pace] + ', ' + S.floor + ' botole';
+            SF.offer($('#end-host'), {
+                game: GAME, title: 'Caduta Libera', seed: S.seed, opt: opt, src: S.src, score: won,
+                text: function (name, url) {
+                    return (ch ? 'Rilancio la sfida' : 'Ti sfido') + ' a Caduta Libera (' + what + '): ' + money(won) + ' portati a casa. ' +
+                        'Le stesse domande per te, nello stesso ordine: riesci a battermi?\n' + url;
+                }
+            });
+        }
         paintRecord();
+    }
+
+    /* ---------- Sfida un amico: il link arrivato ---------- */
+    function playChallenge() { if (CH) start('sfida'); }
+    if (CH && SF) {
+        var chR = chRules(CH.opt);
+        SF.intro({
+            ch: CH, target: money(CH.score),
+            rules: 'Caduta Libera, ' + chR.len + ' domande, ritmo ' + PACE_NAME[chR.pace] + ', ' + chR.floor + ' botole: le stesse domande, nello stesso ordine e con le risposte negli stessi posti. Niente record in palio, solo l\'onore.',
+            onPlay: playChallenge
+        });
+    }
+
+    // per i test automatici (node): regole del montepremi
+    if (typeof window !== 'undefined' && window.__QZ_TEST__) {
+        window.__QZ_TEST__.cadutalibera = { speedBonus: speedBonus, keepShare: keepShare, toNextStep: toNextStep, recMode: recMode, FINISH_BONUS: FINISH_BONUS, FALL_KEEP: FALL_KEEP };
     }
 })();

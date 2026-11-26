@@ -109,3 +109,53 @@ test('statistiche della solitaria', () => {
     assert.deepEqual(st, { games: 2, hits: 1, sum: 188.5 });
     assert.deepEqual(G.addSoloStats({ games: 'x' }, 50, false), { games: 1, hits: 0, sum: 50 });
 });
+
+/* ---------- Novembre 2026 (2): mercato salvato 12 ore, doppioni, database da 3.649 ---------- */
+const fs = require('node:fs');
+const JS = fs.readFileSync(path.join(__dirname, '..', 'assets', 'games', 'giocatoributget.js'), 'utf8');
+
+test('mercato in corso: in localStorage, valido 12 ore', () => {
+    const now = Date.UTC(2026, 10, 26, 21);
+    const d = (ago) => ({ v: 1, ts: now - ago, players: [{ name: 'A', picks: [] }] });
+    assert.equal(G.LIVE_TTL, 12 * 3600e3);
+    assert.ok(G.liveFresh(d(0), now));
+    assert.ok(G.liveFresh(d(11.9 * 3600e3), now));
+    assert.ok(!G.liveFresh(d(12.1 * 3600e3), now), 'scaduto');
+    assert.ok(!G.liveFresh(d(-60e3), now), 'dal futuro (orologio cambiato)');
+    assert.ok(!G.liveFresh({ v: 2, ts: now, players: [{}] }, now));
+    assert.ok(!G.liveFresh({ v: 1, ts: now, players: [] }, now));
+    assert.ok(!G.liveFresh(null, now));
+    assert.match(JS, /function session\(\) \{ try \{ return window\.localStorage;/);
+    assert.match(JS, /oldSession\(\)/, 'il mercato salvato dalla versione di prima (sessionStorage) si recupera');
+});
+
+test('doppioni ammessi: chi gioca dopo non vede (ne\' si vede bloccare) le scelte degli altri', () => {
+    assert.doesNotMatch(JS, /takenBy/);
+    assert.doesNotMatch(JS, /Preso da/);
+    assert.doesNotMatch(JS, /già presi/);
+});
+
+test('database: chiavi uniche (la partita salvata si ritrova), valori validi, ricerca veloce', () => {
+    assert.ok(playersDatabase.length >= 3600, `calciatori: ${playersDatabase.length}`);
+    const keys = new Set(playersDatabase.map(G.keyOf));
+    assert.equal(keys.size, playersDatabase.length, 'due calciatori con stesso nome e squadra');
+    playersDatabase.forEach((p) => {
+        assert.ok(['POR', 'DIF', 'CEN', 'ATT'].includes(p.role), `ruolo ${p.role} di ${p.name}`);
+        assert.ok(Number(p.value) > 0 && Number(p.value) <= 300, `valore ${p.value} di ${p.name}`);
+    });
+    // come filtered(): un tasto premuto non deve costare piu' di qualche millisecondo
+    const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+    const idx = playersDatabase.map((p) => norm(p.name + ' ' + p.team + ' ' + p.role));
+    const t0 = process.hrtime.bigint();
+    let found = 0;
+    for (const q of ['l', 'la', 'lau', 'laut', 'lautaro', 'inter', 'real madrid', 'mbappe']) {
+        const terms = q.split(' ');
+        found = idx.filter((k) => terms.every((t) => k.includes(t))).length;
+    }
+    const ms = Number(process.hrtime.bigint() - t0) / 1e6 / 8;
+    assert.ok(ms < 20, `ricerca lenta: ${ms.toFixed(2)} ms a tasto`);
+    assert.ok(found >= 1, 'Mbappe non si trova');
+    // nei valori c'e' varieta': non tutti uguali, ventaglio ampio
+    const vals = new Set(playersDatabase.map((p) => p.value));
+    assert.ok(vals.size >= 40, `valori diversi: ${vals.size}`);
+});

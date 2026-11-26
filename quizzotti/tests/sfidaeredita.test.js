@@ -164,3 +164,91 @@ test('fuori di poco: vale anche un pezzo di piu\' parole o un cognome col tratti
     assert.ok(G.nearMiss('alexander arnold', 'TRENT ALEXANDER-ARNOLD'));
     assert.ok(!G.nearMiss('sergej milinkovic savic', 'SERGEJ MILINKOVIĆ-SAVIĆ'));
 });
+
+/* ---------- Novembre 2026 (2): cognomi, tolleranza, ritmo delle lettere ---------- */
+const fs = require('node:fs');
+const SURN = G.surnameIndex(database, G.NOT_PEOPLE);
+const ok = (said, word) => G.accepts(said, word, SURN);
+
+test('NOT_PEOPLE: tutte le risposte a piu\' parole fuori dalle sezioni delle persone (e solo quelle)', () => {
+    const lines = fs.readFileSync(path.join(__dirname, '..', 'assets', 'db-sfidaeredita.js'), 'utf8').split(/\r?\n/);
+    const PEOPLE = /Campioni|Italia ---|Stelle|Brasile|Germania|Resto|Africa|Allenatori|Arbitri/;
+    const JOURNALISTS = ['GIANNI BRERA', 'NICOLÒ CAROSIO', 'NANDO MARTELLINI', 'BRUNO PIZZUL', 'FABIO CARESSA', 'SANDRO CIOTTI'];
+    const not = new Set(G.NOT_PEOPLE.map(G.norm));
+    let sec = '';
+    lines.forEach((l) => {
+        const s = l.match(/\/\/ --- (.*) ---/);
+        if (s) sec = s[0];
+        const w = l.match(/word: "([^"]+)"/);
+        if (!w || !w[1].includes(' ')) return;
+        const person = PEOPLE.test(sec) || JOURNALISTS.includes(w[1]);
+        assert.equal(not.has(G.norm(w[1])), !person, `${w[1]} (${sec}): ${person ? 'e\' una persona, togliere da' : 'non e\' una persona, aggiungere a'} NOT_PEOPLE`);
+    });
+    G.NOT_PEOPLE.forEach((n) => assert.ok(find(n), `NOT_PEOPLE: ${n} non c'e' nel database`));
+});
+
+test('persone: basta il cognome se nessun altro nel database lo porta', () => {
+    assert.ok(ok('mbappe', 'KYLIAN MBAPPÉ'));
+    assert.ok(ok('de rossi', 'DANIELE DE ROSSI'));
+    assert.ok(ok('derossi', 'DANIELE DE ROSSI'));
+    assert.ok(ok('riquelme', 'JUAN ROMÁN RIQUELME'));
+    assert.ok(ok('del piero', 'ALESSANDRO DEL PIERO'));
+    assert.ok(ok('milinkovic savic', 'SERGEJ MILINKOVIĆ-SAVIĆ'));
+    assert.ok(ok('maradona', 'DIEGO MARADONA'), 'lo stadio Maradona non e\' un omonimo');
+    assert.ok(ok('secondo me e mbappe', 'KYLIAN MBAPPÉ'), 'a voce anche dentro una frase');
+    // omonimi: serve il nome
+    assert.ok(!ok('inzaghi', 'SIMONE INZAGHI'));
+    assert.ok(!ok('rossi', 'PAOLO ROSSI'));
+    assert.ok(!ok('rossi', 'DANIELE DE ROSSI'));
+    assert.ok(!ok('ronaldo', 'CRISTIANO RONALDO'), 'c\'e\' anche Ronaldo Nazario');
+    assert.ok(!ok('martinez', 'LAUTARO MARTÍNEZ'));
+    assert.ok(!ok('cole', 'ASHLEY COLE'), 'c\'e\' anche Cole Palmer');
+    assert.ok(ok('simone inzaghi', 'SIMONE INZAGHI'));
+    // il nome di battesimo non basta mai
+    assert.ok(!ok('kylian', 'KYLIAN MBAPPÉ'));
+    // le cose non sono persone: un pezzo resta "fuori di poco"
+    assert.ok(!ok('berlino', 'NOTTE DI BERLINO'));
+    assert.ok(!ok('olimpico', 'GOL OLIMPICO'));
+    assert.ok(!ok('madrid', 'REAL MADRID'));
+    assert.ok(!ok('franchi', 'ARTEMIO FRANCHI'));
+    assert.ok(G.nearMiss('berlino', 'NOTTE DI BERLINO'));
+});
+
+test('persone: ogni persona del database ha un nome intero che vale, e quasi tutte un cognome', () => {
+    const people = Object.keys(SURN);
+    assert.ok(people.length > 500, `persone: ${people.length}`);
+    const withSurname = people.filter((k) => SURN[k].length > 0).length;
+    assert.ok(withSurname / people.length > 0.9, `con cognome: ${withSurname}/${people.length}`);
+    database.forEach((d) => assert.ok(ok(d.word, d.word), d.word));
+});
+
+test('tolleranza: niente refusi sotto le 7 lettere e mai sull\'ultima', () => {
+    assert.equal(G.tolerance(6), 0);
+    assert.equal(G.tolerance(7), 1);
+    assert.ok(!G.matches('rossi', 'ROSSO'));
+    assert.ok(!G.matches('rigori', 'RIGORE'));
+    assert.ok(!G.matches('rossoneri', 'ROSSONERO'), 'ultima lettera diversa');
+    assert.ok(!G.matches('fuorigioci', 'FUORIGIOCO'));
+    assert.ok(G.matches('rosoneri', 'ROSSONERI'), 'una lettera mancante in mezzo, parola lunga');
+    assert.ok(G.matches('fuorigoco', 'FUORIGIOCO'));
+    assert.ok(!G.matches('palla', 'PALLO'));
+});
+
+test('ritmo delle lettere legato alla lunghezza: corte piu\' piano, lunghe piu\' in fretta', () => {
+    G.SPEEDS.forEach((sp) => {
+        assert.equal(G.letterDelay(10, sp), sp);
+        assert.ok(G.letterDelay(4, sp) > sp);
+        assert.ok(G.letterDelay(20, sp) < sp);
+        assert.ok(G.letterDelay(2, sp) <= sp * 1.6 && G.letterDelay(40, sp) >= sp * 0.4, 'entro i limiti');
+        for (let n = 3; n < 30; n++) assert.ok(G.letterDelay(n + 1, sp) <= G.letterDelay(n, sp));
+    });
+});
+
+test('pagina: voce giudicata anche sui provvisori, arbitro in mano all\'altra squadra', () => {
+    const js = fs.readFileSync(path.join(__dirname, '..', 'assets', 'games', 'sfidaeredita.js'), 'utf8');
+    const html = fs.readFileSync(path.join(__dirname, '..', 'sfidaEredita.html'), 'utf8');
+    assert.match(js, /else if \(accepts\(text, G\.word\.word, SURNAMES\)\)/, 'il provvisorio giusto deve dare gol');
+    assert.match(js, /setInterval\(revealLetter, letterDelay\(/);
+    assert.match(html, /id="ref-who"/);
+    assert.match(js, /G\.teams\[1 - G\.turn\]/);
+});

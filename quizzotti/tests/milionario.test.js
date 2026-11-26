@@ -14,11 +14,12 @@ const { milionarioData } = require(path.join(root, 'assets', 'db-milionario.js')
 const Q = milionarioData.questions;
 const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
 
-test('db-milionario.js: 9 categorie da 30 domande, 18 per ognuno dei 15 livelli', () => {
+test('db-milionario.js: 12 categorie, almeno 15 domande ciascuna e 36 per ognuno dei 15 livelli', () => {
     const cats = Object.keys(milionarioData.icons);
-    assert.equal(cats.length, 9);
-    for (const c of cats) assert.equal(Q.filter((q) => q.cat === c).length, 30, c);
-    for (let lv = 1; lv <= 15; lv++) assert.equal(Q.filter((q) => q.level === lv).length, 18, `livello ${lv}`);
+    assert.equal(cats.length, 12);
+    for (const c of cats) assert.ok(Q.filter((q) => q.cat === c).length >= 15, c);
+    Q.forEach((q) => assert.ok(cats.includes(q.cat), `categoria senza icona: ${q.cat}`));
+    for (let lv = 1; lv <= 15; lv++) assert.ok(Q.filter((q) => q.level === lv).length >= 36, `livello ${lv}`);
 });
 
 test('db-milionario.js: quattro opzioni piene e diverse, risposta valida e ben distribuita', () => {
@@ -79,4 +80,26 @@ test('MilionarioNormale.html: carica il motore condiviso e solo il suo database'
     assert.match(html, /assets\/db-milionario\.js/);
     assert.match(html, /assets\/games\/cvem\.js/);
     assert.doesNotMatch(html, /db-cvem\.js|questions-data\.js/);
+});
+
+test('cvem.js con data-game="milionario": niente frasi di calcio', () => {
+    let hooks = null;
+    const el = () => ({ innerHTML: '', textContent: '', dataset: {}, style: {}, classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
+        addEventListener() {}, setAttribute() {}, removeAttribute() {}, focus() {}, querySelector() { return el(); }, getBoundingClientRect() { return { left: 0 }; } });
+    const QZ = {
+        $: () => el(), $$: () => [], icon: () => '', esc: String, fmt: String, ringHTML: () => '', ring: () => el(),
+        Deck: function () { this.draw = () => null; }, store: { get: (k, f) => f, set() {} }, profile: { best: () => undefined }
+    };
+    const ctx = { QZ, milionarioData, document: { body: { getAttribute: (a) => (a === 'data-game' ? 'milionario' : null) }, addEventListener() {}, querySelector() { return null; } },
+        window: { __cvemTest: (h) => { hooks = h; } }, performance: { now: () => 0 } };
+    vm.createContext(ctx);
+    vm.runInContext(fs.readFileSync(path.join(root, 'assets', 'games', 'cvem.js'), 'utf8'), ctx);
+    for (let lv = 1; lv <= 15; lv++) assert.doesNotMatch(hooks.phase(lv), /tempo|riscaldamento/i, `livello ${lv}`);
+    // i timbri e i titoli di calcio stanno solo nel ramo del calcio
+    const src = fs.readFileSync(path.join(root, 'assets', 'games', 'cvem.js'), 'utf8');
+    for (const w of ["'Gol!'", "'Fuorigioco'", "'Fuori nel riscaldamento'"]) {
+        const at = src.indexOf(w);
+        assert.ok(at > 0, w);
+        assert.match(src.slice(Math.max(0, at - 120), at), /NORMAL \?/, `${w} esce anche nel Milionario normale`);
+    }
 });
