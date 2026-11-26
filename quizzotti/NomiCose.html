@@ -103,6 +103,28 @@
   .nc-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
   .nc-rank { margin-top: 18px; }
 
+  /* ---------- Controllo: una categoria alla volta ---------- */
+  .nc-rev-head { display: flex; align-items: center; gap: 16px; }
+  .nc-rev-head__txt { flex: 1; min-width: 0; }
+  .nc-rev-head h2 { margin: 2px 0 0; font-family: var(--font-display); font-weight: 900; font-size: clamp(30px, 5vw, 54px); line-height: 1; text-transform: uppercase; overflow-wrap: anywhere; }
+  .nc-rev-dots { display: flex; gap: 6px; margin: 14px 0 18px; }
+  .nc-rev-dots span { flex: 1; height: 6px; border-radius: 3px; background: #20272d; }
+  .nc-rev-dots span.is-done { background: rgba(var(--accent-rgb), .45); }
+  .nc-rev-dots span.is-now { background: var(--accent); }
+  .nc-rev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 12px; }
+  .nc-card { display: grid; gap: 8px; align-content: start; min-height: 132px; padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel); box-shadow: inset 0 4px 0 var(--c); color: var(--text); text-align: left; animation: qz-rise .35s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 70ms); }
+  button.nc-card:hover { border-color: rgba(var(--accent-rgb), .6); }
+  .nc-card__who { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; color: var(--text-2); }
+  .nc-card__who .team__dot { background: var(--c); }
+  .nc-card__t { font-family: var(--font-display); font-weight: 900; font-size: clamp(24px, 3vw, 34px); line-height: 1.05; overflow-wrap: anywhere; }
+  .nc-card__s { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text-2); }
+  .nc-card__p { font-family: var(--font-led); font-size: 28px; color: var(--led-green, #3ddc84); }
+  .nc-card.is-dup .nc-card__p { color: var(--led); }
+  .nc-card.is-bad .nc-card__t { text-decoration: line-through; color: var(--text-2); }
+  .nc-card.is-bad .nc-card__p { color: var(--led-red, #e5484d); }
+  .nc-card.is-empty .nc-card__t { color: var(--faint, #5b646c); font-weight: 600; }
+  .nc-card.is-forced { border-color: rgba(var(--accent-rgb), .7); }
+
   /* ---------- Resoconto finale ---------- */
   .nc-awards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; margin-top: 18px; }
   .nc-award { padding: 14px 16px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--panel); }
@@ -238,10 +260,17 @@
 
   <!-- ============ TV: CONTROLLO ============ -->
   <section class="screen" id="t-review">
-    <div class="section-head"><h2 id="t-review-title"></h2></div>
-    <p class="nc-legend" id="t-legend"></p>
-    <div class="nc-table-wrap mt-2"><table class="nc-table" id="t-review-table"></table></div>
-    <div class="nc-actions"><button class="btn btn--primary btn--xl" type="button" id="t-confirm"></button></div>
+    <div class="nc-rev-head">
+      <div class="nc-hud__letter" id="t-rev-letter"></div>
+      <div class="nc-rev-head__txt"><span class="label" id="t-rev-step"></span><h2 id="t-rev-cat" aria-live="polite"></h2></div>
+    </div>
+    <div class="nc-rev-dots" id="t-rev-dots" aria-hidden="true"></div>
+    <div class="nc-rev-grid" id="t-rev-grid"></div>
+    <p class="nc-legend mt-2" id="t-legend"></p>
+    <div class="nc-actions">
+      <button class="btn btn--lg" type="button" id="t-rev-prev"></button>
+      <button class="btn btn--primary btn--xl" type="button" id="t-rev-next"></button>
+    </div>
   </section>
 
   <!-- ============ TV: RISULTATI DEL ROUND ============ -->
@@ -334,11 +363,14 @@
   <!-- ============ TELEFONO: CONTROLLO ============ -->
   <section class="screen" id="p-review">
     <div class="nc-phone">
-      <div class="nc-big-msg"><b>Controllo</b><p>Tocca «Non vale» sulle risposte degli altri che secondo te sono sbagliate. Basta metà del tavolo per bocciarle.</p></div>
+      <div class="nc-big-msg"><span class="label" id="p-rev-step"></span><b id="p-rev-cat"></b><p>Guardate la TV. Tocca «Non vale» sulle risposte sbagliate: basta metà del tavolo per bocciarle.</p></div>
       <div class="nc-vote" id="p-vote"></div>
       <div class="nc-boss" id="p-boss2" hidden>
         <span>Sei il capitano</span>
-        <button class="btn btn--primary btn--lg btn--block" type="button" id="p-confirm"></button>
+        <div class="grid-2">
+          <button class="btn btn--lg" type="button" id="p-rev-prev"></button>
+          <button class="btn btn--primary btn--lg" type="button" id="p-rev-next"></button>
+        </div>
       </div>
     </div>
   </section>
@@ -360,6 +392,6 @@
 <script src="assets/qz.js?v=aa5e65ca" defer></script>
 <script src="assets/db-nomicose.js?v=03b12399" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
-<script src="assets/games/nomicose.js?v=0ad28eee" defer></script>
+<script src="assets/games/nomicose.js?v=653ab767" defer></script>
 </body>
 </html>

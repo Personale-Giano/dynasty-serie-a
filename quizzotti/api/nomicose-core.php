@@ -5,7 +5,9 @@
    (tests/nomicose-core.test.php). Scritto per PHP 8.0, la versione di Altervista.
 
    Fasi: lobby -> letter (lettera estratta, 4 s) -> play (si scrive) ->
-   review (si contestano le risposte) -> results -> letter ... -> end.
+   review (si contestano le risposte, una categoria alla volta: le altre
+   restano coperte finche' la TV o il capitano non ci arrivano) -> results ->
+   letter ... -> end.
    Punti per categoria: 20 se sei l'unico con una risposta valida, 10 se la
    tua risposta valida e' solo tua, 5 se qualcun altro ha scritto la stessa.
    ========================================================================== */
@@ -166,13 +168,14 @@ function nc_start_round(&$r, $now, $rand = null) {
     $r['rejects'] = [];
     $r['override'] = [];
     $r['roundCats'] = $r['cats'];
+    $r['revIdx'] = 0;
     return ['ok' => 1];
 }
 
 /** Avanza le fasi a tempo. Restituisce true se la stanza e' cambiata. */
 function nc_tick(&$r, $now) {
     if ($r['phase'] === 'letter' && $now >= $r['startAt']) { $r['phase'] = 'play'; return true; }
-    if ($r['phase'] === 'play' && $now >= $r['deadline'] + NC_GRACE_SECONDS) { $r['phase'] = 'review'; return true; }
+    if ($r['phase'] === 'play' && $now >= $r['deadline'] + NC_GRACE_SECONDS) { $r['phase'] = 'review'; $r['revIdx'] = 0; return true; }
     return false;
 }
 
@@ -211,10 +214,25 @@ function nc_letter_ok($answer, $letter) {
     return $k !== '' && strtoupper($k[0]) === $letter;
 }
 
+/** Categoria gia' scoperta nel controllo (quelle dopo restano coperte). */
+function nc_revealed($r, $cid) {
+    foreach ($r['roundCats'] ?? [] as $i => $c) if ($c['id'] === $cid) return $i <= ($r['revIdx'] ?? 0);
+    return false;
+}
+
+/** La TV o il capitano scorrono le categorie del controllo, avanti o indietro. */
+function nc_review_cat(&$r, $idx) {
+    if ($r['phase'] !== 'review') return ['err' => 'Niente da controllare'];
+    $last = count($r['roundCats'] ?? []) - 1;
+    $r['revIdx'] = max(0, min($last, (int)$idx));
+    return ['ok' => 1];
+}
+
 /** Contestazione: un voto per giocatore su una risposta altrui (si ritocca per togliere). */
 function nc_vote(&$r, $voter, $target, $cat) {
     if ($r['phase'] !== 'review') return ['err' => 'Si contesta solo durante il controllo'];
     if ($voter === $target || nc_player_index($r, $target) < 0) return ['err' => 'Voto non valido'];
+    if (!nc_revealed($r, $cat)) return ['err' => 'Questa categoria non è ancora uscita'];
     $list = $r['rejects'][$target][$cat] ?? [];
     $i = array_search($voter, $list, true);
     if ($i === false) $list[] = $voter; else array_splice($list, $i, 1);
@@ -225,6 +243,7 @@ function nc_vote(&$r, $voter, $target, $cat) {
 /** La TV o il capitano possono forzare: valida (true), non valida (false), torna al voto (null). */
 function nc_override(&$r, $target, $cat, $value) {
     if ($r['phase'] !== 'review') return ['err' => 'Si corregge solo durante il controllo'];
+    if (!nc_revealed($r, $cat)) return ['err' => 'Questa categoria non è ancora uscita'];
     $k = $target . '|' . $cat;
     if ($value === null) unset($r['override'][$k]); else $r['override'][$k] = (bool)$value;
     return ['ok' => 1];
@@ -268,6 +287,7 @@ function nc_evaluate($r) {
 
 function nc_confirm(&$r) {
     if ($r['phase'] !== 'review') return ['err' => 'Niente da confermare'];
+    if (($r['revIdx'] ?? 0) < count($r['roundCats'] ?? []) - 1) return ['err' => 'Mancano ancora categorie da guardare'];
     $ev = nc_evaluate($r);
     $pts = [];
     foreach ($r['players'] as $p) $pts[$p['id']] = 0;
@@ -279,7 +299,7 @@ function nc_confirm(&$r) {
 }
 
 function nc_end(&$r) {
-    if ($r['phase'] === 'review') nc_confirm($r);
+    if ($r['phase'] === 'review') { $r['revIdx'] = count($r['roundCats']) - 1; nc_confirm($r); }
     if (!in_array($r['phase'], ['lobby', 'results'], true)) return ['err' => 'Finite prima il round in corso'];
     $r['phase'] = 'end';
     return ['ok' => 1];
@@ -323,7 +343,10 @@ function nc_public($r, $me, $isHost, $now) {
         $out['mine'] = $me !== '' ? ($r['answers'][$me] ?? new stdClass()) : new stdClass();
     }
     if ($r['phase'] === 'review') {
-        $out['eval'] = nc_evaluate($r);
+        // solo le categorie gia' scoperte: le altre risposte non escono dal server
+        $out['eval'] = array_filter(nc_evaluate($r), function ($cid) use ($r) { return nc_revealed($r, (string)$cid); }, ARRAY_FILTER_USE_KEY);
+        if (!$out['eval']) $out['eval'] = new stdClass();
+        $out['revIdx'] = $r['revIdx'] ?? 0;
         $out['myVotes'] = [];
         foreach ($r['rejects'] as $target => $cats) foreach ($cats as $cid => $voters) {
             if (in_array($me, $voters, true)) $out['myVotes'][] = $target . '|' . $cid;

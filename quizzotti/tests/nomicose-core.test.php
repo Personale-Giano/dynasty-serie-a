@@ -60,6 +60,21 @@ check($ev['alle'][$b]['why'] === 'lettera' && $ev['alle'][$b]['pts'] === 0, 'Rea
 check($ev['alle'][$a]['pts'] === 20, 'unica risposta valida della categoria: 20');
 $port = 'x' . $r['seq'];
 check($ev[$port][$a]['pts'] === 20, 'categoria aggiunta conta');
+// controllo una categoria alla volta: le altre restano coperte
+check($r['revIdx'] === 0, 'il controllo parte dalla prima categoria');
+$pub = nc_public($r, $a, false, 2030);
+check(array_keys((array)$pub['eval']) === ['gita'], 'si vede solo la prima categoria');
+check(strpos(json_encode($pub), 'Mourinho') === false, 'le risposte delle categorie dopo non escono');
+check(isset(nc_vote($r, $a, $b, 'alle')['err']), 'non si vota una categoria ancora coperta');
+check(isset(nc_override($r, $b, 'alle', true)['err']), 'non si corregge una categoria ancora coperta');
+check(isset(nc_confirm($r)['err']), 'non si conferma prima di aver visto tutto');
+nc_review_cat($r, 2);
+check(array_keys((array)nc_public($r, $a, false, 2030)['eval']) === ['gita', 'sqit', 'alle'], 'avanti: scoperte le prime tre');
+nc_review_cat($r, 1);
+check($r['revIdx'] === 1, 'si torna indietro');
+nc_review_cat($r, 99);
+check($r['revIdx'] === count($r['roundCats']) - 1, 'oltre la fine si ferma sull ultima');
+
 // contestazione: con 3 giocatori basta 1 voto
 nc_vote($r, $b, $c, 'gita');
 check(nc_evaluate($r)['gita'][$c]['why'] === 'bocciata', 'risposta bocciata dal voto');

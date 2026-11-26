@@ -147,7 +147,7 @@ if ($a === 'join') {
     out(['pid' => $res['pid'], 'state' => nc_public($r, $res['pid'], false, $now)]);
 }
 
-$BOSS = ['opts', 'cats', 'removecat', 'start', 'finish', 'confirm', 'override', 'end', 'rematch', 'kick'];
+$BOSS = ['opts', 'cats', 'removecat', 'start', 'finish', 'revcat', 'confirm', 'override', 'end', 'rematch', 'kick'];
 [$r, $res] = with_room($code, function (&$r) use ($a, $in, $tok, $now, $BOSS) {
     nc_tick($r, $now);
     [$me, , $boss] = who($r, $tok);
@@ -171,6 +171,7 @@ $BOSS = ['opts', 'cats', 'removecat', 'start', 'finish', 'confirm', 'override', 
             $val = $in['value'] ?? null;
             return nc_override($r, (string)($in['pid'] ?? ''), (string)($in['cat'] ?? ''), $val === null ? null : (bool)$val);
         case 'finish': return nc_finish($r, $now);
+        case 'revcat': return nc_review_cat($r, (int)($in['idx'] ?? 0));
         case 'confirm': return nc_confirm($r);
         case 'end': return nc_end($r);
         case 'rematch': return nc_rematch($r);

@@ -125,7 +125,6 @@
     $('#f-new').innerHTML = QZ.icon('plus') + 'Stanza nuova';
     $('#f-exit').innerHTML = QZ.icon('grid') + 'Cambia gioco';
     $('#p-join-btn').innerHTML = 'Entra in campo' + QZ.icon('arrow');
-    $('#p-confirm').innerHTML = QZ.icon('check') + 'Conferma i punti';
     $('#p-again').innerHTML = QZ.icon('refresh') + 'Rivincita';
     $('#t-timer').innerHTML = QZ.ringHTML();
     $('#p-timer').innerHTML = QZ.ringHTML();
@@ -287,8 +286,9 @@
         $('#t-force').addEventListener('click', function () {
             QZ.confirm('Il round finisce adesso per tutti: valgono le risposte già scritte.', { title: 'Chiudere il round?', okLabel: 'Chiudi' }).then(function (ok) { if (ok) api({ a: 'finish' }); });
         });
-        $('#t-confirm').addEventListener('click', function () { api({ a: 'confirm' }); });
-        $('#t-review-table').addEventListener('click', function (e) {
+        $('#t-rev-prev').addEventListener('click', function () { reviewStep(-1); });
+        $('#t-rev-next').addEventListener('click', function () { reviewStep(1); });
+        $('#t-rev-grid').addEventListener('click', function (e) {
             var b = e.target.closest('[data-ov]');
             if (!b || !S || S.phase !== 'review') return;
             var key = b.dataset.ov;
@@ -342,7 +342,7 @@
             }
         } else if (ph === 'review') {
             if (changed) { QZ.show('t-review'); QZ.sound.whistle(); }
-            renderReviewTable();
+            renderReviewCat();
         } else if (ph === 'results') {
             renderResults();
             $('#t-cats2').innerHTML = catsHTML();
@@ -414,14 +414,53 @@
         }).join('') + '</tr></thead>';
     }
 
-    function renderReviewTable() {
-        $('#t-review-title').textContent = 'Controllo · lettera ' + S.letter;
-        $('#t-legend').innerHTML = '<span>Verde: risposta solo sua (10, o 20 se è l\'unica)</span><span>Giallo: doppia (5)</span><span>Barrata: non vale</span><span>Tocca una risposta per correggerla a mano</span>';
-        var ev = S.eval || {};
-        $('#t-review-table').innerHTML = headHTML() + '<tbody>' + S.roundCats.map(function (c) {
-            return '<tr><th scope="row">' + QZ.esc(c.name) + '</th>' + S.players.map(function (p) { return '<td>' + cellHTML(ev, p.id, c.id, true) + '</td>'; }).join('') + '</tr>';
-        }).join('') + '</tbody>';
-        $('#t-confirm').innerHTML = QZ.icon('check') + 'Conferma i punti';
+    /* ---------- Controllo: una categoria per schermata ---------- */
+    var shownRev = '';
+    function revCat() { return S.roundCats[S.revIdx || 0]; }
+    function revLast() { return (S.revIdx || 0) >= S.roundCats.length - 1; }
+
+    /** Avanti o indietro tra le categorie; dopo l'ultima si confermano i punti. */
+    function reviewStep(d) {
+        if (!S || S.phase !== 'review') return;
+        if (d > 0 && revLast()) { api({ a: 'confirm' }); return; }
+        QZ.sound.click();
+        api({ a: 'revcat', idx: (S.revIdx || 0) + d });
+    }
+    function prevLabel() { return QZ.icon('back') + 'Categoria prima'; }
+    function nextLabel() { return revLast() ? QZ.icon('check') + 'Conferma i punti' : 'Prossima categoria' + QZ.icon('arrow'); }
+
+    function cardHTML(x, p, cid, i) {
+        if (!x || !x.t) return '<div class="nc-card is-empty" style="--c:' + p.color + ';--i:' + i + '"><span class="nc-card__who"><span class="team__dot" aria-hidden="true"></span>' + QZ.esc(p.name) + '</span><span class="nc-card__t">nessuna risposta</span></div>';
+        var why = { lettera: 'Lettera sbagliata', bocciata: 'Bocciata dal tavolo (' + x.rej + ')', tv: 'Tolta dalla TV' }[x.why] || '';
+        var forced = S.override && S.override[p.id + '|' + cid] !== undefined;
+        var status = !x.ok ? why : x.pts === 20 ? 'L\'unico con una risposta!' : x.dup ? 'Uguale a qualcun altro' : 'Solo sua';
+        if (x.ok && x.rej) status += ' · ' + plural(x.rej, 'contestazione', 'contestazioni');
+        if (forced) status += ' · decisa dalla TV';
+        return '<button type="button" class="nc-card' + (x.ok ? (x.dup ? ' is-dup' : '') : ' is-bad') + (forced ? ' is-forced' : '') + '" style="--c:' + p.color + ';--i:' + i + '" data-ov="' + p.id + '|' + cid + '" title="Tocca per correggere">' +
+            '<span class="nc-card__who"><span class="team__dot" aria-hidden="true"></span>' + QZ.esc(p.name) + '</span>' +
+            '<span class="nc-card__t">' + QZ.esc(x.t) + '</span>' +
+            '<span class="nc-card__s"><span>' + QZ.esc(status) + '</span><span class="nc-card__p">' + (x.ok ? '+' + x.pts : '0') + '</span></span></button>';
+    }
+
+    function renderReviewCat() {
+        var c = revCat();
+        if (!c) return;
+        var idx = S.revIdx || 0;
+        var rows = (S.eval || {})[c.id] || {};
+        var key = S.round + '|' + idx;
+        $('#t-rev-letter').textContent = S.letter;
+        $('#t-rev-step').textContent = 'Controllo · categoria ' + (idx + 1) + ' di ' + S.roundCats.length;
+        $('#t-rev-cat').textContent = c.name;
+        $('#t-rev-dots').innerHTML = S.roundCats.map(function (x, i) { return '<span class="' + (i < idx ? 'is-done' : i === idx ? 'is-now' : '') + '"></span>'; }).join('');
+        var grid = $('#t-rev-grid');
+        grid.innerHTML = S.players.map(function (p, i) { return cardHTML(rows[p.id], p, c.id, i); }).join('');
+        // l'animazione d'ingresso solo quando arriva una categoria nuova, non a ogni voto
+        if (key === shownRev) QZ.$$('.nc-card', grid).forEach(function (el) { el.style.animation = 'none'; });
+        else { shownRev = key; QZ.sound.reveal(); }
+        $('#t-legend').innerHTML = '<span>Verde: solo sua, 10 punti (20 se è l\'unica)</span><span>Gialla: uguale a un\'altra, 5</span><span>Barrata: non vale</span><span>Tocca una risposta per correggerla a mano</span>';
+        $('#t-rev-prev').innerHTML = prevLabel();
+        $('#t-rev-prev').disabled = idx === 0;
+        $('#t-rev-next').innerHTML = nextLabel();
     }
 
     function lastHistory() { return S.history && S.history.length ? S.history[S.history.length - 1] : null; }
@@ -529,7 +568,8 @@
         $('#p-end').addEventListener('click', function () {
             QZ.confirm('Si chiude la partita e la TV mostra il resoconto finale.', { title: 'Fischio finale?', okLabel: 'Resoconto' }).then(function (ok) { if (ok) api({ a: 'end' }); });
         });
-        $('#p-confirm').addEventListener('click', function () { api({ a: 'confirm' }); });
+        $('#p-rev-prev').addEventListener('click', function () { reviewStep(-1); });
+        $('#p-rev-next').addEventListener('click', function () { reviewStep(1); });
         $('#p-again').addEventListener('click', function () { api({ a: 'rematch' }); });
         $('#p-stop').addEventListener('click', function () {
             save(true).then(function () { api({ a: 'stop' }); });
@@ -664,9 +704,14 @@
             if (!S.stopBy) delete $('#p-play').dataset.stopped;
         } else if (ph === 'review') {
             // le ultime lettere non salvate non contano piu': il foglio si chiude
+            var before = $('#p-vote').dataset.k;
             renderVote();
             $('#p-boss2').hidden = !boss;
+            $('#p-rev-prev').innerHTML = prevLabel();
+            $('#p-rev-prev').disabled = !S.revIdx;
+            $('#p-rev-next').innerHTML = nextLabel();
             if (changed) { QZ.show('p-review'); QZ.vibrate(60); }
+            else if (before !== $('#p-vote').dataset.k) { QZ.vibrate(40); window.scrollTo({ top: 0, behavior: 'smooth' }); }
         } else if (ph === 'end') {
             var r = ranked();
             var pos = r.map(function (x) { return x.id; }).indexOf(p.id) + 1;
@@ -689,7 +734,12 @@
         var ev = S.eval || {};
         var mine = {};
         (S.myVotes || []).forEach(function (k) { mine[k] = 1; });
-        $('#p-vote').innerHTML = S.roundCats.map(function (c) {
+        var c0 = revCat();
+        $('#p-rev-step').textContent = 'Categoria ' + ((S.revIdx || 0) + 1) + ' di ' + S.roundCats.length;
+        $('#p-rev-cat').textContent = c0 ? c0.name : '';
+        $('#p-vote').dataset.k = S.round + '|' + (S.revIdx || 0);
+        // sul telefono solo la categoria che c'e' sulla TV: le altre restano coperte
+        $('#p-vote').innerHTML = (c0 ? [c0] : []).map(function (c) {
             var rows = S.players.map(function (p) {
                 var x = ev[c.id] && ev[c.id][p.id];
                 if (!x || !x.t) return '';
@@ -700,7 +750,7 @@
                     (self || x.why === 'lettera' ? '<b>' + (x.ok ? '+' + x.pts : '0') + '</b>' :
                         '<button type="button" class="btn btn--sm" data-vote="' + k + '" aria-pressed="' + !!mine[k] + '" aria-label="Non vale: ' + QZ.esc(x.t) + ' di ' + QZ.esc(p.name) + '">' + QZ.icon('x') + 'Non vale</button>') + '</div>';
             }).join('');
-            return '<div class="nc-vote__cat"><h3>' + QZ.esc(c.name) + '</h3>' + (rows || '<p class="small muted" style="margin:0">Nessuna risposta</p>') + '</div>';
+            return '<div class="nc-vote__cat">' + (rows || '<p class="small muted" style="margin:0">Nessuna risposta</p>') + '</div>';
         }).join('');
     }
 
